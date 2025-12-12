@@ -1,206 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>New Student</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
+<meta charset="utf-8" />
+<title>New Student — Debug Mode</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-body {
-  font-family: Arial, sans-serif;
-  padding: 20px;
-}
-
-input, select {
-  width: 100%;
-  padding: 8px;
-  margin: 6px 0 12px 0;
-  box-sizing: border-box;
-}
-
-button {
-  padding: 10px 20px;
-  cursor: pointer;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 40px;
-}
-
-th, td {
-  border: 1px solid #ccc;
-  padding: 8px;
-}
+  body{font-family:Arial,Helvetica,sans-serif;margin:18px;background:#f7fbfb}
+  h1{margin:0 0 10px 0}
+  .row{display:grid;grid-template-columns:1fr 320px;gap:18px}
+  .card{background:#fff;padding:12px;border-radius:6px;border:1px solid #ddd}
+  label{font-weight:600;font-size:13px;display:block;margin-top:8px}
+  input,select,textarea,button{width:100%;padding:8px;margin-top:6px;box-sizing:border-box}
+  #debugArea{white-space:pre-wrap;font-family:monospace;font-size:12px;max-height:380px;overflow:auto;background:#111;color:#b5f5b5;padding:10px;border-radius:6px}
+  .status{padding:8px;margin-bottom:8px;border-radius:6px}
+  .ok{background:#e6fff0;border:1px solid #39a86a;color:#006030}
+  .err{background:#ffecec;border:1px solid #c04848;color:#7a1a1a}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th,td{border:1px solid #ddd;padding:6px;font-size:13px}
+  .small{font-size:12px;color:#666}
 </style>
 </head>
 <body>
+  <h1>New Student (debug)</h1>
 
-<h2>New Student</h2>
+  <div class="row">
+    <div class="card" id="mainCard">
+      <div id="statusBox" class="status small">Status: <span id="statusText">starting...</span></div>
 
-<label>Parent</label>
-<select id="parent_id">
-  <option value="">Select Parent</option>
-</select>
+      <label>Parent</label>
+      <select id="parent_id"><option>Loading…</option></select>
 
-<label>Student Name</label>
-<input type="text" id="name">
+      <label>Student Name</label><input id="name" type="text"/>
 
-<label>Date of Birth</label>
-<input type="date" id="date_of_birth">
+      <label>Date of Birth</label><input id="date_of_birth" type="date"/>
 
-<label>Grade</label>
-<input type="text" id="grade">
+      <label>Grade</label><input id="grade" type="text"/>
 
-<h3>Authorized Pickup 1</h3>
-<label>Name</label>
-<input type="text" id="ap1_name">
-<label>Phone</label>
-<input type="text" id="ap1_phone">
-<label>Relationship</label>
-<input type="text" id="ap1_relationship">
+      <h3>Authorized Pickup 1</h3>
+      <label>Name</label><input id="ap1_name" type="text"/>
+      <label>Phone</label><input id="ap1_phone" type="text"/>
+      <label>Relationship</label><input id="ap1_relationship" type="text"/>
 
-<h3>Authorized Pickup 2</h3>
-<label>Name</label>
-<input type="text" id="ap2_name">
-<label>Phone</label>
-<input type="text" id="ap2_phone">
-<label>Relationship</label>
-<input type="text" id="ap2_relationship">
+      <h3>Emergency Contact</h3>
+      <label>Name</label><input id="ec_name" type="text"/>
+      <label>Phone</label><input id="ec_phone" type="text"/>
+      <label>Relationship</label><input id="ec_relationship" type="text"/>
 
-<h3>Authorized Pickup 3</h3>
-<label>Name</label>
-<input type="text" id="ap3_name">
-<label>Phone</label>
-<input type="text" id="ap3_phone">
-<label>Relationship</label>
-<input type="text" id="ap3_relationship">
+      <label>Active</label>
+      <select id="is_active"><option value="true">Yes</option><option value="false">No</option></select>
 
-<h3>Emergency Contact</h3>
-<label>Name</label>
-<input type="text" id="ec_name">
-<label>Phone</label>
-<input type="text" id="ec_phone">
-<label>Relationship</label>
-<input type="text" id="ec_relationship">
+      <button id="saveStudent" style="margin-top:12px">Save Student</button>
 
-<label>Active</label>
-<select id="is_active">
-  <option value="true">Active</option>
-  <option value="false">Inactive</option>
-</select>
+      <div id="message" class="small" style="margin-top:8px"></div>
 
-<button id="saveStudent">Save Student</button>
+      <h3 style="margin-top:18px">Students</h3>
+      <table id="studentTable"><thead><tr><th>ID</th><th>Name</th><th>Parent</th><th>DOB</th><th>Grade</th></tr></thead><tbody></tbody></table>
+    </div>
 
-<table id="studentTable">
-<thead>
-<tr>
-  <th>ID</th>
-  <th>Name</th>
-  <th>Parent</th>
-  <th>DOB</th>
-  <th>Grade</th>
-  <th>Active</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
+    <div class="card">
+      <strong>Debug / Network log</strong>
+      <div id="debugArea">Waiting to run fetches…</div>
+      <div style="margin-top:10px">
+        <button id="btnReload" style="margin-right:8px">Reload both endpoints</button>
+        <button id="btnClear">Clear debug</button>
+      </div>
+      <div style="margin-top:10px" class="small">
+        <p><strong>Instructions:</strong> Click <em>Reload both endpoints</em>. If parents/students fail, copy the debug output and paste here.</p>
+      </div>
+    </div>
+  </div>
 
 <script>
-// -----------------------
-// LOAD PARENTS
-// -----------------------
-async function loadParents() {
-  try {
-    const res = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent");
-    const parents = await res.json();
+(() => {
+  const parentUrl = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent";
+  const studentUrl = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
+  const debug = document.getElementById('debugArea');
+  const statusText = document.getElementById('statusText');
+  const msg = document.getElementById('message');
 
-    const dropdown = document.getElementById("parent_id");
-    dropdown.innerHTML = '<option value="">Select Parent</option>';
-
-    parents.forEach(p => {
-      const opt = document.createElement("option");
-      opt.value = p.id;
-      opt.textContent = `${p.first_name} ${p.last_name}`;
-      dropdown.appendChild(opt);
-    });
-  } catch (err) {
-    console.error("Error loading parents:", err);
+  function log(...args){
+    console.log(...args);
+    debug.textContent += args.map(a => (typeof a === 'object' ? JSON.stringify(a,null,2) : String(a))).join(' ') + "\n\n";
+    debug.scrollTop = debug.scrollHeight;
   }
-}
 
-// -----------------------
-// LOAD STUDENTS
-// -----------------------
-async function loadStudents() {
-  try {
-    const res = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student");
-    const students = await res.json();
-
-    const tableBody = document.querySelector("#studentTable tbody");
-    tableBody.innerHTML = "";
-
-    students.forEach(s => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${s.id}</td>
-        <td>${s.name}</td>
-        <td>${s.parent_id}</td>
-        <td>${s.date_of_birth}</td>
-        <td>${s.grade}</td>
-        <td>${s.is_active}</td>
-      `;
-      tableBody.appendChild(row);
-    });
-  } catch (err) {
-    console.error("Error loading students:", err);
+  function setStatus(text, ok=true){
+    statusText.textContent = text;
+    const box = document.getElementById('statusBox');
+    box.className = 'status small ' + (ok ? 'ok' : 'err');
   }
-}
 
-// -----------------------
-// SAVE STUDENT
-// -----------------------
-document.getElementById("saveStudent").addEventListener("click", async () => {
-  const payload = {
-    parent_id: Number(document.getElementById("parent_id").value),
-    name: document.getElementById("name").value,
-    date_of_birth: document.getElementById("date_of_birth").value,
-    grade: document.getElementById("grade").value,
-    authorized_pickup_1_name: document.getElementById("ap1_name").value,
-    authorized_pickup_1_phone: document.getElementById("ap1_phone").value,
-    authorized_pickup_1_relationship: document.getElementById("ap1_relationship").value,
-    authorized_pickup_2_name: document.getElementById("ap2_name").value,
-    authorized_pickup_2_phone: document.getElementById("ap2_phone").value,
-    authorized_pickup_2_relationship: document.getElementById("ap2_relationship").value,
-    authorized_pickup_3_name: document.getElementById("ap3_name").value,
-    authorized_pickup_3_phone: document.getElementById("ap3_phone").value,
-    authorized_pickup_3_relationship: document.getElementById("ap3_relationship").value,
-    emergency_contact_name: document.getElementById("ec_name").value,
-    emergency_contact_phone: document.getElementById("ec_phone").value,
-    emergency_contact_relationship: document.getElementById("ec_relationship").value,
-    is_active: document.getElementById("is_active").value === "true"
-  };
-
-  try {
-    await fetch("https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    loadStudents();
-    alert("Student Saved!");
-  } catch (err) {
-    console.error("Save error:", err);
+  function setMessage(t, isErr=false){
+    msg.textContent = t;
+    msg.style.color = isErr ? '#a00' : '#060';
   }
-});
 
-// INITIAL LOAD
-loadParents();
-loadStudents();
+  async function fetchParents(){
+    setStatus('Fetching parents...');
+    setMessage('Fetching parents...');
+    log("== Parent GET =>", parentUrl);
+    try {
+      const res = await fetch(parentUrl, {cache: "no-store"});
+      log("Parent status", res.status, res.statusText);
+      const txt = await res.text();
+      log("Parent response text:", txt);
+      let json;
+      try { json = JSON.parse(txt); } catch(e){ json = null; log("Parent JSON parse error:", e.message); }
+      if (!res.ok) {
+        setStatus("Parent GET failed: " + res.status, false);
+        setMessage("Parent GET failed: " + res.status + " - see debug", true);
+        return [];
+      }
+      const list = Array.isArray(json) ? json : (json && json.data && Array.isArray(json.data) ? json.data : []);
+      const sel = document.getElementById('parent_id');
+      sel.innerHTML = '<option value="">Select Parent</option>';
+      if(!list || list.length===0){
+        sel.innerHTML = '<option value="">(no parents)</option>';
+        setStatus('Parents fetched: 0', false);
+        setMessage('No parents found. Check API or data.', true);
+        return list;
+      }
+      list.forEach(p=>{
+        const opt = document.createElement('option');
+        opt.value = p.id ?? p.parent_id ?? '';
+        opt.textContent = ((p.first_name||'') + ' ' + (p.last_name||'')).trim() || p.name || p.email || opt.value;
+        sel.appendChild(opt);
+      });
+      setStatus('Parents fetched: ' + list.length, true);
+      setMessage('Parents loaded OK');
+      return list;
+    } catch(err){
+      log("Parent fetch error:", err && err.message ? err.message : err);
+      setStatus('Parent fetch network/error', false);
+      setMessage('Network or CORS error fetching parents — see debug', true);
+      return [];
+    }
+  }
+
+  async function fetchStudents(){
+    setStatus('Fetching students...');
+    setMessage('Fetching students...');
+    log("== Student GET =>", studentUrl);
+    try {
+      const res = await fetch(studentUrl, {cache: "no-store"});
+      log("Student status", res.status, res.statusText);
+      const txt = await res.text();
+      log("Student response text:", txt);
+      let json;
+      try { json = JSON.parse(txt); } catch(e){ json = null; log("Student JSON parse error:", e.message); }
+      if (!res.ok) {
+        setStatus("Student GET failed: " + res.status, false);
+        setMessage("Student GET failed: " + res.status + " - see debug", true);
+        return [];
+      }
+      const list = Array.isArray(json) ? json : (json && json.data && Array.isArray(json.data) ? json.data : []);
+      const tbody = document.querySelector('#studentTable tbody');
+      tbody.innerHTML = '';
+      if(!list || list.length===0){
+        tbody.innerHTML = '<tr><td colspan="5">(no students)</td></tr>';
+        setStatus('Students fetched: 0', true);
+        setMessage('Students loaded: 0');
+        return list;
+      }
+      list.forEach(s=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${s.id}</td><td>${s.name||''}</td><td>${s.parent_id||''}</td><td>${s.date_of_birth||''}</td><td>${s.grade||''}</td>`;
+        tbody.appendChild(tr);
+      });
+      setStatus('Students fetched: ' + list.length, true);
+      setMessage('Students loaded OK');
+      return list;
+    } catch(err){
+      log("Student fetch error:", err && err.message ? err.message : err);
+      setStatus('Student fetch network/error', false);
+      setMessage('Network or CORS error fetching students — see debug', true);
+      return [];
+    }
+  }
+
+  async function doReload(){
+    debug.textContent = '';
+    setStatus('Starting reload...');
+    setMessage('');
+    const parents = await fetchParents();
+    // always attempt students regardless
+    await fetchStudents();
+    log("Reload finished. Parents count:", (parents && parents.length) ? parents.length : 0);
+  }
+
+  document.getElementById('btnReload').addEventListener('click', doReload);
+  document.getElementById('btnClear').addEventListener('click', ()=>{ debug.textContent=''; });
+
+  // Save student button with debug
+  document.getElementById('saveStudent').addEventListener('click', async ()=>{
+    const payload = {
+      parent_id: (document.getElementById('parent_id').value) ? Number(document.getElementById('parent_id').value) : null,
+      name: document.getElementById('name').value,
+      date_of_birth: document.getElementById('date_of_birth').value || null,
+      grade: document.getElementById('grade').value || '',
+      authorized_pickup_1_name: document.getElementById('ap1_name').value || '',
+      authorized_pickup_1_phone: document.getElementById('ap1_phone').value || '',
+      authorized_pickup_1_relationship: document.getElementById('ap1_relationship').value || '',
+      emergency_contact_name: document.getElementById('ec_name').value || '',
+      emergency_contact_phone: document.getElementById('ec_phone').value || '',
+      emergency_contact_relationship: document.getElementById('ec_relationship').value || '',
+      is_active: document.getElementById('is_active').value === 'true'
+    };
+    log("== POST Student =>", studentUrl, "payload:", payload);
+    setStatus('Posting new student...');
+    try {
+      const res = await fetch(studentUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      log("POST status", res.status, res.statusText);
+      const txt = await res.text();
+      log("POST response text:", txt);
+      if(!res.ok){
+        setStatus('POST failed: ' + res.status, false);
+        setMessage('Post failed — see debug', true);
+        return;
+      }
+      setStatus('POST succeeded', true);
+      setMessage('Student created — reloading students');
+      // reload students
+      await fetchStudents();
+    } catch(err){
+      log("POST error:", err && err.message ? err.message : err);
+      setStatus('POST network/error', false);
+      setMessage('Network or CORS error on POST — see debug', true);
+    }
+  });
+
+  // auto-run on load
+  doReload();
+})();
 </script>
-
 </body>
 </html>
-
