@@ -32,11 +32,13 @@
 
 <form id="studentForm">
 
+    <!-- Parent Relationship -->
     <label for="parent_id">Parent</label>
     <select id="parent_id" name="parent_id" required>
         <option value="">Loading parent list...</option>
     </select>
 
+    <!-- Basic Info -->
     <label for="name">Student Name</label>
     <input type="text" id="name" name="name" required>
 
@@ -46,6 +48,7 @@
     <label for="grade">Grade</label>
     <input type="text" id="grade" name="grade">
 
+    <!-- Authorized Pickup 1 -->
     <h3>Authorized Pickup 1</h3>
     <label>Name</label>
     <input type="text" id="authorized_pickup_1_name" name="authorized_pickup_1_name">
@@ -54,6 +57,7 @@
     <label>Relationship</label>
     <input type="text" id="authorized_pickup_1_relationship" name="authorized_pickup_1_relationship">
 
+    <!-- Authorized Pickup 2 -->
     <h3>Authorized Pickup 2</h3>
     <label>Name</label>
     <input type="text" id="authorized_pickup_2_name" name="authorized_pickup_2_name">
@@ -62,6 +66,7 @@
     <label>Relationship</label>
     <input type="text" id="authorized_pickup_2_relationship" name="authorized_pickup_2_relationship">
 
+    <!-- Authorized Pickup 3 -->
     <h3>Authorized Pickup 3</h3>
     <label>Name</label>
     <input type="text" id="authorized_pickup_3_name" name="authorized_pickup_3_name">
@@ -70,6 +75,7 @@
     <label>Relationship</label>
     <input type="text" id="authorized_pickup_3_relationship" name="authorized_pickup_3_relationship">
 
+    <!-- Emergency Contact -->
     <h3>Emergency Contact</h3>
     <label>Name</label>
     <input type="text" id="emergency_contact_name" name="emergency_contact_name">
@@ -78,6 +84,7 @@
     <label>Relationship</label>
     <input type="text" id="emergency_contact_relationship" name="emergency_contact_relationship">
 
+    <!-- Active -->
     <label for="is_active">Active</label>
     <select id="is_active" name="is_active">
         <option value="true" selected>Yes</option>
@@ -89,7 +96,7 @@
 
 <script>
 // ---------------------------------------------------------
-// Load parent list from Xano
+// Load parents from Xano
 // ---------------------------------------------------------
 document.addEventListener("DOMContentLoaded", function() {
     const parentSelect = document.getElementById("parent_id");
@@ -100,21 +107,20 @@ document.addEventListener("DOMContentLoaded", function() {
             parentSelect.innerHTML = '<option value="">Select Parent</option>';
 
             data.forEach(parent => {
-                const fullName = `${parent.first_name} ${parent.last_name}`;
                 const option = document.createElement("option");
                 option.value = parent.id;
-                option.textContent = fullName;
+                option.textContent = `${parent.first_name} ${parent.last_name}`;
                 parentSelect.appendChild(option);
             });
         })
         .catch(error => {
-            parentSelect.innerHTML = '<option value="">Error loading parents</option>';
             console.error("Error fetching parents:", error);
+            parentSelect.innerHTML = '<option value="">Error loading parents</option>';
         });
 });
 
 // ---------------------------------------------------------
-// Submit Student to Xano
+// POST student to Xano
 // ---------------------------------------------------------
 document.getElementById("studentForm").addEventListener("submit", function(e) {
     e.preventDefault();
@@ -153,7 +159,6 @@ document.getElementById("studentForm").addEventListener("submit", function(e) {
         alert("Error saving student.");
         console.error(err);
     });
-
 });
 </script>
 
