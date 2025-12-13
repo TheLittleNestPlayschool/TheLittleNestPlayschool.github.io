@@ -405,6 +405,25 @@ document.getElementById('add-form').onsubmit=async e=>{
   fetchAllRecords();
 };
 
+/* ---------- PRINT ALL FILTERED RECORDS ---------- */
+document.getElementById('printBtn').onclick = () => {
+  const originalPage = currentPage;
+  const originalPageSize = PAGE_SIZE;
+
+  PAGE_SIZE = filteredRecords.length || 1;
+  currentPage = 1;
+  renderPage();
+
+  setTimeout(() => {
+    window.print();
+
+    PAGE_SIZE = originalPageSize;
+    currentPage = originalPage;
+    renderPage();
+    renderPagination();
+  }, 100);
+};
+
 fetchAllRecords();
 </script>
 </body>
