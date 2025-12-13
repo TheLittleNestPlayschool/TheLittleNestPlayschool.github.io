@@ -29,11 +29,6 @@ form .record-line{
   flex-direction:column
 }
 
-/* 🔒 HIDE USER ID ONLY */
-.hide-user-id{
-  display:none;
-}
-
 input,textarea,select{
   padding:8px;
   font-size:14px;
@@ -168,7 +163,6 @@ th{background:#e8ffff;}
 
 <body>
 
-<!-- Add Parent Form -->
 <form id="add-form" autocomplete="off">
   <div class="record-line">
     <div class="record-field"><label>First Name</label><input type="text" id="first_name" required></div>
@@ -179,13 +173,7 @@ th{background:#e8ffff;}
 
   <div class="record-line">
     <div class="record-field"><label>Address</label><input type="text" id="address"></div>
-
-    <!-- USER ID HIDDEN (still exists) -->
-    <div class="record-field hide-user-id">
-      <label>User ID</label>
-      <input type="number" id="user_id">
-    </div>
-
+    <div class="record-field"><label>User ID</label><input type="number" id="user_id"></div>
     <div class="record-field"><label>Last Class Attended</label><input type="date" id="last_class_attended_date"></div>
     <div class="record-field">
       <label>Active?</label>
@@ -208,7 +196,6 @@ th{background:#e8ffff;}
 
 <div id="message" style="min-height:22px;margin-bottom:6px"></div>
 
-<!-- Controls -->
 <div class="controls">
   <input id="searchInput" placeholder="Search name, phone, email..." />
   <label>
@@ -224,7 +211,6 @@ th{background:#e8ffff;}
   <button id="printBtn" class="compact">Print</button>
 </div>
 
-<!-- Table -->
 <div id="tableWrapper">
 <table id="records-table">
 <thead>
@@ -247,7 +233,6 @@ let allRecords=[];
 let filteredRecords=[];
 let currentPage=1;
 
-/* ---------- Fetch ---------- */
 async function fetchAllRecords(){
   const res=await fetch(apiBase);
   const data=await res.json();
@@ -257,7 +242,6 @@ async function fetchAllRecords(){
   renderPagination();
 }
 
-/* ---------- Render ---------- */
 function renderPage(){
   const tbody=document.getElementById('table-body');
   tbody.innerHTML='';
@@ -279,13 +263,7 @@ function renderPage(){
         </div>
         <div class="record-line-grid">
           <div class="record-field"><label>Address</label><input data-field="address" value="${r.address||''}" disabled></div>
-
-          <!-- USER ID HIDDEN -->
-          <div class="record-field hide-user-id">
-            <label>User ID</label>
-            <input type="number" data-field="user_id" value="${r.user_id||''}" disabled>
-          </div>
-
+          <div class="record-field"><label>User ID</label><input type="number" data-field="user_id" value="${r.user_id||''}" disabled></div>
           <div class="record-field"><label>Last Class</label><input type="date" data-field="last_class_attended_date" value="${r.last_class_attended_date||''}" disabled></div>
           <div class="record-field">
             <label>Active?</label>
@@ -302,7 +280,7 @@ function renderPage(){
           </div>
         </div>
       </td>
-      <td class="actions">
+      <td class="actions" style="width:110px">
         <button onclick="editRow(this,${r.id})">Edit</button>
         <button onclick="deleteRow(${r.id})">Delete</button>
       </td>
@@ -311,7 +289,6 @@ function renderPage(){
   }
 }
 
-/* ---------- Edit ---------- */
 async function editRow(btn,id){
   const tr=btn.closest('tr');
   const inputs=tr.querySelectorAll('input,select');
@@ -341,14 +318,12 @@ async function editRow(btn,id){
   fetchAllRecords();
 }
 
-/* ---------- Delete ---------- */
 async function deleteRow(id){
   if(!confirm('Delete this parent?')) return;
   await fetch(`${apiBase}/${id}`,{method:'DELETE'});
   fetchAllRecords();
 }
 
-/* ---------- Pagination ---------- */
 document.getElementById('pageSizeSelect').onchange=e=>{
   PAGE_SIZE=parseInt(e.target.value);
   currentPage=1;
@@ -380,7 +355,6 @@ function renderPagination(){
   }
 }
 
-/* ---------- Add ---------- */
 document.getElementById('add-form').onsubmit=async e=>{
   e.preventDefault();
   const payload={
@@ -403,6 +377,11 @@ document.getElementById('add-form').onsubmit=async e=>{
 
   e.target.reset();
   fetchAllRecords();
+};
+
+/* ---------- PRINT (ONLY ADDITION) ---------- */
+document.getElementById('printBtn').onclick = () => {
+  window.print();
 };
 
 fetchAllRecords();
