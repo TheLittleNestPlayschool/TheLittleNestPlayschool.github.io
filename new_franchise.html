@@ -30,9 +30,7 @@ form .record-line{
 }
 
 /* 🔒 HIDE MANAGER USER ID ONLY */
-.hide-manager-id{
-  display:none;
-}
+.hide-manager-id{display:none;}
 
 input,textarea,select{
   padding:8px;
@@ -122,9 +120,7 @@ th{background:#e8ffff;}
 }
 
 /* ---------- Actions ---------- */
-.actions{
-  text-align:center;
-}
+.actions{text-align:center;}
 .actions button{
   display:block;
   width:84px;
@@ -168,79 +164,55 @@ th{background:#e8ffff;}
 
 <body>
 
-<!-- Add Franchise Form -->
 <form id="add-form" autocomplete="off">
   <div class="record-line">
-    <div class="record-field"><label>Franchise Name</label><input type="text" id="name" required></div>
-    <div class="record-field"><label>Phone</label><input type="text" id="phone_number"></div>
+    <div class="record-field"><label>Franchise Name</label><input id="name" required></div>
+    <div class="record-field"><label>Phone</label><input id="phone_number"></div>
     <div class="record-field"><label>Franchise Email</label><input type="email" id="franchise_email"></div>
-    <div class="record-field"><label>Address</label><input type="text" id="address"></div>
+    <div class="record-field"><label>Address</label><input id="address"></div>
   </div>
 
   <div class="record-line">
     <div class="record-field"><label>Royalty Rate</label><input type="number" step="0.01" id="royalty_rate"></div>
-    <div class="record-field"><label>Status</label><input type="text" id="status"></div>
+    <div class="record-field"><label>Status</label><input id="status"></div>
     <div class="record-field"><label>Opening Date</label><input type="date" id="opening_date"></div>
-
-    <!-- MANAGER USER ID HIDDEN -->
-    <div class="record-field hide-manager-id">
-      <label>Manager User ID</label>
-      <input type="number" id="manager_user_id">
-    </div>
+    <div class="record-field hide-manager-id"><label>Manager User ID</label><input id="manager_user_id"></div>
   </div>
 
   <div class="record-line">
-    <div class="record-field"><label>Owner 1 Name</label><input type="text" id="owner_1_name"></div>
-    <div class="record-field"><label>Owner 1 Phone</label><input type="text" id="owner_1_phone"></div>
+    <div class="record-field"><label>Owner 1 Name</label><input id="owner_1_name"></div>
+    <div class="record-field"><label>Owner 1 Phone</label><input id="owner_1_phone"></div>
     <div class="record-field"><label>Owner 1 Email</label><input type="email" id="owner_1_email"></div>
-    <div class="record-field"><label>Business Tax ID</label><input type="text" id="business_tax_id"></div>
+    <div class="record-field"><label>Business Tax ID</label><input id="business_tax_id"></div>
   </div>
 
   <div class="record-line">
-    <div class="record-field"><label>Owner 2 Name</label><input type="text" id="owner_2_name"></div>
-    <div class="record-field"><label>Owner 2 Phone</label><input type="text" id="owner_2_phone"></div>
+    <div class="record-field"><label>Owner 2 Name</label><input id="owner_2_name"></div>
+    <div class="record-field"><label>Owner 2 Phone</label><input id="owner_2_phone"></div>
     <div class="record-field"><label>Owner 2 Email</label><input type="email" id="owner_2_email"></div>
     <div class="record-field"><label>Social Media Links (JSON)</label><textarea id="social_media_links"></textarea></div>
   </div>
 
   <div class="record-line">
-    <div class="record-field">
-      <label>Internal Notes</label>
-      <textarea id="internal_notes"></textarea>
-    </div>
+    <div class="record-field"><label>Internal Notes</label><textarea id="internal_notes"></textarea></div>
   </div>
 
   <button type="submit" style="width:160px;">Add Franchise</button>
 </form>
 
-<div id="message" style="min-height:22px;margin-bottom:6px"></div>
-
-<!-- Controls -->
 <div class="controls">
   <input id="searchInput" placeholder="Search name, phone, email..." />
-  <label>
-    Records per page:
+  <label>Records per page:
     <select id="pageSizeSelect">
-      <option value="5">5</option>
-      <option value="10" selected>10</option>
-      <option value="20">20</option>
-      <option value="50">50</option>
-      <option value="100">100</option>
+      <option>5</option><option selected>10</option><option>20</option><option>50</option><option>100</option>
     </select>
   </label>
   <button id="printBtn" class="compact">Print</button>
 </div>
 
-<!-- Table -->
 <div id="tableWrapper">
-<table id="records-table">
-<thead>
-<tr>
-  <th style="width:48px">ID</th>
-  <th>All Fields</th>
-  <th style="width:110px">Actions</th>
-</tr>
-</thead>
+<table>
+<thead><tr><th style="width:48px">ID</th><th>All Fields</th><th style="width:110px">Actions</th></tr></thead>
 <tbody id="table-body"></tbody>
 </table>
 </div>
@@ -249,153 +221,67 @@ th{background:#e8ffff;}
 
 <script>
 const apiBase="https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
-let PAGE_SIZE=10;
-let allRecords=[];
-let filteredRecords=[];
-let currentPage=1;
+let PAGE_SIZE=10, allRecords=[], filteredRecords=[], currentPage=1;
 
-/* ---------- Fetch ---------- */
 async function fetchAllRecords(){
   const res=await fetch(apiBase);
   const data=await res.json();
-  allRecords = Array.isArray(data) ? data : data.items || [];
-  filteredRecords = allRecords.slice();
-  renderPage();
-  renderPagination();
+  allRecords=Array.isArray(data)?data:data.items||[];
+  filteredRecords=allRecords.slice();
+  renderPage(); renderPagination();
 }
 
-/* ---------- Render ---------- */
 function renderPage(){
-  const tbody=document.getElementById('table-body');
-  tbody.innerHTML='';
-  let start=(currentPage-1)*PAGE_SIZE;
-  let end=Math.min(start+PAGE_SIZE,filteredRecords.length);
-
-  for(let i=start;i<end;i++){
+  const tb=document.getElementById('table-body');
+  tb.innerHTML='';
+  let s=(currentPage-1)*PAGE_SIZE, e=Math.min(s+PAGE_SIZE,filteredRecords.length);
+  for(let i=s;i<e;i++){
     const r=filteredRecords[i];
-    const tr=document.createElement('tr');
-
-    tr.innerHTML=`
-      <td>${r.id}</td>
-      <td>
-        <div class="record-line-grid">
-          <div class="record-field"><label>Name</label><input data-field="name" value="${r.name||''}" disabled></div>
-          <div class="record-field"><label>Phone</label><input data-field="phone_number" value="${r.phone_number||''}" disabled></div>
-          <div class="record-field"><label>Email</label><input data-field="franchise_email" value="${r.franchise_email||''}" disabled></div>
-          <div class="record-field"><label>Status</label><input data-field="status" value="${r.status||''}" disabled></div>
-        </div>
-
-        <div class="record-line-grid">
-          <div class="record-field"><label>Address</label><input data-field="address" value="${r.address||''}" disabled></div>
-          <div class="record-field"><label>Royalty Rate</label><input data-field="royalty_rate" value="${r.royalty_rate||''}" disabled></div>
-          <div class="record-field"><label>Opening Date</label><input type="date" data-field="opening_date" value="${r.opening_date||''}" disabled></div>
-
-          <div class="record-field hide-manager-id">
-            <label>Manager User ID</label>
-            <input type="number" data-field="manager_user_id" value="${r.manager_user_id||''}" disabled>
-          </div>
-        </div>
-
-        <div class="record-line-grid">
-          <div class="record-field"><label>Owner 1</label><input data-field="owner_1_name" value="${r.owner_1_name||''}" disabled></div>
-          <div class="record-field"><label>Owner 2</label><input data-field="owner_2_name" value="${r.owner_2_name||''}" disabled></div>
-          <div class="record-field"><label>Business Tax ID</label><input data-field="business_tax_id" value="${r.business_tax_id||''}" disabled></div>
-          <div class="record-field"><label>Social Media</label><input data-field="social_media_links" value='${JSON.stringify(r.social_media_links||{})}' disabled></div>
-        </div>
-
-        <div class="record-line-grid">
-          <div class="record-field">
-            <label>Internal Notes</label>
-            <textarea data-field="internal_notes" disabled>${r.internal_notes||''}</textarea>
-          </div>
-        </div>
-      </td>
-      <td class="actions">
-        <button onclick="editRow(this,${r.id})">Edit</button>
-        <button onclick="deleteRow(${r.id})">Delete</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
+    tb.innerHTML+=`
+<tr>
+<td>${r.id}</td>
+<td>
+<div class="record-line-grid">
+<input data-field="name" value="${r.name||''}" disabled>
+<input data-field="phone_number" value="${r.phone_number||''}" disabled>
+<input data-field="franchise_email" value="${r.franchise_email||''}" disabled>
+<input data-field="status" value="${r.status||''}" disabled>
+</div>
+</td>
+<td class="actions">
+<button onclick="editRow(this,${r.id})">Edit</button>
+<button onclick="deleteRow(${r.id})">Delete</button>
+</td>
+</tr>`;
   }
 }
 
-/* ---------- Edit ---------- */
 async function editRow(btn,id){
   const tr=btn.closest('tr');
-  const inputs=tr.querySelectorAll('input,textarea');
-
-  if(btn.textContent==='Edit'){
-    inputs.forEach(i=>i.disabled=false);
-    btn.textContent='Save';
-    return;
-  }
-
+  const inputs=tr.querySelectorAll('input');
+  if(btn.textContent==='Edit'){inputs.forEach(i=>i.disabled=false);btn.textContent='Save';return;}
   const payload={};
-  inputs.forEach(i=>{
-    if(i.dataset.field){
-      payload[i.dataset.field]=i.value||null;
-      i.disabled=true;
-    }
-  });
-
-  await fetch(`${apiBase}/${id}`,{
-    method:'PATCH',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload)
-  });
-
-  btn.textContent='Edit';
-  fetchAllRecords();
+  inputs.forEach(i=>{payload[i.dataset.field]=i.value||null;i.disabled=true;});
+  await fetch(`${apiBase}/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  btn.textContent='Edit'; fetchAllRecords();
 }
 
-/* ---------- Delete ---------- */
 async function deleteRow(id){
-  if(!confirm('Delete this franchise?')) return;
+  if(!confirm('Delete this franchise?'))return;
   await fetch(`${apiBase}/${id}`,{method:'DELETE'});
   fetchAllRecords();
 }
 
-/* ---------- Pagination ---------- */
-document.getElementById('pageSizeSelect').onchange=e=>{
-  PAGE_SIZE=parseInt(e.target.value);
-  currentPage=1;
-  renderPage();
-  renderPagination();
-};
-
-document.getElementById('searchInput').oninput=()=>{
-  const v=searchInput.value.toLowerCase();
-  filteredRecords=allRecords.filter(r=>
-    ((r.name||'')+(r.phone_number||'')+(r.franchise_email||''))
-    .toLowerCase().includes(v)
-  );
-  currentPage=1;
-  renderPage();
-  renderPagination();
-};
-
-function renderPagination(){
-  const p=document.getElementById('pagination');
-  p.innerHTML='';
-  const pages=Math.ceil(filteredRecords.length/PAGE_SIZE);
-  for(let i=1;i<=pages;i++){
-    const b=document.createElement('button');
-    b.textContent=i;
-    b.className='page-btn'+(i===currentPage?' active':'');
-    b.onclick=()=>{currentPage=i;renderPage();renderPagination()};
-    p.appendChild(b);
-  }
-}
-
-/* ---------- Add ---------- */
 document.getElementById('add-form').onsubmit=async e=>{
   e.preventDefault();
+  let social={};
+  try{social=social_media_links.value?JSON.parse(social_media_links.value):{};}catch{}
   const payload={
     name:name.value,
     address:address.value,
     phone_number:phone_number.value,
     manager_user_id:parseInt(manager_user_id.value)||null,
-    royalty_rate:royalty_rate.value||null,
+    royalty_rate:royalty_rate.value?parseFloat(royalty_rate.value):null,
     owner_1_name:owner_1_name.value,
     owner_1_phone:owner_1_phone.value,
     owner_1_email:owner_1_email.value,
@@ -403,39 +289,20 @@ document.getElementById('add-form').onsubmit=async e=>{
     owner_2_phone:owner_2_phone.value,
     owner_2_email:owner_2_email.value,
     franchise_email:franchise_email.value,
-    social_media_links:social_media_links.value ? JSON.parse(social_media_links.value) : {},
+    social_media_links:social,
     status:status.value,
     opening_date:opening_date.value||null,
     business_tax_id:business_tax_id.value,
     internal_notes:internal_notes.value
   };
-
-  await fetch(apiBase,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload)
-  });
-
-  e.target.reset();
-  fetchAllRecords();
+  await fetch(apiBase,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  e.target.reset(); fetchAllRecords();
 };
 
-/* ---------- PRINT ALL FILTERED RECORDS ---------- */
 document.getElementById('printBtn').onclick=()=>{
-  const originalPage=currentPage;
-  const originalPageSize=PAGE_SIZE;
-
-  PAGE_SIZE=filteredRecords.length||1;
-  currentPage=1;
-  renderPage();
-
-  setTimeout(()=>{
-    window.print();
-    PAGE_SIZE=originalPageSize;
-    currentPage=originalPage;
-    renderPage();
-    renderPagination();
-  },100);
+  const p=currentPage,s=PAGE_SIZE;
+  PAGE_SIZE=filteredRecords.length||1;currentPage=1;renderPage();
+  setTimeout(()=>{window.print();PAGE_SIZE=s;currentPage=p;renderPage();renderPagination();},100);
 };
 
 fetchAllRecords();
