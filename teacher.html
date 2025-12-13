@@ -145,26 +145,45 @@ th{background:#e8ffff;}
 <body>
 
 <form id="add-form" autocomplete="off">
+
+  <!-- ROW 1 -->
   <div class="record-line">
-    <div class="record-field"><label>First Name</label><input id="first_name" required></div>
-    <div class="record-field"><label>Last Name</label><input id="last_name" required></div>
-    <div class="record-field"><label>Email</label><input id="email"></div>
-    <div class="record-field"><label>Phone</label><input id="phone"></div>
+    <div class="record-field">
+      <label>First Name</label>
+      <input id="first_name" required>
+    </div>
+    <div class="record-field">
+      <label>Last Name</label>
+      <input id="last_name" required>
+    </div>
+    <div class="record-field">
+      <label>Email</label>
+      <input id="email">
+    </div>
+    <div class="record-field">
+      <label>Phone</label>
+      <input id="phone">
+    </div>
   </div>
 
+  <!-- ROW 2 -->
   <div class="record-line">
     <div class="record-field">
       <label>Admin Type</label>
       <select id="admin_type_id"></select>
     </div>
-
     <div class="record-field">
       <label>Franchise</label>
       <select id="franchise_id"></select>
     </div>
-
-    <div class="record-field"><label>User ID</label><input id="user_id"></div>
-    <div class="record-field"><label>Daily Pay</label><input id="daily_pay"></div>
+    <div class="record-field">
+      <label>User ID</label>
+      <input id="user_id">
+    </div>
+    <div class="record-field">
+      <label>Daily Pay</label>
+      <input id="daily_pay">
+    </div>
   </div>
 
   <button type="submit" style="width:160px;">Add Teacher</button>
@@ -200,47 +219,29 @@ th{background:#e8ffff;}
 <div class="pagination" id="pagination"></div>
 
 <script>
-const apiBase="https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
-const franchiseApi="https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
-const adminTypeApi="https://x8ki-letl-twmt.n7.xano.io/api:UpJO_5WB/admin_type";
+const teacherAPI="https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
+const adminTypeAPI="https://x8ki-letl-twmt.n7.xano.io/api:UpJO_5WB/admin_type";
+const franchiseAPI="https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
 
 let PAGE_SIZE=10, allRecords=[], filteredRecords=[], currentPage=1;
-let franchises=[], adminTypes=[];
+let adminTypes=[], franchises=[];
 
-/* -------- LOOKUPS -------- */
-async function fetchFranchises(){
-  const res=await fetch(franchiseApi);
-  const data=await res.json();
-  franchises = Array.isArray(data)?data:(data.items||[]);
-  const sel=document.getElementById('franchise_id');
-  sel.innerHTML='<option value="">Select Franchise</option>';
-  franchises.forEach(f=>{
-    const o=document.createElement('option');
-    o.value=f.id;
-    o.textContent=f.name || `Franchise ${f.id}`;
-    sel.appendChild(o);
-  });
-}
+async function loadLookups(){
+  adminTypes=await (await fetch(adminTypeAPI)).json();
+  franchises=await (await fetch(franchiseAPI)).json();
 
-async function fetchAdminTypes(){
-  const res=await fetch(adminTypeApi);
-  const data=await res.json();
-  adminTypes = Array.isArray(data)?data:(data.items||[]);
-  const sel=document.getElementById('admin_type_id');
-  sel.innerHTML='<option value="">Select Admin Type</option>';
   adminTypes.forEach(a=>{
-    const o=document.createElement('option');
-    o.value=a.id;
-    o.textContent=a.Admin_Type || `Admin Type ${a.id}`;
-    sel.appendChild(o);
+    admin_type_id.innerHTML+=`<option value="${a.id}">${a.Admin_Type}</option>`;
+  });
+  franchises.forEach(f=>{
+    franchise_id.innerHTML+=`<option value="${f.id}">${f.id}</option>`;
   });
 }
 
-/* -------- TEACHERS -------- */
 async function fetchAllRecords(){
-  const res=await fetch(apiBase);
+  const res=await fetch(teacherAPI);
   const data=await res.json();
-  allRecords=Array.isArray(data)?data:(data.items||[]);
+  allRecords=Array.isArray(data)?data:data.items||[];
   filteredRecords=allRecords.slice();
   renderPage();
 }
@@ -261,26 +262,23 @@ function renderPage(){
   <div class="record-line-grid">
     <div class="record-field"><label>First Name</label><input data-field="first_name" value="${r.first_name||''}" disabled></div>
     <div class="record-field"><label>Last Name</label><input data-field="last_name" value="${r.last_name||''}" disabled></div>
+    <div class="record-field"><label>Email</label><input data-field="email" value="${r.email||''}" disabled></div>
+    <div class="record-field"><label>Phone</label><input data-field="phone" value="${r.phone||''}" disabled></div>
 
-    <div class="record-field">
-      <label>Admin Type</label>
+    <div class="record-field"><label>Admin Type</label>
       <select data-field="admin_type_id" disabled>
-        ${adminTypes.map(a=>`
-          <option value="${a.id}" ${String(a.id)===String(r.admin_type_id)?'selected':''}>
-            ${a.Admin_Type || `Admin Type ${a.id}`}
-          </option>`).join('')}
+        ${adminTypes.map(a=>`<option value="${a.id}" ${a.id==r.admin_type_id?'selected':''}>${a.Admin_Type}</option>`).join('')}
       </select>
     </div>
 
-    <div class="record-field">
-      <label>Franchise</label>
+    <div class="record-field"><label>Franchise</label>
       <select data-field="franchise_id" disabled>
-        ${franchises.map(f=>`
-          <option value="${f.id}" ${String(f.id)===String(r.franchise_id)?'selected':''}>
-            ${f.name || `Franchise ${f.id}`}
-          </option>`).join('')}
+        ${franchises.map(f=>`<option value="${f.id}" ${f.id==r.franchise_id?'selected':''}>${f.id}</option>`).join('')}
       </select>
     </div>
+
+    <div class="record-field"><label>User ID</label><input data-field="user_id" value="${r.user_id||''}" disabled></div>
+    <div class="record-field"><label>Daily Pay</label><input data-field="daily_pay" value="${r.daily_pay||''}" disabled></div>
   </div>
 </td>
 <td class="actions">
@@ -291,42 +289,36 @@ function renderPage(){
   }
 }
 
-/* -------- EDIT / DELETE -------- */
 async function editRow(btn,id){
   const tr=btn.closest('tr');
-  const fields=tr.querySelectorAll('input,select');
-
+  const inputs=tr.querySelectorAll('input,select');
   if(btn.textContent==='Edit'){
-    fields.forEach(f=>f.disabled=false);
+    inputs.forEach(i=>i.disabled=false);
     btn.textContent='Save';
     return;
   }
-
   const payload={};
-  fields.forEach(f=>{
-    if(f.dataset.field){
-      payload[f.dataset.field]=f.value;
-      f.disabled=true;
+  inputs.forEach(i=>{
+    if(i.dataset.field){
+      payload[i.dataset.field]=i.value;
+      i.disabled=true;
     }
   });
-
-  await fetch(`${apiBase}/${id}`,{
+  await fetch(`${teacherAPI}/${id}`,{
     method:'PATCH',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify(payload)
   });
-
   btn.textContent='Edit';
   fetchAllRecords();
 }
 
 async function deleteRow(id){
   if(!confirm('Delete this teacher?'))return;
-  await fetch(`${apiBase}/${id}`,{method:'DELETE'});
+  await fetch(`${teacherAPI}/${id}`,{method:'DELETE'});
   fetchAllRecords();
 }
 
-/* -------- ADD -------- */
 document.getElementById('add-form').onsubmit=async e=>{
   e.preventDefault();
   const payload={
@@ -339,24 +331,16 @@ document.getElementById('add-form').onsubmit=async e=>{
     user_id:user_id.value,
     daily_pay:daily_pay.value
   };
-
-  await fetch(apiBase,{
+  await fetch(teacherAPI,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify(payload)
   });
-
   e.target.reset();
   fetchAllRecords();
 };
 
-/* -------- LOAD ORDER -------- */
-(async()=>{
-  await fetchAdminTypes();
-  await fetchFranchises();
-  await fetchAllRecords();
-})();
+loadLookups().then(fetchAllRecords);
 </script>
-
 </body>
 </html>
