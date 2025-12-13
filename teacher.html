@@ -146,44 +146,18 @@ th{background:#e8ffff;}
 
 <form id="add-form" autocomplete="off">
 
-  <!-- ROW 1 -->
   <div class="record-line">
-    <div class="record-field">
-      <label>First Name</label>
-      <input id="first_name" required>
-    </div>
-    <div class="record-field">
-      <label>Last Name</label>
-      <input id="last_name" required>
-    </div>
-    <div class="record-field">
-      <label>Email</label>
-      <input id="email">
-    </div>
-    <div class="record-field">
-      <label>Phone</label>
-      <input id="phone">
-    </div>
+    <div class="record-field"><label>First Name</label><input id="first_name" required></div>
+    <div class="record-field"><label>Last Name</label><input id="last_name" required></div>
+    <div class="record-field"><label>Email</label><input id="email"></div>
+    <div class="record-field"><label>Phone</label><input id="phone"></div>
   </div>
 
-  <!-- ROW 2 -->
   <div class="record-line">
-    <div class="record-field">
-      <label>Admin Type</label>
-      <select id="admin_type_id"></select>
-    </div>
-    <div class="record-field">
-      <label>Franchise</label>
-      <select id="franchise_id"></select>
-    </div>
-    <div class="record-field">
-      <label>User ID</label>
-      <input id="user_id">
-    </div>
-    <div class="record-field">
-      <label>Daily Pay</label>
-      <input id="daily_pay">
-    </div>
+    <div class="record-field"><label>Admin Type</label><select id="admin_type_id"></select></div>
+    <div class="record-field"><label>Franchise</label><select id="franchise_id"></select></div>
+    <div class="record-field"><label>User ID</label><input id="user_id"></div>
+    <div class="record-field"><label>Daily Pay</label><input id="daily_pay"></div>
   </div>
 
   <button type="submit" style="width:160px;">Add Teacher</button>
@@ -230,11 +204,14 @@ async function loadLookups(){
   adminTypes=await (await fetch(adminTypeAPI)).json();
   franchises=await (await fetch(franchiseAPI)).json();
 
+  admin_type_id.innerHTML='';
   adminTypes.forEach(a=>{
     admin_type_id.innerHTML+=`<option value="${a.id}">${a.Admin_Type}</option>`;
   });
+
+  franchise_id.innerHTML='';
   franchises.forEach(f=>{
-    franchise_id.innerHTML+=`<option value="${f.id}">${f.id}</option>`;
+    franchise_id.innerHTML+=`<option value="${f.id}">${f.name}</option>`;
   });
 }
 
@@ -265,15 +242,17 @@ function renderPage(){
     <div class="record-field"><label>Email</label><input data-field="email" value="${r.email||''}" disabled></div>
     <div class="record-field"><label>Phone</label><input data-field="phone" value="${r.phone||''}" disabled></div>
 
-    <div class="record-field"><label>Admin Type</label>
+    <div class="record-field">
+      <label>Admin Type</label>
       <select data-field="admin_type_id" disabled>
         ${adminTypes.map(a=>`<option value="${a.id}" ${a.id==r.admin_type_id?'selected':''}>${a.Admin_Type}</option>`).join('')}
       </select>
     </div>
 
-    <div class="record-field"><label>Franchise</label>
+    <div class="record-field">
+      <label>Franchise</label>
       <select data-field="franchise_id" disabled>
-        ${franchises.map(f=>`<option value="${f.id}" ${f.id==r.franchise_id?'selected':''}>${f.id}</option>`).join('')}
+        ${franchises.map(f=>`<option value="${f.id}" ${f.id==r.franchise_id?'selected':''}>${f.name}</option>`).join('')}
       </select>
     </div>
 
@@ -292,11 +271,13 @@ function renderPage(){
 async function editRow(btn,id){
   const tr=btn.closest('tr');
   const inputs=tr.querySelectorAll('input,select');
+
   if(btn.textContent==='Edit'){
     inputs.forEach(i=>i.disabled=false);
     btn.textContent='Save';
     return;
   }
+
   const payload={};
   inputs.forEach(i=>{
     if(i.dataset.field){
@@ -304,11 +285,13 @@ async function editRow(btn,id){
       i.disabled=true;
     }
   });
+
   await fetch(`${teacherAPI}/${id}`,{
     method:'PATCH',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify(payload)
   });
+
   btn.textContent='Edit';
   fetchAllRecords();
 }
@@ -321,6 +304,7 @@ async function deleteRow(id){
 
 document.getElementById('add-form').onsubmit=async e=>{
   e.preventDefault();
+
   const payload={
     first_name:first_name.value,
     last_name:last_name.value,
@@ -331,16 +315,21 @@ document.getElementById('add-form').onsubmit=async e=>{
     user_id:user_id.value,
     daily_pay:daily_pay.value
   };
+
   await fetch(teacherAPI,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify(payload)
   });
+
   e.target.reset();
   fetchAllRecords();
 };
 
-loadLookups().then(fetchAllRecords);
+(async()=>{
+  await loadLookups();
+  await fetchAllRecords();
+})();
 </script>
 </body>
 </html>
