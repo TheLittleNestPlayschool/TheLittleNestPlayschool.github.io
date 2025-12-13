@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Parent 1 Manager</title>
+<title>Parent Manager</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
 :root{--max-width:1400px;--gap:10px;}
@@ -24,7 +24,6 @@ input,textarea,select{
   border:1px solid #ccc;
   border-radius:4px;
 }
-textarea{min-height:56px; resize:vertical}
 button{
   padding:8px 12px;
   font-size:14px;
@@ -32,159 +31,158 @@ button{
   border:none;
   border-radius:4px;
   cursor:pointer;
-  transition:0.2s;
 }
-button:hover{
-  background-color:#498787;
-  color:#fff;
-}
+button:hover{background-color:#498787;color:#fff}
 .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
-.controls > *{min-width:120px}
-#searchInput{flex:1;min-width:220px;padding:10px;font-size:15px;background-color:#ffeffb;border:1px solid #ccc;border-radius:4px}
-#tableWrapper{
-  max-height:600px;
-  overflow-y:auto;
-  border:1px solid #ddd;
-  padding:8px;
-  border-radius:6px;
-  background:#e8ffff;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  table-layout:fixed;
-  background:#e8ffff;
-}
-th,td{
-  border:1px solid #e6e6e6;
-  padding:8px;
-  vertical-align:top;
-  font-size:13px;
-}
-th{background:#e8ffff;}
-.record-line-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px}
-.record-field label{font-size:12px;color:#333;margin-bottom:6px}
+#searchInput{flex:1;min-width:220px;padding:10px;font-size:15px;background:#ffeffb;border:1px solid #ccc;border-radius:4px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #e6e6e6;padding:8px;font-size:13px;vertical-align:top}
 .actions button{display:block;width:84px;margin:6px auto;padding:6px}
-.pagination{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:12px;flex-wrap:wrap}
-.page-btn{padding:6px 10px;border:1px solid #ccc;background:#74e8e8;color:#000;cursor:pointer;border-radius:4px}
-.page-btn.active{background:#498787;color:#fff;border-color:#498787}
-.compact{font-size:13px}
-@media (max-width:1200px){
-  .record-line-grid{grid-template-columns:repeat(2,1fr)}
-  form .record-line{grid-template-columns:repeat(2,1fr)}
-}
+.pagination{display:flex;gap:6px;justify-content:center;margin-top:12px}
+.page-btn{padding:6px 10px;border:1px solid #ccc;background:#74e8e8;border-radius:4px}
+.page-btn.active{background:#498787;color:#fff}
+#debugBox{background:#111;color:#b5f5b5;padding:10px;border-radius:6px;font-family:monospace;font-size:12px;white-space:pre-wrap;max-height:160px;overflow:auto;margin-top:12px}
 </style>
 </head>
 <body>
 
-<form id="add-form" autocomplete="off">
+<form id="add-form">
   <div class="record-line">
-    <div class="record-field"><label>First Name</label><input type="text" id="first_name" required></div>
-    <div class="record-field"><label>Last Name</label><input type="text" id="last_name" required></div>
-    <div class="record-field"><label>Email</label><input type="email" id="email"></div>
-    <div class="record-field"><label>Phone</label><input type="text" id="phone"></div>
+    <div class="record-field"><label>First Name</label><input id="first_name" required></div>
+    <div class="record-field"><label>Last Name</label><input id="last_name" required></div>
+    <div class="record-field"><label>Email</label><input id="email"></div>
+    <div class="record-field"><label>Phone</label><input id="phone"></div>
   </div>
   <div class="record-line">
-    <div class="record-field"><label>Address</label><input type="text" id="address"></div>
-    <div class="record-field"><label>User ID</label><input type="number" id="user_id"></div>
-    <div class="record-field"><label>Last Class Attended</label><input type="date" id="last_class_attended_date"></div>
-    <div class="record-field"><label>Active?</label><select id="is_active"><option selected>Yes</option><option>No</option></select></div>
+    <div class="record-field"><label>Active?</label>
+      <select id="is_active"><option>Yes</option><option>No</option></select>
+    </div>
   </div>
-  <div class="record-line">
-    <div class="record-field"><label>Inactivation Comments</label><input type="text" id="inactivation_reason_comments"></div>
-  </div>
-  <button type="submit" style="width:160px;">Add Parent</button>
+  <button type="submit">Add Parent</button>
 </form>
 
-<div id="message"></div>
-
 <div class="controls">
-  <input id="searchInput" placeholder="Search name, phone, email..." />
-  <select id="pageSizeSelect">
-    <option value="5">5</option>
-    <option value="10" selected>10</option>
-    <option value="20">20</option>
-  </select>
+  <input id="searchInput" placeholder="Search parents..." />
 </div>
 
-<div id="tableWrapper">
 <table>
 <thead>
 <tr><th>ID</th><th>All Fields</th><th>Actions</th></tr>
 </thead>
 <tbody id="table-body"></tbody>
 </table>
-</div>
 
 <div class="pagination" id="pagination"></div>
+<div id="debugBox"></div>
 
 <script>
-const apiBase="https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent";
-let PAGE_SIZE=10,currentPage=1;
-let allRecords=[],filteredRecords=[];
+const API_BASE="https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N";
+const parentApi=`${API_BASE}/parent`;
 
-function normalizeList(json){
-  if(!json) return [];
-  if(Array.isArray(json)) return json;
-  if(json.data && Array.isArray(json.data)) return json.data;
-  if(json.items && Array.isArray(json.items)) return json.items;
-  if(json.result && Array.isArray(json.result)) return json.result;
-  const found=Object.values(json).find(v=>Array.isArray(v));
-  return found||[];
+let allRecords=[],filteredRecords=[],PAGE_SIZE=10,currentPage=1;
+
+function dbg(...a){
+  const b=document.getElementById('debugBox');
+  b.textContent+=a.map(x=>typeof x==='object'?JSON.stringify(x,null,2):x).join(' ')+"\n";
+}
+
+function normalizeList(j){
+  if(Array.isArray(j)) return j;
+  if(j?.data && Array.isArray(j.data)) return j.data;
+  return Object.values(j||{}).find(v=>Array.isArray(v))||[];
 }
 
 async function fetchAllRecords(){
-  const res=await fetch(apiBase,{cache:'no-store'});
-  const text=await res.text();
-  let json={};
-  try{json=JSON.parse(text);}catch(e){}
-  allRecords=normalizeList(json);
-  filteredRecords=[...allRecords];
+  const r=await fetch(parentApi,{cache:'no-store'});
+  const t=await r.text();
+  const j=JSON.parse(t);
+  allRecords=normalizeList(j);
+  filteredRecords=allRecords.slice();
   render();
 }
 
 function render(){
   const tb=document.getElementById('table-body');
   tb.innerHTML='';
-  const start=(currentPage-1)*PAGE_SIZE;
-  filteredRecords.slice(start,start+PAGE_SIZE).forEach(r=>{
+  filteredRecords.forEach(r=>{
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td>${r.id}</td>
-      <td>${r.first_name||''} ${r.last_name||''}</td>
       <td>
+        <div class="record-field"><label>First</label><input value="${r.first_name||''}" data-f="first_name" disabled></div>
+        <div class="record-field"><label>Last</label><input value="${r.last_name||''}" data-f="last_name" disabled></div>
+        <div class="record-field"><label>Email</label><input value="${r.email||''}" data-f="email" disabled></div>
+        <div class="record-field"><label>Phone</label><input value="${r.phone||''}" data-f="phone" disabled></div>
+        <div class="record-field"><label>Active</label>
+          <select data-f="is_active" disabled>
+            <option ${r.is_active?'selected':''}>Yes</option>
+            <option ${!r.is_active?'selected':''}>No</option>
+          </select>
+        </div>
+      </td>
+      <td class="actions">
+        <button>Edit</button>
         <button onclick="deleteRow(${r.id})">Delete</button>
       </td>`;
+    tr.querySelector('button').onclick=()=>editRow(tr,r.id);
     tb.appendChild(tr);
   });
 }
 
+async function editRow(tr,id){
+  const btn=tr.querySelector('button');
+  const inputs=tr.querySelectorAll('input,select');
+  if(btn.textContent==='Edit'){
+    btn.textContent='Save';
+    inputs.forEach(i=>i.disabled=false);
+    return;
+  }
+  const p={};
+  inputs.forEach(i=>{
+    p[i.dataset.f]=i.dataset.f==='is_active'?i.value==='Yes':i.value||null;
+    i.disabled=true;
+  });
+  await fetch(`${parentApi}/${id}`,{
+    method:'PATCH',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(p),
+    cache:'no-store'
+  });
+  btn.textContent='Edit';
+  fetchAllRecords();
+}
+
 async function deleteRow(id){
-  await fetch(`${apiBase}/${id}`,{method:'DELETE',cache:'no-store'});
+  if(!confirm('Delete parent?'))return;
+  await fetch(`${parentApi}/${id}`,{method:'DELETE',cache:'no-store'});
   fetchAllRecords();
 }
 
 document.getElementById('add-form').onsubmit=async e=>{
   e.preventDefault();
-  const payload={
+  const p={
     first_name:first_name.value,
     last_name:last_name.value,
     email:email.value,
     phone:phone.value,
-    address:address.value,
-    user_id:+user_id.value||null,
-    last_class_attended_date:last_class_attended_date.value||null,
-    is_active:is_active.value==='Yes',
-    inactivation_reason_comments:inactivation_reason_comments.value
+    is_active:is_active.value==='Yes'
   };
-  await fetch(apiBase,{
+  await fetch(parentApi,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload),
+    body:JSON.stringify(p),
     cache:'no-store'
   });
   e.target.reset();
   fetchAllRecords();
+};
+
+document.getElementById('searchInput').oninput=e=>{
+  const v=e.target.value.toLowerCase();
+  filteredRecords=allRecords.filter(r=>
+    (`${r.first_name} ${r.last_name} ${r.email}`).toLowerCase().includes(v)
+  );
+  render();
 };
 
 fetchAllRecords();
