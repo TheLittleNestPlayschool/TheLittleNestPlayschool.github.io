@@ -281,7 +281,10 @@ async function editRow(btn,id){
   const payload={};
   inputs.forEach(i=>{
     if(i.dataset.field){
-      payload[i.dataset.field]=i.value;
+      payload[i.dataset.field]=
+        i.tagName==='SELECT'
+          ? parseInt(i.value)
+          : (i.value==='' ? null : i.value);
       i.disabled=true;
     }
   });
@@ -308,12 +311,12 @@ document.getElementById('add-form').onsubmit=async e=>{
   const payload={
     first_name:first_name.value,
     last_name:last_name.value,
-    email:email.value,
-    phone:phone.value,
-    admin_type_id:admin_type_id.value,
-    franchise_id:franchise_id.value,
-    user_id:user_id.value,
-    daily_pay:daily_pay.value,
+    email:email.value || null,
+    phone:phone.value || null,
+    admin_type_id:parseInt(admin_type_id.value),
+    franchise_id:parseInt(franchise_id.value),
+    user_id:user_id.value ? parseInt(user_id.value) : null,
+    daily_pay:daily_pay.value ? parseFloat(daily_pay.value) : null,
     is_active:true
   };
 
