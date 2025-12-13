@@ -29,6 +29,11 @@ form .record-line{
   flex-direction:column
 }
 
+/* 🔒 HIDE USER ID ONLY */
+.hide-user-id{
+  display:none;
+}
+
 input,textarea,select{
   padding:8px;
   font-size:14px;
@@ -158,12 +163,6 @@ th{background:#e8ffff;}
   .record-line-grid{grid-template-columns:repeat(2,1fr)}
   form .record-line{grid-template-columns:repeat(2,1fr)}
 }
-
-/* ===== ONLY CHANGE: hide User ID ===== */
-#user_id,
-[data-field="user_id"]{
-  display:none !important;
-}
 </style>
 </head>
 
@@ -180,7 +179,13 @@ th{background:#e8ffff;}
 
   <div class="record-line">
     <div class="record-field"><label>Address</label><input type="text" id="address"></div>
-    <div class="record-field"><label>User ID</label><input type="number" id="user_id"></div>
+
+    <!-- USER ID HIDDEN (still exists) -->
+    <div class="record-field hide-user-id">
+      <label>User ID</label>
+      <input type="number" id="user_id">
+    </div>
+
     <div class="record-field"><label>Last Class Attended</label><input type="date" id="last_class_attended_date"></div>
     <div class="record-field">
       <label>Active?</label>
@@ -203,6 +208,7 @@ th{background:#e8ffff;}
 
 <div id="message" style="min-height:22px;margin-bottom:6px"></div>
 
+<!-- Controls -->
 <div class="controls">
   <input id="searchInput" placeholder="Search name, phone, email..." />
   <label>
@@ -215,8 +221,10 @@ th{background:#e8ffff;}
       <option value="100">100</option>
     </select>
   </label>
+  <button id="printBtn" class="compact">Print</button>
 </div>
 
+<!-- Table -->
 <div id="tableWrapper">
 <table id="records-table">
 <thead>
@@ -271,7 +279,13 @@ function renderPage(){
         </div>
         <div class="record-line-grid">
           <div class="record-field"><label>Address</label><input data-field="address" value="${r.address||''}" disabled></div>
-          <div class="record-field"><label>User ID</label><input type="number" data-field="user_id" value="${r.user_id||''}" disabled></div>
+
+          <!-- USER ID HIDDEN -->
+          <div class="record-field hide-user-id">
+            <label>User ID</label>
+            <input type="number" data-field="user_id" value="${r.user_id||''}" disabled>
+          </div>
+
           <div class="record-field"><label>Last Class</label><input type="date" data-field="last_class_attended_date" value="${r.last_class_attended_date||''}" disabled></div>
           <div class="record-field">
             <label>Active?</label>
@@ -288,7 +302,7 @@ function renderPage(){
           </div>
         </div>
       </td>
-      <td class="actions" style="width:110px">
+      <td class="actions">
         <button onclick="editRow(this,${r.id})">Edit</button>
         <button onclick="deleteRow(${r.id})">Delete</button>
       </td>
