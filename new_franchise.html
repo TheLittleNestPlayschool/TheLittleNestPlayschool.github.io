@@ -17,7 +17,6 @@ body{
   background-color:#e8ffff;
 }
 
-/* ---------- Layout & Fields ---------- */
 form .record-line{
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -29,7 +28,6 @@ form .record-line{
   flex-direction:column
 }
 
-/* 🔒 HIDE MANAGER USER ID ONLY */
 .hide-manager-id{display:none;}
 
 input,textarea,select{
@@ -51,14 +49,12 @@ button{
   border:none;
   border-radius:4px;
   cursor:pointer;
-  transition:0.2s;
 }
 button:hover{
   background-color:#498787;
   color:#fff;
 }
 
-/* ---------- Controls ---------- */
 .controls{
   display:flex;
   gap:10px;
@@ -78,7 +74,6 @@ button:hover{
   border-radius:4px
 }
 
-/* ---------- Table ---------- */
 #tableWrapper{
   max-height:600px;
   overflow-y:auto;
@@ -100,7 +95,6 @@ th,td{
   padding:8px;
   vertical-align:top;
   font-size:13px;
-  overflow:hidden;
 }
 
 th{background:#e8ffff;}
@@ -110,30 +104,23 @@ th{background:#e8ffff;}
   grid-template-columns:repeat(4,1fr);
   gap:10px;
   margin-bottom:6px;
-  max-width:100%;
 }
 
 .record-field label{
   font-size:12px;
-  color:#333;
   margin-bottom:6px
 }
 
-/* ---------- Actions ---------- */
 .actions{text-align:center;}
 .actions button{
   display:block;
   width:84px;
   margin:6px auto;
-  padding:6px;
-  max-width:90px;
 }
 
-/* ---------- Pagination ---------- */
 .pagination{
   display:flex;
   gap:6px;
-  align-items:center;
   justify-content:center;
   margin-top:12px;
   flex-wrap:wrap
@@ -143,14 +130,11 @@ th{background:#e8ffff;}
   padding:6px 10px;
   border:1px solid #ccc;
   background:#74e8e8;
-  color:#000;
-  cursor:pointer;
   border-radius:4px
 }
 .page-btn.active{
   background:#498787;
   color:#fff;
-  border-color:#498787
 }
 
 .compact{font-size:13px}
@@ -204,7 +188,11 @@ th{background:#e8ffff;}
   <input id="searchInput" placeholder="Search name, phone, email..." />
   <label>Records per page:
     <select id="pageSizeSelect">
-      <option>5</option><option selected>10</option><option>20</option><option>50</option><option>100</option>
+      <option value="5">5</option>
+      <option value="10" selected>10</option>
+      <option value="20">20</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
     </select>
   </label>
   <button id="printBtn" class="compact">Print</button>
@@ -212,7 +200,13 @@ th{background:#e8ffff;}
 
 <div id="tableWrapper">
 <table>
-<thead><tr><th style="width:48px">ID</th><th>All Fields</th><th style="width:110px">Actions</th></tr></thead>
+<thead>
+<tr>
+  <th style="width:48px">ID</th>
+  <th>All Fields</th>
+  <th style="width:110px">Actions</th>
+</tr>
+</thead>
 <tbody id="table-body"></tbody>
 </table>
 </div>
@@ -232,38 +226,85 @@ async function fetchAllRecords(){
 }
 
 function renderPage(){
-  const tb=document.getElementById('table-body');
-  tb.innerHTML='';
-  let s=(currentPage-1)*PAGE_SIZE, e=Math.min(s+PAGE_SIZE,filteredRecords.length);
-  for(let i=s;i<e;i++){
+  const tbody=document.getElementById('table-body');
+  tbody.innerHTML='';
+  let start=(currentPage-1)*PAGE_SIZE;
+  let end=Math.min(start+PAGE_SIZE,filteredRecords.length);
+
+  for(let i=start;i<end;i++){
     const r=filteredRecords[i];
-    tb.innerHTML+=`
-<tr>
+    const tr=document.createElement('tr');
+
+    tr.innerHTML=`
 <td>${r.id}</td>
 <td>
+
 <div class="record-line-grid">
-<input data-field="name" value="${r.name||''}" disabled>
-<input data-field="phone_number" value="${r.phone_number||''}" disabled>
-<input data-field="franchise_email" value="${r.franchise_email||''}" disabled>
-<input data-field="status" value="${r.status||''}" disabled>
+  <div class="record-field"><label>Name</label><input data-field="name" value="${r.name||''}" disabled></div>
+  <div class="record-field"><label>Phone</label><input data-field="phone_number" value="${r.phone_number||''}" disabled></div>
+  <div class="record-field"><label>Email</label><input data-field="franchise_email" value="${r.franchise_email||''}" disabled></div>
+  <div class="record-field"><label>Status</label><input data-field="status" value="${r.status||''}" disabled></div>
 </div>
+
+<div class="record-line-grid">
+  <div class="record-field"><label>Address</label><input data-field="address" value="${r.address||''}" disabled></div>
+  <div class="record-field"><label>Royalty Rate</label><input data-field="royalty_rate" value="${r.royalty_rate||''}" disabled></div>
+  <div class="record-field"><label>Opening Date</label><input type="date" data-field="opening_date" value="${r.opening_date||''}" disabled></div>
+  <div class="record-field hide-manager-id"><label>Manager User ID</label><input data-field="manager_user_id" value="${r.manager_user_id||''}" disabled></div>
+</div>
+
+<div class="record-line-grid">
+  <div class="record-field"><label>Owner 1 Name</label><input data-field="owner_1_name" value="${r.owner_1_name||''}" disabled></div>
+  <div class="record-field"><label>Owner 1 Phone</label><input data-field="owner_1_phone" value="${r.owner_1_phone||''}" disabled></div>
+  <div class="record-field"><label>Owner 1 Email</label><input data-field="owner_1_email" value="${r.owner_1_email||''}" disabled></div>
+  <div class="record-field"><label>Business Tax ID</label><input data-field="business_tax_id" value="${r.business_tax_id||''}" disabled></div>
+</div>
+
+<div class="record-line-grid">
+  <div class="record-field"><label>Owner 2 Name</label><input data-field="owner_2_name" value="${r.owner_2_name||''}" disabled></div>
+  <div class="record-field"><label>Owner 2 Phone</label><input data-field="owner_2_phone" value="${r.owner_2_phone||''}" disabled></div>
+  <div class="record-field"><label>Owner 2 Email</label><input data-field="owner_2_email" value="${r.owner_2_email||''}" disabled></div>
+  <div class="record-field"><label>Social Media</label><input data-field="social_media_links" value='${JSON.stringify(r.social_media_links||{})}' disabled></div>
+</div>
+
+<div class="record-line-grid">
+  <div class="record-field">
+    <label>Internal Notes</label>
+    <textarea data-field="internal_notes" disabled>${r.internal_notes||''}</textarea>
+  </div>
+</div>
+
 </td>
 <td class="actions">
-<button onclick="editRow(this,${r.id})">Edit</button>
-<button onclick="deleteRow(${r.id})">Delete</button>
-</td>
-</tr>`;
+  <button onclick="editRow(this,${r.id})">Edit</button>
+  <button onclick="deleteRow(${r.id})">Delete</button>
+</td>`;
+    tbody.appendChild(tr);
   }
 }
 
 async function editRow(btn,id){
   const tr=btn.closest('tr');
-  const inputs=tr.querySelectorAll('input');
-  if(btn.textContent==='Edit'){inputs.forEach(i=>i.disabled=false);btn.textContent='Save';return;}
+  const inputs=tr.querySelectorAll('input,textarea');
+  if(btn.textContent==='Edit'){
+    inputs.forEach(i=>i.disabled=false);
+    btn.textContent='Save';
+    return;
+  }
   const payload={};
-  inputs.forEach(i=>{payload[i.dataset.field]=i.value||null;i.disabled=true;});
-  await fetch(`${apiBase}/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-  btn.textContent='Edit'; fetchAllRecords();
+  inputs.forEach(i=>{
+    if(i.dataset.field){
+      payload[i.dataset.field]=i.value||null;
+      i.disabled=true;
+    }
+  });
+  await fetch(`${apiBase}/${id}`,{
+    method:'PATCH',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  });
+  btn.textContent='Edit';
+  fetchAllRecords();
 }
 
 async function deleteRow(id){
@@ -295,14 +336,56 @@ document.getElementById('add-form').onsubmit=async e=>{
     business_tax_id:business_tax_id.value,
     internal_notes:internal_notes.value
   };
-  await fetch(apiBase,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-  e.target.reset(); fetchAllRecords();
+  await fetch(apiBase,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  });
+  e.target.reset();
+  fetchAllRecords();
 };
+
+document.getElementById('searchInput').oninput=()=>{
+  const v=searchInput.value.toLowerCase();
+  filteredRecords=allRecords.filter(r=>
+    ((r.name||'')+(r.phone_number||'')+(r.franchise_email||''))
+      .toLowerCase().includes(v)
+  );
+  currentPage=1;
+  renderPage(); renderPagination();
+};
+
+document.getElementById('pageSizeSelect').onchange=e=>{
+  PAGE_SIZE=parseInt(e.target.value);
+  currentPage=1;
+  renderPage(); renderPagination();
+};
+
+function renderPagination(){
+  const p=document.getElementById('pagination');
+  p.innerHTML='';
+  const pages=Math.ceil(filteredRecords.length/PAGE_SIZE);
+  for(let i=1;i<=pages;i++){
+    const b=document.createElement('button');
+    b.textContent=i;
+    b.className='page-btn'+(i===currentPage?' active':'');
+    b.onclick=()=>{currentPage=i;renderPage();renderPagination();};
+    p.appendChild(b);
+  }
+}
 
 document.getElementById('printBtn').onclick=()=>{
   const p=currentPage,s=PAGE_SIZE;
-  PAGE_SIZE=filteredRecords.length||1;currentPage=1;renderPage();
-  setTimeout(()=>{window.print();PAGE_SIZE=s;currentPage=p;renderPage();renderPagination();},100);
+  PAGE_SIZE=filteredRecords.length||1;
+  currentPage=1;
+  renderPage();
+  setTimeout(()=>{
+    window.print();
+    PAGE_SIZE=s;
+    currentPage=p;
+    renderPage();
+    renderPagination();
+  },100);
 };
 
 fetchAllRecords();
