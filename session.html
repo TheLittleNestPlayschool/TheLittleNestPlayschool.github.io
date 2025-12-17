@@ -8,11 +8,11 @@
 <style>
 :root{--bg:#e8ffff;--input:#ffeffb;--accent:#74e8e8;--dark:#498787;}
 
-body{font-family:Arial,sans-serif; margin:16px auto; padding:18px; max-width:1400px; background-color:var(--bg);}
+body{font-family:Arial,sans-serif; margin:16px auto; padding:18px; max-width:1200px; background-color:var(--bg);}
 
 h2{color: #333; border-bottom: 2px solid var(--accent); padding-bottom: 8px;}
 
-form .record-line{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:10px}
+form .record-line{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px}
 .record-field{display:flex; flex-direction:column}
 label{font-size:11px; font-weight:bold; margin-bottom:4px; color:#555;}
 
@@ -29,10 +29,10 @@ table{width:100%; border-collapse:collapse; table-layout:fixed;}
 th,td{border:1px solid #eee; padding:10px; font-size:13px; text-align:left; vertical-align:top;}
 th{background:#f9f9f9; position:sticky; top:0; z-index: 10;}
 
-.grid-inner{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px;}
+.grid-inner{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px;}
 .actions button{display:block; width:100%; margin:4px 0;}
 
-@media (max-width:1000px){ form .record-line{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:800px){ form .record-line{grid-template-columns:1fr} }
 </style>
 </head>
 
@@ -43,28 +43,30 @@ th{background:#f9f9f9; position:sticky; top:0; z-index: 10;}
   <div class="record-line">
     <div class="record-field"><label>Session Name</label><input id="name" required></div>
     <div class="record-field"><label>Franchise</label><select id="f_select" required><option value="">Loading...</option></select></div>
-    <div class="record-field"><label>Primary Teacher</label><select id="t_select" required><option value="">Loading...</option></select></div>
     <div class="record-field"><label>Max Students</label><input type="number" id="max_students"></div>
   </div>
 
   <div class="record-line">
     <div class="record-field"><label>Start Time</label><input id="start_time_text" placeholder="e.g. 10:00 AM"></div>
     <div class="record-field"><label>End Time</label><input id="end_time_text" placeholder="e.g. 11:30 AM"></div>
-    <div class="record-field"><label>Scheduled Days</label>
+    <div class="record-field"><label>Is Active?</label>
+      <select id="is_active"><option value="true">Yes</option><option value="false">No</option></select>
+    </div>
+  </div>
+
+  <div class="record-line" style="grid-template-columns: 1fr;">
+    <div class="record-field"><label>Scheduled Days (Hold Ctrl/Cmd to select multiple)</label>
       <select id="scheduled_days" multiple style="height:70px">
         <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
         <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
       </select>
-    </div>
-    <div class="record-field"><label>Is Active?</label>
-      <select id="is_active"><option value="true">Yes</option><option value="false">No</option></select>
     </div>
   </div>
 
   <button type="submit" id="submitBtn">Save Session</button>
 </form>
 
-<input id="searchInput" placeholder="Quick search sessions, teachers, or franchises..." onkeyup="filterTable()">
+<input id="searchInput" placeholder="Search sessions or franchises..." onkeyup="filterTable()">
 
 <div id="tableWrapper">
   <table>
@@ -80,40 +82,27 @@ th{background:#f9f9f9; position:sticky; top:0; z-index: 10;}
 </div>
 
 <script>
-// Verified Endpoints
 const sessionAPI = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session";
-const teacherAPI = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
 const franchiseAPI = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
 
-let dataStore = { sessions: [], teachers: [], franchises: [] };
+let dataStore = { sessions: [], franchises: [] };
 
-// Initial Load
 async function init() {
     try {
-        const [fRes, tRes] = await Promise.all([
-            fetch(franchiseAPI).then(r => r.json()),
-            fetch(teacherAPI).then(r => r.json())
-        ]);
-        
-        dataStore.franchises = Array.isArray(fRes) ? fRes : (fRes.items || []);
-        dataStore.teachers = Array.isArray(tRes) ? tRes : (tRes.items || []);
+        const fRes = await fetch(franchiseAPI);
+        const fData = await fRes.json();
+        dataStore.franchises = Array.isArray(fData) ? fData : (fData.items || []);
 
-        populateDropdown('f_select', dataStore.franchises, 'Franchise');
-        populateDropdown('t_select', dataStore.teachers, 'Teacher');
+        const fSelect = document.getElementById('f_select');
+        fSelect.innerHTML = '<option value="">-- Select Franchise --</option>';
+        dataStore.franchises.forEach(f => {
+            fSelect.innerHTML += `<option value="${f.id}">${f.name || f.id}</option>`;
+        });
         
         await fetchSessions();
     } catch (err) { 
         console.error("Initialization Error:", err); 
     }
-}
-
-function populateDropdown(id, list, label) {
-    const el = document.getElementById(id);
-    el.innerHTML = `<option value="">-- Select ${label} --</option>`;
-    list.forEach(item => {
-        const nameStr = item.name || item.first_name || `ID: ${item.id}`;
-        el.innerHTML += `<option value="${item.id}">${nameStr}</option>`;
-    });
 }
 
 async function fetchSessions() {
@@ -140,11 +129,6 @@ function render() {
                             ${dataStore.franchises.map(f => `<option value="${f.id}" ${f.id == s.franchise_id ? 'selected' : ''}>${f.name || f.id}</option>`).join('')}
                         </select>
                     </div>
-                    <div class="record-field"><label>Teacher</label>
-                        <select data-field="primary_teacher_id" disabled>
-                            ${dataStore.teachers.map(t => `<option value="${t.id}" ${t.id == s.primary_teacher_id ? 'selected' : ''}>${t.name || t.first_name || t.id}</option>`).join('')}
-                        </select>
-                    </div>
                     <div class="record-field"><label>Start Time</label>
                         <input data-field="start_time_text" value="${s.start_time_text||''}" disabled>
                     </div>
@@ -152,7 +136,7 @@ function render() {
             </td>
             <td class="actions">
                 <button onclick="editRow(this, ${s.id})">Edit</button>
-                <button onclick="deleteRow(${s.id})" style="background:#ffcccc; color:#a00;">Delete</button>
+                <button onclick="deleteRow(${s.id})" style="background:#ffcccc; color:#a00;">Del</button>
             </td>
         `;
         tbody.appendChild(tr);
@@ -172,7 +156,7 @@ async function editRow(btn, id) {
         fields.forEach(f => {
             const key = f.dataset.field;
             if(key) {
-                payload[key] = (f.type === 'number' || key.endsWith('_id')) ? parseInt(f.value) : f.value;
+                payload[key] = (f.type === 'number' || key === 'franchise_id') ? parseInt(f.value) : f.value;
             }
         });
         
@@ -190,7 +174,7 @@ async function editRow(btn, id) {
 }
 
 async function deleteRow(id) {
-    if (confirm('Are you sure you want to delete this session?')) {
+    if (confirm('Delete session?')) {
         await fetch(`${sessionAPI}/${id}`, { method: 'DELETE' });
         fetchSessions();
     }
@@ -208,7 +192,6 @@ document.getElementById('add-form').onsubmit = async (e) => {
     const payload = {
         name: document.getElementById('name').value,
         franchise_id: parseInt(document.getElementById('f_select').value),
-        primary_teacher_id: parseInt(document.getElementById('t_select').value),
         max_students: parseInt(document.getElementById('max_students').value) || null,
         start_time_text: document.getElementById('start_time_text').value,
         end_time_text: document.getElementById('end_time_text').value,
