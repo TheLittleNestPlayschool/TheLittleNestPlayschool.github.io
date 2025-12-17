@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Question Student Manager</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<style>
+:root{--bg:#e8ffff;--input:#ffeffb;--accent:#74e8e8;--dark:#498787;}
+
+body{font-family:Arial,sans-serif; margin:16px auto; padding:18px; max-width:1200px; background-color:var(--bg);}
+
+h2{color: #333; border-bottom: 2px solid var(--accent); padding-bottom: 8px;}
+
+form .record-line{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px}
+.record-field{display:flex; flex-direction:column}
+label{font-size:11px; font-weight:bold; margin-bottom:4px; color:#555;}
+
+input,textarea,select{padding:8px; border:1px solid #ccc; border-radius:4px; background-color:var(--input); width:100%; box-sizing:border-box;}
+textarea{min-height:56px; resize:vertical}
+
+button{padding:8px 12px; background-color:var(--accent); border:none; border-radius:4px; cursor:pointer; font-weight: bold;}
+button:hover{background-color:var(--dark); color:#fff;}
+
+#searchInput{width:100%; padding:12px; margin:20px 0 10px 0; border:1px solid #ccc; border-radius:4px; background:var(--input); font-size: 15px;}
+
+#tableWrapper{max-height:600px; overflow-y:auto; border:1px solid #ddd; border-radius:6px; background:white; padding:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
+table{width:100%; border-collapse:collapse; table-layout:fixed;}
+th,td{border:1px solid #eee; padding:10px; font-size:13px; text-align:left; vertical-align:top;}
+th{background:#f9f9f9; position:sticky; top:0; z-index: 10;}
+
+.grid-inner{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px;}
+.actions button{display:block; width:100%; margin:4px 0;}
+
+@media (max-width:800px){ form .record-line{grid-template-columns:1fr} }
+</style>
+</head>
+
+<body>
+
+<h2>Create New Student Question</h2>
+<form id="add-form">
+  <div class="record-line" style="grid-template-columns: 2fr 1fr;">
+    <div class="record-field">
+        <label>Question Text</label>
+        <textarea id="question_text" required placeholder="Enter the student question here..."></textarea>
+    </div>
+    <div class="record-field">
+        <label>Is Active?</label>
+        <select id="is_active">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+        </select>
+    </div>
+  </div>
+
+  <button type="submit" id="submitBtn">Save Question</button>
+</form>
+
+<input id="searchInput" placeholder="Search questions..." onkeyup="filterTable()">
+
+<div id="tableWrapper">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:50px">ID</th>
+        <th>Question Details</th>
+        <th style="width:100px">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+
+<script>
+// API Endpoint provided
+const questionAPI = "https://x8ki-letl-twmt.n7.xano.io/api:0K_jkjwR/question_student";
+
+let dataStore = { questions: [] };
+
+async function init() {
+    try {
+        await fetchQuestions();
+    } catch (err) { 
+        console.error("Initialization Error:", err); 
+    }
+}
+
+async function fetchQuestions() {
+    try {
+        const res = await fetch(questionAPI);
+        const data = await res.json();
+        dataStore.questions = Array.isArray(data) ? data : (data.items || []);
+        render();
+    } catch (err) {
+        console.error("Fetch Error:", err);
+    }
+}
+
+function render() {
+    const tbody = document.getElementById('table-body');
+    tbody.innerHTML = '';
+    dataStore.questions.forEach(q => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${q.id}</td>
+            <td>
+                <div class="grid-inner">
+                    <div class="record-field" style="grid-column: span 2;">
+                        <label>Question Text</label>
+                        <textarea data-field="question_text" disabled>${q.question_text||''}</textarea>
+                    </div>
+                    <div class="record-field">
+                        <label>Status</label>
+                        <select data-field="is_active" disabled>
+                            <option value="true" ${q.is_active == true ? 'selected' : ''}>Active</option>
+                            <option value="false" ${q.is_active == false ? 'selected' : ''}>Inactive</option>
+                        </select>
+                    </div>
+                </div>
+            </td>
+            <td class="actions">
+                <button onclick="editRow(this, ${q.id})">Edit</button>
+                <button onclick="deleteRow(${q.id})" style="background:#ffcccc; color:#a00;">Del</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+async function editRow(btn, id) {
+    const tr = btn.closest('tr');
+    const fields = tr.querySelectorAll('textarea, select');
+    if (btn.textContent === 'Edit') {
+        fields.forEach(f => f.disabled = false);
+        btn.textContent = 'Save';
+        btn.style.background = '#498787';
+        btn.style.color = '#fff';
+    } else {
+        const payload = {};
+        fields.forEach(f => {
+            const key = f.dataset.field;
+            if(key) {
+                payload[key] = (f.tagName === 'SELECT') ? (f.value === 'true') : f.value;
+            }
+        });
+        
+        await fetch(`${questionAPI}/${id}`, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        
+        btn.textContent = 'Edit';
+        btn.style.background = '';
+        btn.style.color = '';
+        fetchQuestions();
+    }
+}
+
+async function deleteRow(id) {
+    if (confirm('Delete question?')) {
+        await fetch(`${questionAPI}/${id}`, { method: 'DELETE' });
+        fetchQuestions();
+    }
+}
+
+function filterTable() {
+    const val = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#table-body tr').forEach(r => {
+        r.style.display = r.innerText.toLowerCase().includes(val) ? '' : 'none';
+    });
+}
+
+document.getElementById('add-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+        question_text: document.getElementById('question_text').value,
+        is_active: document.getElementById('is_active').value === 'true'
+    };
+    
+    await fetch(questionAPI, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+    
+    e.target.reset();
+    fetchQuestions();
+};
+
+init();
+</script>
+</body>
+</html>
