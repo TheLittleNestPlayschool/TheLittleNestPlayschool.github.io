@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Blog Dashboard: Posts, Categories & Analytics</title>
+<title>Blog Dashboard: Auto-Slug Integrated</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
 <style>
@@ -131,8 +131,11 @@ th,td{ border:1px solid #e6e6e6; padding:10px; vertical-align:top; font-size:13p
     <h2>Create New Blog Post</h2>
     <form id="add-post-form" autocomplete="off">
       <div class="record-line">
-        <div class="record-field"><label>Title</label><input type="text" id="post_title" required></div>
-        <div class="record-field"><label>Slug</label><input type="text" id="post_slug" required></div>
+        <div class="record-field" style="grid-column: span 2;">
+            <label>Title</label>
+            <input type="text" id="post_title" placeholder="Enter post title..." required oninput="autoSlug('post_title', 'post_slug_hidden')">
+            <input type="hidden" id="post_slug_hidden">
+        </div>
         <div class="record-field">
             <label>Category</label>
             <select id="post_category_select" required></select>
@@ -176,8 +179,11 @@ th,td{ border:1px solid #e6e6e6; padding:10px; vertical-align:top; font-size:13p
     <h2>Manage Categories</h2>
     <form id="add-category-form" autocomplete="off" style="background:#fff; padding:15px; border-radius:6px; margin-bottom:20px; border:1px solid #ccc;">
         <div class="record-line">
-            <div class="record-field"><label>Category Name</label><input type="text" id="cat_name" required></div>
-            <div class="record-field"><label>Slug</label><input type="text" id="cat_slug" required></div>
+            <div class="record-field" style="grid-column: span 2;">
+                <label>Category Name</label>
+                <input type="text" id="cat_name" required oninput="autoSlug('cat_name', 'cat_slug_hidden')">
+                <input type="hidden" id="cat_slug_hidden">
+            </div>
             <div class="record-field">
                 <label>Status</label>
                 <select id="cat_is_active">
@@ -211,6 +217,21 @@ th,td{ border:1px solid #e6e6e6; padding:10px; vertical-align:top; font-size:13p
 </div>
 
 <script>
+/* ---------- Helper: Slug Generator ---------- */
+function generateSlug(text) {
+    return text.toString().toLowerCase()
+        .replace(/\s+/g, '-')           // Replace spaces with -
+        .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+        .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+        .replace(/^-+/, '')             // Trim - from start
+        .replace(/-+$/, '');            // Trim - from end
+}
+
+function autoSlug(sourceId, targetId) {
+    const sourceVal = document.getElementById(sourceId).value;
+    document.getElementById(targetId).value = generateSlug(sourceVal);
+}
+
 /* ---------- Config & State ---------- */
 const CURRENT_USER_ID = 1; 
 const apiPost = "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_post";
@@ -225,7 +246,7 @@ let allPosts = [], filteredPosts = [], categories = [], currentPage = 1;
 function switchTab(tabId) {
     document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
-    event.currentTarget.classList.add('active');
+    if(event) event.currentTarget.classList.add('active');
     
     if(tabId === 'categories') fetchCategories();
     if(tabId === 'analytics') fetchAnalytics();
@@ -253,7 +274,7 @@ function renderCategoryTable() {
             <td>
                 <div class="record-line-grid">
                     <div class="record-field"><label>Name</label><input data-cat="name" value="${c.name}" disabled></div>
-                    <div class="record-field"><label>Slug</label><input data-cat="slug" value="${c.slug}" disabled></div>
+                    <div class="record-field"><label>Slug (URL)</label><input data-cat="slug" value="${c.slug}" disabled></div>
                     <div class="record-field"><label>Status</label>
                         <select data-cat="is_active" disabled>
                             <option value="true" ${c.is_active?'selected':''}>Active</option>
@@ -274,8 +295,11 @@ function renderCategoryTable() {
 document.getElementById('add-category-form').onsubmit = async (e) => {
     e.preventDefault();
     const payload = {
-        name: cat_name.value, slug: cat_slug.value, 
-        description: cat_desc.value, is_active: cat_is_active.value === 'true', created_at: Date.now()
+        name: cat_name.value, 
+        slug: cat_slug_hidden.value, // Taken from hidden auto-generated field
+        description: cat_desc.value, 
+        is_active: cat_is_active.value === 'true', 
+        created_at: Date.now()
     };
     await fetch(apiCat, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
     e.target.reset();
@@ -327,7 +351,7 @@ function renderPosts() {
             <td>
                 <div class="record-line-grid">
                     <div class="record-field"><label>Title</label><input data-post="title" value="${p.title}" disabled></div>
-                    <div class="record-field"><label>Slug</label><input data-post="slug" value="${p.slug}" disabled></div>
+                    <div class="record-field"><label>Slug (URL)</label><input data-post="slug" value="${p.slug}" disabled></div>
                     <div class="record-field"><label>Status</label>
                         <select data-post="is_published" disabled>
                             <option value="true" ${p.is_published?'selected':''}>Published</option>
@@ -342,7 +366,7 @@ function renderPosts() {
                 </div>
                 <textarea data-post="content" disabled>${p.content||''}</textarea>
                 <div class="gallery-section">
-                    <div class="gallery-grid" id="gal-${p.id}">Loading gallery...</div>
+                    <div class="gallery-grid" id="gal-${p.id}">Loading...</div>
                     <div style="margin-top:8px; display:flex; gap:5px;">
                         <input type="text" id="img-url-${p.id}" placeholder="Image URL">
                         <button onclick="addImg(${p.id})">Add</button>
@@ -383,7 +407,9 @@ async function editPost(btn, id) {
 document.getElementById('add-post-form').onsubmit = async (e) => {
     e.preventDefault();
     const payload = {
-        title: post_title.value, slug: post_slug.value, content: post_content.value,
+        title: post_title.value, 
+        slug: post_slug_hidden.value, // Auto-generated
+        content: post_content.value,
         blog_category_id: parseInt(post_category_select.value),
         author_user_id: CURRENT_USER_ID,
         is_published: post_status.value === 'true',
@@ -400,7 +426,7 @@ async function deletePost(id) {
     if(confirm('Delete post?')) { await fetch(`${apiPost}/${id}`, { method: 'DELETE' }); initPosts(); }
 }
 
-/* ---------- Gallery Logic ---------- */
+/* ---------- Gallery & Analytics & Search (Same as before) ---------- */
 async function loadGallery(postId) {
     const res = await fetch(`${apiImg}?blog_post_id=${postId}`);
     const imgs = await res.json();
@@ -413,20 +439,16 @@ async function loadGallery(postId) {
         cont.appendChild(d);
     });
 }
-
 async function addImg(postId) {
     const url = document.getElementById(`img-url-${postId}`).value;
     if(!url) return;
     await fetch(apiImg, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ blog_post_id: postId, image_url: url, created_at: Date.now() }) });
     loadGallery(postId);
 }
-
 async function deleteImg(imgId, postId) {
     await fetch(`${apiImg}/${imgId}`, { method: 'DELETE' });
     loadGallery(postId);
 }
-
-/* ---------- Analytics ---------- */
 async function fetchAnalytics() {
     const res = await fetch(apiAnalytics);
     const data = await res.json();
@@ -440,14 +462,11 @@ async function fetchAnalytics() {
         </tr>
     `).join('');
 }
-
-/* ---------- Search & Pagination ---------- */
 function handleSearch() {
     const v = document.getElementById('searchInput').value.toLowerCase();
     filteredPosts = allPosts.filter(p => p.title.toLowerCase().includes(v));
     currentPage = 1; renderPosts();
 }
-
 function renderPagination() {
     const p = document.getElementById('pagination');
     p.innerHTML = '';
@@ -461,7 +480,6 @@ function renderPagination() {
     }
 }
 
-// Startup
 initPosts();
 </script>
 </body>
