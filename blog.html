@@ -64,7 +64,7 @@ th,td{ border:1px solid #e6e6e6; padding:10px; vertical-align:top; font-size:13p
       </div>
       <div class="record-line">
         <div class="record-field" style="grid-column: span 2;">
-            <label>Featured Image (Saved to Gallery first)</label>
+            <label>Featured Image (File Upload)</label>
             <input type="file" id="post_f_img_file" accept="image/*">
         </div>
         <div class="record-field">
@@ -198,7 +198,7 @@ document.getElementById('add-category-form').onsubmit = async (e) => {
     e.target.reset(); fetchCategories();
 };
 
-/* ---------- Blog Post CRUD & Normalized Upload Logic ---------- */
+/* ---------- Blog Post CRUD & Corrected Mapping ---------- */
 async function initPosts() {
     await fetchCategories();
     const res = await fetch(apiPost);
@@ -210,21 +210,25 @@ async function initPosts() {
 
 document.getElementById('add-post-form').onsubmit = async (e) => {
     e.preventDefault();
-    let featured_image_id = null;
+    let featured_id = null;
     const fileInput = document.getElementById('post_f_img_file');
 
-    // STEP 1: Upload Image to blog_image table first if it exists
+    // STEP 1: Upload to blog_image table first
     if(fileInput.files[0]) {
         const fdImg = new FormData();
-        fdImg.append('image', fileInput.files[0]);
-        fdImg.append('position', 0); // Position 0 denotes Featured
+        fdImg.append('image_file', fileInput.files[0]);
+        fdImg.append('order_number', 0); 
         
-        const imgRes = await fetch(apiImg, { method:'POST', body:fdImg });
-        const imgData = await imgRes.json();
-        featured_image_id = imgData.id; // Store the ID for Step 2
+        try {
+            const imgRes = await fetch(apiImg, { method:'POST', body:fdImg });
+            const imgData = await imgRes.json();
+            if(imgData.id) featured_id = imgData.id;
+        } catch (err) {
+            console.error("Featured image upload failed", err);
+        }
     }
 
-    // STEP 2: Create Blog Post with the Reference ID
+    // STEP 2: Create Blog Post with reference
     const postPayload = {
         title: post_title.value,
         slug: post_slug_hidden.value,
@@ -232,7 +236,7 @@ document.getElementById('add-post-form').onsubmit = async (e) => {
         blog_category_id: parseInt(post_category_select.value),
         author_name: currentUser.name,
         is_published: post_status.value === 'true',
-        featured_image_id: featured_image_id, // Pointer to blog_image
+        featured_blog_image_id: featured_id,
         created_at: Date.now()
     };
 
@@ -251,8 +255,8 @@ async function uploadGallery(postId) {
     for(let f of fileInput.files) {
         const fd = new FormData(); 
         fd.append('blog_post_id', postId); 
-        fd.append('image', f);
-        fd.append('position', 1); // Positions > 0 are gallery items
+        fd.append('image_file', f);
+        fd.append('order_number', 1); 
         await fetch(apiImg, { method:'POST', body:fd });
     }
     fileInput.value=''; 
@@ -306,7 +310,11 @@ async function loadGallery(postId) {
     const res = await fetch(`${apiImg}?blog_post_id=${postId}`);
     const imgs = await res.json();
     const cont = document.getElementById(`gal-${postId}`);
-    cont.innerHTML = imgs.map(img => `<div class="gallery-item"><img src="${img.image?.url || ''}"><button class="del-img" onclick="deleteImg(${img.id},${postId})">×</button></div>`).join('');
+    cont.innerHTML = imgs.map(img => `
+        <div class="gallery-item">
+            <img src="${img.image_file?.url || ''}">
+            <button class="del-img" onclick="deleteImg(${img.id},${postId})">×</button>
+        </div>`).join('');
 }
 
 /* ---------- Analytics Summary ---------- */
