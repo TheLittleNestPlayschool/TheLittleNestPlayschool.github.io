@@ -210,10 +210,11 @@ async function initPosts() {
 document.getElementById('add-post-form').onsubmit = async (e) => {
     e.preventDefault();
     const btn = document.getElementById('add-post-btn');
-    btn.disabled = true;
-    btn.textContent = "Processing...";
+    const fileInput = document.getElementById('post_f_img_file');
+    btn.disabled = true; btn.textContent = "Processing...";
 
     try {
+        // Step 1: Create Post
         const postPayload = {
             title: post_title.value,
             slug: post_slug_hidden.value,
@@ -231,16 +232,18 @@ document.getElementById('add-post-form').onsubmit = async (e) => {
         });
         const newPost = await postRes.json();
 
-        const fileInput = document.getElementById('post_f_img_file');
+        // Step 2: Upload Image inside the 'blog_image' object as Xano expects
         if(fileInput.files[0] && newPost.id) {
             const fdImg = new FormData();
-            fdImg.append('image_file', fileInput.files[0]);
-            fdImg.append('blog_post_id', newPost.id);
-            fdImg.append('order_number', 0); 
+            // Note the nested naming convention: blog_image[field_name]
+            fdImg.append('blog_image[image_file]', fileInput.files[0]);
+            fdImg.append('blog_image[blog_post_id]', newPost.id);
+            fdImg.append('blog_image[order_number]', 0); 
             
             const imgRes = await fetch(apiImg, { method:'POST', body:fdImg });
             const imgData = await imgRes.json();
 
+            // Step 3: Link back to Post
             if(imgData.id) {
                 await fetch(`${apiPost}/${newPost.id}`, {
                     method: 'PATCH',
@@ -249,12 +252,10 @@ document.getElementById('add-post-form').onsubmit = async (e) => {
                 });
             }
         }
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Error in 3-step process:", err); }
 
-    btn.disabled = false;
-    btn.textContent = "Add Post";
-    e.target.reset(); 
-    initPosts();
+    btn.disabled = false; btn.textContent = "Add Post";
+    e.target.reset(); initPosts();
 };
 
 async function uploadGallery(postId, btn) {
@@ -263,9 +264,9 @@ async function uploadGallery(postId, btn) {
     btn.disabled = true; btn.textContent = "Uploading...";
     for(let f of fileInput.files) {
         const fd = new FormData(); 
-        fd.append('blog_post_id', postId); 
-        fd.append('image_file', f);
-        fd.append('order_number', 1); 
+        fd.append('blog_image[blog_post_id]', postId); 
+        fd.append('blog_image[image_file]', f);
+        fd.append('blog_image[order_number]', 1); 
         await fetch(apiImg, { method:'POST', body:fd });
     }
     fileInput.value=''; 
