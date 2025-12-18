@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Our Blog</title>
+<title>Blog Admin & Gallery Manager</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
 <style>
-:root{--max-width:1400px;--gap:20px;}
+:root{--max-width:1400px;--gap:10px;}
 
 body{
   font-family:Arial,Helvetica,sans-serif;
@@ -14,166 +14,398 @@ body{
   padding:18px;
   max-width:var(--max-width);
   font-size:15px;
-  background-color:#e8ffff; /* Your brand background */
-  color: #333;
+  background-color:#e8ffff;
 }
 
-/* ---------- Blog Grid ---------- */
-#blog-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--gap);
-  margin-top: 20px;
+/* ---------- Layout & Fields ---------- */
+form .record-line{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-bottom:10px
+}
+.record-field{
+  display:flex;
+  flex-direction:column
 }
 
-.blog-card {
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s;
+input,textarea,select{
+  padding:8px;
+  font-size:14px;
+  box-sizing:border-box;
+  background-color:#ffeffb;
+  border:1px solid #ccc;
+  border-radius:4px;
+  width:100%;
 }
 
-.blog-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+textarea{min-height:56px; resize:vertical}
+
+button{
+  padding:8px 12px;
+  font-size:14px;
+  background-color:#74e8e8;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+  transition:0.2s;
+}
+button:hover{
+  background-color:#498787;
+  color:#fff;
 }
 
-.featured-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  background-color: #ffeffb; /* Your brand input color as placeholder */
+/* ---------- Gallery Styles ---------- */
+.gallery-section {
+    background: #fff5fd;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 6px;
+    border: 1px dashed #74e8e8;
+}
+.gallery-grid {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    min-height: 50px;
+}
+.gallery-item {
+    width: 90px;
+    position: relative;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: white;
+    padding: 2px;
+}
+.gallery-item img {
+    width: 100%;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 2px;
+}
+.del-img {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
 }
 
-.card-content {
-  padding: 15px;
-  flex-grow: 1;
+/* ---------- Table & Controls ---------- */
+.controls{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin:12px 0
+}
+#searchInput{
+  flex:1;
+  min-width:220px;
+  padding:10px;
+  background-color:#ffeffb;
+  border:1px solid #ccc;
+  border-radius:4px
 }
 
-.category-tag {
-  display: inline-block;
-  background: #74e8e8; /* Your brand button color */
-  padding: 4px 8px;
-  font-size: 11px;
-  text-transform: uppercase;
-  border-radius: 4px;
-  margin-bottom: 10px;
+#tableWrapper{
+  max-height:700px;
+  overflow-y:auto;
+  border:1px solid #ddd;
+  padding:8px;
+  border-radius:6px;
+  background:#e8ffff;
 }
 
-.blog-title {
-  font-size: 20px;
-  margin: 0 0 10px 0;
-  color: #498787; /* Your brand hover color */
+table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
 }
 
-.blog-summary {
-  font-size: 14px;
-  line-height: 1.5;
-  color: #666;
-  margin-bottom: 15px;
+th,td{
+  border:1px solid #e6e6e6;
+  padding:10px;
+  vertical-align:top;
+  font-size:13px;
 }
 
-.read-more {
-  text-decoration: none;
+.record-line-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-bottom:6px;
+}
+
+.record-field label{
+  font-size:11px;
   font-weight: bold;
-  color: #498787;
-  font-size: 13px;
+  color:#555;
+  margin-bottom:4px
 }
 
-/* ---------- Tracking Status ---------- */
-#visitor-log-status {
-  font-size: 12px;
-  text-align: right;
-  color: #498787;
-  margin-bottom: 10px;
+.actions button{
+  display:block;
+  width:90px;
+  margin:6px auto;
 }
 
-@media (max-width: 600px) {
-  #blog-container { grid-template-columns: 1fr; }
+.pagination{
+  display:flex;
+  gap:6px;
+  justify-content:center;
+  margin-top:12px;
+}
+.page-btn{
+  padding:6px 10px;
+  border:1px solid #ccc;
+  background:#74e8e8;
+  cursor:pointer;
+  border-radius:4px
+}
+.page-btn.active{background:#498787; color:#fff;}
+
+@media (max-width:1200px){
+  .record-line-grid, form .record-line{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
 
 <body>
 
-<div id="visitor-log-status">Tracking active...</div>
-<h1>Our Latest Stories</h1>
+<h2>Create New Blog Post</h2>
+<form id="add-form" autocomplete="off">
+  <div class="record-line">
+    <div class="record-field"><label>Title</label><input type="text" id="title" required></div>
+    <div class="record-field"><label>Slug</label><input type="text" id="slug" required></div>
+    <div class="record-field"><label>Category ID</label><input type="number" id="blog_category_id"></div>
+    <div class="record-field"><label>Author ID</label><input type="number" id="author_user_id"></div>
+  </div>
+  <div class="record-line">
+    <div class="record-field" style="grid-column: span 2;"><label>Featured Image URL</label><input type="text" id="featured_image_url"></div>
+    <div class="record-field">
+      <label>Status</label>
+      <select id="is_published">
+        <option value="true">Published</option>
+        <option value="false" selected>Draft</option>
+      </select>
+    </div>
+    <div class="record-field"><label>Publish Date</label><input type="date" id="published_at"></div>
+  </div>
+  <div class="record-field" style="margin-bottom:10px;">
+    <label>Post Content</label>
+    <textarea id="content" style="min-height:100px"></textarea>
+  </div>
+  <button type="submit" style="width:160px;">Add Post</button>
+</form>
 
-<div id="blog-container">
-  <p>Loading the latest stories...</p>
+<div class="controls">
+  <input id="searchInput" placeholder="Search titles, content..." />
+  <select id="pageSizeSelect">
+    <option value="10" selected>10 per page</option>
+    <option value="25">25 per page</option>
+  </select>
 </div>
 
+<div id="tableWrapper">
+<table id="records-table">
+<thead>
+<tr>
+  <th style="width:40px">ID</th>
+  <th>Post Editor & Gallery</th>
+  <th style="width:110px">Actions</th>
+</tr>
+</thead>
+<tbody id="table-body"></tbody>
+</table>
+</div>
+
+<div class="pagination" id="pagination"></div>
+
 <script>
-const apiPosts = "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_post";
-const apiAnalytics = "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_analytics";
+const apiBase = "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_post";
+const imgApi = "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_image";
 
-/* ---------- 1. Fetch and Display Posts ---------- */
-async function loadBlog() {
-  try {
-    const res = await fetch(apiPosts);
-    const posts = await res.json();
-    const container = document.getElementById('blog-container');
-    container.innerHTML = '';
+let PAGE_SIZE = 10;
+let allRecords = [];
+let filteredRecords = [];
+let currentPage = 1;
 
-    // Only show published posts
-    const publishedPosts = posts.filter(p => p.is_published === true);
+/* ---------- Core Data Fetching ---------- */
+async function fetchAllRecords(){
+  const res = await fetch(apiBase);
+  const data = await res.json();
+  allRecords = Array.isArray(data) ? data : data.items || [];
+  filteredRecords = [...allRecords];
+  renderPage();
+  renderPagination();
+}
 
-    publishedPosts.forEach(post => {
-      const card = document.createElement('div');
-      card.className = 'blog-card';
-      
-      // Use featured image or a placeholder
-      const imgUrl = post.featured_image_url || 'https://via.placeholder.com/400x200?text=No+Image';
-      
-      card.innerHTML = `
-        <img src="${imgUrl}" class="featured-image" alt="${post.title}">
-        <div class="card-content">
-          <span class="category-tag">Category ${post.blog_category_id}</span>
-          <h2 class="blog-title">${post.title}</h2>
-          <p class="blog-summary">${truncateText(post.content, 120)}</p>
-          <a href="/post.html?slug=${post.slug}" class="read-more">Read Full Story →</a>
+/* ---------- Rendering Posts ---------- */
+function renderPage(){
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+  let start = (currentPage-1) * PAGE_SIZE;
+  let end = Math.min(start + PAGE_SIZE, filteredRecords.length);
+
+  for(let i=start; i<end; i++){
+    const r = filteredRecords[i];
+    const tr = document.createElement('tr');
+    const galleryId = `gallery-${r.id}`;
+
+    tr.innerHTML = `
+      <td>${r.id}</td>
+      <td>
+        <div class="record-line-grid">
+          <div class="record-field"><label>Title</label><input data-field="title" value="${r.title||''}" disabled></div>
+          <div class="record-field"><label>Slug</label><input data-field="slug" value="${r.slug||''}" disabled></div>
+          <div class="record-field">
+            <label>Status</label>
+            <select data-field="is_published" disabled>
+              <option value="true" ${r.is_published?'selected':''}>Published</option>
+              <option value="false" ${!r.is_published?'selected':''}>Draft</option>
+            </select>
+          </div>
+          <div class="record-field"><label>Category ID</label><input type="number" data-field="blog_category_id" value="${r.blog_category_id||''}" disabled></div>
         </div>
-      `;
-      container.appendChild(card);
-    });
-  } catch (err) {
-    console.error("Failed to load blog:", err);
+        <div class="record-field">
+          <label>Content</label>
+          <textarea data-field="content" disabled>${r.content||''}</textarea>
+        </div>
+
+        <div class="gallery-section">
+          <label>Multiple Images (Gallery)</label>
+          <div class="gallery-grid" id="${galleryId}">Loading...</div>
+          <div style="margin-top:8px; display:flex; gap:5px;">
+             <input type="text" id="in-url-${r.id}" placeholder="Paste Image URL" style="flex:2">
+             <button onclick="addImage(${r.id})" style="background:#498787; color:white;">Add Image</button>
+          </div>
+        </div>
+      </td>
+      <td class="actions">
+        <button onclick="editRow(this,${r.id})">Edit Post</button>
+        <button onclick="deleteRow(${r.id})" style="background:#ffb3b3">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+    loadGallery(r.id, galleryId);
   }
 }
 
-/* ---------- 2. Logic to Log Visitor (The tracking part) ---------- */
-async function logVisit() {
+/* ---------- Gallery Logic ---------- */
+async function loadGallery(postId, containerId) {
+  const res = await fetch(`${imgApi}?blog_post_id=${postId}`);
+  const images = await res.json();
+  const container = document.getElementById(containerId);
+  container.innerHTML = images.length ? '' : '<span style="color:#999">No images.</span>';
+
+  images.forEach(img => {
+    const div = document.createElement('div');
+    div.className = 'gallery-item';
+    div.innerHTML = `<img src="${img.image_url}"><button class="del-img" onclick="deleteImage(${img.id},${postId},'${containerId}')">×</button>`;
+    container.appendChild(div);
+  });
+}
+
+async function addImage(postId) {
+  const url = document.getElementById(`in-url-${postId}`).value;
+  if(!url) return;
+  await fetch(imgApi, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ blog_post_id: postId, image_url: url, created_at: Date.now() })
+  });
+  document.getElementById(`in-url-${postId}`).value = '';
+  loadGallery(postId, `gallery-${postId}`);
+}
+
+async function deleteImage(imgId, postId, containerId) {
+  await fetch(`${imgApi}/${imgId}`, { method: 'DELETE' });
+  loadGallery(postId, containerId);
+}
+
+/* ---------- Post CRUD ---------- */
+async function editRow(btn, id){
+  const tr = btn.closest('tr');
+  const inputs = tr.querySelectorAll('input, select, textarea');
+  if(btn.textContent === 'Edit Post'){
+    inputs.forEach(i => i.disabled = false);
+    btn.textContent = 'Save';
+    return;
+  }
+  const payload = {};
+  inputs.forEach(i => {
+    if(i.dataset.field){
+      payload[i.dataset.field] = (i.dataset.field==='is_published') ? (i.value==='true') : i.value;
+      i.disabled = true;
+    }
+  });
+  await fetch(`${apiBase}/${id}`, {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  btn.textContent = 'Edit Post';
+  fetchAllRecords();
+}
+
+async function deleteRow(id){
+  if(confirm('Delete this post and all its data?')){
+    await fetch(`${apiBase}/${id}`, {method:'DELETE'});
+    fetchAllRecords();
+  }
+}
+
+document.getElementById('add-form').onsubmit = async e => {
+  e.preventDefault();
   const payload = {
-    created_at: Date.now(),
-    ip_address: "Logged by Browser", // Xano can capture actual IP on the backend
-    user_agent: navigator.userAgent,
-    referrer: document.referrer || "Direct",
-    blog_post_id: null // On a list page, this is null
+    title: title.value,
+    slug: slug.value,
+    content: content.value,
+    blog_category_id: parseInt(blog_category_id.value),
+    author_user_id: parseInt(author_user_id.value),
+    is_published: is_published.value === 'true',
+    featured_image_url: featured_image_url.value,
+    published_at: Date.parse(published_at.value) || Date.now(),
+    created_at: Date.now()
   };
+  await fetch(apiBase, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  e.target.reset();
+  fetchAllRecords();
+};
 
-  try {
-    await fetch(apiAnalytics, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-  } catch (e) {
-    console.log("Analytics error:", e);
+/* ---------- Search & Pagination ---------- */
+document.getElementById('searchInput').oninput = () => {
+  const v = searchInput.value.toLowerCase();
+  filteredRecords = allRecords.filter(r => (r.title||'').toLowerCase().includes(v));
+  currentPage = 1; renderPage(); renderPagination();
+};
+
+function renderPagination(){
+  const p = document.getElementById('pagination');
+  p.innerHTML = '';
+  const pages = Math.ceil(filteredRecords.length / PAGE_SIZE);
+  for(let i=1; i<=pages; i++){
+    const b = document.createElement('button');
+    b.textContent = i; b.className = 'page-btn' + (i===currentPage?' active':'');
+    b.onclick = () => { currentPage=i; renderPage(); renderPagination(); };
+    p.appendChild(b);
   }
 }
 
-/* ---------- Helper Functions ---------- */
-function truncateText(text, length) {
-  if (!text) return "";
-  return text.length > length ? text.substring(0, length) + "..." : text;
-}
-
-// Initializing
-loadBlog();
-logVisit();
+fetchAllRecords();
 </script>
 </body>
 </html>
