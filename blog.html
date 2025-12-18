@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Blog Admin & Gallery Manager</title>
+<title>Blog Admin & Analytics Dashboard</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
 <style>
-:root{--max-width:1400px;--gap:10px;}
+:root{--max-width:1400px;--gap:10px; --primary: #74e8e8; --secondary: #498787; --bg: #e8ffff; --input-bg: #ffeffb;}
 
 body{
   font-family:Arial,Helvetica,sans-serif;
@@ -14,8 +14,31 @@ body{
   padding:18px;
   max-width:var(--max-width);
   font-size:15px;
-  background-color:#e8ffff;
+  background-color:var(--bg);
 }
+
+/* ---------- Tab Switcher ---------- */
+.tab-nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 10px;
+}
+.tab-btn {
+    padding: 10px 20px;
+    background: #fff;
+    border: 1px solid var(--primary);
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+}
+.tab-btn.active {
+    background: var(--primary);
+    color: #000;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 
 /* ---------- Layout & Fields ---------- */
 form .record-line{
@@ -33,7 +56,7 @@ input,textarea,select{
   padding:8px;
   font-size:14px;
   box-sizing:border-box;
-  background-color:#ffeffb;
+  background-color:var(--input-bg);
   border:1px solid #ccc;
   border-radius:4px;
   width:100%;
@@ -44,14 +67,14 @@ textarea{min-height:56px; resize:vertical}
 button{
   padding:8px 12px;
   font-size:14px;
-  background-color:#74e8e8;
+  background-color:var(--primary);
   border:none;
   border-radius:4px;
   cursor:pointer;
   transition:0.2s;
 }
 button:hover{
-  background-color:#498787;
+  background-color:var(--secondary);
   color:#fff;
 }
 
@@ -61,7 +84,7 @@ button:hover{
     padding: 12px;
     margin-top: 10px;
     border-radius: 6px;
-    border: 1px dashed #74e8e8;
+    border: 1px dashed var(--primary);
 }
 .gallery-grid {
     display: flex;
@@ -99,157 +122,188 @@ button:hover{
     font-weight: bold;
 }
 
-/* ---------- Table & Controls ---------- */
-.controls{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-  margin:12px 0
-}
-#searchInput{
-  flex:1;
-  min-width:220px;
-  padding:10px;
-  background-color:#ffeffb;
-  border:1px solid #ccc;
-  border-radius:4px
-}
-
+/* ---------- Table Styles ---------- */
 #tableWrapper{
   max-height:700px;
   overflow-y:auto;
   border:1px solid #ddd;
   padding:8px;
   border-radius:6px;
-  background:#e8ffff;
+  background:#fff;
 }
+table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+th,td{ border:1px solid #e6e6e6; padding:10px; vertical-align:top; font-size:13px; }
+.record-line-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:6px; }
+.record-field label{ font-size:11px; font-weight: bold; color:#555; margin-bottom:4px }
+.actions button{ display:block; width:90px; margin:6px auto; }
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  table-layout:fixed;
-}
-
-th,td{
-  border:1px solid #e6e6e6;
-  padding:10px;
-  vertical-align:top;
-  font-size:13px;
-}
-
-.record-line-grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-  margin-bottom:6px;
-}
-
-.record-field label{
-  font-size:11px;
-  font-weight: bold;
-  color:#555;
-  margin-bottom:4px
-}
-
-.actions button{
-  display:block;
-  width:90px;
-  margin:6px auto;
-}
-
-.pagination{
-  display:flex;
-  gap:6px;
-  justify-content:center;
-  margin-top:12px;
-}
-.page-btn{
-  padding:6px 10px;
-  border:1px solid #ccc;
-  background:#74e8e8;
-  cursor:pointer;
-  border-radius:4px
-}
-.page-btn.active{background:#498787; color:#fff;}
+.pagination{ display:flex; gap:6px; justify-content:center; margin-top:12px; }
+.page-btn{ padding:6px 10px; border:1px solid #ccc; background:var(--primary); cursor:pointer; border-radius:4px }
+.page-btn.active{background:var(--secondary); color:#fff;}
 
 @media (max-width:1200px){
   .record-line-grid, form .record-line{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
-
 <body>
 
-<h2>Create New Blog Post</h2>
-<form id="add-form" autocomplete="off">
-  <div class="record-line">
-    <div class="record-field"><label>Title</label><input type="text" id="title" required></div>
-    <div class="record-field"><label>Slug</label><input type="text" id="slug" required></div>
-    <div class="record-field"><label>Category ID</label><input type="number" id="blog_category_id"></div>
-    <div class="record-field"><label>Author ID</label><input type="number" id="author_user_id"></div>
-  </div>
-  <div class="record-line">
-    <div class="record-field" style="grid-column: span 2;"><label>Featured Image URL</label><input type="text" id="featured_image_url"></div>
-    <div class="record-field">
-      <label>Status</label>
-      <select id="is_published">
-        <option value="true">Published</option>
-        <option value="false" selected>Draft</option>
-      </select>
+<div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('posts')">Blog Posts</button>
+    <button class="tab-btn" onclick="switchTab('categories')">Categories</button>
+    <button class="tab-btn" onclick="switchTab('analytics')">Analytics</button>
+</div>
+
+<div id="posts" class="tab-content active">
+    <h2>Create New Blog Post</h2>
+    <form id="add-form" autocomplete="off">
+      <div class="record-line">
+        <div class="record-field"><label>Title</label><input type="text" id="title" required></div>
+        <div class="record-field"><label>Slug</label><input type="text" id="slug" required></div>
+        <div class="record-field">
+            <label>Category</label>
+            <select id="blog_category_id_select" required></select>
+        </div>
+        <div class="record-field"><label>Author</label><input type="text" id="author_display" value="Current User" disabled></div>
+      </div>
+      <div class="record-line">
+        <div class="record-field" style="grid-column: span 2;"><label>Featured Image URL</label><input type="text" id="featured_image_url"></div>
+        <div class="record-field">
+          <label>Status</label>
+          <select id="is_published">
+            <option value="true">Published</option>
+            <option value="false" selected>Draft</option>
+          </select>
+        </div>
+        <div class="record-field"><label>Publish Date</label><input type="date" id="published_at"></div>
+      </div>
+      <div class="record-field" style="margin-bottom:10px;">
+        <label>Post Content</label>
+        <textarea id="content" style="min-height:100px"></textarea>
+      </div>
+      <button type="submit" style="width:160px;">Add Post</button>
+    </form>
+
+    <div style="margin: 20px 0; display: flex; gap: 10px;">
+        <input id="searchInput" placeholder="Search titles..." style="flex:1" />
     </div>
-    <div class="record-field"><label>Publish Date</label><input type="date" id="published_at"></div>
-  </div>
-  <div class="record-field" style="margin-bottom:10px;">
-    <label>Post Content</label>
-    <textarea id="content" style="min-height:100px"></textarea>
-  </div>
-  <button type="submit" style="width:160px;">Add Post</button>
-</form>
 
-<div class="controls">
-  <input id="searchInput" placeholder="Search titles, content..." />
-  <select id="pageSizeSelect">
-    <option value="10" selected>10 per page</option>
-    <option value="25">25 per page</option>
-  </select>
+    <div id="tableWrapper">
+        <table id="records-table">
+            <thead>
+                <tr><th style="width:40px">ID</th><th>Post Editor & Gallery</th><th style="width:110px">Actions</th></tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
 </div>
 
-<div id="tableWrapper">
-<table id="records-table">
-<thead>
-<tr>
-  <th style="width:40px">ID</th>
-  <th>Post Editor & Gallery</th>
-  <th style="width:110px">Actions</th>
-</tr>
-</thead>
-<tbody id="table-body"></tbody>
-</table>
+<div id="categories" class="tab-content">
+    <h2>Blog Categories</h2>
+    <div id="tableWrapper">
+        <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Slug</th><th>Status</th></tr></thead>
+            <tbody id="category-table-body"></tbody>
+        </table>
+    </div>
 </div>
 
-<div class="pagination" id="pagination"></div>
+<div id="analytics" class="tab-content">
+    <h2>Traffic Audit Log (Read-Only)</h2>
+    <div id="tableWrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Post ID</th>
+                    <th>IP Address</th>
+                    <th>Referrer</th>
+                    <th>User Agent</th>
+                </tr>
+            </thead>
+            <tbody id="analytics-table-body"></tbody>
+        </table>
+    </div>
+</div>
 
 <script>
+/* ---------- Configuration ---------- */
+const CURRENT_USER_ID = 1; // Replace with dynamic ID after login integration
 const apiBase = "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_post";
 const imgApi = "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_image";
+const catApi = "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_category";
+const analyticsApi = "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_analytics";
 
 let PAGE_SIZE = 10;
 let allRecords = [];
 let filteredRecords = [];
+let categories = [];
 let currentPage = 1;
 
-/* ---------- Core Data Fetching ---------- */
-async function fetchAllRecords(){
-  const res = await fetch(apiBase);
-  const data = await res.json();
-  allRecords = Array.isArray(data) ? data : data.items || [];
-  filteredRecords = [...allRecords];
-  renderPage();
-  renderPagination();
+/* ---------- Tab Switcher Logic ---------- */
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+    
+    if(tabId === 'categories') fetchCategories();
+    if(tabId === 'analytics') fetchAnalytics();
+    if(tabId === 'posts') fetchAllRecords();
 }
 
-/* ---------- Rendering Posts ---------- */
+/* ---------- Core Data Fetching ---------- */
+async function fetchCategories(){
+    const res = await fetch(catApi);
+    categories = await res.json();
+    renderCategoryDropdown();
+    renderCategoryTable();
+}
+
+async function fetchAnalytics(){
+    const res = await fetch(analyticsApi);
+    const data = await res.json();
+    const tbody = document.getElementById('analytics-table-body');
+    tbody.innerHTML = data.map(a => `
+        <tr>
+            <td>${new Date(a.created_at).toLocaleString()}</td>
+            <td>Post #${a.blog_post_id}</td>
+            <td>${a.ip_address}</td>
+            <td>${a.referrer || 'Direct'}</td>
+            <td style="font-size:10px">${a.user_agent}</td>
+        </tr>
+    `).join('');
+}
+
+async function fetchAllRecords(){
+    if(categories.length === 0) await fetchCategories();
+    const res = await fetch(apiBase);
+    const data = await res.json();
+    allRecords = Array.isArray(data) ? data : data.items || [];
+    filteredRecords = [...allRecords];
+    renderPage();
+    renderPagination();
+}
+
+/* ---------- Rendering Helpers ---------- */
+function renderCategoryDropdown(){
+    const select = document.getElementById('blog_category_id_select');
+    select.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+function renderCategoryTable(){
+    const tbody = document.getElementById('category-table-body');
+    tbody.innerHTML = categories.map(c => `
+        <tr>
+            <td>${c.id}</td>
+            <td><strong>${c.name}</strong></td>
+            <td>${c.slug}</td>
+            <td>${c.is_active ? '✅ Active' : '❌ Inactive'}</td>
+        </tr>
+    `).join('');
+}
+
 function renderPage(){
   const tbody = document.getElementById('table-body');
   tbody.innerHTML = '';
@@ -274,19 +328,23 @@ function renderPage(){
               <option value="false" ${!r.is_published?'selected':''}>Draft</option>
             </select>
           </div>
-          <div class="record-field"><label>Category ID</label><input type="number" data-field="blog_category_id" value="${r.blog_category_id||''}" disabled></div>
+          <div class="record-field">
+            <label>Category</label>
+            <select data-field="blog_category_id" disabled>
+                ${categories.map(c => `<option value="${c.id}" ${c.id === r.blog_category_id ? 'selected' : ''}>${c.name}</option>`).join('')}
+            </select>
+          </div>
         </div>
         <div class="record-field">
           <label>Content</label>
           <textarea data-field="content" disabled>${r.content||''}</textarea>
         </div>
-
         <div class="gallery-section">
-          <label>Multiple Images (Gallery)</label>
+          <label>Gallery</label>
           <div class="gallery-grid" id="${galleryId}">Loading...</div>
           <div style="margin-top:8px; display:flex; gap:5px;">
-             <input type="text" id="in-url-${r.id}" placeholder="Paste Image URL" style="flex:2">
-             <button onclick="addImage(${r.id})" style="background:#498787; color:white;">Add Image</button>
+             <input type="text" id="in-url-${r.id}" placeholder="Paste URL" style="flex:2">
+             <button onclick="addImage(${r.id})">Add</button>
           </div>
         </div>
       </td>
@@ -300,39 +358,7 @@ function renderPage(){
   }
 }
 
-/* ---------- Gallery Logic ---------- */
-async function loadGallery(postId, containerId) {
-  const res = await fetch(`${imgApi}?blog_post_id=${postId}`);
-  const images = await res.json();
-  const container = document.getElementById(containerId);
-  container.innerHTML = images.length ? '' : '<span style="color:#999">No images.</span>';
-
-  images.forEach(img => {
-    const div = document.createElement('div');
-    div.className = 'gallery-item';
-    div.innerHTML = `<img src="${img.image_url}"><button class="del-img" onclick="deleteImage(${img.id},${postId},'${containerId}')">×</button>`;
-    container.appendChild(div);
-  });
-}
-
-async function addImage(postId) {
-  const url = document.getElementById(`in-url-${postId}`).value;
-  if(!url) return;
-  await fetch(imgApi, {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ blog_post_id: postId, image_url: url, created_at: Date.now() })
-  });
-  document.getElementById(`in-url-${postId}`).value = '';
-  loadGallery(postId, `gallery-${postId}`);
-}
-
-async function deleteImage(imgId, postId, containerId) {
-  await fetch(`${imgApi}/${imgId}`, { method: 'DELETE' });
-  loadGallery(postId, containerId);
-}
-
-/* ---------- Post CRUD ---------- */
+/* ---------- CRUD Logic (Simplified for brevity) ---------- */
 async function editRow(btn, id){
   const tr = btn.closest('tr');
   const inputs = tr.querySelectorAll('input, select, textarea');
@@ -344,7 +370,8 @@ async function editRow(btn, id){
   const payload = {};
   inputs.forEach(i => {
     if(i.dataset.field){
-      payload[i.dataset.field] = (i.dataset.field==='is_published') ? (i.value==='true') : i.value;
+      payload[i.dataset.field] = (i.dataset.field==='is_published') ? (i.value==='true') : 
+                                 (i.dataset.field==='blog_category_id') ? parseInt(i.value) : i.value;
       i.disabled = true;
     }
   });
@@ -357,8 +384,37 @@ async function editRow(btn, id){
   fetchAllRecords();
 }
 
+async function addImage(postId) {
+  const url = document.getElementById(`in-url-${postId}`).value;
+  if(!url) return;
+  await fetch(imgApi, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ blog_post_id: postId, image_url: url, created_at: Date.now() })
+  });
+  loadGallery(postId, `gallery-${postId}`);
+}
+
+async function loadGallery(postId, containerId) {
+  const res = await fetch(`${imgApi}?blog_post_id=${postId}`);
+  const images = await res.json();
+  const container = document.getElementById(containerId);
+  container.innerHTML = images.length ? '' : '<span style="color:#999">No images.</span>';
+  images.forEach(img => {
+    const div = document.createElement('div');
+    div.className = 'gallery-item';
+    div.innerHTML = `<img src="${img.image_url}"><button class="del-img" onclick="deleteImage(${img.id},${postId},'${containerId}')">×</button>`;
+    container.appendChild(div);
+  });
+}
+
+async function deleteImage(imgId, postId, containerId) {
+  await fetch(`${imgApi}/${imgId}`, { method: 'DELETE' });
+  loadGallery(postId, containerId);
+}
+
 async function deleteRow(id){
-  if(confirm('Delete this post and all its data?')){
+  if(confirm('Delete post?')){
     await fetch(`${apiBase}/${id}`, {method:'DELETE'});
     fetchAllRecords();
   }
@@ -370,8 +426,8 @@ document.getElementById('add-form').onsubmit = async e => {
     title: title.value,
     slug: slug.value,
     content: content.value,
-    blog_category_id: parseInt(blog_category_id.value),
-    author_user_id: parseInt(author_user_id.value),
+    blog_category_id: parseInt(document.getElementById('blog_category_id_select').value),
+    author_user_id: CURRENT_USER_ID, // Automatically assigned
     is_published: is_published.value === 'true',
     featured_image_url: featured_image_url.value,
     published_at: Date.parse(published_at.value) || Date.now(),
@@ -386,7 +442,7 @@ document.getElementById('add-form').onsubmit = async e => {
   fetchAllRecords();
 };
 
-/* ---------- Search & Pagination ---------- */
+/* ---------- Pagination & Search ---------- */
 document.getElementById('searchInput').oninput = () => {
   const v = searchInput.value.toLowerCase();
   filteredRecords = allRecords.filter(r => (r.title||'').toLowerCase().includes(v));
@@ -405,6 +461,7 @@ function renderPagination(){
   }
 }
 
+// Initial Load
 fetchAllRecords();
 </script>
 </body>
