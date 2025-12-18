@@ -2,121 +2,38 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Blog Dashboard: Auto-Slug Integrated</title>
+<title>Blog Dashboard: Dynamic Author</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
 <style>
 :root{--max-width:1400px; --primary: #74e8e8; --secondary: #498787; --bg: #e8ffff; --input-bg: #ffeffb;}
-
-body{
-  font-family:Arial,Helvetica,sans-serif;
-  margin:16px auto;
-  padding:18px;
-  max-width:var(--max-width);
-  font-size:15px;
-  background-color:var(--bg);
-}
-
-/* ---------- Tab Switcher ---------- */
-.tab-nav {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    border-bottom: 2px solid var(--primary);
-    padding-bottom: 10px;
-}
-.tab-btn {
-    padding: 10px 20px;
-    background: #fff;
-    border: 1px solid var(--primary);
-    cursor: pointer;
-    border-radius: 4px;
-    font-weight: bold;
-}
-.tab-btn.active {
-    background: var(--primary);
-    color: #000;
-}
+body{ font-family:Arial,Helvetica,sans-serif; margin:16px auto; padding:18px; max-width:var(--max-width); font-size:15px; background-color:var(--bg); }
+.tab-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+.tab-btn { padding: 10px 20px; background: #fff; border: 1px solid var(--primary); cursor: pointer; border-radius: 4px; font-weight: bold; }
+.tab-btn.active { background: var(--primary); color: #000; }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
-
-/* ---------- Forms & Layout ---------- */
-form .record-line{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-  margin-bottom:10px
-}
+form .record-line{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:10px }
 .record-field{ display:flex; flex-direction:column }
-
-input,textarea,select{
-  padding:8px;
-  font-size:14px;
-  box-sizing:border-box;
-  background-color:var(--input-bg);
-  border:1px solid #ccc;
-  border-radius:4px;
-  width:100%;
-}
+input,textarea,select{ padding:8px; font-size:14px; box-sizing:border-box; background-color:var(--input-bg); border:1px solid #ccc; border-radius:4px; width:100%; }
 textarea{min-height:56px; resize:vertical}
-
-button{
-  padding:8px 12px;
-  font-size:14px;
-  background-color:var(--primary);
-  border:none;
-  border-radius:4px;
-  cursor:pointer;
-  transition:0.2s;
-}
+button{ padding:8px 12px; font-size:14px; background-color:var(--primary); border:none; border-radius:4px; cursor:pointer; transition:0.2s; }
 button:hover{ background-color:var(--secondary); color:#fff; }
-
-/* ---------- Gallery ---------- */
-.gallery-section {
-    background: #fff5fd;
-    padding: 12px;
-    margin-top: 10px;
-    border-radius: 6px;
-    border: 1px dashed var(--primary);
-}
+.gallery-section { background: #fff5fd; padding: 12px; margin-top: 10px; border-radius: 6px; border: 1px dashed var(--primary); }
 .gallery-grid { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; min-height: 50px; }
-.gallery-item {
-    width: 90px;
-    position: relative;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background: white;
-    padding: 2px;
-}
+.gallery-item { width: 90px; position: relative; border: 1px solid #ccc; border-radius: 4px; background: white; padding: 2px; }
 .gallery-item img { width: 100%; height: 60px; object-fit: cover; border-radius: 2px; }
-.del-img {
-    position: absolute; top: -8px; right: -8px; background: #ff4d4d;
-    color: white; border: none; border-radius: 50%; width: 20px; height: 20px;
-    cursor: pointer; font-size: 12px; font-weight: bold;
-}
-
-/* ---------- Tables ---------- */
-#tableWrapper{
-  max-height:700px;
-  overflow-y:auto;
-  border:1px solid #ddd;
-  padding:8px;
-  border-radius:6px;
-  background:#fff;
-}
+.del-img { position: absolute; top: -8px; right: -8px; background: #ff4d4d; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 12px; font-weight: bold; }
+#tableWrapper{ max-height:700px; overflow-y:auto; border:1px solid #ddd; padding:8px; border-radius:6px; background:#fff; }
 table{ width:100%; border-collapse:collapse; table-layout:fixed; }
 th,td{ border:1px solid #e6e6e6; padding:10px; vertical-align:top; font-size:13px; }
 .record-line-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:6px; }
 .record-field label{ font-size:11px; font-weight: bold; color:#555; margin-bottom:4px }
 .actions button{ display:block; width:100%; margin:6px auto; }
-
 .pagination{ display:flex; gap:6px; justify-content:center; margin-top:12px; }
 .page-btn{ padding:6px 10px; border:1px solid #ccc; background:var(--primary); cursor:pointer; border-radius:4px }
 .page-btn.active{background:var(--secondary); color:#fff;}
-
-@media (max-width:1200px){
-  .record-line-grid, form .record-line{grid-template-columns:repeat(2,1fr)}
-}
+@media (max-width:1200px){ .record-line-grid, form .record-line{grid-template-columns:repeat(2,1fr)} }
 </style>
 </head>
 <body>
@@ -140,7 +57,10 @@ th,td{ border:1px solid #e6e6e6; padding:10px; vertical-align:top; font-size:13p
             <label>Category</label>
             <select id="post_category_select" required></select>
         </div>
-        <div class="record-field"><label>Author</label><input type="text" value="Active User" disabled></div>
+        <div class="record-field">
+            <label>Author</label>
+            <input type="text" id="post_author_display" disabled>
+        </div>
       </div>
       <div class="record-line">
         <div class="record-field" style="grid-column: span 2;"><label>Featured Image URL</label><input type="text" id="post_f_img"></div>
@@ -195,7 +115,6 @@ th,td{ border:1px solid #e6e6e6; padding:10px; vertical-align:top; font-size:13p
         </div>
         <div class="record-field"><label>Description</label><textarea id="cat_desc" style="min-height:40px"></textarea></div>
     </form>
-
     <div id="tableWrapper">
         <table>
             <thead><tr><th style="width:50px">ID</th><th>Category Details</th><th style="width:120px">Actions</th></tr></thead>
@@ -217,16 +136,21 @@ th,td{ border:1px solid #e6e6e6; padding:10px; vertical-align:top; font-size:13p
 </div>
 
 <script>
-/* ---------- Helper: Slug Generator ---------- */
-function generateSlug(text) {
-    return text.toString().toLowerCase()
-        .replace(/\s+/g, '-')           
-        .replace(/[^\w\-]+/g, '')       
-        .replace(/\-\-+/g, '-')         
-        .replace(/^-+/, '')             
-        .replace(/-+$/, '');            
+/* ---------- Auth Check: Pull from Local Storage ---------- */
+// This assumes your sign-in process stores an object in localStorage
+// Example: localStorage.setItem('currentUser', JSON.stringify({name: "Dave Test 2", role: "Super Admin", id: 123}));
+const rawUserData = localStorage.getItem('currentUser'); 
+const currentUser = rawUserData ? JSON.parse(rawUserData) : { name: "Dave Test 2", role: "Super Admin", id: 1 };
+
+function setAuthorUI() {
+    const display = document.getElementById('post_author_display');
+    if(display) display.value = `${currentUser.name} (${currentUser.role})`;
 }
 
+/* ---------- Helper: Slug Generator ---------- */
+function generateSlug(text) {
+    return text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+}
 function autoSlug(sourceId, targetId) {
     const sourceVal = document.getElementById(sourceId).value;
     document.getElementById(targetId).value = generateSlug(sourceVal);
@@ -246,7 +170,6 @@ function switchTab(e, tabId) {
     document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     if(e) e.currentTarget.classList.add('active');
-    
     if(tabId === 'categories') fetchCategories();
     if(tabId === 'analytics') fetchAnalytics();
     if(tabId === 'posts') initPosts();
@@ -257,12 +180,7 @@ async function fetchCategories() {
     const res = await fetch(apiCat);
     categories = await res.json();
     renderCategoryTable();
-    renderCategoryDropdown();
-}
-
-function renderCategoryDropdown() {
-    const sel = document.getElementById('post_category_select');
-    sel.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    document.getElementById('post_category_select').innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 }
 
 function renderCategoryTable() {
@@ -273,7 +191,7 @@ function renderCategoryTable() {
             <td>
                 <div class="record-line-grid">
                     <div class="record-field"><label>Name</label><input data-cat="name" value="${c.name}" disabled></div>
-                    <div class="record-field"><label>Slug (URL)</label><input data-cat="slug" value="${c.slug}" disabled></div>
+                    <div class="record-field"><label>Slug</label><input data-cat="slug" value="${c.slug}" disabled></div>
                     <div class="record-field"><label>Status</label>
                         <select data-cat="is_active" disabled>
                             <option value="true" ${c.is_active?'selected':''}>Active</option>
@@ -287,31 +205,14 @@ function renderCategoryTable() {
                 <button onclick="editCat(this,${c.id})">Edit</button>
                 <button onclick="deleteCat(${c.id})" style="background:#ffb3b3">Delete</button>
             </td>
-        </tr>
-    `).join('');
+        </tr>`).join('');
 }
-
-document.getElementById('add-category-form').onsubmit = async (e) => {
-    e.preventDefault();
-    const payload = {
-        name: cat_name.value, 
-        slug: cat_slug_hidden.value, 
-        description: cat_desc.value, 
-        is_active: cat_is_active.value === 'true', 
-        created_at: Date.now()
-    };
-    await fetch(apiCat, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    e.target.reset();
-    fetchCategories();
-};
 
 async function editCat(btn, id) {
     const tr = btn.closest('tr');
     const inputs = tr.querySelectorAll('input, select, textarea');
     if(btn.textContent === 'Edit') { inputs.forEach(i => i.disabled = false); btn.textContent = 'Save'; return; }
-    
-    const payload = {};
-    let newName = "";
+    const payload = {}; let newName = "";
     inputs.forEach(i => {
         if(i.dataset.cat) {
             payload[i.dataset.cat] = (i.dataset.cat === 'is_active') ? (i.value === 'true') : i.value;
@@ -319,20 +220,19 @@ async function editCat(btn, id) {
             i.disabled = true;
         }
     });
-
     if(newName) payload.slug = generateSlug(newName);
-
     await fetch(`${apiCat}/${id}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    btn.textContent = 'Edit';
-    fetchCategories();
+    btn.textContent = 'Edit'; fetchCategories();
 }
 
-async function deleteCat(id) {
-    if(confirm('Delete category?')) {
-        await fetch(`${apiCat}/${id}`, { method: 'DELETE' });
-        fetchCategories();
-    }
-}
+document.getElementById('add-category-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const payload = { name: cat_name.value, slug: cat_slug_hidden.value, description: cat_desc.value, is_active: cat_is_active.value === 'true', created_at: Date.now() };
+    await fetch(apiCat, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    e.target.reset(); fetchCategories();
+};
+
+async function deleteCat(id) { if(confirm('Delete category?')) { await fetch(`${apiCat}/${id}`, { method: 'DELETE' }); fetchCategories(); } }
 
 /* ---------- Posts CRUD ---------- */
 async function initPosts() {
@@ -341,6 +241,7 @@ async function initPosts() {
     allPosts = await res.json();
     filteredPosts = [...allPosts];
     renderPosts();
+    setAuthorUI();
 }
 
 function renderPosts() {
@@ -348,7 +249,6 @@ function renderPosts() {
     tbody.innerHTML = '';
     let start = (currentPage-1) * PAGE_SIZE;
     let end = Math.min(start + PAGE_SIZE, filteredPosts.length);
-
     for(let i=start; i<end; i++) {
         const p = filteredPosts[i];
         const tr = document.createElement('tr');
@@ -357,7 +257,7 @@ function renderPosts() {
             <td>
                 <div class="record-line-grid">
                     <div class="record-field"><label>Title</label><input data-post="title" value="${p.title}" disabled></div>
-                    <div class="record-field"><label>Slug (URL)</label><input data-post="slug" value="${p.slug}" disabled></div>
+                    <div class="record-field"><label>Slug</label><input data-post="slug" value="${p.slug}" disabled></div>
                     <div class="record-field"><label>Status</label>
                         <select data-post="is_published" disabled>
                             <option value="true" ${p.is_published?'selected':''}>Published</option>
@@ -382,8 +282,7 @@ function renderPosts() {
             <td class="actions">
                 <button onclick="editPost(this,${p.id})">Edit Post</button>
                 <button onclick="deletePost(${p.id})" style="background:#ffb3b3">Delete</button>
-            </td>
-        `;
+            </td>`;
         tbody.appendChild(tr);
         loadGallery(p.id);
     }
@@ -394,9 +293,7 @@ async function editPost(btn, id) {
     const tr = btn.closest('tr');
     const inputs = tr.querySelectorAll('input, select, textarea');
     if(btn.textContent === 'Edit Post') { inputs.forEach(i => i.disabled = false); btn.textContent = 'Save'; return; }
-
-    const payload = {};
-    let newTitle = "";
+    const payload = {}; let newTitle = "";
     inputs.forEach(i => {
         if(i.dataset.post) {
             let val = i.value;
@@ -407,12 +304,9 @@ async function editPost(btn, id) {
             i.disabled = true;
         }
     });
-
     if(newTitle) payload.slug = generateSlug(newTitle);
-
     await fetch(`${apiPost}/${id}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    btn.textContent = 'Edit Post';
-    initPosts();
+    btn.textContent = 'Edit Post'; initPosts();
 }
 
 document.getElementById('add-post-form').onsubmit = async (e) => {
@@ -422,7 +316,12 @@ document.getElementById('add-post-form').onsubmit = async (e) => {
         slug: post_slug_hidden.value, 
         content: post_content.value,
         blog_category_id: parseInt(post_category_select.value),
-        author_user_id: 1,
+        
+        // DYNAMIC AUTHOR INFO
+        author_name: currentUser.name,
+        author_role: currentUser.role,
+        author_user_id: currentUser.id,
+        
         is_published: post_status.value === 'true',
         featured_image_url: post_f_img.value,
         published_at: Date.parse(post_date.value) || Date.now(),
@@ -433,9 +332,7 @@ document.getElementById('add-post-form').onsubmit = async (e) => {
     initPosts();
 };
 
-async function deletePost(id) {
-    if(confirm('Delete post?')) { await fetch(`${apiPost}/${id}`, { method: 'DELETE' }); initPosts(); }
-}
+async function deletePost(id) { if(confirm('Delete post?')) { await fetch(`${apiPost}/${id}`, { method: 'DELETE' }); initPosts(); } }
 
 async function loadGallery(postId) {
     const res = await fetch(`${apiImg}?blog_post_id=${postId}`);
@@ -456,10 +353,8 @@ async function addImg(postId) {
     document.getElementById(`img-url-${postId}`).value = '';
     loadGallery(postId);
 }
-async function deleteImg(imgId, postId) {
-    await fetch(`${apiImg}/${imgId}`, { method: 'DELETE' });
-    loadGallery(postId);
-}
+async function deleteImg(imgId, postId) { await fetch(`${apiImg}/${imgId}`, { method: 'DELETE' }); loadGallery(postId); }
+
 async function fetchAnalytics() {
     const res = await fetch(apiAnalytics);
     const data = await res.json();
@@ -470,8 +365,7 @@ async function fetchAnalytics() {
             <td>${a.ip_address}</td>
             <td>${a.referrer || 'None'}</td>
             <td><small>${a.user_agent.substring(0,30)}...</small></td>
-        </tr>
-    `).join('');
+        </tr>`).join('');
 }
 function handleSearch() {
     const v = document.getElementById('searchInput').value.toLowerCase();
@@ -479,8 +373,7 @@ function handleSearch() {
     currentPage = 1; renderPosts();
 }
 function renderPagination() {
-    const p = document.getElementById('pagination');
-    p.innerHTML = '';
+    const p = document.getElementById('pagination'); p.innerHTML = '';
     const total = Math.ceil(filteredPosts.length / PAGE_SIZE);
     for(let i=1; i<=total; i++) {
         const b = document.createElement('button');
