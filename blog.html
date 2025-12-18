@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Blog Dashboard: Auto-Slug & Management</title>
+<title>Blog Dashboard: Auto-Slug Integrated</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
 <style>
@@ -122,9 +122,9 @@ th,td{ border:1px solid #e6e6e6; padding:10px; vertical-align:top; font-size:13p
 <body>
 
 <div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('posts')">Blog Posts</button>
-    <button class="tab-btn" onclick="switchTab('categories')">Categories</button>
-    <button class="tab-btn" onclick="switchTab('analytics')">Analytics</button>
+    <button class="tab-btn active" onclick="switchTab(event, 'posts')">Blog Posts</button>
+    <button class="tab-btn" onclick="switchTab(event, 'categories')">Categories</button>
+    <button class="tab-btn" onclick="switchTab(event, 'analytics')">Analytics</button>
 </div>
 
 <div id="posts" class="tab-content active">
@@ -220,11 +220,11 @@ th,td{ border:1px solid #e6e6e6; padding:10px; vertical-align:top; font-size:13p
 /* ---------- Helper: Slug Generator ---------- */
 function generateSlug(text) {
     return text.toString().toLowerCase()
-        .replace(/\s+/g, '-')           // Replace spaces with -
-        .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-        .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-        .replace(/^-+/, '')             // Trim - from start
-        .replace(/-+$/, '');            // Trim - from end
+        .replace(/\s+/g, '-')           
+        .replace(/[^\w\-]+/g, '')       
+        .replace(/\-\-+/g, '-')         
+        .replace(/^-+/, '')             
+        .replace(/-+$/, '');            
 }
 
 function autoSlug(sourceId, targetId) {
@@ -233,7 +233,6 @@ function autoSlug(sourceId, targetId) {
 }
 
 /* ---------- Config & State ---------- */
-const CURRENT_USER_ID = 1; 
 const apiPost = "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_post";
 const apiImg = "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_image";
 const apiCat = "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_category";
@@ -243,10 +242,10 @@ let PAGE_SIZE = 10;
 let allPosts = [], filteredPosts = [], categories = [], currentPage = 1;
 
 /* ---------- Navigation ---------- */
-function switchTab(tabId) {
+function switchTab(e, tabId) {
     document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
-    if(event) event.currentTarget.classList.add('active');
+    if(e) e.currentTarget.classList.add('active');
     
     if(tabId === 'categories') fetchCategories();
     if(tabId === 'analytics') fetchAnalytics();
@@ -423,7 +422,7 @@ document.getElementById('add-post-form').onsubmit = async (e) => {
         slug: post_slug_hidden.value, 
         content: post_content.value,
         blog_category_id: parseInt(post_category_select.value),
-        author_user_id: CURRENT_USER_ID,
+        author_user_id: 1,
         is_published: post_status.value === 'true',
         featured_image_url: post_f_img.value,
         published_at: Date.parse(post_date.value) || Date.now(),
@@ -438,7 +437,6 @@ async function deletePost(id) {
     if(confirm('Delete post?')) { await fetch(`${apiPost}/${id}`, { method: 'DELETE' }); initPosts(); }
 }
 
-/* ---------- Gallery & Analytics ---------- */
 async function loadGallery(postId) {
     const res = await fetch(`${apiImg}?blog_post_id=${postId}`);
     const imgs = await res.json();
