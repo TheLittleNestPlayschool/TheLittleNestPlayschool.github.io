@@ -74,24 +74,26 @@
     };
 
     window.loadTeacherList = async () => {
-        const res = await fetch(T_API + '?t=' + Date.now());
-        const data = await res.json();
-        document.getElementById('teacher-container').innerHTML = data.map(t => `
-            <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-                <div style="display:flex; justify-content:space-between; border-bottom:2px solid #00d1b2; padding-bottom:10px; margin-bottom:10px;">
-                    <h2 style="margin:0;">${t.first_name} ${t.last_name}</h2>
-                    <span style="font-weight:bold; color:${t.is_active ? 'green' : 'red'};">${t.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; font-size:0.9rem;">
-                    <div><b>Contact:</b><br>${t.email || 'N/A'}<br>${t.phone || 'N/A'}</div>
-                    <div><b>Organization:</b><br>Franchise: ${fMap[t.franchise_id] || t.franchise_id}<br>Type: ${rMap[t.admin_type_id] || t.admin_type_id}</div>
-                    <div><b>Employment:</b><br>Pay: ₱${t.daily_pay}<br>Start: ${t.start_date || 'N/A'}</div>
-                </div>
-                <div style="text-align:right; margin-top:10px;">
-                    <button onclick="editTeacher(${t.id})" style="color:blue; border:1px solid blue; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">EDIT</button>
-                    <button onclick="deleteTeacher(${t.id})" style="color:red; border:1px solid red; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">DELETE</button>
-                </div>
-            </div>`).join('');
+        try {
+            const res = await fetch(T_API + '?t=' + Date.now());
+            const data = await res.json();
+            document.getElementById('teacher-container').innerHTML = data.map(t => `
+                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                    <div style="display:flex; justify-content:space-between; border-bottom:2px solid #00d1b2; padding-bottom:10px; margin-bottom:10px;">
+                        <h2 style="margin:0;">${t.first_name} ${t.last_name}</h2>
+                        <span style="font-weight:bold; color:${t.is_active ? 'green' : 'red'};">${t.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; font-size:0.9rem;">
+                        <div><b>Contact:</b><br>${t.email || 'N/A'}<br>${t.phone || 'N/A'}</div>
+                        <div><b>Organization:</b><br>Franchise: ${fMap[t.franchise_id] || t.franchise_id}<br>Type: ${rMap[t.admin_type_id] || t.admin_type_id}</div>
+                        <div><b>Employment:</b><br>Pay: ₱${t.daily_pay}<br>Start: ${t.start_date || 'N/A'}</div>
+                    </div>
+                    <div style="text-align:right; margin-top:10px;">
+                        <button onclick="editTeacher(${t.id})" style="color:blue; border:1px solid blue; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">EDIT</button>
+                        <button onclick="deleteTeacher(${t.id})" style="color:red; border:1px solid red; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">DELETE</button>
+                    </div>
+                </div>`).join('');
+        } catch(e) { document.getElementById('teacher-container').innerHTML = '<p>Error loading data.</p>'; }
     };
 
     window.openNewTeacherModal = () => {
@@ -106,9 +108,9 @@
         const start = document.getElementById('t-start_date').value;
         const end = document.getElementById('t-last_day_of_work').value;
         
-        // CRITICAL FIX: Convert empty date strings to NULL
-        const finalStart = start === "" ? null : start;
-        const finalEnd = end === "" ? null : end;
+        // CRITICAL FIX: Send NULL if date is empty
+        const finalStart = start ? start : null;
+        const finalEnd = end ? end : null;
 
         const payload = {
             first_name: document.getElementById('t-first_name').value,
@@ -117,8 +119,8 @@
             phone: document.getElementById('t-phone').value,
             tin_number: document.getElementById('t-tin_number').value,
             daily_pay: parseFloat(document.getElementById('t-daily_pay').value) || 0,
-            franchise_id: parseInt(document.getElementById('t-franchise_id').value) || 0,
-            admin_type_id: parseInt(document.getElementById('t-admin_type_id').value) || 0,
+            franchise_id: parseInt(document.getElementById('t-franchise_id').value),
+            admin_type_id: parseInt(document.getElementById('t-admin_type_id').value),
             user_id: parseInt(document.getElementById('t-user_id').value) || null,
             start_date: finalStart,
             last_day_of_work: finalEnd,
