@@ -4,7 +4,7 @@
 </div>
 
 <div id="teacher-container" style="display: flex; flex-direction: column; gap: 20px;">
-    <div style="text-align:center; padding:50px; border:1px solid #eee;">Connecting to Database...</div>
+    <div style="text-align:center; padding:50px; border:1px solid #eee;">Loading Data...</div>
 </div>
 
 <div id="modal-teacher" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
@@ -13,8 +13,9 @@
         <div style="padding:25px; overflow-y:auto; flex-grow:1; display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">
             <input type="hidden" id="t-id">
             
-            <div><label>First Name</label><input type="text" id="t-first_name" style="width:100%; padding:8px;"></div>
-            <div><label>Last Name</label><input type="text" id="t-last_name" style="width:100%; padding:8px;"></div>
+            <div><label style="font-weight:bold; color:red;">1. First Name</label><input type="text" id="t-first_name" style="width:100%; padding:8px;"></div>
+            <div><label style="font-weight:bold; color:red;">1. Last Name</label><input type="text" id="t-last_name" style="width:100%; padding:8px;"></div>
+            
             <div><label>Email</label><input type="email" id="t-email" style="width:100%; padding:8px;"></div>
             <div><label>Phone</label><input type="text" id="t-phone" style="width:100%; padding:8px;"></div>
             <div><label>TIN Number</label><input type="text" id="t-tin_number" style="width:100%; padding:8px;"></div>
@@ -49,7 +50,7 @@
     let fMap = {};
     let rMap = {};
 
-    // Helper to safely get array from Xano (handles {items:[]} vs [])
+    // Handles {items:[]} or [] from Xano
     const safeFetch = async (url) => {
         const res = await fetch(url);
         const json = await res.json();
@@ -58,24 +59,22 @@
 
     window.initTeacherModule = async () => {
         try {
-            // 1. Fetch Lookup Tables
             const [fData, aData] = await Promise.all([safeFetch(F_API), safeFetch(A_API)]);
 
-            // 2. Build Maps
-            // Mapping Franchise Name using 'name' field
+            // MAPPING FRANCHISE
             document.getElementById('t-franchise_id').innerHTML = '<option value="">Select...</option>' + fData.map(f => {
                 fMap[f.id] = f.name; 
                 return `<option value="${f.id}">${f.name}</option>`;
             }).join('');
 
-            // Mapping Admin Type using 'Admin_Type' field (EXACT SCHEMA MATCH)
+            // MAPPING ADMIN TYPE (Using correct field: Admin_Type)
             document.getElementById('t-admin_type_id').innerHTML = '<option value="">Select...</option>' + aData.map(a => {
-                const typeName = a.Admin_Type || 'Role ' + a.id; 
-                rMap[a.id] = typeName;
-                return `<option value="${a.id}">${typeName}</option>`;
+                // Use Admin_Type exactly as defined in schema
+                const name = a.Admin_Type || 'Role ' + a.id;
+                rMap[a.id] = name;
+                return `<option value="${a.id}">${name}</option>`;
             }).join('');
 
-            // 3. Load Main Data
             loadTeacherList();
         } catch(e) { console.error("API Error", e); }
     };
@@ -84,14 +83,14 @@
         try {
             const data = await safeFetch(T_API + '?t=' + Date.now());
             document.getElementById('teacher-container').innerHTML = data.map(t => {
-                // Resolve Names using Maps (Parse IDs to int to match map keys)
-                const fName = fMap[parseInt(t.franchise_id)] || t.franchise_id || 'N/A';
-                const rName = rMap[parseInt(t.admin_type_id)] || t.admin_type_id || 'N/A';
+                // Ensure IDs match keys
+                const fName = fMap[t.franchise_id] || t.franchise_id;
+                const rName = rMap[t.admin_type_id] || t.admin_type_id;
 
                 return `
                 <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
                     <div style="display:flex; justify-content:space-between; border-bottom:2px solid #00d1b2; padding-bottom:10px; margin-bottom:10px;">
-                        <h2 style="margin:0;">${t.first_name || ''} ${t.last_name || ''}</h2>
+                        <h2 style="margin:0;">${t.first_name} ${t.last_name}</h2>
                         <span style="font-weight:bold; color:${t.is_active ? 'green' : 'red'};">${t.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
                     </div>
                     <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; font-size:0.9rem;">
@@ -120,7 +119,7 @@
         const start = document.getElementById('t-start_date').value;
         const end = document.getElementById('t-last_day_of_work').value;
         
-        // LOGIC FIX: Convert empty dates to NULL
+        // FIX: Send null if empty
         const finalStart = start === "" ? null : start;
         const finalEnd = end === "" ? null : end;
 
