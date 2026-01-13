@@ -1,0 +1,48 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <h1>Franchise Manager</h1>
+    <button onclick="openNewFranchiseModal()" class="btn btn-save">+ NEW FRANCHISE</button>
+</div>
+
+<table class="admin-table">
+    <thead>
+        <tr>
+            <th>NAME/TAX</th>
+            <th>CONTACT/OWNERS</th>
+            <th>OPERATIONS</th>
+            <th>ROY</th>
+            <th>STATUS</th>
+            <th>ACTIONS</th>
+        </tr>
+    </thead>
+    <tbody id="f-body">
+        <tr><td colspan="6" style="text-align:center;">Loading...</td></tr>
+    </tbody>
+</table>
+
+<script>
+    // Module-specific logic
+    const XANO_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
+
+    async function loadFranchiseData() {
+        try {
+            const res = await fetch(XANO_URL);
+            const data = await res.json();
+            document.getElementById('f-body').innerHTML = data.map(f => `
+                <tr>
+                    <td><strong>${f.name}</strong><br><small>${f.business_tax_id || ''}</small></td>
+                    <td>E: ${f.franchise_email || 'N/A'}<br>O1: ${f.owner_1_name || 'N/A'}</td>
+                    <td>Date: ${f.opening_date ? new Date(f.opening_date).toLocaleDateString() : 'N/A'}<br>Mgr: ${f.manager_user_id || '0'}</td>
+                    <td>${f.royalty_rate || '0'}</td>
+                    <td style="text-transform:uppercase; font-weight:bold; color:${f.status === 'active' ? 'green' : 'orange'}">${f.status}</td>
+                    <td>
+                        <a href="javascript:void(0)" onclick="doEdit(${f.id})" style="color:blue; font-weight:bold;">Edit</a> | 
+                        <a href="javascript:void(0)" onclick="doDelete(${f.id})" style="color:red; font-weight:bold;">Del</a>
+                    </td>
+                </tr>
+            `).join('');
+        } catch(e) { console.error(e); }
+    }
+
+    // Initialize the load
+    loadFranchiseData();
+</script>
