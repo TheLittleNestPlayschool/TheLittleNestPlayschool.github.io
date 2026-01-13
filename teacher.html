@@ -1,65 +1,65 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <h1 style="margin:0; color:#1a1a1a;">Teacher Management</h1>
-    <button onclick="openNewTeacherModal()" style="background:#00d1b2; color:white; border:none; padding:12px 24px; cursor:pointer; font-weight:bold; border-radius:4px; transition:0.3s;">+ NEW TEACHER</button>
+    <button onclick="openNewTeacherModal()" style="background:#00d1b2; color:white; border:none; padding:12px 24px; cursor:pointer; font-weight:bold; border-radius:4px;">+ NEW TEACHER</button>
 </div>
 
 <div style="overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #eee;">
-    <table class="admin-table" style="width: 100%; border-collapse: collapse; min-width: 1100px;">
+    <table class="admin-table" style="width: 100%; border-collapse: collapse; min-width: 1000px;">
         <thead>
             <tr style="background: #f8f9fa; border-bottom: 2px solid #eee;">
-                <th style="padding: 12px; text-align: left; width: 50px;">ID</th>
                 <th style="padding: 12px; text-align: left;">NAME</th>
-                <th style="padding: 12px; text-align: left;">CONTACT</th>
+                <th style="padding: 12px; text-align: left;">EMAIL</th>
+                <th style="padding: 12px; text-align: left;">PHONE</th>
                 <th style="padding: 12px; text-align: left;">SPECIALIZATION</th>
                 <th style="padding: 12px; text-align: left;">HIRE DATE</th>
                 <th style="padding: 12px; text-align: left;">RATE</th>
                 <th style="padding: 12px; text-align: left;">STATUS</th>
-                <th style="padding: 12px; text-align: left;">CREATED</th>
+                <th style="padding: 12px; text-align: left;">NOTES</th>
                 <th style="padding: 12px; text-align: center;">ACTIONS</th>
             </tr>
         </thead>
         <tbody id="teacher-body">
-            <tr><td colspan="9" style="text-align:center; padding:40px;">Fetching 10-field records from Xano...</td></tr>
+            <tr><td colspan="9" style="text-align:center; padding:40px;">Loading teacher records...</td></tr>
         </tbody>
     </table>
 </div>
 
 <div id="modal-teacher" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:center;">
-    <div style="background:white; width:750px; border-radius:8px; overflow:hidden; box-shadow: 0 15px-50px rgba(0,0,0,0.6); display:flex; flex-direction:column; max-height:90vh;">
+    <div style="background:white; width:750px; border-radius:8px; overflow:hidden; box-shadow: 0 15px 50px rgba(0,0,0,0.6); display:flex; flex-direction:column; max-height:90vh;">
         <div style="padding:20px; border-bottom:1px solid #eee; background:#fcfcfc;"><h3 id="t-modal-title" style="margin:0;">Teacher Profile</h3></div>
         
         <div style="padding:25px; overflow-y:auto; flex-grow:1; display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
             <input type="hidden" id="t-id">
             
             <div style="grid-column: span 2;">
-                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Full Name (name)</label>
+                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Full Name</label>
                 <input type="text" id="t-name" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;">
             </div>
 
             <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Email (email)</label>
+                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Email</label>
                 <input type="email" id="t-email" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;">
             </div>
             <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Phone (phone)</label>
+                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Phone</label>
                 <input type="text" id="t-phone" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;">
             </div>
 
             <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Specialization (specialization)</label>
+                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Specialization</label>
                 <input type="text" id="t-specialization" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;">
             </div>
             <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Hire Date (hire_date)</label>
+                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Hire Date</label>
                 <input type="date" id="t-hire_date" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;">
             </div>
 
             <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Hourly Rate ($) (hourly_rate)</label>
+                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Hourly Rate ($)</label>
                 <input type="number" id="t-hourly_rate" step="0.01" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;">
             </div>
             <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Status (status)</label>
+                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Status</label>
                 <select id="t-status" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;">
                     <option value="active">Active</option>
                     <option value="on_leave">On Leave</option>
@@ -68,7 +68,7 @@
             </div>
 
             <div style="grid-column: span 2;">
-                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Internal Notes (notes)</label>
+                <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:6px;">Internal Notes</label>
                 <textarea id="t-notes" style="width:100%; height:100px; padding:10px; border:1px solid #ccc; border-radius:4px; font-family:inherit;"></textarea>
             </div>
         </div>
@@ -89,26 +89,23 @@
             const res = await fetch(TEACHER_URL);
             const data = await res.json();
             
-            document.getElementById('teacher-body').innerHTML = data.map(t => {
-                const createdDate = t.created_at ? new Date(t.created_at).toLocaleDateString() : 'N/A';
-                return `
+            document.getElementById('teacher-body').innerHTML = data.map(t => `
                 <tr style="border-bottom:1px solid #eee;">
-                    <td style="padding:12px;">${t.id}</td>
                     <td style="padding:12px;"><strong>${t.name || 'Unnamed'}</strong></td>
-                    <td style="padding:12px;">${t.email || ''}<br><small style="color:#666;">${t.phone || ''}</small></td>
+                    <td style="padding:12px;">${t.email || 'N/A'}</td>
+                    <td style="padding:12px;">${t.phone || 'N/A'}</td>
                     <td style="padding:12px;">${t.specialization || 'General'}</td>
                     <td style="padding:12px;">${t.hire_date || 'N/A'}</td>
                     <td style="padding:12px;">$${t.hourly_rate || '0.00'}</td>
                     <td style="padding:12px;"><span style="color:${t.status === 'active' ? 'green' : 'orange'}; font-weight:bold;">${t.status || 'active'}</span></td>
-                    <td style="padding:12px; color:#888; font-size:0.8rem;">${createdDate}</td>
+                    <td style="padding:12px; font-size:0.85rem; color:#666; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${t.notes || ''}</td>
                     <td style="padding:12px; text-align:center;">
                         <a href="javascript:void(0)" onclick="editTeacher(${t.id})" style="color:blue; text-decoration:none; font-weight:bold; margin-right:10px;">Edit</a>
                         <a href="javascript:void(0)" onclick="deleteTeacher(${t.id})" style="color:red; text-decoration:none; font-weight:bold;">Del</a>
                     </td>
-                </tr>`;
-            }).join('');
+                </tr>`).join('');
         } catch(e) { 
-            document.getElementById('teacher-body').innerHTML = '<tr><td colspan="9" style="text-align:center; color:red; padding:20px;">Error connecting to 10-field API.</td></tr>';
+            document.getElementById('teacher-body').innerHTML = '<tr><td colspan="9" style="text-align:center; color:red; padding:20px;">Error connecting to Xano.</td></tr>';
         }
     };
 
@@ -159,7 +156,7 @@
             document.getElementById('modal-teacher').style.display = 'none';
             loadTeachers();
         } else {
-            alert("Error saving record to Xano. Verify your field permissions.");
+            alert("Error saving record to Xano.");
         }
     };
 
