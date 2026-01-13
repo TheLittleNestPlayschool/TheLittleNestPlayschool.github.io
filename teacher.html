@@ -4,7 +4,7 @@
 </div>
 
 <div id="teacher-container" style="display: flex; flex-direction: column; gap: 20px;">
-    <div style="text-align:center; padding:50px; border:1px solid #eee;">Connecting to API Groups...</div>
+    <div style="text-align:center; padding:50px;">Initialising Data...</div>
 </div>
 
 <div id="modal-teacher" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
@@ -12,7 +12,6 @@
         <div style="padding:20px; border-bottom:1px solid #eee;"><h3>Teacher Profile</h3></div>
         <div style="padding:25px; overflow-y:auto; flex-grow:1; display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">
             <input type="hidden" id="t-id">
-            
             <div><label>First Name</label><input type="text" id="t-first_name" style="width:100%; padding:8px;"></div>
             <div><label>Last Name</label><input type="text" id="t-last_name" style="width:100%; padding:8px;"></div>
             <div><label>Email</label><input type="email" id="t-email" style="width:100%; padding:8px;"></div>
@@ -42,48 +41,58 @@
 
 <script>
 (function() {
-    // DISTINCT API GROUPS - AS PROVIDED BY YOU
-    const TEACHER_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher';
-    const FRANCHISE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
-    const ADMIN_TYPE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:UpJO_5WB/admin_type';
+    const T_API = 'https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher';
+    const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
+    const A_API = 'https://x8ki-letl-twmt.n7.xano.io/api:UpJO_5WB/admin_type';
 
     let fMap = {};
     let rMap = {};
 
+    // Helper to safely get array from Xano (handles {items:[]} vs [])
+    const safeFetch = async (url) => {
+        const res = await fetch(url);
+        const json = await res.json();
+        return Array.isArray(json) ? json : (json.items || []);
+    };
+
     window.initTeacherModule = async () => {
         try {
-            // 1. FETCH FROM DISTINCT GROUPS
-            const [fRes, aRes] = await Promise.all([fetch(FRANCHISE_URL), fetch(ADMIN_TYPE_URL)]);
-            
-            // 2. PARSE DATA
-            const fData = await fRes.json();
-            const aData = await aRes.json();
+            // 1. Fetch Lookup Tables
+            const [fData, aData] = await Promise.all([safeFetch(F_API), safeFetch(A_API)]);
 
-            // 3. BUILD DROPDOWNS & MAPS
+            // 2. Build Maps and Populate Selects
             document.getElementById('t-franchise_id').innerHTML = '<option value="">Select...</option>' + fData.map(f => {
-                fMap[f.id] = f.name; // Map ID to Name
+                fMap[f.id] = f.name; // Map for list view
                 return `<option value="${f.id}">${f.name}</option>`;
             }).join('');
 
             document.getElementById('t-admin_type_id').innerHTML = '<option value="">Select...</option>' + aData.map(a => {
-                const name = a.name || a.role_name || 'Role ' + a.id;
-                rMap[a.id] = name; // Map ID to Name
+                // Handle different potential name fields
+                const name = a.role_name || a.name || a.type_name || 'Role ' + a.id;
+                rMap[a.id] = name; // Map for list view
                 return `<option value="${a.id}">${name}</option>`;
             }).join('');
 
-            // 4. LOAD TEACHERS
+            // 3. Load Main Data
             loadTeacherList();
-        } catch(e) { console.error("API Error", e); }
+        } catch(e) { 
+            console.error("API Error", e); 
+            document.getElementById('teacher-container').innerHTML = '<p>Error loading lookup data. Check console.</p>';
+        }
     };
 
     window.loadTeacherList = async () => {
         try {
-            const res = await fetch(TEACHER_URL + '?t=' + Date.now());
-            const data = await res.json();
+            const data = await safeFetch(T_API + '?t=' + Date.now());
+            
             document.getElementById('teacher-container').innerHTML = data.map(t => {
-                // Resolve Names using Maps
-                const fName = fMap[t.franchise_id] || t.franchise_id || 'N/A';
-                const rName = rMap[t.admin_type_id] || t.admin_type_id || 'N/A';
+                // Ensure IDs are integers for map lookup
+                const fId = parseInt(t.franchise_id);
+                const rId = parseInt(t.admin_type_id);
+                
+                // Get name from map, fallback to ID if missing
+                const fName = fMap[fId] || t.franchise_id || 'Unknown ID';
+                const rName = rMap[rId] || t.admin_type_id || 'Unknown ID';
 
                 return `
                 <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
@@ -117,9 +126,8 @@
         const start = document.getElementById('t-start_date').value;
         const end = document.getElementById('t-last_day_of_work').value;
         
-        // CRITICAL FIX: Send NULL if date is empty string
-        const finalStart = start === "" ? null : start;
-        const finalEnd = end === "" ? null : end;
+        // SAFE DATE CONVERSION
+        const safeDate = (val) => (val && val !== "") ? val : null;
 
         const payload = {
             first_name: document.getElementById('t-first_name').value,
@@ -128,11 +136,11 @@
             phone: document.getElementById('t-phone').value,
             tin_number: document.getElementById('t-tin_number').value,
             daily_pay: parseFloat(document.getElementById('t-daily_pay').value) || 0,
-            franchise_id: parseInt(document.getElementById('t-franchise_id').value),
-            admin_type_id: parseInt(document.getElementById('t-admin_type_id').value),
+            franchise_id: parseInt(document.getElementById('t-franchise_id').value) || 0,
+            admin_type_id: parseInt(document.getElementById('t-admin_type_id').value) || 0,
             user_id: parseInt(document.getElementById('t-user_id').value) || null,
-            start_date: finalStart,
-            last_day_of_work: finalEnd,
+            start_date: safeDate(start),
+            last_day_of_work: safeDate(end),
             is_active: document.getElementById('t-is_active').value === "true",
             address: document.getElementById('t-address').value,
             city: document.getElementById('t-city').value,
@@ -140,7 +148,7 @@
             inactivation_reason_comments: document.getElementById('t-notes').value
         };
 
-        const res = await fetch(id ? `${TEACHER_URL}/${id}` : TEACHER_URL, {
+        const res = await fetch(id ? `${T_API}/${id}` : T_API, {
             method: id ? 'PATCH' : 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
@@ -151,12 +159,12 @@
             loadTeacherList();
         } else {
             const err = await res.json();
-            alert("Save Failed: " + (err.message || "Unknown Error"));
+            alert("Save Failed: " + (err.message || "Unknown error."));
         }
     };
 
     window.editTeacher = async (id) => {
-        const res = await fetch(`${TEACHER_URL}/${id}`);
+        const res = await fetch(`${T_API}/${id}`);
         const t = await res.json();
         document.getElementById('t-id').value = t.id;
         document.getElementById('t-first_name').value = t.first_name || "";
@@ -178,7 +186,7 @@
         document.getElementById('modal-teacher').style.display = 'flex';
     };
 
-    window.deleteTeacher = async (id) => { if(confirm("Delete record?")) { await fetch(`${TEACHER_URL}/${id}`, {method:'DELETE'}); loadTeacherList(); } };
+    window.deleteTeacher = async (id) => { if(confirm("Delete record?")) { await fetch(`${T_API}/${id}`, {method:'DELETE'}); loadTeacherList(); } };
     
     initTeacherModule();
 })();
