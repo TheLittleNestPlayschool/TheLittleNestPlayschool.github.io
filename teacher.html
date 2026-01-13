@@ -51,54 +51,47 @@
 
     window.initTeacherModule = async () => {
         try {
-            // STEP 1: FETCH LOOKUPS WITH CACHE BUSTING
-            const [fRes, aRes] = await Promise.all([
-                fetch(F_API + '?t=' + Date.now()), 
-                fetch(A_API + '?t=' + Date.now())
-            ]);
+            // 1. Fetch Lookup Tables
+            const [fRes, aRes] = await Promise.all([fetch(F_API), fetch(A_API)]);
             const fData = await fRes.json();
             const aData = await aRes.json();
 
-            // STEP 2: BUILD MAPS AND SELECTS
-            const fSelect = document.getElementById('t-franchise_id');
-            fSelect.innerHTML = '<option value="">Select...</option>' + fData.map(f => {
-                fMap[f.id] = f.name;
+            // 2. Build Maps and Populate Selects
+            document.getElementById('t-franchise_id').innerHTML = '<option value="">Select...</option>' + fData.map(f => {
+                fMap[f.id] = f.name; // ID Map for list view
                 return `<option value="${f.id}">${f.name}</option>`;
             }).join('');
 
-            const aSelect = document.getElementById('t-admin_type_id');
-            aSelect.innerHTML = '<option value="">Select...</option>' + aData.map(a => {
+            document.getElementById('t-admin_type_id').innerHTML = '<option value="">Select...</option>' + aData.map(a => {
                 const name = a.role_name || a.name || 'Role ' + a.id;
-                rMap[a.id] = name;
+                rMap[a.id] = name; // ID Map for list view
                 return `<option value="${a.id}">${name}</option>`;
             }).join('');
 
-            // STEP 3: LOAD TEACHERS
+            // 3. Load Main Data
             loadTeacherList();
-        } catch(e) { console.error("Init Error", e); }
+        } catch(e) { console.error("API Error", e); }
     };
 
     window.loadTeacherList = async () => {
-        try {
-            const res = await fetch(T_API + '?t=' + Date.now());
-            const data = await res.json();
-            document.getElementById('teacher-container').innerHTML = data.map(t => `
-                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-                    <div style="display:flex; justify-content:space-between; border-bottom:2px solid #00d1b2; padding-bottom:10px; margin-bottom:10px;">
-                        <h2 style="margin:0;">${t.first_name || ''} ${t.last_name || ''}</h2>
-                        <span style="font-weight:bold; color:${t.is_active ? 'green' : 'red'};">${t.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
-                    </div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; font-size:0.9rem;">
-                        <div><b>Contact:</b><br>${t.email || 'N/A'}<br>${t.phone || 'N/A'}</div>
-                        <div><b>Organization:</b><br>Franchise: ${fMap[t.franchise_id] || t.franchise_id}<br>Type: ${rMap[t.admin_type_id] || t.admin_type_id}</div>
-                        <div><b>Employment:</b><br>Pay: ₱${t.daily_pay}<br>Start: ${t.start_date || 'N/A'}</div>
-                    </div>
-                    <div style="text-align:right; margin-top:10px;">
-                        <button onclick="editTeacher(${t.id})" style="color:blue; border:1px solid blue; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">EDIT</button>
-                        <button onclick="deleteTeacher(${t.id})" style="color:red; border:1px solid red; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">DELETE</button>
-                    </div>
-                </div>`).join('');
-        } catch(e) { document.getElementById('teacher-container').innerHTML = '<p>Error loading data.</p>'; }
+        const res = await fetch(T_API + '?t=' + Date.now());
+        const data = await res.json();
+        document.getElementById('teacher-container').innerHTML = data.map(t => `
+            <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                <div style="display:flex; justify-content:space-between; border-bottom:2px solid #00d1b2; padding-bottom:10px; margin-bottom:10px;">
+                    <h2 style="margin:0;">${t.first_name} ${t.last_name}</h2>
+                    <span style="font-weight:bold; color:${t.is_active ? 'green' : 'red'};">${t.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; font-size:0.9rem;">
+                    <div><b>Contact:</b><br>${t.email || 'N/A'}<br>${t.phone || 'N/A'}</div>
+                    <div><b>Organization:</b><br>Franchise: ${fMap[t.franchise_id] || t.franchise_id}<br>Type: ${rMap[t.admin_type_id] || t.admin_type_id}</div>
+                    <div><b>Employment:</b><br>Pay: ₱${t.daily_pay}<br>Start: ${t.start_date || 'N/A'}</div>
+                </div>
+                <div style="text-align:right; margin-top:10px;">
+                    <button onclick="editTeacher(${t.id})" style="color:blue; border:1px solid blue; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">EDIT</button>
+                    <button onclick="deleteTeacher(${t.id})" style="color:red; border:1px solid red; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">DELETE</button>
+                </div>
+            </div>`).join('');
     };
 
     window.openNewTeacherModal = () => {
@@ -113,9 +106,9 @@
         const start = document.getElementById('t-start_date').value;
         const end = document.getElementById('t-last_day_of_work').value;
         
-        // SAFE PARSING to prevent NaN
-        const safeInt = (val) => { const parsed = parseInt(val); return isNaN(parsed) ? 0 : parsed; };
-        const safeFloat = (val) => { const parsed = parseFloat(val); return isNaN(parsed) ? 0.0 : parsed; };
+        // CRITICAL FIX: Convert empty date strings to NULL
+        const finalStart = start === "" ? null : start;
+        const finalEnd = end === "" ? null : end;
 
         const payload = {
             first_name: document.getElementById('t-first_name').value,
@@ -123,12 +116,12 @@
             email: document.getElementById('t-email').value,
             phone: document.getElementById('t-phone').value,
             tin_number: document.getElementById('t-tin_number').value,
-            daily_pay: safeFloat(document.getElementById('t-daily_pay').value),
-            franchise_id: safeInt(document.getElementById('t-franchise_id').value),
-            admin_type_id: safeInt(document.getElementById('t-admin_type_id').value),
-            user_id: safeInt(document.getElementById('t-user_id').value) || null,
-            start_date: start === "" ? null : start,
-            last_day_of_work: end === "" ? null : end,
+            daily_pay: parseFloat(document.getElementById('t-daily_pay').value) || 0,
+            franchise_id: parseInt(document.getElementById('t-franchise_id').value) || 0,
+            admin_type_id: parseInt(document.getElementById('t-admin_type_id').value) || 0,
+            user_id: parseInt(document.getElementById('t-user_id').value) || null,
+            start_date: finalStart,
+            last_day_of_work: finalEnd,
             is_active: document.getElementById('t-is_active').value === "true",
             address: document.getElementById('t-address').value,
             city: document.getElementById('t-city').value,
