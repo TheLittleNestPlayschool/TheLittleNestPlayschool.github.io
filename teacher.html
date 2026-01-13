@@ -4,11 +4,11 @@
 </div>
 
 <div id="teacher-container" style="display: flex; flex-direction: column; gap: 20px;">
-    <div style="text-align:center; padding:50px;">Syncing with Franchise & Role Tables...</div>
+    <div style="text-align:center; padding:50px;">Syncing Assignment Data...</div>
 </div>
 
 <div id="modal-teacher" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:center;">
-    <div style="background:white; width:900px; border-radius:8px; display:flex; flex-direction:column; max-height:92vh;">
+    <div style="background:white; width:900px; border-radius:8px; display:flex; flex-direction:column; max-height:92vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         <div style="padding:20px; border-bottom:1px solid #eee; background:#fcfcfc;"><h3 id="t-modal-title" style="margin:0;">Teacher Profile</h3></div>
         <div style="padding:25px; overflow-y:auto; flex-grow:1; display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">
             <input type="hidden" id="t-id">
@@ -21,8 +21,8 @@
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">TIN Number</label><input type="text" id="t-tin_number" style="width:100%; padding:8px;"></div>
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">Daily Pay</label><input type="number" id="t-daily_pay" step="0.01" style="width:100%; padding:8px;"></div>
 
-            <div><label style="display:block; font-size:0.75rem; font-weight:700;">Franchise Assignment</label><select id="t-franchise_id" style="width:100%; padding:8px;"></select></div>
-            <div><label style="display:block; font-size:0.75rem; font-weight:700;">Admin Type (Role)</label><select id="t-admin_type_id" style="width:100%; padding:8px;"></select></div>
+            <div><label style="display:block; font-size:0.75rem; font-weight:700;">Franchise</label><select id="t-franchise_id" style="width:100%; padding:8px;"></select></div>
+            <div><label style="display:block; font-size:0.75rem; font-weight:700;">Admin Type</label><select id="t-admin_type_id" style="width:100%; padding:8px;"></select></div>
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">User ID (Manual Link)</label><input type="number" id="t-user_id" style="width:100%; padding:8px;"></div>
 
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">Start Date</label><input type="date" id="t-start_date" style="width:100%; padding:8px;"></div>
@@ -45,49 +45,48 @@
 <script>
 (function() {
     const API = 'https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e';
-    let franchises = {};
-    let roles = {};
+    let fLookup = {};
+    let rLookup = {};
 
-    // 1. Logic: Fetch names from other tables first
-    window.initTeacherModule = async () => {
+    window.initTeacherSystem = async () => {
         try {
+            // FORCE AWAIT for lookup tables before loading teachers
             const [fRes, rRes] = await Promise.all([
                 fetch(`${API}/franchise`),
                 fetch(`${API}/admin_roles`)
             ]);
             
-            const fData = await fRes.json();
-            const rData = await rRes.json();
+            const franchises = await fRes.json();
+            const roles = await rRes.json();
 
-            // Populate Modal Dropdowns and local Map for the UI
-            const fSelect = document.getElementById('t-franchise_id');
-            fSelect.innerHTML = fData.map(f => {
-                franchises[f.id] = f.name; // Store name for display
+            // Populate the lookup maps and dropdowns
+            document.getElementById('t-franchise_id').innerHTML = franchises.map(f => {
+                fLookup[f.id] = f.name;
                 return `<option value="${f.id}">${f.name}</option>`;
             }).join('');
 
-            const rSelect = document.getElementById('t-admin_type_id');
-            rSelect.innerHTML = rData.map(r => {
+            document.getElementById('t-admin_type_id').innerHTML = roles.map(r => {
                 const name = r.role_name || r.name || `Role ${r.id}`;
-                roles[r.id] = name; // Store name for display
+                rLookup[r.id] = name;
                 return `<option value="${r.id}">${name}</option>`;
             }).join('');
 
-            // Now that we have names, load the actual teachers
-            loadTeachers();
-        } catch(e) { console.error("Setup failed", e); }
+            // Only load teachers AFTER maps are filled
+            loadTeacherCards();
+        } catch(e) { console.error("Data Sync Failed", e); }
     };
 
-    window.loadTeachers = async () => {
+    window.loadTeacherCards = async () => {
         const res = await fetch(`${API}/teacher`);
         const data = await res.json();
+        
         document.getElementById('teacher-container').innerHTML = data.map(t => `
             <div style="background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                 <div style="display:flex; justify-content: space-between; border-bottom: 2px solid #00d1b2; padding-bottom: 10px; margin-bottom: 15px;">
                     <h2 style="margin:0;">${t.first_name || ''} ${t.last_name || ''}</h2>
                     <span style="font-weight:bold; color:${t.is_active ? 'green' : 'red'};">${t.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; font-size: 0.85rem; line-height: 1.6;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 20px; font-size: 0.85rem; line-height: 1.6;">
                     <div>
                         <span style="color:#888;">CONTACT</span><br>
                         <b>Email:</b> ${t.email || 'N/A'}<br>
@@ -97,13 +96,13 @@
                     <div>
                         <span style="color:#888;">EMPLOYMENT</span><br>
                         <b>Daily Pay:</b> ₱${t.daily_pay || '0.00'}<br>
-                        <b>Start Date:</b> ${t.start_date || 'N/A'}<br>
+                        <b>Start:</b> ${t.start_date || 'N/A'}<br>
                         <b>Last Day:</b> ${t.last_day_of_work || 'Active'}
                     </div>
                     <div>
                         <span style="color:#888;">ASSIGNMENT</span><br>
-                        <b>Franchise:</b> ${franchises[t.franchise_id] || 'ID: ' + t.franchise_id}<br>
-                        <b>Admin Type:</b> ${roles[t.admin_type_id] || 'ID: ' + t.admin_type_id}<br>
+                        <b>Franchise:</b> ${fLookup[t.franchise_id] || 'ID: ' + t.franchise_id}<br>
+                        <b>Admin Type:</b> ${rLookup[t.admin_type_id] || 'ID: ' + t.admin_type_id}<br>
                         <b>User ID:</b> ${t.user_id || 'None'}
                     </div>
                     <div style="grid-column: span 2;">
@@ -111,7 +110,7 @@
                         ${t.address || ''}, ${t.brgy || ''}, ${t.city || ''}
                     </div>
                     <div>
-                        <span style="color:#888;">NOTES</span><br>
+                        <span style="color:#888;">INACTIVATION REASON</span><br>
                         ${t.inactivation_reason_comments || 'None'}
                     </div>
                 </div>
@@ -136,8 +135,8 @@
         document.getElementById('t-last_name').value = t.last_name || "";
         document.getElementById('t-email').value = t.email || "";
         document.getElementById('t-phone').value = t.phone || "";
-        document.getElementById('t-tin_number').value = t.tin_number || "";
         document.getElementById('t-daily_pay').value = t.daily_pay || "";
+        document.getElementById('t-tin_number').value = t.tin_number || "";
         document.getElementById('t-start_date').value = t.start_date || "";
         document.getElementById('t-last_day_of_work').value = t.last_day_of_work || "";
         document.getElementById('t-is_active').value = t.is_active.toString();
@@ -177,12 +176,12 @@
             body: JSON.stringify(payload)
         });
         document.getElementById('modal-teacher').style.display = 'none';
-        loadTeachers();
+        loadTeacherCards();
     };
 
-    window.deleteTeacher = async (id) => { if(confirm("Permanently delete?")) { await fetch(`${API}/teacher/${id}`, {method:'DELETE'}); loadTeachers(); } };
+    window.deleteTeacher = async (id) => { if(confirm("Permanently delete?")) { await fetch(`${API}/teacher/${id}`, {method:'DELETE'}); loadTeacherCards(); } };
     
-    // Logic: Execute Init
-    initTeacherModule();
+    // EXECUTE INIT
+    initTeacherSystem();
 })();
 </script>
