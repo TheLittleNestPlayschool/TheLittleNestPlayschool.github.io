@@ -7,41 +7,53 @@
     <thead>
         <tr><th>NAME/TAX</th><th>CONTACT/OWNERS</th><th>OPERATIONS</th><th>ROY</th><th>STATUS</th><th>ACTIONS</th></tr>
     </thead>
-    <tbody id="f-body"><tr><td colspan="6" style="text-align:center;">Loading...</td></tr></tbody>
+    <tbody id="f-body"><tr><td colspan="6" style="text-align:center;">Loading Data...</td></tr></tbody>
 </table>
 
 <div id="modal-franchise" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:11000; justify-content:center; align-items:center;">
-    <div style="background:white; width:850px; height:85vh; display:flex; flex-direction:column; border-radius:4px; overflow:hidden;">
+    <div style="background:white; width:850px; height:90vh; display:flex; flex-direction:column; border-radius:4px; overflow:hidden;">
         <div style="padding:15px; border-bottom:1px solid #eee;"><h3 id="modal-title" style="margin:0;">Franchise Details</h3></div>
         <div style="padding:20px; overflow-y:auto; flex-grow:1;">
             <input type="hidden" id="f-id">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 20px;">
+                
                 <div style="grid-column: span 2; background:#f8f8f8; padding:5px 10px; font-weight:800; font-size:0.8rem; border-left:4px solid #00d1b2;">LOCATION & TAX</div>
                 <div><label>Location Name</label><input type="text" id="f-name"></div>
-                <div><label>Tax ID</label><input type="text" id="f-business_tax_id"></div>
+                <div><label>Business Tax ID</label><input type="text" id="f-business_tax_id"></div>
                 <div style="grid-column: span 2;"><label>Full Address</label><input type="text" id="f-address"></div>
 
-                <div style="grid-column: span 2; background:#f8f8f8; padding:5px 10px; font-weight:800; font-size:0.8rem; border-left:4px solid #00d1b2;">CONTACTS</div>
+                <div style="grid-column: span 2; background:#f8f8f8; padding:5px 10px; font-weight:800; font-size:0.8rem; border-left:4px solid #00d1b2;">PRIMARY CONTACT</div>
                 <div><label>Franchise Email</label><input type="email" id="f-franchise_email"></div>
                 <div><label>Phone Number</label><input type="text" id="f-phone_number"></div>
+
+                <div style="grid-column: span 2; background:#f8f8f8; padding:5px 10px; font-weight:800; font-size:0.8rem; border-left:4px solid #00d1b2;">OWNERSHIP DETAILS</div>
                 <div><label>Owner 1 Name</label><input type="text" id="f-owner_1_name"></div>
                 <div><label>Owner 1 Phone</label><input type="text" id="f-owner_1_phone"></div>
                 <div style="grid-column: span 2;"><label>Owner 1 Email</label><input type="email" id="f-owner_1_email"></div>
+                
                 <div><label>Owner 2 Name</label><input type="text" id="f-owner_2_name"></div>
                 <div><label>Owner 2 Phone</label><input type="text" id="f-owner_2_phone"></div>
                 <div style="grid-column: span 2;"><label>Owner 2 Email</label><input type="email" id="f-owner_2_email"></div>
 
-                <div style="grid-column: span 2; background:#f8f8f8; padding:5px 10px; font-weight:800; font-size:0.8rem; border-left:4px solid #00d1b2;">OPERATIONS</div>
-                <div><label>Status</label><select id="f-status"><option value="active">active</option><option value="on_hold">on_hold</option><option value="closed">closed</option></select></div>
+                <div style="grid-column: span 2; background:#f8f8f8; padding:5px 10px; font-weight:800; font-size:0.8rem; border-left:4px solid #00d1b2;">OPERATIONS & SETTINGS</div>
+                <div><label>Status</label>
+                    <select id="f-status">
+                        <option value="active">active</option>
+                        <option value="on_hold">on_hold</option>
+                        <option value="closed">closed</option>
+                    </select>
+                </div>
                 <div><label>Opening Date</label><input type="date" id="f-opening_date"></div>
                 <div><label>Royalty Rate</label><input type="number" step="0.01" id="f-royalty_rate"></div>
-                <div><label>Manager ID</label><input type="number" id="f-manager_user_id"></div>
-                <div style="grid-column: span 2;"><label>Internal Notes</label><textarea id="f-internal_notes" style="width:100%;height:50px;"></textarea></div>
+                <div><label>Manager User ID</label><input type="number" id="f-manager_user_id"></div>
+                
+                <div style="grid-column: span 2;"><label>Social Media Links (JSON)</label><input type="text" id="f-social_media_links" placeholder='{"facebook":""}'></div>
+                <div style="grid-column: span 2;"><label>Internal Notes</label><textarea id="f-internal_notes" style="width:100%;height:60px;"></textarea></div>
             </div>
         </div>
         <div style="padding:15px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px;">
-            <button onclick="document.getElementById('modal-franchise').style.display='none'" class="btn">CANCEL</button>
-            <button onclick="submitFranchise()" class="btn-save" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE FRANCHISE RECORD</button>
+            <button onclick="document.getElementById('modal-franchise').style.display='none'" style="padding:10px 20px; cursor:pointer; font-weight:700;">CANCEL</button>
+            <button onclick="submitFranchise()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE FRANCHISE RECORD</button>
         </div>
     </div>
 </div>
@@ -57,7 +69,7 @@
             <tr>
                 <td><strong>${f.name}</strong><br><small>${f.business_tax_id || ''}</small></td>
                 <td>E: ${f.franchise_email}<br>O1: ${f.owner_1_name}</td>
-                <td>Date: ${f.opening_date || 'N/A'}</td>
+                <td>Date: ${f.opening_date || 'N/A'}<br>Mgr: ${f.manager_user_id}</td>
                 <td>${f.royalty_rate}</td>
                 <td style="font-weight:bold; color:${f.status==='active'?'green':'orange'}">${f.status}</td>
                 <td><a href="javascript:void(0)" onclick="doEdit(${f.id})">Edit</a> | <a href="javascript:void(0)" onclick="doDelete(${f.id})">Del</a></td>
@@ -68,6 +80,7 @@
         document.getElementById('modal-title').innerText = "Create New Franchise";
         document.getElementById('f-id').value = "";
         document.querySelectorAll('#modal-franchise input, #modal-franchise textarea').forEach(i => i.value = "");
+        document.getElementById('f-status').value = "active";
         document.getElementById('modal-franchise').style.display = 'flex';
     };
 
@@ -90,53 +103,4 @@
         document.getElementById('f-opening_date').value = f.opening_date || "";
         document.getElementById('f-royalty_rate').value = f.royalty_rate || 0;
         document.getElementById('f-manager_user_id').value = f.manager_user_id || 0;
-        document.getElementById('f-internal_notes').value = f.internal_notes || "";
-        document.getElementById('modal-franchise').style.display = 'flex';
-    };
-
-    window.submitFranchise = async () => {
-        const id = document.getElementById('f-id').value;
-        const payload = {
-            name: document.getElementById('f-name').value,
-            business_tax_id: document.getElementById('f-business_tax_id').value,
-            address: document.getElementById('f-address').value,
-            franchise_email: document.getElementById('f-franchise_email').value,
-            phone_number: document.getElementById('f-phone_number').value,
-            owner_1_name: document.getElementById('f-owner_1_name').value,
-            owner_1_phone: document.getElementById('f-owner_1_phone').value,
-            owner_1_email: document.getElementById('f-owner_1_email').value,
-            owner_2_name: document.getElementById('f-owner_2_name').value,
-            owner_2_phone: document.getElementById('f-owner_2_phone').value,
-            owner_2_email: document.getElementById('f-owner_2_email').value,
-            status: document.getElementById('f-status').value,
-            opening_date: document.getElementById('f-opening_date').value,
-            royalty_rate: parseFloat(document.getElementById('f-royalty_rate').value) || 0,
-            manager_user_id: parseInt(document.getElementById('f-manager_user_id').value) || 0,
-            internal_notes: document.getElementById('f-internal_notes').value
-        };
-
-        const res = await fetch(id ? `${X_URL}/${id}` : X_URL, {
-            method: id ? 'PATCH' : 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (res.ok) {
-            document.getElementById('modal-franchise').style.display = 'none';
-            loadData();
-        } else {
-            const err = await res.json();
-            alert("Xano Error: " + err.message);
-        }
-    };
-
-    window.doDelete = async (id) => {
-        if(confirm("Delete this record?")) {
-            await fetch(`${X_URL}/${id}`, { method: 'DELETE' });
-            loadData();
-        }
-    };
-
-    loadData();
-})();
-</script>
+        document.getElementById('f-social_media_links').value = JSON.
