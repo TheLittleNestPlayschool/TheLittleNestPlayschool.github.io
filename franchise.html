@@ -1,6 +1,6 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-    <h1>Franchise Manager</h1>
-    <button onclick="openNewFranchiseModal()" class="btn btn-save" style="background:#00d1b2; color:white; border:none; padding:8px 15px; cursor:pointer; font-weight:bold; border-radius:4px;">+ NEW FRANCHISE</button>
+    <h1 style="margin:0;">Franchise Manager</h1>
+    <button onclick="openNewFranchiseModal()" class="btn btn-save" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px;">+ NEW FRANCHISE</button>
 </div>
 
 <table class="admin-table">
@@ -15,25 +15,31 @@
         </tr>
     </thead>
     <tbody id="f-body">
-        <tr><td colspan="6" style="text-align:center;">Loading Data from Xano...</td></tr>
+        <tr><td colspan="6" style="text-align:center; padding:20px;">Loading Data from Xano...</td></tr>
     </tbody>
 </table>
 
 <div id="modal-franchise" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:11000; justify-content:center; align-items:center;">
-    <div style="background:white; width:850px; height:85vh; display:flex; flex-direction:column; border-radius:4px; overflow:hidden;">
-        <div style="padding:20px; border-bottom:1px solid #eee;"><h3>Franchise Details</h3></div>
+    <div style="background:white; width:850px; height:85vh; display:flex; flex-direction:column; border-radius:4px; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <div style="padding:20px; border-bottom:1px solid #eee;">
+            <h3 id="modal-title" style="margin:0;">Franchise Details</h3>
+        </div>
         <div style="padding:20px; overflow-y:auto; flex-grow:1;">
             <input type="hidden" id="f-id"> 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 20px;">
-                <div style="grid-column: span 2; background:#f8f8f8; padding:5px; font-weight:bold; border-left:4px solid #00d1b2;">LOCATION & TAX</div>
-                <div><label style="display:block; font-size:0.8rem; font-weight:bold;">Location Name</label><input type="text" id="f-name" style="width:100%; padding:8px;"></div>
-                <div><label style="display:block; font-size:0.8rem; font-weight:bold;">Tax ID</label><input type="text" id="f-business_tax_id" style="width:100%; padding:8px;"></div>
-                <div style="grid-column: span 2;"><label style="display:block; font-size:0.8rem; font-weight:bold;">Address</label><input type="text" id="f-address" style="width:100%; padding:8px;"></div>
-                </div>
+                <div style="grid-column: span 2; background:#f8f8f8; padding:5px 10px; font-weight:800; font-size:0.8rem; border-left:4px solid #00d1b2;">BASIC LOCATION INFO</div>
+                <div><label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:4px;">Location Name</label><input type="text" id="f-name" style="width:100%; padding:8px; border:1px solid #ccc;"></div>
+                <div><label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:4px;">Business Tax ID</label><input type="text" id="f-business_tax_id" style="width:100%; padding:8px; border:1px solid #ccc;"></div>
+                <div style="grid-column: span 2;"><label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:4px;">Full Address</label><input type="text" id="f-address" style="width:100%; padding:8px; border:1px solid #ccc;"></div>
+                
+                <div style="grid-column: span 2; background:#f8f8f8; padding:5px 10px; font-weight:800; font-size:0.8rem; border-left:4px solid #00d1b2;">CONTACTS</div>
+                <div><label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:4px;">Franchise Email</label><input type="email" id="f-franchise_email" style="width:100%; padding:8px; border:1px solid #ccc;"></div>
+                <div><label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:4px;">Phone Number</label><input type="text" id="f-phone_number" style="width:100%; padding:8px; border:1px solid #ccc;"></div>
+            </div>
         </div>
-        <div style="padding:15px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px;">
-            <button onclick="document.getElementById('modal-franchise').style.display='none'" style="padding:10px 20px; cursor:pointer;">CANCEL</button>
-            <button onclick="submitFranchise()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; font-weight:bold;">SAVE RECORD</button>
+        <div style="padding:15px 20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; background:#fff;">
+            <button onclick="document.getElementById('modal-franchise').style.display='none'" style="padding:10px 20px; cursor:pointer; font-weight:700; background:#eee; border:none; border-radius:4px;">CANCEL</button>
+            <button onclick="submitFranchise()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE FRANCHISE RECORD</button>
         </div>
     </div>
 </div>
@@ -41,6 +47,7 @@
 <script>
     const XANO_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
 
+    // 1. Fetch Data
     async function loadFranchiseData() {
         try {
             const res = await fetch(XANO_URL);
@@ -48,20 +55,74 @@
             document.getElementById('f-body').innerHTML = data.map(f => `
                 <tr>
                     <td><strong>${f.name}</strong><br><small>${f.business_tax_id || ''}</small></td>
-                    <td>E: ${f.franchise_email || ''}<br>O1: ${f.owner_1_name || ''}</td>
-                    <td>Date: ${f.opening_date || 'N/A'}</td>
+                    <td>E: ${f.franchise_email || 'N/A'}<br>O1: ${f.owner_1_name || 'N/A'}</td>
+                    <td>Date: ${f.opening_date || 'N/A'}<br>Mgr: ${f.manager_user_id || '0'}</td>
                     <td>${f.royalty_rate || '0'}</td>
-                    <td style="font-weight:bold; color:green;">${f.status || 'ACTIVE'}</td>
-                    <td><a href="#" onclick="doEdit(${f.id})">Edit</a></td>
+                    <td style="text-transform:uppercase; font-weight:bold; color:${f.status === 'active' ? 'green' : 'orange'}">${f.status || 'ACTIVE'}</td>
+                    <td>
+                        <a href="javascript:void(0)" onclick="doEdit(${f.id})" style="color:blue; font-weight:bold;">Edit</a> | 
+                        <a href="javascript:void(0)" onclick="doDelete(${f.id})" style="color:red; font-weight:bold;">Del</a>
+                    </td>
                 </tr>
             `).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error("Xano Fetch Error:", e); }
     }
 
+    // 2. Open Modal for New
     function openNewFranchiseModal() {
+        document.getElementById('modal-title').innerText = "Create New Franchise";
         document.getElementById('f-id').value = "";
+        document.querySelectorAll('#modal-franchise input').forEach(i => i.value = "");
         document.getElementById('modal-franchise').style.display = 'flex';
     }
 
+    // 3. Submit to Xano (Add or Update)
+    async function submitFranchise() {
+        const id = document.getElementById('f-id').value;
+        const payload = {
+            name: document.getElementById('f-name').value,
+            business_tax_id: document.getElementById('f-business_tax_id').value,
+            address: document.getElementById('f-address').value,
+            franchise_email: document.getElementById('f-franchise_email').value,
+            phone_number: document.getElementById('f-phone_number').value
+        };
+
+        const res = await fetch(id ? `${XANO_URL}/${id}` : XANO_URL, {
+            method: id ? 'PATCH' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            document.getElementById('modal-franchise').style.display = 'none';
+            loadFranchiseData();
+        } else {
+            alert("Error saving to Xano.");
+        }
+    }
+
+    // 4. Edit Record
+    async function doEdit(id) {
+        const res = await fetch(`${XANO_URL}/${id}`);
+        const f = await res.json();
+        document.getElementById('modal-title').innerText = "Editing: " + f.name;
+        document.getElementById('f-id').value = f.id;
+        document.getElementById('f-name').value = f.name;
+        document.getElementById('f-business_tax_id').value = f.business_tax_id;
+        document.getElementById('f-address').value = f.address;
+        document.getElementById('f-franchise_email').value = f.franchise_email;
+        document.getElementById('f-phone_number').value = f.phone_number;
+        document.getElementById('modal-franchise').style.display = 'flex';
+    }
+
+    // 5. Delete Record
+    async function doDelete(id) {
+        if(confirm("Permanently delete this record?")) {
+            await fetch(`${XANO_URL}/${id}`, { method: 'DELETE' });
+            loadFranchiseData();
+        }
+    }
+
+    // Initial Load
     loadFranchiseData();
 </script>
