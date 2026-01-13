@@ -42,17 +42,33 @@
         try {
             const res = await fetch(ROLE_URL);
             const data = await res.json();
-            document.getElementById('role-body').innerHTML = data.map(r => `
+            console.log("Xano Data Received:", data);
+
+            if (!data || data.length === 0) {
+                document.getElementById('role-body').innerHTML = '<tr><td colspan="4" style="text-align:center;">No roles found in database.</td></tr>';
+                return;
+            }
+
+            document.getElementById('role-body').innerHTML = data.map(r => {
+                // Safety: check for 'Admin_Type' or 'admin_type'
+                const roleName = r.Admin_Type || r.admin_type || "Unnamed Role";
+                const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString() : 'N/A';
+                
+                return `
                 <tr>
                     <td>${r.id}</td>
-                    <td><strong>${r.Admin_Type}</strong></td>
-                    <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                    <td><strong>${roleName}</strong></td>
+                    <td>${dateStr}</td>
                     <td>
                         <a href="javascript:void(0)" onclick="editRole(${r.id})" style="color:blue; font-weight:bold;">Edit</a> | 
                         <a href="javascript:void(0)" onclick="deleteRole(${r.id})" style="color:red; font-weight:bold;">Del</a>
                     </td>
-                </tr>`).join('');
-        } catch(e) { console.error("Error loading roles:", e); }
+                </tr>`;
+            }).join('');
+        } catch(e) { 
+            console.error("Error loading roles:", e); 
+            document.getElementById('role-body').innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Error connecting to Xano.</td></tr>';
+        }
     };
 
     window.openNewRoleModal = () => {
@@ -63,11 +79,11 @@
     };
 
     window.editRole = async (id) => {
-        const res = await fetch(\`\${ROLE_URL}/\${id}\`);
+        const res = await fetch(`${ROLE_URL}/${id}`);
         const r = await res.json();
         document.getElementById('role-modal-title').innerText = "Edit Role Name";
         document.getElementById('role-id').value = r.id;
-        document.getElementById('role-name').value = r.Admin_Type || "";
+        document.getElementById('role-name').value = r.Admin_Type || r.admin_type || "";
         document.getElementById('modal-role').style.display = 'flex';
     };
 
@@ -79,7 +95,7 @@
 
         if(!payload.Admin_Type) { alert("Please enter a role name."); return; }
 
-        const res = await fetch(id ? \`\${ROLE_URL}/\${id}\` : ROLE_URL, {
+        const res = await fetch(id ? `${ROLE_URL}/${id}` : ROLE_URL, {
             method: id ? 'PATCH' : 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -95,7 +111,7 @@
 
     window.deleteRole = async (id) => {
         if(confirm("Permanently delete this Admin Role?")) {
-            await fetch(\`\${ROLE_URL}/\${id}\`, { method: 'DELETE' });
+            await fetch(`${ROLE_URL}/${id}`, { method: 'DELETE' });
             loadRoles();
         }
     };
