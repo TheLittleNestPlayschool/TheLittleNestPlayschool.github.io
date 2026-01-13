@@ -1,11 +1,10 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-    <h1 style="margin:0;">Teacher Management V2</h1>
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <h1 style="margin:0;">Teacher Management</h1>
     <button onclick="openNewTeacherModal()" style="background:#00d1b2; color:white; border:none; padding:12px 24px; cursor:pointer; font-weight:bold; border-radius:4px;">+ NEW TEACHER</button>
 </div>
 
-
 <div id="teacher-container" style="display: flex; flex-direction: column; gap: 20px;">
-    <div style="text-align:center; padding:50px; border:1px solid #eee;">Connecting to Database...</div>
+    <div style="text-align:center; padding:50px; border:1px solid #eee;">Syncing Database...</div>
 </div>
 
 <div id="modal-teacher" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
@@ -16,17 +15,16 @@
             
             <div><label>First Name</label><input type="text" id="t-first_name" style="width:100%; padding:8px;"></div>
             <div><label>Last Name</label><input type="text" id="t-last_name" style="width:100%; padding:8px;"></div>
-            <div><label>Email</label><input type="email" id="t-email" style="width:100%; padding:8px;"></div>
+            <div><label>Email (Contact)</label><input type="email" id="t-email" style="width:100%; padding:8px;"></div>
             <div><label>Phone</label><input type="text" id="t-phone" style="width:100%; padding:8px;"></div>
             <div><label>TIN Number</label><input type="text" id="t-tin_number" style="width:100%; padding:8px;"></div>
             <div><label>Daily Pay</label><input type="number" id="t-daily_pay" step="0.01" style="width:100%; padding:8px;"></div>
             
             <div><label>Franchise</label><select id="t-franchise_id" style="width:100%; padding:8px;"></select></div>
             <div><label>Admin Type</label><select id="t-admin_type_id" style="width:100%; padding:8px;"></select></div>
-            <div><label>User ID</label><input type="number" id="t-user_id" style="width:100%; padding:8px;"></div>
 
             <div><label>Start Date</label><input type="date" id="t-start_date" style="width:100%; padding:8px;"></div>
-            <div><label>End Date</label><input type="date" id="t-last_day_of_work" style="width:100%; padding:8px;"></div>
+            <div><label>End Date (Optional)</label><input type="date" id="t-last_day_of_work" style="width:100%; padding:8px;"></div>
             <div><label>Active?</label><select id="t-is_active" style="width:100%; padding:8px;"><option value="true">True</option><option value="false">False</option></select></div>
             
             <div style="grid-column: span 3;"><label>Address</label><input type="text" id="t-address" style="width:100%; padding:8px;"></div>
@@ -43,6 +41,7 @@
 
 <script>
 (function() {
+    // API ENDPOINTS
     const T_API = 'https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher';
     const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
     const A_API = 'https://x8ki-letl-twmt.n7.xano.io/api:UpJO_5WB/admin_type';
@@ -51,22 +50,24 @@
     let rMap = {};
 
     const safeFetch = async (url) => {
-        const res = await fetch(url);
-        const json = await res.json();
-        return Array.isArray(json) ? json : (json.items || []);
+        try {
+            const res = await fetch(url);
+            const json = await res.json();
+            return Array.isArray(json) ? json : (json.items || []);
+        } catch (e) { return []; }
     };
 
     window.initTeacherModule = async () => {
         try {
             const [fData, aData] = await Promise.all([safeFetch(F_API), safeFetch(A_API)]);
 
-            // MAP FRANCHISE NAMES
+            // 1. Franchise Dropdown
             document.getElementById('t-franchise_id').innerHTML = '<option value="">Select...</option>' + fData.map(f => {
                 fMap[f.id] = f.name; 
                 return `<option value="${f.id}">${f.name}</option>`;
             }).join('');
 
-            // MAP ADMIN TYPE NAMES (Using Admin_Type field)
+            // 2. Admin Type Dropdown (Field: Admin_Type)
             document.getElementById('t-admin_type_id').innerHTML = '<option value="">Select...</option>' + aData.map(a => {
                 const name = a.Admin_Type || 'Role ' + a.id;
                 rMap[a.id] = name;
@@ -74,12 +75,12 @@
             }).join('');
 
             loadTeacherList();
-        } catch(e) { console.error("API Error", e); }
+        } catch(e) { console.error("Init Error", e); }
     };
 
     window.loadTeacherList = async () => {
         try {
-            const data = await safeFetch(T_API);
+            const data = await safeFetch(T_API + '?t=' + Date.now());
             document.getElementById('teacher-container').innerHTML = data.map(t => {
                 const fName = fMap[parseInt(t.franchise_id)] || t.franchise_id || 'N/A';
                 const rName = rMap[parseInt(t.admin_type_id)] || t.admin_type_id || 'N/A';
@@ -91,11 +92,34 @@
                         <span style="font-weight:bold; color:${t.is_active ? 'green' : 'red'};">${t.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
                     </div>
                     <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; font-size:0.9rem;">
-                        <div><b>Contact:</b><br>${t.email || 'N/A'}<br>${t.phone || 'N/A'}</div>
-                        <div><b>Organization:</b><br>Franchise: ${fName}<br>Type: ${rName}</div>
-                        <div><b>Employment:</b><br>Pay: ₱${t.daily_pay}<br>Start: ${t.start_date || 'N/A'}</div>
+                        <div>
+                            <span style="color:#888; font-size:0.8rem; font-weight:bold;">CONTACT</span><br>
+                            ${t.email || 'N/A'}<br>
+                            ${t.phone || 'N/A'}<br>
+                            <small>TIN: ${t.tin_number || 'N/A'}</small>
+                        </div>
+                        <div>
+                            <span style="color:#888; font-size:0.8rem; font-weight:bold;">ASSIGNMENT</span><br>
+                            <b>Franchise:</b> ${fName}<br>
+                            <b>Role:</b> ${rName}
+                        </div>
+                        <div>
+                            <span style="color:#888; font-size:0.8rem; font-weight:bold;">EMPLOYMENT</span><br>
+                            Pay: ₱${t.daily_pay}<br>
+                            Start: ${t.start_date || 'N/A'}<br>
+                            End: ${t.last_day_of_work || 'Active'}
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <span style="color:#888; font-size:0.8rem; font-weight:bold;">LOCATION</span><br>
+                            ${t.address || ''}<br>
+                            ${t.brgy || ''}, ${t.city || ''}
+                        </div>
+                        <div>
+                            <span style="color:#888; font-size:0.8rem; font-weight:bold;">NOTES</span><br>
+                            ${t.inactivation_reason_comments || 'None'}
+                        </div>
                     </div>
-                    <div style="text-align:right; margin-top:10px;">
+                    <div style="text-align:right; margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
                         <button onclick="editTeacher(${t.id})" style="color:blue; border:1px solid blue; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">EDIT</button>
                         <button onclick="deleteTeacher(${t.id})" style="color:red; border:1px solid red; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">DELETE</button>
                     </div>
@@ -116,10 +140,6 @@
         const start = document.getElementById('t-start_date').value;
         const end = document.getElementById('t-last_day_of_work').value;
         
-        // FIX: Send null if empty
-        const finalStart = start === "" ? null : start;
-        const finalEnd = end === "" ? null : end;
-
         const payload = {
             first_name: document.getElementById('t-first_name').value,
             last_name: document.getElementById('t-last_name').value,
@@ -129,9 +149,8 @@
             daily_pay: parseFloat(document.getElementById('t-daily_pay').value) || 0,
             franchise_id: parseInt(document.getElementById('t-franchise_id').value),
             admin_type_id: parseInt(document.getElementById('t-admin_type_id').value),
-            user_id: parseInt(document.getElementById('t-user_id').value) || null,
-            start_date: finalStart,
-            last_day_of_work: finalEnd,
+            start_date: start === "" ? null : start,
+            last_day_of_work: end === "" ? null : end,
             is_active: document.getElementById('t-is_active').value === "true",
             address: document.getElementById('t-address').value,
             city: document.getElementById('t-city').value,
@@ -164,7 +183,6 @@
         document.getElementById('t-phone').value = t.phone || "";
         document.getElementById('t-tin_number').value = t.tin_number || "";
         document.getElementById('t-daily_pay').value = t.daily_pay || "";
-        document.getElementById('t-user_id').value = t.user_id || "";
         document.getElementById('t-franchise_id').value = t.franchise_id || "";
         document.getElementById('t-admin_type_id').value = t.admin_type_id || "";
         document.getElementById('t-start_date').value = t.start_date || "";
@@ -181,4 +199,4 @@
     
     initTeacherModule();
 })();
-</script>
+</script>          
