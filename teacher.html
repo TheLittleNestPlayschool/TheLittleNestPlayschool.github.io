@@ -4,7 +4,7 @@
 </div>
 
 <div id="teacher-container" style="display: flex; flex-direction: column; gap: 20px;">
-    <div style="text-align:center; padding:50px;">Initialising Data...</div>
+    <div style="text-align:center; padding:50px; border:1px solid #eee;">Connecting to Database...</div>
 </div>
 
 <div id="modal-teacher" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
@@ -12,6 +12,7 @@
         <div style="padding:20px; border-bottom:1px solid #eee;"><h3>Teacher Profile</h3></div>
         <div style="padding:25px; overflow-y:auto; flex-grow:1; display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">
             <input type="hidden" id="t-id">
+            
             <div><label>First Name</label><input type="text" id="t-first_name" style="width:100%; padding:8px;"></div>
             <div><label>Last Name</label><input type="text" id="t-last_name" style="width:100%; padding:8px;"></div>
             <div><label>Email</label><input type="email" id="t-email" style="width:100%; padding:8px;"></div>
@@ -48,7 +49,7 @@
     let fMap = {};
     let rMap = {};
 
-    // Helper to safely get array from Xano (handles {items:[]} vs [])
+    // Helper to handle {items:[]} vs []
     const safeFetch = async (url) => {
         const res = await fetch(url);
         const json = await res.json();
@@ -60,41 +61,28 @@
             // 1. Fetch Lookup Tables
             const [fData, aData] = await Promise.all([safeFetch(F_API), safeFetch(A_API)]);
 
-            // 2. Build Maps and Populate Selects
+            // 2. Build Maps
             document.getElementById('t-franchise_id').innerHTML = '<option value="">Select...</option>' + fData.map(f => {
-                fMap[f.id] = f.name; // Map for list view
+                fMap[f.id] = f.name; // Uses 'name' from schema
                 return `<option value="${f.id}">${f.name}</option>`;
             }).join('');
 
             document.getElementById('t-admin_type_id').innerHTML = '<option value="">Select...</option>' + aData.map(a => {
-                // Handle different potential name fields
-                const name = a.role_name || a.name || a.type_name || 'Role ' + a.id;
-                rMap[a.id] = name; // Map for list view
+                // Uses 'Admin_Type' exactly as per your schema
+                const name = a.Admin_Type || 'Role ' + a.id; 
+                rMap[a.id] = name;
                 return `<option value="${a.id}">${name}</option>`;
             }).join('');
 
             // 3. Load Main Data
             loadTeacherList();
-        } catch(e) { 
-            console.error("API Error", e); 
-            document.getElementById('teacher-container').innerHTML = '<p>Error loading lookup data. Check console.</p>';
-        }
+        } catch(e) { console.error("API Error", e); }
     };
 
     window.loadTeacherList = async () => {
         try {
             const data = await safeFetch(T_API + '?t=' + Date.now());
-            
-            document.getElementById('teacher-container').innerHTML = data.map(t => {
-                // Ensure IDs are integers for map lookup
-                const fId = parseInt(t.franchise_id);
-                const rId = parseInt(t.admin_type_id);
-                
-                // Get name from map, fallback to ID if missing
-                const fName = fMap[fId] || t.franchise_id || 'Unknown ID';
-                const rName = rMap[rId] || t.admin_type_id || 'Unknown ID';
-
-                return `
+            document.getElementById('teacher-container').innerHTML = data.map(t => `
                 <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
                     <div style="display:flex; justify-content:space-between; border-bottom:2px solid #00d1b2; padding-bottom:10px; margin-bottom:10px;">
                         <h2 style="margin:0;">${t.first_name || ''} ${t.last_name || ''}</h2>
@@ -102,15 +90,14 @@
                     </div>
                     <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; font-size:0.9rem;">
                         <div><b>Contact:</b><br>${t.email || 'N/A'}<br>${t.phone || 'N/A'}</div>
-                        <div><b>Organization:</b><br>Franchise: ${fName}<br>Type: ${rName}</div>
+                        <div><b>Organization:</b><br>Franchise: ${fMap[t.franchise_id] || t.franchise_id}<br>Type: ${rMap[t.admin_type_id] || t.admin_type_id}</div>
                         <div><b>Employment:</b><br>Pay: ₱${t.daily_pay}<br>Start: ${t.start_date || 'N/A'}</div>
                     </div>
                     <div style="text-align:right; margin-top:10px;">
                         <button onclick="editTeacher(${t.id})" style="color:blue; border:1px solid blue; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">EDIT</button>
                         <button onclick="deleteTeacher(${t.id})" style="color:red; border:1px solid red; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">DELETE</button>
                     </div>
-                </div>`;
-            }).join('');
+                </div>`).join('');
         } catch(e) { document.getElementById('teacher-container').innerHTML = '<p>Error loading data.</p>'; }
     };
 
@@ -126,8 +113,9 @@
         const start = document.getElementById('t-start_date').value;
         const end = document.getElementById('t-last_day_of_work').value;
         
-        // SAFE DATE CONVERSION
-        const safeDate = (val) => (val && val !== "") ? val : null;
+        // LOGIC FIX: Convert empty dates to NULL
+        const finalStart = start === "" ? null : start;
+        const finalEnd = end === "" ? null : end;
 
         const payload = {
             first_name: document.getElementById('t-first_name').value,
@@ -136,11 +124,11 @@
             phone: document.getElementById('t-phone').value,
             tin_number: document.getElementById('t-tin_number').value,
             daily_pay: parseFloat(document.getElementById('t-daily_pay').value) || 0,
-            franchise_id: parseInt(document.getElementById('t-franchise_id').value) || 0,
-            admin_type_id: parseInt(document.getElementById('t-admin_type_id').value) || 0,
+            franchise_id: parseInt(document.getElementById('t-franchise_id').value),
+            admin_type_id: parseInt(document.getElementById('t-admin_type_id').value),
             user_id: parseInt(document.getElementById('t-user_id').value) || null,
-            start_date: safeDate(start),
-            last_day_of_work: safeDate(end),
+            start_date: finalStart,
+            last_day_of_work: finalEnd,
             is_active: document.getElementById('t-is_active').value === "true",
             address: document.getElementById('t-address').value,
             city: document.getElementById('t-city').value,
