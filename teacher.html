@@ -4,11 +4,11 @@
 </div>
 
 <div id="teacher-container" style="display: flex; flex-direction: column; gap: 20px;">
-    <div style="text-align:center; padding:50px;">Syncing Assignment Data...</div>
+    <div style="text-align:center; padding:50px;">Syncing with Franchise & Role Tables...</div>
 </div>
 
 <div id="modal-teacher" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:center;">
-    <div style="background:white; width:900px; border-radius:8px; display:flex; flex-direction:column; max-height:92vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <div style="background:white; width:950px; border-radius:8px; display:flex; flex-direction:column; max-height:92vh;">
         <div style="padding:20px; border-bottom:1px solid #eee; background:#fcfcfc;"><h3 id="t-modal-title" style="margin:0;">Teacher Profile</h3></div>
         <div style="padding:25px; overflow-y:auto; flex-grow:1; display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">
             <input type="hidden" id="t-id">
@@ -19,11 +19,11 @@
             
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">Phone</label><input type="text" id="t-phone" style="width:100%; padding:8px;"></div>
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">TIN Number</label><input type="text" id="t-tin_number" style="width:100%; padding:8px;"></div>
-            <div><label style="display:block; font-size:0.75rem; font-weight:700;">Daily Pay</label><input type="number" id="t-daily_pay" step="0.01" style="width:100%; padding:8px;"></div>
+            <div><label style="display:block; font-size:0.75rem; font-weight:700;">Daily Pay (Decimal)</label><input type="number" id="t-daily_pay" step="0.01" style="width:100%; padding:8px;"></div>
 
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">Franchise</label><select id="t-franchise_id" style="width:100%; padding:8px;"></select></div>
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">Admin Type</label><select id="t-admin_type_id" style="width:100%; padding:8px;"></select></div>
-            <div><label style="display:block; font-size:0.75rem; font-weight:700;">User ID (Manual Link)</label><input type="number" id="t-user_id" style="width:100%; padding:8px;"></div>
+            <div><label style="display:block; font-size:0.75rem; font-weight:700;">User ID (Int)</label><input type="number" id="t-user_id" style="width:100%; padding:8px;"></div>
 
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">Start Date</label><input type="date" id="t-start_date" style="width:100%; padding:8px;"></div>
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">Last Work Day</label><input type="date" id="t-last_day_of_work" style="width:100%; padding:8px;"></div>
@@ -33,7 +33,7 @@
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">City</label><input type="text" id="t-city" style="width:100%; padding:8px;"></div>
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">Barangay (brgy)</label><input type="text" id="t-brgy" style="width:100%; padding:8px;"></div>
             
-            <div style="grid-column: span 3;"><label style="display:block; font-size:0.75rem; font-weight:700;">Inactivation Reason / Comments</label><textarea id="t-notes" style="width:100%; height:60px; padding:8px; border:1px solid #ccc;"></textarea></div>
+            <div style="grid-column: span 3;"><label style="display:block; font-size:0.75rem; font-weight:700;">Inactivation Reason / Comments</label><textarea id="t-inactivation_reason_comments" style="width:100%; height:60px; padding:8px; border:1px solid #ccc;"></textarea></div>
         </div>
         <div style="padding:20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:12px; background:#fcfcfc;">
             <button onclick="document.getElementById('modal-teacher').style.display='none'" style="padding:10px 20px; cursor:pointer;">CANCEL</button>
@@ -44,42 +44,42 @@
 
 <script>
 (function() {
-    const API = 'https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e';
-    let fLookup = {};
-    let rLookup = {};
+    const TEACHER_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher';
+    const FRANCHISE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
+    const ADMIN_TYPE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:UpJO_5WB/admin_type';
 
-    window.initTeacherSystem = async () => {
+    let franchises = {};
+    let roles = {};
+
+    window.initTeacherModule = async () => {
         try {
-            // FORCE AWAIT for lookup tables before loading teachers
-            const [fRes, rRes] = await Promise.all([
-                fetch(`${API}/franchise`),
-                fetch(`${API}/admin_roles`)
-            ]);
-            
-            const franchises = await fRes.json();
-            const roles = await rRes.json();
+            // STEP 1: Wait for lookup data from separate API groups
+            const [fRes, rRes] = await Promise.all([fetch(FRANCHISE_URL), fetch(ADMIN_TYPE_URL)]);
+            const fData = await fRes.json();
+            const rData = await rRes.json();
 
-            // Populate the lookup maps and dropdowns
-            document.getElementById('t-franchise_id').innerHTML = franchises.map(f => {
-                fLookup[f.id] = f.name;
+            // STEP 2: Map IDs to Names for the display and populate selects
+            const fSelect = document.getElementById('t-franchise_id');
+            fSelect.innerHTML = fData.map(f => {
+                franchises[f.id] = f.name;
                 return `<option value="${f.id}">${f.name}</option>`;
             }).join('');
 
-            document.getElementById('t-admin_type_id').innerHTML = roles.map(r => {
-                const name = r.role_name || r.name || `Role ${r.id}`;
-                rLookup[r.id] = name;
+            const aSelect = document.getElementById('t-admin_type_id');
+            aSelect.innerHTML = rData.map(r => {
+                const name = r.role_name || r.name || `Type ${r.id}`;
+                roles[r.id] = name;
                 return `<option value="${r.id}">${name}</option>`;
             }).join('');
 
-            // Only load teachers AFTER maps are filled
-            loadTeacherCards();
-        } catch(e) { console.error("Data Sync Failed", e); }
+            // STEP 3: Now load the teacher list
+            loadTeachers();
+        } catch(e) { console.error("Setup failed", e); }
     };
 
-    window.loadTeacherCards = async () => {
-        const res = await fetch(`${API}/teacher`);
+    window.loadTeachers = async () => {
+        const res = await fetch(TEACHER_URL);
         const data = await res.json();
-        
         document.getElementById('teacher-container').innerHTML = data.map(t => `
             <div style="background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                 <div style="display:flex; justify-content: space-between; border-bottom: 2px solid #00d1b2; padding-bottom: 10px; margin-bottom: 15px;">
@@ -88,21 +88,17 @@
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 20px; font-size: 0.85rem; line-height: 1.6;">
                     <div>
-                        <span style="color:#888;">CONTACT</span><br>
-                        <b>Email:</b> ${t.email || 'N/A'}<br>
-                        <b>Phone:</b> ${t.phone || 'N/A'}<br>
-                        <b>TIN:</b> ${t.tin_number || 'N/A'}
+                        <span style="color:#888;">PERSONAL</span><br>
+                        <b>Email:</b> ${t.email || 'N/A'}<br><b>Phone:</b> ${t.phone || 'N/A'}<br><b>TIN:</b> ${t.tin_number || 'N/A'}
                     </div>
                     <div>
                         <span style="color:#888;">EMPLOYMENT</span><br>
-                        <b>Daily Pay:</b> ₱${t.daily_pay || '0.00'}<br>
-                        <b>Start:</b> ${t.start_date || 'N/A'}<br>
-                        <b>Last Day:</b> ${t.last_day_of_work || 'Active'}
+                        <b>Daily Pay:</b> ₱${t.daily_pay || '0.00'}<br><b>Start:</b> ${t.start_date || 'N/A'}<br><b>End:</b> ${t.last_day_of_work || 'Active'}
                     </div>
                     <div>
                         <span style="color:#888;">ASSIGNMENT</span><br>
-                        <b>Franchise:</b> ${fLookup[t.franchise_id] || 'ID: ' + t.franchise_id}<br>
-                        <b>Admin Type:</b> ${rLookup[t.admin_type_id] || 'ID: ' + t.admin_type_id}<br>
+                        <b>Franchise:</b> ${franchises[t.franchise_id] || t.franchise_id}<br>
+                        <b>Type:</b> ${roles[t.admin_type_id] || t.admin_type_id}<br>
                         <b>User ID:</b> ${t.user_id || 'None'}
                     </div>
                     <div style="grid-column: span 2;">
@@ -110,8 +106,7 @@
                         ${t.address || ''}, ${t.brgy || ''}, ${t.city || ''}
                     </div>
                     <div>
-                        <span style="color:#888;">INACTIVATION REASON</span><br>
-                        ${t.inactivation_reason_comments || 'None'}
+                        <span style="color:#888;">NOTES</span><br>${t.inactivation_reason_comments || 'None'}
                     </div>
                 </div>
                 <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
@@ -128,15 +123,15 @@
     };
 
     window.editTeacher = async (id) => {
-        const res = await fetch(`${API}/teacher/${id}`);
+        const res = await fetch(`${TEACHER_URL}/${id}`);
         const t = await res.json();
         document.getElementById('t-id').value = t.id;
         document.getElementById('t-first_name').value = t.first_name || "";
         document.getElementById('t-last_name').value = t.last_name || "";
         document.getElementById('t-email').value = t.email || "";
         document.getElementById('t-phone').value = t.phone || "";
-        document.getElementById('t-daily_pay').value = t.daily_pay || "";
         document.getElementById('t-tin_number').value = t.tin_number || "";
+        document.getElementById('t-daily_pay').value = t.daily_pay || "";
         document.getElementById('t-start_date').value = t.start_date || "";
         document.getElementById('t-last_day_of_work').value = t.last_day_of_work || "";
         document.getElementById('t-is_active').value = t.is_active.toString();
@@ -146,7 +141,7 @@
         document.getElementById('t-address').value = t.address || "";
         document.getElementById('t-city').value = t.city || "";
         document.getElementById('t-brgy').value = t.brgy || "";
-        document.getElementById('t-notes').value = t.inactivation_reason_comments || "";
+        document.getElementById('t-inactivation_reason_comments').value = t.inactivation_reason_comments || "";
         document.getElementById('modal-teacher').style.display = 'flex';
     };
 
@@ -157,31 +152,34 @@
             last_name: document.getElementById('t-last_name').value,
             email: document.getElementById('t-email').value,
             phone: document.getElementById('t-phone').value,
-            daily_pay: parseFloat(document.getElementById('t-daily_pay').value) || 0,
             tin_number: document.getElementById('t-tin_number').value,
+            daily_pay: parseFloat(document.getElementById('t-daily_pay').value) || 0,
             franchise_id: parseInt(document.getElementById('t-franchise_id').value),
             admin_type_id: parseInt(document.getElementById('t-admin_type_id').value),
             user_id: parseInt(document.getElementById('t-user_id').value) || null,
-            start_date: document.getElementById('t-start_date').value,
-            last_day_of_work: document.getElementById('t-last_day_of_work').value,
+            start_date: document.getElementById('t-start_date').value || null,
+            last_day_of_work: document.getElementById('t-last_day_of_work').value || null,
             is_active: document.getElementById('t-is_active').value === "true",
             address: document.getElementById('t-address').value,
             city: document.getElementById('t-city').value,
             brgy: document.getElementById('t-brgy').value,
-            inactivation_reason_comments: document.getElementById('t-notes').value
+            inactivation_reason_comments: document.getElementById('t-inactivation_reason_comments').value
         };
-        await fetch(id ? `${API}/teacher/${id}` : `${API}/teacher`, {
+        const res = await fetch(id ? `${TEACHER_URL}/${id}` : TEACHER_URL, {
             method: id ? 'PATCH' : 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
-        document.getElementById('modal-teacher').style.display = 'none';
-        loadTeacherCards();
+        if (res.ok) {
+            document.getElementById('modal-teacher').style.display = 'none';
+            loadTeachers();
+        } else {
+            alert("Save failed. Check field permissions in Xano.");
+        }
     };
 
-    window.deleteTeacher = async (id) => { if(confirm("Permanently delete?")) { await fetch(`${API}/teacher/${id}`, {method:'DELETE'}); loadTeacherCards(); } };
+    window.deleteTeacher = async (id) => { if(confirm("Delete record?")) { await fetch(`${TEACHER_URL}/${id}`, {method:'DELETE'}); loadTeachers(); } };
     
-    // EXECUTE INIT
-    initTeacherSystem();
+    initTeacherModule();
 })();
 </script>
