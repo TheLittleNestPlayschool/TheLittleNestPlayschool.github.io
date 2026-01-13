@@ -1,0 +1,220 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <h1 style="margin:0;">Lead Profiles</h1>
+    <button onclick="openNewLeadModal()" style="background:#00d1b2; color:white; border:none; padding:12px 24px; cursor:pointer; font-weight:bold; border-radius:4px;">+ NEW LEAD</button>
+</div>
+
+<div id="lead-container" style="display: flex; flex-direction: column; gap: 20px;">
+    <div style="text-align:center; padding:50px; border:1px solid #eee;">Fetching Lead Data...</div>
+</div>
+
+<div id="modal-lead" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
+    <div style="background:white; width:98%; max-width:1400px; border-radius:8px; display:flex; flex-direction:column; max-height:98vh;">
+        <div style="padding:15px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; background:#f9f9f9; border-radius:8px 8px 0 0;">
+            <h3 style="margin:0;">Master Lead Profile Editor</h3>
+            <button onclick="document.getElementById('modal-lead').style.display='none'" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+        </div>
+        
+        <div style="padding:25px; overflow-y:auto; flex-grow:1;">
+            <input type="hidden" id="l-id">
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+                
+                <div>
+                    <h4 style="border-bottom:2px solid #00d1b2; color:#333;">1. Primary Identity</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+                        <div><label>FB User ID</label><input type="text" id="l-fb_user_id" style="width:100%;"></div>
+                        <div><label>FB Name</label><input type="text" id="l-fb_name" style="width:100%;"></div>
+                        <div><label>Phone</label><input type="text" id="l-lead_phone_number" style="width:100%;"></div>
+                        <div><label>Email</label><input type="email" id="l-lead_email" style="width:100%;"></div>
+                        <div style="grid-column:span 2;"><label>Profile Pic URL</label><input type="text" id="l-fb_pic_url" style="width:100%;"></div>
+                    </div>
+
+                    <h4 style="border-bottom:2px solid #00d1b2; color:#333;">2. Children Details</h4>
+                    <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1.5fr 1.5fr; gap:8px; margin-bottom:20px; font-size:0.8rem;">
+                        <strong>Name</strong><strong>Age</strong><strong>Gen</strong><strong>B-Day</strong><strong>Nick</strong>
+                        <input type="text" id="l-child_name_1"><input type="text" id="l-child_age_1"><input type="text" id="l-child_gender_1"><input type="date" id="l-child_birthday_1"><input type="text" id="l-child_nickname_1">
+                        <input type="text" id="l-child_name_2"><input type="text" id="l-child_age_2"><input type="text" id="l-child_gender_2"><input type="date" id="l-child_birthday_2"><input type="text" id="l-child_nickname_2">
+                        <input type="text" id="l-child_name_3"><input type="text" id="l-child_age_3"><input type="text" id="l-child_gender_3"><input type="date" id="l-child_birthday_3"><input type="text" id="l-child_nickname_3">
+                    </div>
+
+                    <h4 style="border-bottom:2px solid #00d1b2; color:#333;">3. Household & Care</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+                        <div><label>Home City</label><input type="text" id="l-home_city" style="width:100%;"></div>
+                        <div><label>Barangay</label><input type="text" id="l-barangay" style="width:100%;"></div>
+                        <div><label>Parent Occ.</label><input type="text" id="l-parent_occupation" style="width:100%;"></div>
+                        <div><label>Household Type</label><input type="text" id="l-household_type" style="width:100%;"></div>
+                        <div><label>Primary Caregiver</label><input type="text" id="l-primary_caregiver" style="width:100%;"></div>
+                        <div><label>Toilet Status</label><input type="text" id="l-toilet_trained_status" style="width:100%;"></div>
+                    </div>
+
+                    <h4 style="border-bottom:2px solid #00d1b2; color:#333;">4. Emergency Contact</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:20px;">
+                        <div><label>Name</label><input type="text" id="l-emergency_contact_name" style="width:100%;"></div>
+                        <div><label>Number</label><input type="text" id="l-emergency_contact_num" style="width:100%;"></div>
+                        <div><label>Relation</label><input type="text" id="l-emergency_relationship" style="width:100%;"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="border-bottom:2px solid #e67e22; color:#333;">5. Medical & Allergies</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:5px; margin-bottom:15px; font-size:0.75rem;">
+                        <div><input type="checkbox" id="l-med_asthma"> Asthma</div>
+                        <div><input type="checkbox" id="l-med_g6pd"> G6PD</div>
+                        <div><input type="checkbox" id="l-med_epilepsy"> Epilepsy</div>
+                        <div><input type="checkbox" id="l-med_diabetes"> Diabetes</div>
+                        <div><input type="checkbox" id="l-med_heart_condition"> Heart</div>
+                        <div><input type="checkbox" id="l-dev_autism"> Autism</div>
+                        <div><input type="checkbox" id="l-dev_adhd"> ADHD</div>
+                        <div><input type="checkbox" id="l-dev_speech_delay"> Speech</div>
+                        <div><input type="checkbox" id="l-dev_sensory_processing"> Sensory</div>
+                        <div><input type="checkbox" id="l-alg_env_latex"> Latex</div>
+                        <div><input type="checkbox" id="l-alg_env_pollen"> Pollen</div>
+                        <div><input type="checkbox" id="l-alg_env_sun"> Sun</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                        <input type="text" id="l-alg_food_other" placeholder="Other Food Allergies" style="width:100%;">
+                        <input type="text" id="l-alg_env_other" placeholder="Other Env Allergies" style="width:100%;">
+                    </div>
+
+                    <h4 style="border-bottom:2px solid #e67e22; color:#333;">6. Dietary Requirements</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:5px; margin-bottom:15px; font-size:0.75rem;">
+                        <div><input type="checkbox" id="l-diet_halal"> Halal</div>
+                        <div><input type="checkbox" id="l-diet_vegetarian"> Veg</div>
+                        <div><input type="checkbox" id="l-diet_no_pork"> No Pork</div>
+                        <div><input type="checkbox" id="l-diet_no_beef"> No Beef</div>
+                        <div><input type="checkbox" id="l-diet_no_sugar"> No Sugar</div>
+                        <div><input type="checkbox" id="l-diet_gluten_free"> Gluten-Free</div>
+                    </div>
+
+                    <h4 style="border-bottom:2px solid #3498db; color:#333;">7. Sales Intelligence (AI)</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+                        <div><label>Intent Type</label><input type="text" id="l-intent_type" style="width:100%;"></div>
+                        <div><label>Urgency</label><input type="text" id="l-lead_urgency" style="width:100%;"></div>
+                        <div><label>Prob Score</label><input type="number" id="l-probability_score" style="width:100%;"></div>
+                        <div><label>Budget</label><input type="text" id="l-budget_range" style="width:100%;"></div>
+                        <div><label>Start Date</label><input type="date" id="l-intended_start_date" style="width:100%;"></div>
+                        <div><label>Location ID</label><input type="number" id="l-pref_location_id" style="width:100%;"></div>
+                    </div>
+
+                    <h4 style="border-bottom:2px solid #2c3e50; color:#333;">8. Status & Tracking</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div><label>Enroll Status</label><input type="text" id="l-enrollment_status" placeholder="JSON list" style="width:100%;"></div>
+                        <div><label>Next Step</label><input type="text" id="l-next_action_step" style="width:100%;"></div>
+                        <div style="grid-column: span 2;"><label>Admin Notes</label><textarea id="l-admin_notes" style="width:100%; height:60px;"></textarea></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="padding:15px 20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; background:#f9f9f9;">
+            <button onclick="document.getElementById('modal-lead').style.display='none'" style="padding:10px 20px;">CANCEL</button>
+            <button onclick="submitLead()" style="background:#00d1b2; color:white; border:none; padding:10px 30px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE COMPLETE PROFILE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const API_BASE = 'https://x8ki-letl-twmt.n7.xano.io/api:dzfsI_eq/lead_profile';
+    const fields = [
+        'fb_user_id','fb_name','fb_pic_url',
+        'child_name_1','child_name_2','child_name_3',
+        'child_age_1','child_age_2','child_age_3',
+        'child_gender_1','child_gender_2','child_gender_3',
+        'child_birthday_1','child_birthday_2','child_birthday_3',
+        'child_nickname_1','child_nickname_2','child_nickname_3',
+        'med_asthma','med_g6pd','med_epilepsy','med_diabetes','med_heart_condition',
+        'dev_autism','dev_adhd','dev_speech_delay','dev_sensory_processing',
+        'alg_food_peanuts','alg_food_tree_nuts','alg_food_dairy','alg_food_eggs',
+        'alg_food_shellfish','alg_food_soy','alg_food_wheat','alg_food_fish','alg_food_other',
+        'alg_env_latex','alg_env_dust_mites','alg_env_pollen','alg_env_mold',
+        'alg_env_pet_dander','alg_env_insect_stings','alg_env_fragrance','alg_env_sun','alg_env_other',
+        'diet_halal','diet_kosher','diet_vegetarian','diet_vegan','diet_no_pork','diet_no_beef',
+        'diet_no_sugar','diet_no_processed','diet_gluten_free','diet_dairy_free','diet_low_sodium',
+        'diet_organic','diet_no_seafood','diet_no_poultry','diet_keto_friendly','diet_other',
+        'toilet_trained_status','vaccination_status','parent_occupation','home_city','barangay',
+        'household_type','primary_caregiver','emergency_contact_name','emergency_contact_num','emergency_relationship',
+        'lead_phone_number','lead_email','prev_school_name','prev_school_reason',
+        'hobby_swimming','hobby_drawing','hobby_coloring','hobby_toys','hobby_group_play',
+        'hobby_outdoors','hobby_music','hobby_reading','hobby_other',
+        'social_milestone_status','separation_anxiety_level','intent_type','objection_type',
+        'budget_range','intended_start_date','pref_days','pref_time_slots','pref_location_id',
+        'lead_urgency','probability_score','active_pivot_script','referral_source','enrollment_status',
+        'next_action_step','admin_notes','school_tour_booked','enrollment_form_sent','is_processed',
+        'is_visible','lead_type','external_source'
+    ];
+
+    window.loadLeads = async () => {
+        try {
+            const res = await fetch(API_BASE + '?t=' + Date.now());
+            const data = await res.json();
+            const leads = Array.isArray(data) ? data : (data.items || []);
+            document.getElementById('lead-container').innerHTML = leads.map(l => `
+                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #00d1b2; padding-bottom:10px; margin-bottom:10px;">
+                        <h2 style="margin:0;">${l.fb_name || 'Unnamed Lead'}</h2>
+                        <span style="font-weight:bold; color:#00d1b2;">Score: ${l.probability_score || 0}%</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; font-size:0.9rem;">
+                        <div><b>Email:</b> ${l.lead_email || 'N/A'}<br><b>Phone:</b> ${l.lead_phone_number || 'N/A'}</div>
+                        <div><b>Intent:</b> ${l.intent_type || 'N/A'}<br><b>Urgency:</b> ${l.lead_urgency || 'Normal'}</div>
+                        <div><b>Next Step:</b> ${l.next_action_step || 'None'}</div>
+                    </div>
+                    <div style="text-align:right; margin-top:10px;">
+                        <button onclick="editLead(${l.id})" style="color:blue; border:1px solid blue; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">EDIT FULL PROFILE</button>
+                    </div>
+                </div>`).join('');
+        } catch(e) { console.error(e); }
+    };
+
+    window.openNewLeadModal = () => {
+        document.getElementById('l-id').value = "";
+        fields.forEach(f => {
+            const el = document.getElementById('l-' + f);
+            if (el) {
+                if (el.type === 'checkbox') el.checked = false;
+                else el.value = "";
+            }
+        });
+        document.getElementById('modal-lead').style.display = 'flex';
+    };
+
+    window.submitLead = async () => {
+        const id = document.getElementById('l-id').value;
+        const payload = {};
+        fields.forEach(f => {
+            const el = document.getElementById('l-' + f);
+            if (el) {
+                if (el.type === 'checkbox') payload[f] = el.checked;
+                else if (el.type === 'number') payload[f] = parseInt(el.value) || 0;
+                else payload[f] = el.value || null;
+            }
+        });
+
+        const res = await fetch(id ? `${API_BASE}/${id}` : API_BASE, {
+            method: id ? 'PATCH' : 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) { document.getElementById('modal-lead').style.display = 'none'; loadLeads(); }
+        else { alert("Save Failed"); }
+    };
+
+    window.editLead = async (id) => {
+        const res = await fetch(`${API_BASE}/${id}`);
+        const l = await res.json();
+        document.getElementById('l-id').value = l.id;
+        fields.forEach(f => {
+            const el = document.getElementById('l-' + f);
+            if (el) {
+                if (el.type === 'checkbox') el.checked = l[f] || false;
+                else el.value = l[f] || "";
+            }
+        });
+        document.getElementById('modal-lead').style.display = 'flex';
+    };
+
+    loadLeads();
+})();
+</script>
