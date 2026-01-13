@@ -1,0 +1,105 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <h1 style="margin:0;">Admin Roles & Permissions</h1>
+    <button onclick="openNewRoleModal()" class="btn-save" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px;">+ NEW ROLE</button>
+</div>
+
+<table class="admin-table">
+    <thead>
+        <tr>
+            <th style="width: 80px;">ID</th>
+            <th>ADMIN ROLE NAME</th>
+            <th>CREATED ON</th>
+            <th style="width: 150px;">ACTIONS</th>
+        </tr>
+    </thead>
+    <tbody id="role-body">
+        <tr><td colspan="4" style="text-align:center; padding:20px;">Fetching roles from Xano...</td></tr>
+    </tbody>
+</table>
+
+<div id="modal-role" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:11000; justify-content:center; align-items:center;">
+    <div style="background:white; width:450px; border-radius:4px; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <div style="padding:15px; border-bottom:1px solid #eee;"><h3 id="role-modal-title" style="margin:0;">Role Configuration</h3></div>
+        <div style="padding:20px;">
+            <input type="hidden" id="role-id">
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-size:0.85rem; font-weight:700; margin-bottom:5px;">Admin Type Name</label>
+                <input type="text" id="role-name" placeholder="e.g. Super Admin" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+            </div>
+        </div>
+        <div style="padding:15px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; background:#fcfcfc;">
+            <button onclick="document.getElementById('modal-role').style.display='none'" style="padding:8px 15px; cursor:pointer; font-weight:bold; background:#eee; border:none; border-radius:4px;">CANCEL</button>
+            <button onclick="submitRole()" style="background:#00d1b2; color:white; border:none; padding:8px 15px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE ROLE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const ROLE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:UpJO_5WB/admin_type';
+
+    window.loadRoles = async () => {
+        try {
+            const res = await fetch(ROLE_URL);
+            const data = await res.json();
+            document.getElementById('role-body').innerHTML = data.map(r => `
+                <tr>
+                    <td>${r.id}</td>
+                    <td><strong>${r.Admin_Type}</strong></td>
+                    <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <a href="javascript:void(0)" onclick="editRole(${r.id})" style="color:blue; font-weight:bold;">Edit</a> | 
+                        <a href="javascript:void(0)" onclick="deleteRole(${r.id})" style="color:red; font-weight:bold;">Del</a>
+                    </td>
+                </tr>`).join('');
+        } catch(e) { console.error("Error loading roles:", e); }
+    };
+
+    window.openNewRoleModal = () => {
+        document.getElementById('role-modal-title').innerText = "Create New Admin Role";
+        document.getElementById('role-id').value = "";
+        document.getElementById('role-name').value = "";
+        document.getElementById('modal-role').style.display = 'flex';
+    };
+
+    window.editRole = async (id) => {
+        const res = await fetch(\`\${ROLE_URL}/\${id}\`);
+        const r = await res.json();
+        document.getElementById('role-modal-title').innerText = "Edit Role Name";
+        document.getElementById('role-id').value = r.id;
+        document.getElementById('role-name').value = r.Admin_Type || "";
+        document.getElementById('modal-role').style.display = 'flex';
+    };
+
+    window.submitRole = async () => {
+        const id = document.getElementById('role-id').value;
+        const payload = {
+            Admin_Type: document.getElementById('role-name').value
+        };
+
+        if(!payload.Admin_Type) { alert("Please enter a role name."); return; }
+
+        const res = await fetch(id ? \`\${ROLE_URL}/\${id}\` : ROLE_URL, {
+            method: id ? 'PATCH' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            document.getElementById('modal-role').style.display = 'none';
+            loadRoles();
+        } else {
+            alert("Error saving role to Xano.");
+        }
+    };
+
+    window.deleteRole = async (id) => {
+        if(confirm("Permanently delete this Admin Role?")) {
+            await fetch(\`\${ROLE_URL}/\${id}\`, { method: 'DELETE' });
+            loadRoles();
+        }
+    };
+
+    loadRoles();
+})();
+</script>
