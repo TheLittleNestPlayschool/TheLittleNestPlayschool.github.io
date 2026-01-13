@@ -4,12 +4,12 @@
 </div>
 
 <div id="teacher-list" style="display: flex; flex-direction: column; gap: 15px;">
-    <div style="text-align:center; padding:50px;">Fetching records...</div>
+    <div style="text-align:center; padding:50px;">Fetching 18-field records...</div>
 </div>
 
 <div id="modal-teacher" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:center;">
-    <div style="background:white; width:900px; border-radius:8px; display:flex; flex-direction:column; max-height:92vh;">
-        <div style="padding:20px; border-bottom:1px solid #eee;"><h3 id="t-modal-title" style="margin:0;">Teacher Profile</h3></div>
+    <div style="background:white; width:900px; border-radius:8px; display:flex; flex-direction:column; max-height:92vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <div style="padding:20px; border-bottom:1px solid #eee; background:#fcfcfc;"><h3 id="t-modal-title" style="margin:0;">Teacher Profile</h3></div>
         <div style="padding:25px; overflow-y:auto; flex-grow:1; display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">
             <input type="hidden" id="t-id">
             
@@ -23,7 +23,7 @@
 
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">Franchise</label><select id="t-franchise_id" style="width:100%; padding:8px;"><option value="">Loading...</option></select></div>
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">Admin Type</label><select id="t-admin_type_id" style="width:100%; padding:8px;"><option value="">Loading...</option></select></div>
-            <div><label style="display:block; font-size:0.75rem; font-weight:700;">User ID (Linked Account)</label><input type="number" id="t-user_id" style="width:100%; padding:8px;"></div>
+            <div><label style="display:block; font-size:0.75rem; font-weight:700;">User ID (Int)</label><input type="number" id="t-user_id" style="width:100%; padding:8px;"></div>
 
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">Start Date</label><input type="date" id="t-start_date" style="width:100%; padding:8px;"></div>
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">Last Work Day</label><input type="date" id="t-last_day_of_work" style="width:100%; padding:8px;"></div>
@@ -33,10 +33,10 @@
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">City</label><input type="text" id="t-city" style="width:100%; padding:8px;"></div>
             <div><label style="display:block; font-size:0.75rem; font-weight:700;">Barangay (brgy)</label><input type="text" id="t-brgy" style="width:100%; padding:8px;"></div>
             
-            <div style="grid-column: span 3;"><label style="display:block; font-size:0.75rem; font-weight:700;">Inactivation Reason / Comments</label><textarea id="t-inactivation_reason_comments" style="width:100%; height:60px; padding:8px;"></textarea></div>
+            <div style="grid-column: span 3;"><label style="display:block; font-size:0.75rem; font-weight:700;">Inactivation Reason / Comments</label><textarea id="t-inactivation_reason_comments" style="width:100%; height:60px; padding:8px; border:1px solid #ccc;"></textarea></div>
         </div>
         <div style="padding:20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:12px; background:#fcfcfc;">
-            <button onclick="document.getElementById('modal-teacher').style.display='none'" style="padding:10px 20px;">CANCEL</button>
+            <button onclick="document.getElementById('modal-teacher').style.display='none'" style="padding:10px 20px; cursor:pointer;">CANCEL</button>
             <button onclick="submitTeacher()" style="background:#00d1b2; color:white; border:none; padding:10px 25px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE RECORD</button>
         </div>
     </div>
@@ -47,17 +47,18 @@
     const API_BASE = 'https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e';
     const TEACHER_URL = `${API_BASE}/teacher`;
     const FRANCHISE_URL = `${API_BASE}/franchise`;
-    const ADMIN_TYPE_URL = `${API_BASE}/admin_type`; // Assumed endpoint based on your relationship note
+    // Using the admin_roles endpoint for the type dropdown
+    const ADMIN_TYPE_URL = `${API_BASE}/admin_roles`; 
 
     window.initTeacherModule = async () => {
-        // Load Dropdowns
-        const [fRes, aRes] = await Promise.all([fetch(FRANCHISE_URL), fetch(ADMIN_TYPE_URL)]);
-        const franchises = await fRes.json();
-        const adminTypes = await aRes.json();
+        try {
+            const [fRes, aRes] = await Promise.all([fetch(FRANCHISE_URL), fetch(ADMIN_TYPE_URL)]);
+            const franchises = await fRes.json();
+            const adminTypes = await aRes.json();
 
-        document.getElementById('t-franchise_id').innerHTML = franchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-        document.getElementById('t-admin_type_id').innerHTML = adminTypes.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-        
+            document.getElementById('t-franchise_id').innerHTML = franchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+            document.getElementById('t-admin_type_id').innerHTML = adminTypes.map(a => `<option value="${a.id}">${a.name || a.role_name}</option>`).join('');
+        } catch(e) { console.error("Dropdown load failed"); }
         loadTeachers();
     };
 
@@ -68,24 +69,24 @@
             document.getElementById('teacher-list').innerHTML = data.map(t => `
                 <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; display:grid; grid-template-columns: 1.5fr 1fr 1.5fr 100px; gap:20px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
                     <div>
-                        <strong style="font-size:1.1rem;">${t.first_name} ${t.last_name}</strong><br>
-                        <small style="color:#666;">ID: ${t.id} | User: ${t.user_id}</small><br>
-                        ${t.email}<br>${t.phone}
+                        <strong style="font-size:1.1rem; color:#1a1a1a;">${t.first_name || ''} ${t.last_name || ''}</strong><br>
+                        <small style="color:#888;">ID: ${t.id} | User ID: ${t.user_id}</small><br>
+                        ${t.email || 'No Email'}<br>${t.phone || 'No Phone'}
                     </div>
-                    <div>
-                        <b>Pay:</b> $${t.daily_pay}<br>
-                        <b>TIN:</b> ${t.tin_number}<br>
-                        <b>Franchise:</b> ${t.franchise_id}<br>
-                        <b>Type:</b> ${t.admin_type_id}
+                    <div style="font-size:0.9rem;">
+                        <b>Pay:</b> ₱${t.daily_pay || '0'}<br>
+                        <b>TIN:</b> ${t.tin_number || 'N/A'}<br>
+                        <b>Franchise ID:</b> ${t.franchise_id}<br>
+                        <b>Type ID:</b> ${t.admin_type_id}
                     </div>
-                    <div>
-                        <b>Location:</b> ${t.address}, ${t.brgy}, ${t.city}<br>
-                        <b>Dates:</b> ${t.start_date} to ${t.last_day_of_work || 'Active'}<br>
-                        <b>Active:</b> <span style="color:${t.is_active ? 'green' : 'red'}; font-weight:bold;">${t.is_active}</span>
+                    <div style="font-size:0.9rem;">
+                        <b>Address:</b> ${t.address || ''}, ${t.brgy || ''}, ${t.city || ''}<br>
+                        <b>Employment:</b> ${t.start_date || 'N/A'} to ${t.last_day_of_work || 'Active'}<br>
+                        <b>Status:</b> <span style="color:${t.is_active ? 'green' : 'red'}; font-weight:bold;">${t.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
                     </div>
-                    <div style="display:flex; flex-direction:column; gap:5px; justify-content:center;">
-                        <button onclick="editTeacher(${t.id})" style="color:blue; border:1px solid blue; background:none; padding:5px; cursor:pointer; border-radius:4px;">Edit</button>
-                        <button onclick="deleteTeacher(${t.id})" style="color:red; border:1px solid red; background:none; padding:5px; cursor:pointer; border-radius:4px;">Delete</button>
+                    <div style="display:flex; flex-direction:column; gap:8px; justify-content:center;">
+                        <button onclick="editTeacher(${t.id})" style="color:blue; border:1px solid blue; background:none; padding:6px; cursor:pointer; border-radius:4px; font-weight:bold;">EDIT</button>
+                        <button onclick="deleteTeacher(${t.id})" style="color:red; border:1px solid red; background:none; padding:6px; cursor:pointer; border-radius:4px; font-weight:bold;">DEL</button>
                     </div>
                 </div>`).join('');
         } catch(e) { document.getElementById('teacher-list').innerHTML = 'Error loading teachers.'; }
@@ -149,7 +150,7 @@
         loadTeachers();
     };
 
-    window.deleteTeacher = async (id) => { if(confirm("Delete?")) { await fetch(`${TEACHER_URL}/${id}`, {method:'DELETE'}); loadTeachers(); } };
+    window.deleteTeacher = async (id) => { if(confirm("Delete record?")) { await fetch(`${TEACHER_URL}/${id}`, {method:'DELETE'}); loadTeachers(); } };
     initTeacherModule();
 })();
 </script>
