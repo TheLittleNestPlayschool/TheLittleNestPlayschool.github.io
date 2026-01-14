@@ -39,15 +39,18 @@
                 <div><label>Brand LinkedIn</label><input type="text" id="f-social_li" style="width:100%; padding:8px;"></div>
             </div>
 
-            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px;">2. Ownership Details</h4>
+            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px;">2. Owner 1 Details</h4>
             <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin-bottom:25px; background:#fcfcfc; padding:15px; border:1px solid #eee; border-radius:4px;">
-                <div><label>Owner 1 Name</label><input type="text" id="f-owner_1_name" style="width:100%;"></div>
-                <div><label>Owner 1 Phone</label><input type="text" id="f-owner_1_phone" style="width:100%;"></div>
-                <div><label>Owner 1 Email</label><input type="email" id="f-owner_1_email" style="width:100%;"></div>
-                
-                <div style="margin-top:10px;"><label>Owner 2 Name</label><input type="text" id="f-owner_2_name" style="width:100%;"></div>
-                <div style="margin-top:10px;"><label>Owner 2 Phone</label><input type="text" id="f-owner_2_phone" style="width:100%;"></div>
-                <div style="margin-top:10px;"><label>Owner 2 Email</label><input type="email" id="f-owner_2_email" style="width:100%;"></div>
+                <div><label>Owner 1 Name</label><input type="text" id="f-owner_1_name" style="width:100%; padding:8px;"></div>
+                <div><label>Owner 1 Phone</label><input type="text" id="f-owner_1_phone" style="width:100%; padding:8px;"></div>
+                <div><label>Owner 1 Email</label><input type="email" id="f-owner_1_email" style="width:100%; padding:8px;"></div>
+            </div>
+
+            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px;">3. Owner 2 Details</h4>
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin-bottom:25px; background:#fcfcfc; padding:15px; border:1px solid #eee; border-radius:4px;">
+                <div><label>Owner 2 Name</label><input type="text" id="f-owner_2_name" style="width:100%; padding:8px;"></div>
+                <div><label>Owner 2 Phone</label><input type="text" id="f-owner_2_phone" style="width:100%; padding:8px;"></div>
+                <div><label>Owner 2 Email</label><input type="email" id="f-owner_2_email" style="width:100%; padding:8px;"></div>
             </div>
 
             <div><label>Internal Notes</label><textarea id="f-internal_notes" style="width:100%; height:60px; padding:8px;"></textarea></div>
@@ -63,6 +66,13 @@
 <script>
 (function() {
     const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
+    const fields = [
+        'name', 'status', 'address', 'phone_number', 'franchise_email', 
+        'royalty_rate', 'opening_date', 'business_tax_id', 'internal_notes',
+        'social_fb', 'social_ig', 'social_tiktok', 'social_li',
+        'owner_1_name', 'owner_1_phone', 'owner_1_email',
+        'owner_2_name', 'owner_2_phone', 'owner_2_email'
+    ];
 
     window.loadFranchises = async () => {
         try {
@@ -70,10 +80,7 @@
             const data = await res.json();
             const list = Array.isArray(data) ? data : (data.items || []);
             
-            document.getElementById('franchise-container').innerHTML = list.map(f => {
-                const s = (val) => val ? '<span style="color:green;">✅</span>' : '<span style="color:red;">❌</span>';
-                
-                return `
+            document.getElementById('franchise-container').innerHTML = list.map(f => `
                 <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
                     <div style="display:flex; justify-content:space-between; border-bottom:2px solid #00d1b2; padding-bottom:10px; margin-bottom:10px;">
                         <h2 style="margin:0;">${f.name || 'N/A'}</h2>
@@ -81,11 +88,9 @@
                     </div>
                     <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px; font-size:0.85rem;">
                         <div>
-                            <span style="color:#888; font-weight:bold; font-size:0.7rem;">CONTACT & LEGAL</span><br>
-                            E: ${f.franchise_email || 'N/A'}<br>
-                            P: ${f.phone_number || 'N/A'}<br>
-                            Tax ID: ${f.business_tax_id || 'N/A'}<br>
-                            FB: ${s(f.social_fb)} IG: ${s(f.social_ig)} TK: ${s(f.social_tiktok)} LI: ${s(f.social_li)}
+                            <span style="color:#888; font-weight:bold; font-size:0.7rem;">BRAND</span><br>
+                            E: ${f.franchise_email || 'N/A'}<br>P: ${f.phone_number || 'N/A'}<br>
+                            Rate: ${f.royalty_rate}%
                         </div>
                         <div>
                             <span style="color:#888; font-weight:bold; font-size:0.7rem;">OWNER 1</span><br>
@@ -96,53 +101,30 @@
                             ${f.owner_2_name || 'N/A'}<br>${f.owner_2_email || 'N/A'}<br>${f.owner_2_phone || 'N/A'}
                         </div>
                     </div>
-                    <div style="margin-top:15px; padding-top:10px; border-top:1px solid #f9f9f9; font-size:0.8rem; color:#555;">
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-                           <div><b>Address:</b> ${f.address || 'N/A'}</div>
-                           <div><b>Royalty:</b> ${f.royalty_rate || '0'}% | <b>Opened:</b> ${f.opening_date || 'N/A'}</div>
-                        </div>
-                        <div style="margin-top:5px;"><b>Notes:</b> ${f.internal_notes || 'None'}</div>
-                    </div>
-                    <div style="text-align:right; margin-top:15px;">
+                    <div style="text-align:right; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
                         <button onclick="editFranchise(${f.id})" style="color:blue; border:1px solid blue; background:none; padding:5px 15px; cursor:pointer; font-weight:bold; border-radius:4px;">EDIT FULL RECORD</button>
-                        <button onclick="deleteFranchise(${f.id})" style="color:red; border:1px solid red; background:none; padding:5px 15px; cursor:pointer; font-weight:bold; border-radius:4px; margin-left:5px;">DELETE</button>
+                        <button onclick="deleteFranchise(${f.id})" style="color:red; border:1px solid red; background:none; padding:5px 15px; cursor:pointer; font-weight:bold; border-radius:4px; margin-left:10px;">DELETE</button>
                     </div>
-                </div>`;
-            }).join('');
-        } catch(e) { console.error(e); }
+                </div>`).join('');
+        } catch(e) { console.error("Load failed:", e); }
     };
 
     window.submitFranchise = async () => {
         const id = document.getElementById('f-id').value;
-        const getV = (id) => document.getElementById(id).value || "";
+        const payload = {};
+        
+        fields.forEach(field => {
+            const el = document.getElementById('f-' + field);
+            if(el) {
+                payload[field] = field === 'royalty_rate' ? (parseFloat(el.value) || 0) : (el.value || "");
+            }
+        });
 
-        const payload = {
-            name: getV('f-name'),
-            status: getV('f-status'),
-            address: getV('f-address'),
-            phone_number: getV('f-phone_number'),
-            franchise_email: getV('f-franchise_email'),
-            royalty_rate: parseFloat(document.getElementById('f-royalty_rate').value) || 0,
-            opening_date: getV('f-opening_date'),
-            business_tax_id: getV('f-business_tax_id'),
-            internal_notes: getV('f-internal_notes'),
-            social_fb: getV('f-social_fb'),
-            social_ig: getV('f-social_ig'),
-            social_tiktok: getV('f-social_tiktok'),
-            social_li: getV('f-social_li'),
-            owner_1_name: getV('f-owner_1_name'),
-            owner_1_phone: getV('f-owner_1_phone'),
-            owner_1_email: getV('f-owner_1_email'),
-            owner_2_name: getV('f-owner_2_name'),
-            owner_2_phone: getV('f-owner_2_phone'),
-            owner_2_email: getV('f-owner_2_email')
-        };
+        console.log("Sending Payload:", payload); // DEBUG: Check browser console to see what is sent
 
-        const method = id ? 'PATCH' : 'POST';
         const url = id ? `${F_API}/${id}` : F_API;
-
         const res = await fetch(url, {
-            method: method,
+            method: id ? 'PATCH' : 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
@@ -152,41 +134,23 @@
             loadFranchises();
         } else {
             const err = await res.json();
-            alert("Error: " + err.message);
+            alert("Error: " + (err.message || "Failed to save"));
         }
     };
 
     window.editFranchise = async (id) => {
         const res = await fetch(`${F_API}/${id}`);
         const f = await res.json();
-        const setV = (id, val) => document.getElementById(id).value = val || "";
         document.getElementById('f-id').value = f.id;
-        
-        setV('f-name', f.name);
-        setV('f-status', f.status);
-        setV('f-address', f.address);
-        setV('f-phone_number', f.phone_number);
-        setV('f-franchise_email', f.franchise_email);
-        setV('f-royalty_rate', f.royalty_rate);
-        setV('f-opening_date', f.opening_date);
-        setV('f-business_tax_id', f.business_tax_id);
-        setV('f-internal_notes', f.internal_notes);
-        setV('f-social_fb', f.social_fb);
-        setV('f-social_ig', f.social_ig);
-        setV('f-social_tiktok', f.social_tiktok);
-        setV('f-social_li', f.social_li);
-        setV('f-owner_1_name', f.owner_1_name);
-        setV('f-owner_1_phone', f.owner_1_phone);
-        setV('f-owner_1_email', f.owner_1_email);
-        setV('f-owner_2_name', f.owner_2_name);
-        setV('f-owner_2_phone', f.owner_2_phone);
-        setV('f-owner_2_email', f.owner_2_email);
-
+        fields.forEach(field => {
+            const el = document.getElementById('f-' + field);
+            if(el) el.value = f[field] || "";
+        });
         document.getElementById('modal-franchise').style.display = 'flex';
     };
 
     window.deleteFranchise = async (id) => {
-        if(confirm("Confirm Delete?")) {
+        if(confirm("Permanent Delete?")) {
             await fetch(`${F_API}/${id}`, { method: 'DELETE' });
             loadFranchises();
         }
@@ -194,7 +158,10 @@
 
     window.openNewFranchiseModal = () => {
         document.getElementById('f-id').value = "";
-        document.querySelectorAll('#modal-franchise input, #modal-franchise textarea').forEach(i => i.value = "");
+        fields.forEach(field => {
+            const el = document.getElementById('f-' + field);
+            if(el) el.value = "";
+        });
         document.getElementById('f-status').value = "active";
         document.getElementById('modal-franchise').style.display = 'flex';
     };
