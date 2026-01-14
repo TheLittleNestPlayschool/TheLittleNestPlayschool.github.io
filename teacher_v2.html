@@ -1,4 +1,4 @@
- <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
     <h1 style="margin:0;">Teacher Management</h1>
     <button onclick="openNewTeacherModal()" style="background:#00d1b2; color:white; border:none; padding:12px 24px; cursor:pointer; font-weight:bold; border-radius:4px;">+ NEW TEACHER</button>
 </div>
@@ -61,13 +61,11 @@
         try {
             const [fData, aData] = await Promise.all([safeFetch(F_API), safeFetch(A_API)]);
 
-            // 1. Franchise Dropdown
             document.getElementById('t-franchise_id').innerHTML = '<option value="">Select...</option>' + fData.map(f => {
                 fMap[f.id] = f.name; 
                 return `<option value="${f.id}">${f.name}</option>`;
             }).join('');
 
-            // 2. Admin Type Dropdown (Field: Admin_Type)
             document.getElementById('t-admin_type_id').innerHTML = '<option value="">Select...</option>' + aData.map(a => {
                 const name = a.Admin_Type || 'Role ' + a.id;
                 rMap[a.id] = name;
@@ -80,8 +78,14 @@
 
     window.loadTeacherList = async () => {
         try {
-            const data = await safeFetch(T_API + '?t=' + Date.now());
-            document.getElementById('teacher-container').innerHTML = data.map(t => {
+            const res = await fetch(T_API + '?t=' + Date.now());
+            const data = await res.json();
+            let list = Array.isArray(data) ? data : (data.items || []);
+            
+            // SORTING: Keeps records stable by ID
+            list.sort((a, b) => a.id - b.id);
+
+            document.getElementById('teacher-container').innerHTML = list.map(t => {
                 const fName = fMap[parseInt(t.franchise_id)] || t.franchise_id || 'N/A';
                 const rName = rMap[parseInt(t.admin_type_id)] || t.admin_type_id || 'N/A';
 
@@ -158,8 +162,9 @@
             inactivation_reason_comments: document.getElementById('t-notes').value
         };
 
+        // FIXED: Switched from PATCH to PUT for updates
         const res = await fetch(id ? `${T_API}/${id}` : T_API, {
-            method: id ? 'PATCH' : 'POST',
+            method: id ? 'PUT' : 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
@@ -199,4 +204,4 @@
     
     initTeacherModule();
 })();
-</script>          
+</script>
