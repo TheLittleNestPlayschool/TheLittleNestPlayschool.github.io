@@ -3,28 +3,37 @@
     <button onclick="loadRawLogs()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px;">RELOAD LOGS</button>
 </div>
 
-<div style="display: flex; padding: 12px 20px; background: #f4f4f4; font-weight: bold; border-radius: 4px; margin-bottom: 5px; font-size: 0.8rem; color: #666; border: 1px solid #eee; width: fit-content; min-width: 100%;">
-    <div style="width: 80px;">ID</div>
-    <div style="width: 200px;">Sender</div>
-    <div style="flex-grow: 1; min-width: 600px; padding: 0 20px;">Full Message Record</div>
-    <div style="width: 200px;">Timestamp</div>
-    <div style="width: 150px; text-align: right;">Actions</div>
+<div style="display: flex; padding: 12px 20px; background: #f4f4f4; font-weight: bold; border-radius: 4px; margin-bottom: 5px; font-size: 0.75rem; color: #666; border: 1px solid #eee; width: fit-content; min-width: 100%; white-space: nowrap; gap: 20px;">
+    <div style="width: 50px;">ID</div>
+    <div style="width: 150px;">Created At</div>
+    <div style="width: 150px;">Sender External ID</div>
+    <div style="width: 80px;">Direction</div>
+    <div style="width: 150px;">Received At</div>
+    <div style="width: 80px;">Processed</div>
+    <div style="width: 100px;">AI Error</div>
+    <div style="width: 400px;">Payload</div>
+    <div style="width: 100px;">First Name</div>
+    <div style="width: 100px;">Last Name</div>
+    <div style="width: 250px;">Profile Pic</div>
+    <div style="width: 150px;">Conversation ID</div>
+    <div style="width: 80px;">Enriched</div>
+    <div style="width: 140px; text-align: right; position: sticky; right: 0; background: #f4f4f4;">Actions</div>
 </div>
 
-<div id="raw-log-container" style="display: flex; flex-direction: column; gap: 4px; overflow-x: auto; padding-bottom: 20px;">
-    <div style="text-align:center; padding:40px; color:#888;">Fetching records from API...</div>
+<div id="raw-log-container" style="display: flex; flex-direction: column; gap: 2px; overflow-x: auto; padding-bottom: 20px;">
+    <div style="text-align:center; padding:40px; color:#888;">Fetching all 13 fields...</div>
 </div>
 
 <div id="modal-raw" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
-    <div style="background:white; width:700px; border-radius:8px; padding:25px;">
-        <h3 style="margin-top:0;">Edit Raw Message</h3>
+    <div style="background:white; width:600px; border-radius:8px; padding:25px;">
+        <h3 style="margin-top:0;">Edit Raw Message Record</h3>
         <input type="hidden" id="r-id">
         <div style="margin-bottom:20px;">
-            <label style="display:block; margin-bottom:8px; font-weight:bold;">Message Content</label>
-            <textarea id="r-message" style="width:100%; height:250px; padding:12px; border:1px solid #ccc; border-radius:4px; font-family:inherit;"></textarea>
+            <label style="display:block; margin-bottom:8px; font-weight:bold;">Payload Content</label>
+            <textarea id="r-payload" style="width:100%; height:200px; padding:12px; border:1px solid #ccc; border-radius:4px; font-family:inherit;"></textarea>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:10px;">
-            <button onclick="document.getElementById('modal-raw').style.display='none'" style="padding:10px 15px; cursor:pointer; background:none; border:none;">Cancel</button>
+            <button onclick="document.getElementById('modal-raw').style.display='none'">Cancel</button>
             <button onclick="submitRawEdit()" style="background:#00d1b2; color:white; border:none; padding:10px 25px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE RECORD</button>
         </div>
     </div>
@@ -32,7 +41,6 @@
 
 <script>
 (function() {
-    // NEW ENDPOINT PROVIDED BY USER
     const RAW_API = 'https://x8ki-letl-twmt.n7.xano.io/api:dnPQr9P8/message_raw';
 
     window.loadRawLogs = async () => {
@@ -40,8 +48,6 @@
         try {
             const res = await fetch(RAW_API + '?t=' + Date.now());
             const data = await res.json();
-            
-            // Handle Xano array or items object
             let list = Array.isArray(data) ? data : (data.items || []);
             
             if (list.length === 0) {
@@ -49,64 +55,58 @@
                 return;
             }
 
-            // Sort by Newest ID
             list.sort((a, b) => b.id - a.id);
 
             container.innerHTML = list.map(r => {
-                // Determine message field
-                const msgContent = r.message || r.content || r.text || r.raw_data || "---";
-                const sender = r.sender_name || r.name || 'System';
-                const date = r.created_at ? new Date(r.created_at).toLocaleString() : 'N/A';
-
+                const s = (val) => val === true ? '✅' : (val === false ? '❌' : (val || '---'));
+                
                 return `
-                <div style="display: flex; align-items: center; padding: 10px 20px; background: #fff; border: 1px solid #eee; border-radius: 4px; font-size: 0.85rem; width: fit-content; min-width: 100%; white-space: nowrap;">
-                    <div style="width: 80px; color: #bbb; font-family: monospace;">#${r.id}</div>
-                    <div style="width: 200px; font-weight: bold; padding-right: 15px;">${sender}</div>
-                    <div style="flex-grow: 1; min-width: 600px; padding-right: 20px; color: #444;">
-                        ${msgContent}
-                    </div>
-                    <div style="width: 200px; color: #999; font-size: 0.75rem;">${date}</div>
-                    <div style="width: 150px; text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
-                        <button onclick="editRaw(${r.id})" style="color: #00d1b2; background: none; border: 1px solid #00d1b2; padding: 4px 12px; cursor: pointer; border-radius: 4px; font-size: 0.75rem; font-weight:bold;">EDIT</button>
-                        <button onclick="deleteRaw(${r.id})" style="color: #ff4757; background: none; border: 1px solid #ff4757; padding: 4px 12px; cursor: pointer; border-radius: 4px; font-size: 0.75rem; font-weight:bold;">DEL</button>
+                <div style="display: flex; align-items: center; padding: 8px 20px; background: #fff; border: 1px solid #eee; border-radius: 4px; font-size: 0.8rem; width: fit-content; min-width: 100%; white-space: nowrap; gap: 20px;">
+                    <div style="width: 50px; font-family: monospace;">${r.id}</div>
+                    <div style="width: 150px;">${r.created_at ? new Date(r.created_at).toLocaleString() : '---'}</div>
+                    <div style="width: 150px;">${r.sender_external_id || '---'}</div>
+                    <div style="width: 80px;">${r.direction || '---'}</div>
+                    <div style="width: 150px;">${r.received_at ? new Date(r.received_at).toLocaleString() : '---'}</div>
+                    <div style="width: 80px; text-align: center;">${s(r.is_processed)}</div>
+                    <div style="width: 100px; color: red;">${r.ai_error || 'None'}</div>
+                    <div style="width: 400px; overflow: hidden; text-overflow: ellipsis;">${r.payload || '---'}</div>
+                    <div style="width: 100px;">${r.first_name || '---'}</div>
+                    <div style="width: 100px;">${r.last_name || '---'}</div>
+                    <div style="width: 250px; color: blue; font-size: 0.7rem;">${r.profile_pic || '---'}</div>
+                    <div style="width: 150px;">${r.conversation_id || '---'}</div>
+                    <div style="width: 80px; text-align: center;">${s(r.is_enriched)}</div>
+                    <div style="width: 140px; text-align: right; position: sticky; right: 0; background: #fff; padding-left: 10px;">
+                        <button onclick="editRaw(${r.id})" style="color: #00d1b2; background: none; border: 1px solid #00d1b2; padding: 2px 8px; cursor: pointer; border-radius: 4px; font-size: 0.7rem; font-weight:bold;">EDIT</button>
+                        <button onclick="deleteRaw(${r.id})" style="color: #ff4757; background: none; border: 1px solid #ff4757; padding: 2px 8px; cursor: pointer; border-radius: 4px; font-size: 0.7rem; font-weight:bold; margin-left: 5px;">DEL</button>
                     </div>
                 </div>`;
             }).join('');
         } catch(e) { 
-            console.error("API Error:", e);
-            container.innerHTML = '<div style="color:red; padding:20px;">Connection failed with the dnPQr9P8 endpoint.</div>';
+            container.innerHTML = '<div style="color:red; padding:20px;">Fetch failed.</div>';
         }
     };
 
     window.submitRawEdit = async () => {
         const id = document.getElementById('r-id').value;
-        const payload = { message: document.getElementById('r-message').value };
-
-        // Using PUT for consistency with Franchise/Teacher
+        const payload = { payload: document.getElementById('r-payload').value };
         const res = await fetch(`${RAW_API}/${id}`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
-
-        if (res.ok) {
-            document.getElementById('modal-raw').style.display = 'none';
-            loadRawLogs();
-        } else {
-            alert("Update failed. Verify the PUT endpoint in Xano for this specific API group.");
-        }
+        if (res.ok) { document.getElementById('modal-raw').style.display = 'none'; loadRawLogs(); }
     };
 
     window.editRaw = async (id) => {
         const res = await fetch(`${RAW_API}/${id}`);
         const r = await res.json();
         document.getElementById('r-id').value = r.id;
-        document.getElementById('r-message').value = r.message || r.content || r.text || "";
+        document.getElementById('r-payload').value = r.payload || "";
         document.getElementById('modal-raw').style.display = 'flex';
     };
 
     window.deleteRaw = async (id) => {
-        if(confirm("Permanently delete record #" + id + "?")) {
+        if(confirm("Delete record #" + id + "?")) {
             await fetch(`${RAW_API}/${id}`, { method: 'DELETE' });
             loadRawLogs();
         }
