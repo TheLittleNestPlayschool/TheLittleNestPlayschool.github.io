@@ -3,25 +3,21 @@
     <button onclick="loadRawLogs()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px;">RELOAD LOGS</button>
 </div>
 
-<div style="display: flex; padding: 12px 20px; background: #f4f4f4; font-weight: bold; border-radius: 4px; margin-bottom: 5px; font-size: 0.75rem; color: #666; border: 1px solid #eee; width: fit-content; min-width: 100%; white-space: nowrap; gap: 20px;">
+<div style="display: flex; padding: 12px 20px; background: #f4f4f4; font-weight: bold; border-radius: 4px; margin-bottom: 5px; font-size: 0.75rem; color: #666; border: 1px solid #eee;">
     <div style="width: 50px;">ID</div>
-    <div style="width: 150px;">Created At</div>
-    <div style="width: 150px;">Sender External ID</div>
+    <div style="width: 160px;">Created At</div>
+    <div style="width: 140px;">Sender Ext ID</div>
     <div style="width: 80px;">Direction</div>
-    <div style="width: 150px;">Received At</div>
-    <div style="width: 80px;">Processed</div>
-    <div style="width: 100px;">AI Error</div>
-    <div style="width: 400px;">Payload</div>
+    <div style="width: 140px;">Received At</div>
     <div style="width: 100px;">First Name</div>
     <div style="width: 100px;">Last Name</div>
-    <div style="width: 250px;">Profile Pic</div>
-    <div style="width: 150px;">Conversation ID</div>
-    <div style="width: 80px;">Enriched</div>
-    <div style="width: 140px; text-align: right; position: sticky; right: 0; background: #f4f4f4;">Actions</div>
+    <div style="width: 80px; text-align: center;">Proc?</div>
+    <div style="width: 80px; text-align: center;">Enrich?</div>
+    <div style="flex-grow: 1; text-align: right;">Actions</div>
 </div>
 
-<div id="raw-log-container" style="display: flex; flex-direction: column; gap: 2px; overflow-x: auto; padding-bottom: 20px;">
-    <div style="text-align:center; padding:40px; color:#888;">Fetching all 13 fields...</div>
+<div id="raw-log-container" style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="text-align:center; padding:40px; color:#888;">Syncing all 13 fields...</div>
 </div>
 
 <div id="modal-raw" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
@@ -33,8 +29,8 @@
             <textarea id="r-payload" style="width:100%; height:200px; padding:12px; border:1px solid #ccc; border-radius:4px; font-family:inherit;"></textarea>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:10px;">
-            <button onclick="document.getElementById('modal-raw').style.display='none'">Cancel</button>
-            <button onclick="submitRawEdit()" style="background:#00d1b2; color:white; border:none; padding:10px 25px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE RECORD</button>
+            <button onclick="document.getElementById('modal-raw').style.display='none'">CANCEL</button>
+            <button onclick="submitRawEdit()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE RECORD</button>
         </div>
     </div>
 </div>
@@ -58,31 +54,45 @@
             list.sort((a, b) => b.id - a.id);
 
             container.innerHTML = list.map(r => {
-                const s = (val) => val === true ? '✅' : (val === false ? '❌' : (val || '---'));
-                
+                const check = (val) => val === true ? '✅' : '❌';
+                const dateFmt = (d) => d ? new Date(d).toLocaleString([], {year:'numeric', month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '---';
+
                 return `
-                <div style="display: flex; align-items: center; padding: 8px 20px; background: #fff; border: 1px solid #eee; border-radius: 4px; font-size: 0.8rem; width: fit-content; min-width: 100%; white-space: nowrap; gap: 20px;">
-                    <div style="width: 50px; font-family: monospace;">${r.id}</div>
-                    <div style="width: 150px;">${r.created_at ? new Date(r.created_at).toLocaleString() : '---'}</div>
-                    <div style="width: 150px;">${r.sender_external_id || '---'}</div>
-                    <div style="width: 80px;">${r.direction || '---'}</div>
-                    <div style="width: 150px;">${r.received_at ? new Date(r.received_at).toLocaleString() : '---'}</div>
-                    <div style="width: 80px; text-align: center;">${s(r.is_processed)}</div>
-                    <div style="width: 100px; color: red;">${r.ai_error || 'None'}</div>
-                    <div style="width: 400px; overflow: hidden; text-overflow: ellipsis;">${r.payload || '---'}</div>
-                    <div style="width: 100px;">${r.first_name || '---'}</div>
-                    <div style="width: 100px;">${r.last_name || '---'}</div>
-                    <div style="width: 250px; color: blue; font-size: 0.7rem;">${r.profile_pic || '---'}</div>
-                    <div style="width: 150px;">${r.conversation_id || '---'}</div>
-                    <div style="width: 80px; text-align: center;">${s(r.is_enriched)}</div>
-                    <div style="width: 140px; text-align: right; position: sticky; right: 0; background: #fff; padding-left: 10px;">
-                        <button onclick="editRaw(${r.id})" style="color: #00d1b2; background: none; border: 1px solid #00d1b2; padding: 2px 8px; cursor: pointer; border-radius: 4px; font-size: 0.7rem; font-weight:bold;">EDIT</button>
-                        <button onclick="deleteRaw(${r.id})" style="color: #ff4757; background: none; border: 1px solid #ff4757; padding: 2px 8px; cursor: pointer; border-radius: 4px; font-size: 0.7rem; font-weight:bold; margin-left: 5px;">DEL</button>
+                <div style="background: #fff; border: 1px solid #eee; border-radius: 4px; padding: 10px 20px; font-size: 0.8rem;">
+                    <div style="display: flex; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f9f9f9; padding-bottom: 5px;">
+                        <div style="width: 50px; font-family: monospace; font-weight:bold; color:#aaa;">${r.id}</div>
+                        <div style="width: 160px;">${dateFmt(r.created_at)}</div>
+                        <div style="width: 140px; color:#666;">${r.sender_external_id || '---'}</div>
+                        <div style="width: 80px;">${r.direction || '---'}</div>
+                        <div style="width: 140px;">${dateFmt(r.received_at)}</div>
+                        <div style="width: 100px; font-weight:bold;">${r.first_name || ''}</div>
+                        <div style="width: 100px; font-weight:bold;">${r.last_name || ''}</div>
+                        <div style="width: 80px; text-align: center;">${check(r.is_processed)}</div>
+                        <div style="width: 80px; text-align: center;">${check(r.is_enriched)}</div>
+                        <div style="flex-grow: 1; text-align: right;">
+                            <button onclick="editRaw(${r.id})" style="color: #00d1b2; background: none; border: 1px solid #00d1b2; padding: 2px 8px; cursor: pointer; border-radius: 4px; font-size: 0.7rem; font-weight:bold;">EDIT</button>
+                            <button onclick="deleteRaw(${r.id})" style="color: #ff4757; background: none; border: 1px solid #ff4757; padding: 2px 8px; cursor: pointer; border-radius: 4px; font-size: 0.7rem; font-weight:bold; margin-left: 5px;">DEL</button>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 20px; align-items: center; color: #555;">
+                        <div style="flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: #fcfcfc; padding: 4px 8px; border-radius: 3px; border: 1px solid #f0f0f0;">
+                            <span style="font-weight:bold; color:#888; font-size:0.7rem; margin-right:5px;">PAYLOAD:</span> ${r.payload || '---'}
+                        </div>
+                        <div style="width: 250px; font-size: 0.7rem; color: #007bff; overflow: hidden; text-overflow: ellipsis;">
+                            <span style="font-weight:bold; color:#888;">PIC:</span> ${r.profile_pic || '---'}
+                        </div>
+                        <div style="width: 150px; font-size: 0.75rem;">
+                            <span style="font-weight:bold; color:#888;">CONV:</span> ${r.conversation_id || '---'}
+                        </div>
+                        <div style="width: 150px; font-size: 0.75rem; color: ${r.ai_error ? 'red' : '#999'};">
+                            <span style="font-weight:bold; color:#888;">AI ERR:</span> ${r.ai_error || 'None'}
+                        </div>
                     </div>
                 </div>`;
             }).join('');
         } catch(e) { 
-            container.innerHTML = '<div style="color:red; padding:20px;">Fetch failed.</div>';
+            container.innerHTML = '<div style="color:red; padding:20px;">Connection failed with dnPQr9P8 endpoint.</div>';
         }
     };
 
