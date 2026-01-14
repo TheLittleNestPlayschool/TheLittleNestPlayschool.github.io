@@ -27,7 +27,7 @@
             
             <div><label>Phone Number</label><input type="text" id="f-phone_number" style="width:100%; padding:8px;"></div>
             <div><label>Franchise Email</label><input type="email" id="f-franchise_email" style="width:100%; padding:8px;"></div>
-            <div><label>Royalty Rate</label><input type="number" id="f-royalty_rate" step="0.01" style="width:100%; padding:8px;"></div>
+            <div><label>Royalty Rate (%)</label><input type="number" id="f-royalty_rate" step="0.01" style="width:100%; padding:8px;"></div>
 
             <div><label>Owner 1 Name</label><input type="text" id="f-owner_1_name" style="width:100%; padding:8px;"></div>
             <div><label>Owner 1 Phone</label><input type="text" id="f-owner_1_phone" style="width:100%; padding:8px;"></div>
@@ -39,13 +39,17 @@
 
             <div><label>Opening Date</label><input type="date" id="f-opening_date" style="width:100%; padding:8px;"></div>
             <div><label>Business Tax ID</label><input type="text" id="f-business_tax_id" style="width:100%; padding:8px;"></div>
-            <div><label>Social Links (JSON)</label><input type="text" id="f-social_media_links" style="width:100%; padding:8px;"></div>
+            <div><label>Facebook URL</label><input type="text" id="f-social_fb" style="width:100%; padding:8px;"></div>
+            
+            <div><label>Instagram URL</label><input type="text" id="f-social_ig" style="width:100%; padding:8px;"></div>
+            <div><label>TikTok URL</label><input type="text" id="f-social_tiktok" style="width:100%; padding:8px;"></div>
+            <div><label>LinkedIn URL</label><input type="text" id="f-social_li" style="width:100%; padding:8px;"></div>
 
             <div style="grid-column: span 3;"><label>Internal Notes</label><textarea id="f-internal_notes" style="width:100%; height:60px; padding:8px;"></textarea></div>
         </div>
         <div style="padding:20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:12px;">
             <button onclick="document.getElementById('modal-franchise').style.display='none'">CANCEL</button>
-            <button onclick="submitFranchise()" style="background:#00d1b2; color:white; border:none; padding:10px 25px; cursor:pointer; font-weight:bold;">SAVE RECORD</button>
+            <button onclick="submitFranchise()" style="background:#00d1b2; color:white; border:none; padding:10px 25px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE RECORD</button>
         </div>
     </div>
 </div>
@@ -57,8 +61,9 @@
         'name', 'address', 'phone_number', 'royalty_rate', 
         'owner_1_name', 'owner_1_phone', 'owner_1_email', 
         'owner_2_name', 'owner_2_phone', 'owner_2_email', 
-        'franchise_email', 'social_media_links', 'status', 
-        'opening_date', 'business_tax_id', 'internal_notes'
+        'franchise_email', 'status', 'opening_date', 
+        'business_tax_id', 'internal_notes',
+        'social_fb', 'social_ig', 'social_tiktok', 'social_li'
     ];
 
     window.loadFranchises = async () => {
@@ -81,21 +86,16 @@
                         </div>
                         <div>
                             <span style="color:#888; font-weight:bold; font-size:0.7rem;">OWNER 1</span><br>
-                            Name: ${f.owner_1_name || 'N/A'}<br>
-                            Email: ${f.owner_1_email || 'N/A'}<br>
-                            Phone: ${f.owner_1_phone || 'N/A'}
+                            ${f.owner_1_name || 'N/A'}<br>${f.owner_1_email || 'N/A'}<br>${f.owner_1_phone || 'N/A'}
                         </div>
                         <div>
                             <span style="color:#888; font-weight:bold; font-size:0.7rem;">OWNER 2</span><br>
-                            Name: ${f.owner_2_name || 'N/A'}<br>
-                            Email: ${f.owner_2_email || 'N/A'}<br>
-                            Phone: ${f.owner_2_phone || 'N/A'}
+                            ${f.owner_2_name || 'N/A'}<br>${f.owner_2_email || 'N/A'}<br>${f.owner_2_phone || 'N/A'}
                         </div>
                         <div>
-                            <span style="color:#888; font-weight:bold; font-size:0.7rem;">OPERATIONS</span><br>
-                            Royalty: ${f.royalty_rate}%<br>
-                            Opened: ${f.opening_date || 'N/A'}<br>
-                            Social: ${f.social_media_links ? 'Link Set' : 'None'}
+                            <span style="color:#888; font-weight:bold; font-size:0.7rem;">SOCIALS</span><br>
+                            FB: ${f.social_fb ? '✅' : '❌'}<br>IG: ${f.social_ig ? '✅' : '❌'}<br>
+                            TikTok: ${f.social_tiktok ? '✅' : '❌'}
                         </div>
                         <div style="grid-column: span 2;">
                             <span style="color:#888; font-weight:bold; font-size:0.7rem;">ADDRESS</span><br>
