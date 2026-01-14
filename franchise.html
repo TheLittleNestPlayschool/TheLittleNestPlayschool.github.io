@@ -67,9 +67,10 @@
 (function() {
     const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
     const fields = [
-        'name', 'address', 'phone_number', 'royalty_rate', 'owner_1_name', 'owner_1_phone', 'owner_1_email',
-        'owner_2_name', 'owner_2_phone', 'owner_2_email', 'franchise_email', 'status', 'opening_date',
-        'business_tax_id', 'internal_notes', 'social_fb', 'social_ig', 'social_li', 'social_tiktok'
+        'name', 'address', 'phone_number', 'royalty_rate', 'franchise_email', 'status', 'opening_date', 'business_tax_id', 'internal_notes',
+        'social_fb', 'social_ig', 'social_li', 'social_tiktok',
+        'owner_1_name', 'owner_1_phone', 'owner_1_email',
+        'owner_2_name', 'owner_2_phone', 'owner_2_email'
     ];
 
     window.loadFranchises = async () => {
@@ -77,6 +78,8 @@
             const res = await fetch(F_API + '?t=' + Date.now());
             const data = await res.json();
             let list = Array.isArray(data) ? data : (data.items || []);
+            
+            // SORTING: Ensuring display order doesn't change after edit
             list.sort((a, b) => a.id - b.id);
             
             document.getElementById('franchise-container').innerHTML = list.map(f => {
@@ -133,29 +136,22 @@
             if(el) payload[f] = (f === 'royalty_rate') ? (parseFloat(el.value) || 0) : (el.value || "");
         });
 
-        // URL fix based on your API screenshot.
-        // We hit /franchise/{id} and also pass franchise_id as a param to be sure.
+        // REFINED ENDPOINT: Attempting segment + query to satisfy Xano {franchise_id} route
         const url = id ? `${F_API}/${id}?franchise_id=${id}` : F_API;
         const method = id ? 'PATCH' : 'POST';
 
-        alert("Debug: Sending " + method + " to " + url);
+        const res = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
 
-        try {
-            const res = await fetch(url, {
-                method: method,
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                document.getElementById('modal-franchise').style.display = 'none';
-                loadFranchises();
-            } else {
-                const err = await res.json();
-                alert("Xano Rejected Request: " + err.message);
-            }
-        } catch (e) {
-            alert("Network Error: Application could not reach Xano.");
+        if (res.ok) {
+            document.getElementById('modal-franchise').style.display = 'none';
+            loadFranchises();
+        } else {
+            const err = await res.json();
+            alert("Xano Error: " + (err.message || "404 Not Found"));
         }
     };
 
@@ -171,7 +167,7 @@
     };
 
     window.deleteFranchise = async (id) => {
-        if(confirm("Permanent Delete?")) {
+        if(confirm("Confirm Permanent Delete?")) {
             await fetch(`${F_API}/${id}?franchise_id=${id}`, { method: 'DELETE' });
             loadFranchises();
         }
