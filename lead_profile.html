@@ -1,19 +1,19 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-    <h1 style="margin:0;">Lead Profiles (Full 108-Field Data)</h1>
+    <h1 style="margin:0;">Lead Profiles (Categorized View)</h1>
     <button onclick="loadLeads()" style="background:#00d1b2; color:white; border:none; padding:12px 24px; cursor:pointer; font-weight:bold; border-radius:4px;">RELOAD ALL DATA</button>
 </div>
 
-<div id="lead-container" style="display: flex; flex-direction: column; gap: 20px;">
-    <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff;">Initializing Full Sync...</div>
+<div id="lead-container" style="display: flex; flex-direction: column; gap: 25px;">
+    <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff;">Syncing Categorized Records...</div>
 </div>
 
 <div id="modal-lead" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
     <div style="background:white; width:95vw; max-width:1400px; border-radius:8px; display:flex; flex-direction:column; max-height:95vh;">
         <div style="padding:20px; border-bottom:1px solid #eee; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center;">
-            <h2 style="margin:0;">Edit Full Lead Profile</h2>
+            <h2 style="margin:0;">Edit Lead Profile</h2>
             <button onclick="document.getElementById('modal-lead').style.display='none'" style="cursor:pointer; border:1px solid #ccc; background:#fff; padding:8px 15px; border-radius:4px;">CLOSE</button>
         </div>
-        <div id="modal-body-lead" style="padding:25px; overflow-y:auto; flex-grow:1; display:grid; grid-template-columns: repeat(5, 1fr); gap:12px; background:#f4f4f4;">
+        <div id="modal-body-lead" style="padding:25px; overflow-y:auto; flex-grow:1; background:#f4f4f4;">
             </div>
         <div style="padding:20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:12px; background:#f9f9f9;">
             <button onclick="document.getElementById('modal-lead').style.display='none'" style="padding:10px 25px; cursor:pointer; border-radius:4px; border:1px solid #ccc;">CANCEL</button>
@@ -26,22 +26,18 @@
 (function() {
     const L_API = 'https://x8ki-letl-twmt.n7.xano.io/api:dzfsI_eq/lead_profile';
 
-    // THE DEFINITIVE 108 FIELD LIST
-    const fList = [
-        'id','created_at','fb_user_id','fb_name','fb_pic_url','child_name_1','child_name_2','child_name_3',
-        'child_age_1','child_age_2','child_age_3','child_gender_1','child_gender_2','child_gender_3',
-        'child_birthday_1','child_birthday_2','child_birthday_3','child_nickname_1','child_nickname_2','child_nickname_3',
-        'med_asthma','med_g6pd','med_epilepsy','med_diabetes','med_heart_condition','dev_autism','dev_adhd','dev_speech_delay','dev_sensory_processing',
-        'alg_food_peanuts','alg_food_tree_nuts','alg_food_dairy','alg_food_eggs','alg_food_shellfish','alg_food_soy','alg_food_wheat','alg_food_fish','alg_food_other',
-        'alg_env_latex','alg_env_dust_mites','alg_env_pollen','alg_env_mold','alg_env_pet_dander','alg_env_insect_stings','alg_env_fragrance','alg_env_sun','alg_env_other',
-        'diet_halal','diet_kosher','diet_vegetarian','diet_vegan','diet_no_pork','diet_no_beef','diet_no_sugar','diet_no_processed','diet_gluten_free','diet_dairy_free','diet_low_sodium','diet_organic','diet_no_seafood','diet_no_poultry','diet_keto_friendly','diet_other',
-        'toilet_trained_status','vaccination_status','parent_occupation','home_city','barangay','household_type','primary_caregiver',
-        'emergency_contact_name','emergency_contact_num','emergency_relationship','lead_phone_number','lead_email',
-        'prev_school_name','prev_school_reason','hobby_swimming','hobby_drawing','hobby_coloring','hobby_toys','hobby_group_play','hobby_outdoors','hobby_music','hobby_reading','hobby_other',
-        'social_milestone_status','separation_anxiety_level','intent_type','objection_type','budget_range','intended_start_date','pref_days','pref_time_slots','pref_location_id',
-        'lead_urgency','probability_score','active_pivot_script','referral_source','enrollment_status','last_follow_up_date','next_action_step','admin_notes',
-        'school_tour_booked','enrollment_form_sent','is_processed','last_ai_update','is_visible','lead_type','external_source'
+    // FIELD GROUPINGS BY TYPE
+    const groups = [
+        { name: "Identity & Child Info", fields: ['id','created_at','fb_user_id','fb_name','fb_pic_url','child_name_1','child_name_2','child_name_3','child_age_1','child_age_2','child_age_3','child_gender_1','child_gender_2','child_gender_3','child_birthday_1','child_birthday_2','child_birthday_3','child_nickname_1','child_nickname_2','child_nickname_3'] },
+        { name: "Medical", fields: ['med_asthma','med_g6pd','med_epilepsy','med_diabetes','med_heart_condition'] },
+        { name: "Developmental", fields: ['dev_autism','dev_adhd','dev_speech_delay','dev_sensory_processing'] },
+        { name: "Allergies", fields: ['alg_food_peanuts','alg_food_tree_nuts','alg_food_dairy','alg_food_eggs','alg_food_shellfish','alg_food_soy','alg_food_wheat','alg_food_fish','alg_food_other','alg_env_latex','alg_env_dust_mites','alg_env_pollen','alg_env_mold','alg_env_pet_dander','alg_env_insect_stings','alg_env_fragrance','alg_env_sun','alg_env_other'] },
+        { name: "Dietary", fields: ['diet_halal','diet_kosher','diet_vegetarian','diet_vegan','diet_no_pork','diet_no_beef','diet_no_sugar','diet_no_processed','diet_gluten_free','diet_dairy_free','diet_low_sodium','diet_organic','diet_no_seafood','diet_no_poultry','diet_keto_friendly','diet_other'] },
+        { name: "Hobbies", fields: ['hobby_swimming','hobby_drawing','hobby_coloring','hobby_toys','hobby_group_play','hobby_outdoors','hobby_music','hobby_reading','hobby_other'] },
+        { name: "Operations & Other", fields: ['toilet_trained_status','vaccination_status','parent_occupation','home_city','barangay','household_type','primary_caregiver','emergency_contact_name','emergency_contact_num','emergency_relationship','lead_phone_number','lead_email','prev_school_name','prev_school_reason','social_milestone_status','separation_anxiety_level','intent_type','objection_type','budget_range','intended_start_date','pref_days','pref_time_slots','pref_location_id','lead_urgency','probability_score','active_pivot_script','referral_source','enrollment_status','last_follow_up_date','next_action_step','admin_notes','school_tour_booked','enrollment_form_sent','is_processed','last_ai_update','is_visible','lead_type','external_source'] }
     ];
+
+    const allFields = groups.flatMap(g => g.fields);
 
     window.loadLeads = async () => {
         const container = document.getElementById('lead-container');
@@ -52,36 +48,34 @@
             list.sort((a, b) => b.id - a.id);
 
             container.innerHTML = list.map(l => {
-                // Generate the grid of ALL 108 fields for the display card
-                const fullDisplayGrid = fList.map(fieldName => {
-                    let val = l[fieldName];
-                    if (val === true) val = '✅';
-                    if (val === false) val = '❌';
-                    if (val === null || val === undefined || val === '') val = '---';
-                    
-                    return `
-                    <div style="border-bottom:1px solid #f0f0f0; padding:4px 0; overflow:hidden; text-overflow:ellipsis;">
-                        <span style="font-size:0.6rem; color:#999; font-weight:bold; text-transform:uppercase; display:block;">${fieldName}</span>
-                        <span style="font-size:0.75rem; color:#333;">${val}</span>
-                    </div>`;
-                }).join('');
-
-                return `
-                <div style="background:#fff; border:1px solid #ddd; border-radius:8px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #00d1b2; padding-bottom:10px;">
-                        <h2 style="margin:0;">${l.fb_name || 'Unnamed Lead'} (#${l.id})</h2>
-                        <div>
-                            <button onclick="editLead(${l.id})" style="background:#00d1b2; color:white; border:none; padding:8px 20px; cursor:pointer; border-radius:4px; font-weight:bold;">EDIT FULL PROFILE</button>
-                            <button onclick="deleteLead(${l.id})" style="background:white; color:red; border:1px solid red; padding:7px 15px; cursor:pointer; border-radius:4px; font-weight:bold; margin-left:10px;">DELETE</button>
+                const sectionsHtml = groups.map(g => `
+                    <div style="margin-bottom:10px;">
+                        <div style="font-size:0.65rem; font-weight:bold; color:#00d1b2; text-transform:uppercase; border-bottom:1px solid #eee; margin-bottom:5px;">${g.name}</div>
+                        <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                            ${g.fields.map(f => {
+                                let val = l[f];
+                                if (val === true) val = '✅';
+                                else if (val === false) val = '❌';
+                                else if (val === null || val === '') val = '---';
+                                return `<div style="font-size:0.75rem;"><b style="color:#999;">${f}:</b> ${val}</div>`;
+                            }).join('')}
                         </div>
                     </div>
-                    
-                    <div style="display:grid; grid-template-columns: repeat(6, 1fr); gap:15px; max-height:400px; overflow-y:auto; padding-right:10px;">
-                        ${fullDisplayGrid}
+                `).join('');
+
+                return `
+                <div style="background:#fff; border:1px solid #ddd; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                        <h2 style="margin:0; font-size:1.2rem;">${l.fb_name || 'Unnamed'} (#${l.id})</h2>
+                        <div>
+                            <button onclick="editLead(${l.id})" style="background:#00d1b2; color:white; border:none; padding:6px 15px; cursor:pointer; border-radius:4px; font-weight:bold;">EDIT RECORD</button>
+                            <button onclick="deleteLead(${l.id})" style="color:red; background:none; border:1px solid red; padding:5px 12px; cursor:pointer; border-radius:4px; margin-left:10px;">DELETE</button>
+                        </div>
                     </div>
+                    ${sectionsHtml}
                 </div>`;
             }).join('');
-        } catch(e) { console.error("Lead fetch failed", e); }
+        } catch(e) { console.error(e); }
     };
 
     window.editLead = async (id) => {
@@ -91,22 +85,25 @@
         
         body.innerHTML = `<input type="hidden" id="lp-id" value="${lead.id}">`;
         
-        fList.forEach(f => {
-            const val = lead[f] === null ? "" : lead[f];
-            const isBool = typeof lead[f] === 'boolean';
-            
-            body.innerHTML += `
-            <div style="background:white; padding:10px; border-radius:4px; border:1px solid #ddd;">
-                <label style="display:block; font-size:0.65rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:5px;">${f}</label>
-                ${isBool ? `
-                    <select id="lp-${f}" style="width:100%; padding:8px; border:1px solid #eee;">
-                        <option value="true" ${val===true?'selected':''}>True</option>
-                        <option value="false" ${val===false?'selected':''}>False</option>
-                    </select>
-                ` : `
-                    <input type="text" id="lp-${f}" value="${val}" style="width:100%; padding:8px; border:1px solid #eee; font-size:0.8rem;">
-                `}
-            </div>`;
+        groups.forEach(g => {
+            let groupHtml = `<div style="grid-column: span 5; margin-top:15px; border-bottom:2px solid #00d1b2; padding-bottom:5px;"><b>${g.name}</b></div>`;
+            g.fields.forEach(f => {
+                const val = lead[f] === null ? "" : lead[f];
+                const isBool = typeof lead[f] === 'boolean';
+                groupHtml += `
+                <div style="background:white; padding:10px; border-radius:4px; border:1px solid #ddd;">
+                    <label style="display:block; font-size:0.65rem; font-weight:bold; color:#888; text-transform:uppercase; margin-bottom:5px;">${f}</label>
+                    ${isBool ? `
+                        <select id="lp-${f}" style="width:100%; padding:8px; border:1px solid #eee;">
+                            <option value="true" ${val===true?'selected':''}>True</option>
+                            <option value="false" ${val===false?'selected':''}>False</option>
+                        </select>
+                    ` : `
+                        <input type="text" id="lp-${f}" value="${val}" style="width:100%; padding:8px; border:1px solid #eee; font-size:0.8rem;">
+                    `}
+                </div>`;
+            });
+            body.innerHTML += groupHtml;
         });
         document.getElementById('modal-lead').style.display = 'flex';
     };
@@ -114,39 +111,25 @@
     window.submitLeadUpdate = async () => {
         const id = document.getElementById('lp-id').value;
         const payload = {};
-        
-        fList.forEach(f => {
+        allFields.forEach(f => {
             const el = document.getElementById('lp-' + f);
             if (!el) return;
-            if (el.tagName === 'SELECT') {
-                payload[f] = el.value === 'true';
-            } else {
-                // Mapping data types based on your schema
-                if (f === 'probability_score' || f === 'pref_location_id') {
-                    payload[f] = parseInt(el.value) || 0;
-                } else {
-                    payload[f] = el.value;
-                }
+            if (el.tagName === 'SELECT') payload[f] = el.value === 'true';
+            else {
+                if (f === 'probability_score' || f === 'pref_location_id') payload[f] = parseInt(el.value) || 0;
+                else payload[f] = el.value;
             }
         });
-
         const res = await fetch(`${L_API}/${id}`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
-        
-        if (res.ok) {
-            document.getElementById('modal-lead').style.display = 'none';
-            loadLeads();
-        } else {
-            const err = await res.json();
-            alert("Update Error: " + err.message);
-        }
+        if (res.ok) { document.getElementById('modal-lead').style.display = 'none'; loadLeads(); }
     };
 
     window.deleteLead = async (id) => {
-        if(confirm("Confirm permanent deletion of Record #" + id + "?")) {
+        if(confirm("Confirm deletion of Record #" + id + "?")) {
             await fetch(`${L_API}/${id}`, { method: 'DELETE' });
             loadLeads();
         }
