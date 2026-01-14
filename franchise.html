@@ -67,10 +67,9 @@
 (function() {
     const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
     const fields = [
-        'name', 'address', 'phone_number', 'royalty_rate', 'franchise_email', 'status', 'opening_date', 'business_tax_id', 'internal_notes',
-        'social_fb', 'social_ig', 'social_li', 'social_tiktok',
-        'owner_1_name', 'owner_1_phone', 'owner_1_email',
-        'owner_2_name', 'owner_2_phone', 'owner_2_email'
+        'name', 'address', 'phone_number', 'royalty_rate', 'owner_1_name', 'owner_1_phone', 'owner_1_email',
+        'owner_2_name', 'owner_2_phone', 'owner_2_email', 'franchise_email', 'status', 'opening_date',
+        'business_tax_id', 'internal_notes', 'social_fb', 'social_ig', 'social_li', 'social_tiktok'
     ];
 
     window.loadFranchises = async () => {
@@ -78,8 +77,6 @@
             const res = await fetch(F_API + '?t=' + Date.now());
             const data = await res.json();
             let list = Array.isArray(data) ? data : (data.items || []);
-            
-            // SORTING: Ensuring display order doesn't change after edit
             list.sort((a, b) => a.id - b.id);
             
             document.getElementById('franchise-container').innerHTML = list.map(f => {
@@ -136,8 +133,8 @@
             if(el) payload[f] = (f === 'royalty_rate') ? (parseFloat(el.value) || 0) : (el.value || "");
         });
 
-        // REFINED ENDPOINT: Attempting segment + query to satisfy Xano {franchise_id} route
-        const url = id ? `${F_API}/${id}?franchise_id=${id}` : F_API;
+        // Use standard Xano URL structure for custom route params
+        const url = id ? `${F_API}/${id}` : F_API;
         const method = id ? 'PATCH' : 'POST';
 
         const res = await fetch(url, {
@@ -151,12 +148,12 @@
             loadFranchises();
         } else {
             const err = await res.json();
-            alert("Xano Error: " + (err.message || "404 Not Found"));
+            alert("Xano Error: " + err.message);
         }
     };
 
     window.editFranchise = async (id) => {
-        const res = await fetch(`${F_API}/${id}?franchise_id=${id}`);
+        const res = await fetch(`${F_API}/${id}`);
         const f = await res.json();
         document.getElementById('f-id').value = f.id;
         fields.forEach(field => {
@@ -167,8 +164,8 @@
     };
 
     window.deleteFranchise = async (id) => {
-        if(confirm("Confirm Permanent Delete?")) {
-            await fetch(`${F_API}/${id}?franchise_id=${id}`, { method: 'DELETE' });
+        if(confirm("Permanent Delete?")) {
+            await fetch(`${F_API}/${id}`, { method: 'DELETE' });
             loadFranchises();
         }
     };
