@@ -3,7 +3,7 @@
 </div>
 
 <div id="lead-container" style="display: flex; flex-direction: column; gap: 15px;">
-    <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff;">Syncing Data Structure...</div>
+    <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff;">Aligning Columns...</div>
 </div>
 
 <div id="modal-lead" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
@@ -49,24 +49,24 @@
                 const sectionsHtml = groups.map(g => {
                     const fieldsHtml = g.fields.map(f => {
                         let val = l[f];
-                        if (val === true) val = '<b style="color:green; margin-left:4px;">Y</b>';
-                        else if (val === false) val = '<span style="color:#eee; margin-left:4px;">N</span>';
-                        else if (val === null || val === '') val = '<span style="margin-left:4px;">-</span>';
-                        else val = `<span style="margin-left:4px; color:#333;">${val}</span>`;
+                        let color = "#333";
+                        if (val === true) { val = 'Y'; color = "green"; }
+                        else if (val === false) { val = 'N'; color = "#ccc"; }
+                        else if (val === null || val === '') { val = '-'; color = "#bbb"; }
                         
                         const label = f.replace(g.prefix, '').replace(/_/g, ' ');
 
                         return `
                         <div style="padding:1px 0; display:flex; align-items:center; overflow:hidden; border-bottom:1px solid #fcfcfc;">
-                            <span style="font-size:0.5rem; color:#aaa; text-transform:uppercase; white-space:nowrap; text-overflow:ellipsis; max-width:85%;">${label}:</span>
-                            <span style="font-size:0.6rem; flex-shrink:0;">${val}</span>
+                            <span style="font-size:0.5rem; color:#444; text-transform:uppercase; white-space:nowrap; text-overflow:ellipsis; width:70%; font-weight:700;">${label}:</span>
+                            <span style="font-size:0.6rem; flex-shrink:0; font-weight:bold; color:${color}; margin-left:2px;">${val}</span>
                         </div>`;
                     }).join('');
 
                     return `
                     <div style="margin-bottom:4px; background:#fff; border:1px solid #f3f3f3; padding:4px;">
                         <div style="font-size:0.55rem; font-weight:bold; color:#00d1b2; text-transform:uppercase; border-bottom:1px solid #00d1b2; display:inline-block; margin-bottom:2px;">${g.name}</div>
-                        <div style="display:grid; grid-template-columns: repeat(${g.cols}, 1fr); gap: 0px 12px; padding-right:5px;">
+                        <div style="display:grid; grid-template-columns: repeat(${g.cols}, 1fr); gap: 0px 10px; padding-right:5px;">
                             ${fieldsHtml}
                         </div>
                     </div>`;
@@ -103,7 +103,7 @@
                 
                 groupHtml += `
                 <div style="background:white; padding:3px; border-radius:2px; border:1px solid #eee;">
-                    <label style="display:block; font-size:0.45rem; font-weight:bold; color:#bbb; margin-bottom:1px;">${label}</label>
+                    <label style="display:block; font-size:0.45rem; font-weight:bold; color:#444; margin-bottom:1px;">${label}</label>
                     ${isBool ? `
                         <select id="lp-${f}" style="width:100%; padding:1px; border:1px solid #eee; font-size:0.6rem;">
                             <option value="true" ${val===true?'selected':''}>Y</option>
