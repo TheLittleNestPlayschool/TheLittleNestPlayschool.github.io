@@ -1,154 +1,98 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-    <h1 style="margin:0;">Message Raw Log (CRUD Debug)</h1>
-    <button onclick="openNewMsgModal()" style="background:#00d1b2; color:white; border:none; padding:12px 24px; cursor:pointer; font-weight:bold; border-radius:4px;">+ NEW RAW RECORD</button>
+    <h1 style="margin:0;">Raw Message Log</h1>
 </div>
 
-
-<div id="msg-container" style="display: flex; flex-direction: column; gap: 20px;">
-    <div style="text-align:center; padding:50px; border:1px solid #eee;">Fetching records...</div>
+<div style="display: flex; padding: 10px 20px; background: #f4f4f4; font-weight: bold; border-radius: 4px; margin-bottom: 10px; font-size: 0.85rem; color: #666;">
+    <div style="flex: 1;">ID</div>
+    <div style="flex: 2;">Sender</div>
+    <div style="flex: 5;">Message Content</div>
+    <div style="flex: 2;">Timestamp</div>
+    <div style="width: 150px; text-align: right;">Actions</div>
 </div>
 
-<div id="modal-msg" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
-    <div style="background:white; width:900px; border-radius:8px; display:flex; flex-direction:column; max-height:95vh;">
-        <div style="padding:20px; border-bottom:1px solid #eee;"><h3>Raw Message Editor</h3></div>
-        <div style="padding:25px; overflow-y:auto; flex-grow:1; display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">
-            <input type="hidden" id="m-id">
-            
-            <div><label>First Name</label><input type="text" id="m-first_name" style="width:100%; padding:8px;"></div>
-            <div><label>Last Name</label><input type="text" id="m-last_name" style="width:100%; padding:8px;"></div>
-            <div><label>Direction</label>
-                <select id="m-direction" style="width:100%; padding:8px;">
-                    <option value="incoming">incoming</option>
-                    <option value="outgoing">outgoing</option>
-                </select>
-            </div>
-            
-            <div><label>Sender External ID</label><input type="text" id="m-sender_external_id" style="width:100%; padding:8px;"></div>
-            <div><label>Conversation ID</label><input type="text" id="m-conversation_id" style="width:100%; padding:8px;"></div>
-            <div><label>Profile Pic URL</label><input type="text" id="m-profile_pic" style="width:100%; padding:8px;"></div>
-            
-            <div><label>Received At (EpochMS)</label><input type="number" id="m-received_at" style="width:100%; padding:8px;"></div>
-            <div><label>Processed?</label>
-                <select id="m-is_processed" style="width:100%; padding:8px;">
-                    <option value="true">True</option>
-                    <option value="false">False</option>
-                </select>
-            </div>
-            <div><label>Enriched?</label>
-                <select id="m-is_enriched" style="width:100%; padding:8px;">
-                    <option value="true">True</option>
-                    <option value="false">False</option>
-                </select>
-            </div>
+<div id="raw-log-container" style="display: flex; flex-direction: column; gap: 5px;">
+    <div style="text-align:center; padding:20px;">Loading raw logs...</div>
+</div>
 
-            <div style="grid-column: span 3;"><label>AI Error</label><input type="text" id="m-ai_error" style="width:100%; padding:8px;"></div>
-            <div style="grid-column: span 3;"><label>Payload (Text)</label><textarea id="m-payload" style="width:100%; height:100px; padding:8px;"></textarea></div>
+<div id="modal-raw" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
+    <div style="background:white; width:600px; border-radius:8px; padding:25px;">
+        <h3>Edit Raw Message</h3>
+        <input type="hidden" id="r-id">
+        <div style="margin-bottom:15px;">
+            <label>Message Content</label>
+            <textarea id="r-message" style="width:100%; height:100px; padding:8px;"></textarea>
         </div>
-        <div style="padding:20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:12px;">
-            <button onclick="document.getElementById('modal-msg').style.display='none'">CANCEL</button>
-            <button onclick="submitMsg()" style="background:#00d1b2; color:white; border:none; padding:10px 25px; cursor:pointer; font-weight:bold;">SAVE RECORD</button>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button onclick="document.getElementById('modal-raw').style.display='none'">CANCEL</button>
+            <button onclick="submitRawEdit()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; font-weight:bold;">SAVE CHANGES</button>
         </div>
     </div>
 </div>
 
 <script>
 (function() {
-    const API_BASE = 'https://x8ki-letl-twmt.n7.xano.io/api:dnPQr9P8/message_raw';
+    const RAW_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/message_raw';
 
-    window.loadMessages = async () => {
+    window.loadRawLogs = async () => {
         try {
-            const res = await fetch(API_BASE + '?t=' + Date.now());
+            const res = await fetch(RAW_API + '?t=' + Date.now());
             const data = await res.json();
-            const msgs = Array.isArray(data) ? data : (data.items || []);
+            let list = Array.isArray(data) ? data : (data.items || []);
             
-            document.getElementById('msg-container').innerHTML = msgs.map(m => `
-                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #00d1b2; padding-bottom:10px; margin-bottom:10px;">
-                        <h2 style="margin:0;">${m.first_name || ''} ${m.last_name || 'Anonymous'} (${m.id})</h2>
-                        <span style="font-weight:bold; color:${m.direction === 'incoming' ? 'green' : 'blue'}; text-transform:uppercase;">${m.direction}</span>
-                    </div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; font-size:0.9rem;">
-                        <div><b>Ext ID:</b> ${m.sender_external_id || 'N/A'}<br><b>Conv ID:</b> ${m.conversation_id || 'N/A'}</div>
-                        <div><b>Status:</b><br>Processed: ${m.is_processed}<br>Enriched: ${m.is_enriched}</div>
-                        <div><b>Received:</b><br>${m.received_at ? new Date(m.received_at).toLocaleString() : 'N/A'}</div>
-                    </div>
-                    <div style="margin-top:10px; background:#f9f9f9; padding:10px; font-family:monospace; font-size:0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                        ${m.payload || 'No payload'}
-                    </div>
-                    <div style="text-align:right; margin-top:15px;">
-                        <button onclick="editMsg(${m.id})" style="color:blue; border:1px solid blue; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px; margin-right:5px;">EDIT</button>
-                        <button onclick="deleteMsg(${m.id})" style="color:red; border:1px solid red; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">DELETE</button>
+            // Keeping order stable
+            list.sort((a, b) => b.id - a.id);
+
+            document.getElementById('raw-log-container').innerHTML = list.map(r => `
+                <div style="display: flex; align-items: center; padding: 8px 20px; background: #fff; border: 1px solid #eee; border-radius: 4px; font-size: 0.85rem; transition: background 0.2s;" onmouseover="this.style.background='#f9f9f9'" onmouseout="this.style.background='#fff'">
+                    <div style="flex: 1; color: #888;">#${r.id}</div>
+                    <div style="flex: 2; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 10px;">${r.sender_name || 'Unknown'}</div>
+                    <div style="flex: 5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 15px; color: #444;">${r.message || ''}</div>
+                    <div style="flex: 2; color: #999; font-size: 0.75rem;">${new Date(r.created_at).toLocaleString()}</div>
+                    <div style="width: 150px; text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
+                        <button onclick="editRaw(${r.id})" style="color: blue; background: none; border: 1px solid blue; padding: 2px 8px; cursor: pointer; border-radius: 3px; font-size: 0.75rem;">EDIT</button>
+                        <button onclick="deleteRaw(${r.id})" style="color: red; background: none; border: 1px solid red; padding: 2px 8px; cursor: pointer; border-radius: 3px; font-size: 0.75rem;">DELETE</button>
                     </div>
                 </div>
             `).join('');
-        } catch(e) { document.getElementById('msg-container').innerHTML = '<p>Error loading messages.</p>'; }
+        } catch(e) { console.error("Raw log load failed", e); }
     };
 
-    window.openNewMsgModal = () => {
-        document.getElementById('m-id').value = "";
-        document.querySelectorAll('#modal-msg input, #modal-msg textarea, #modal-msg select').forEach(i => i.value = "");
-        document.getElementById('m-direction').value = "incoming";
-        document.getElementById('m-is_processed').value = "false";
-        document.getElementById('m-is_enriched').value = "false";
-        document.getElementById('modal-msg').style.display = 'flex';
-    };
-
-    window.submitMsg = async () => {
-        const id = document.getElementById('m-id').value;
+    window.submitRawEdit = async () => {
+        const id = document.getElementById('r-id').value;
         const payload = {
-            first_name: document.getElementById('m-first_name').value,
-            last_name: document.getElementById('m-last_name').value,
-            direction: document.getElementById('m-direction').value,
-            sender_external_id: document.getElementById('m-sender_external_id').value,
-            conversation_id: document.getElementById('m-conversation_id').value,
-            profile_pic: document.getElementById('m-profile_pic').value,
-            received_at: parseInt(document.getElementById('m-received_at').value) || null,
-            is_processed: document.getElementById('m-is_processed').value === "true",
-            is_enriched: document.getElementById('m-is_enriched').value === "true",
-            ai_error: document.getElementById('m-ai_error').value,
-            payload: document.getElementById('m-payload').value
+            message: document.getElementById('r-message').value
         };
 
-        const url = id ? `${API_BASE}/${id}` : API_BASE;
-        const res = await fetch(url, {
-            method: id ? 'PATCH' : 'POST',
+        // Applying the PUT method logic that worked for Franchise/Teacher
+        const res = await fetch(`${RAW_API}/${id}`, {
+            method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
 
         if (res.ok) {
-            document.getElementById('modal-msg').style.display = 'none';
-            loadMessages();
+            document.getElementById('modal-raw').style.display = 'none';
+            loadRawLogs();
         } else {
-            alert("Save Failed");
+            alert("Update failed.");
         }
     };
 
-    window.editMsg = async (id) => {
-        const res = await fetch(`${API_BASE}/${id}`);
-        const m = await res.json();
-        document.getElementById('m-id').value = m.id;
-        document.getElementById('m-first_name').value = m.first_name || "";
-        document.getElementById('m-last_name').value = m.last_name || "";
-        document.getElementById('m-direction').value = m.direction || "incoming";
-        document.getElementById('m-sender_external_id').value = m.sender_external_id || "";
-        document.getElementById('m-conversation_id').value = m.conversation_id || "";
-        document.getElementById('m-profile_pic').value = m.profile_pic || "";
-        document.getElementById('m-received_at').value = m.received_at || "";
-        document.getElementById('m-is_processed').value = m.is_processed.toString();
-        document.getElementById('m-is_enriched').value = m.is_enriched.toString();
-        document.getElementById('m-ai_error').value = m.ai_error || "";
-        document.getElementById('m-payload').value = m.payload || "";
-        document.getElementById('modal-msg').style.display = 'flex';
+    window.editRaw = async (id) => {
+        const res = await fetch(`${RAW_API}/${id}`);
+        const r = await res.json();
+        document.getElementById('r-id').value = r.id;
+        document.getElementById('r-message').value = r.message || "";
+        document.getElementById('modal-raw').style.display = 'flex';
     };
 
-    window.deleteMsg = async (id) => {
-        if(confirm("Delete this raw record?")) {
-            await fetch(`${API_BASE}/${id}`, {method: 'DELETE'});
-            loadMessages();
+    window.deleteRaw = async (id) => {
+        if(confirm("Delete this raw log entry?")) {
+            await fetch(`${RAW_API}/${id}`, { method: 'DELETE' });
+            loadRawLogs();
         }
     };
 
-    loadMessages();
+    loadRawLogs();
 })();
 </script>
