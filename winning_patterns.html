@@ -1,0 +1,160 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <h1 style="margin:0;">Winning Patterns (AI Extractions)</h1>
+</div>
+
+<div id="wp-container" style="display: flex; flex-direction: column; gap: 20px;">
+    <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff;">Syncing Winning Patterns...</div>
+</div>
+
+<div id="modal-wp" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
+    <div style="background:white; width:98vw; max-width:1800px; border-radius:8px; display:flex; flex-direction:column; max-height:98vh;">
+        <div style="padding:10px 20px; border-bottom:1px solid #eee; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center;">
+            <h2 style="margin:0; font-size:1.1rem;">Edit Winning Pattern Record</h2>
+            <button onclick="document.getElementById('modal-wp').style.display='none'" style="cursor:pointer; border:none; background:#eee; padding:5px 10px; border-radius:4px;">CLOSE</button>
+        </div>
+        <div id="modal-body-wp" style="padding:15px; overflow-y:auto; flex-grow:1; background:#f4f4f4;">
+            </div>
+        <div style="padding:15px 20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:12px; background:#f9f9f9;">
+            <button onclick="document.getElementById('modal-wp').style.display='none'" style="padding:8px 20px; cursor:pointer; border-radius:4px; border:1px solid #ccc;">CANCEL</button>
+            <button onclick="submitWPUpdate()" style="background:#00d1b2; color:white; border:none; padding:8px 25px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE PATTERN</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const WP_API = 'https://x8ki-letl-twmt.n7.xano.io/api:8cgL8vPb/winning_patterns';
+
+    const groups = [
+        { name: "Identity & Core", prefix: "", cols: 6, fields: ['id','created_at','last_used_at','is_verified','source_conversation_id','fb_user_id','fb_name','fb_pic_url','fb_user_id'] },
+        { name: "Child Info", prefix: "", cols: 6, fields: ['child_name_1','child_name_2','child_name_3','child_age_1','child_age_2','child_age_3','child_gender_1','child_gender_2','child_gender_3','child_nickname_1','child_nickname_2','child_nickname_3','child_birthday_1','child_birthday_2','child_birthday_3'] },
+        { name: "Medical", prefix: "med_", cols: 10, fields: ['med_asthma','med_g6pd','med_epilepsy','med_diabetes','med_heart_condition'] },
+        { name: "Developmental", prefix: "dev_", cols: 10, fields: ['dev_autism','dev_adhd','dev_speech_delay','dev_sensory_processing'] },
+        { name: "Allergies", prefix: "alg_", cols: 10, fields: ['alg_food_peanuts','alg_food_tree_nuts','alg_food_dairy','alg_food_eggs','alg_food_shellfish','alg_food_soy','alg_food_wheat','alg_food_fish','alg_food_other','alg_env_latex','alg_env_dust_mites','alg_env_pollen','alg_env_mold','alg_env_pet_dander','alg_env_insect_stings','alg_env_fragrance','alg_env_sun','alg_env_other'] },
+        { name: "Dietary", prefix: "diet_", cols: 10, fields: ['diet_halal','diet_kosher','diet_vegetarian','diet_vegan','diet_no_pork','diet_no_beef','diet_no_sugar','diet_no_processed','diet_gluten_free','diet_dairy_free','diet_low_sodium','diet_organic','diet_no_seafood','diet_no_poultry','diet_keto_friendly','diet_other'] },
+        { name: "Hobbies", prefix: "hobby_", cols: 10, fields: ['hobby_swimming','hobby_drawing','hobby_coloring','hobby_toys','hobby_group_play','hobby_outdoors','hobby_music','hobby_reading','hobby_other'] },
+        { name: "Operations", prefix: "", cols: 6, fields: ['toilet_trained_status','vaccination_status','parent_occupation','home_city','barangay','household_type','primary_caregiver','emergency_contact_name','emergency_contact_num','emergency_relationship','lead_phone_number','lead_email','prev_school_name','prev_school_reason','social_milestone_status','separation_anxiety_level','intent_type','objection_type','budget_range','intended_start_date','pref_days','pref_time_slots','pref_location_id','lead_urgency','probability_score','active_pivot_script','referral_source','enrollment_status','last_follow_up_date','next_action_step','admin_notes','school_tour_booked','enrollment_form_sent','extracted_data'] }
+    ];
+
+    const allFields = groups.flatMap(g => g.fields);
+
+    window.loadWPs = async () => {
+        const container = document.getElementById('wp-container');
+        try {
+            const res = await fetch(WP_API + '?t=' + Date.now());
+            const data = await res.json();
+            let list = Array.isArray(data) ? data : (data.items || []);
+            list.sort((a, b) => b.id - a.id);
+
+            container.innerHTML = list.map(l => {
+                const sectionsHtml = groups.map(g => {
+                    const fieldsHtml = g.fields.map(f => {
+                        const val = l[f];
+                        const hasData = (val !== null && val !== undefined && val !== '' && val !== false);
+                        const bgColor = hasData ? "#f2fff7" : "transparent"; 
+                        const textColor = hasData ? "#000000" : "#ccc"; 
+                        const border = hasData ? "1px solid #e1f5e9" : "1px solid #fcfcfc";
+                        const label = f.replace(g.prefix, '').replace(/_/g, ' ');
+                        
+                        let displayVal = "";
+                        if (typeof val === 'object' && val !== null) {
+                            displayVal = ": [JSON]";
+                        } else if (typeof val !== 'boolean' && hasData) {
+                            displayVal = ": " + val;
+                        }
+
+                        return `
+                        <div style="padding:3px 5px; background:${bgColor}; border:${border}; border-radius:3px; margin:1px; overflow:hidden;">
+                            <span style="font-size:0.55rem; color:${textColor}; text-transform:uppercase; white-space:nowrap; text-overflow:ellipsis; font-weight:800;">
+                                ${label}${displayVal}
+                            </span>
+                        </div>`;
+                    }).join('');
+
+                    return `
+                    <div style="margin-bottom:6px; background:#fff; border:1px solid #eee; padding:5px;">
+                        <div style="font-size:0.65rem; font-weight:bold; color:#00d1b2; text-transform:uppercase; border-bottom:1px solid #00d1b2; display:inline-block; margin-bottom:4px;">${g.name}</div>
+                        <div style="display:grid; grid-template-columns: repeat(${g.cols}, 1fr); gap: 1px;">
+                            ${fieldsHtml}
+                        </div>
+                    </div>`;
+                }).join('');
+
+                return `
+                <div style="background:#fff; border:1px solid #ddd; border-radius:6px; padding:15px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid ${l.is_verified ? '#00d1b2' : '#ffcc00'};">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #f0f0f0; padding-bottom:5px;">
+                        <h2 style="margin:0; font-size:1.1rem; color:#333;">Pattern #${l.id} - ${l.fb_name || 'Anonymous'} <small style="color:${l.is_verified ? 'green' : 'orange'}; font-weight:bold;">${l.is_verified ? '[VERIFIED]' : '[PENDING]'}</small></h2>
+                        <div style="display:flex; gap:8px;">
+                            <button onclick="editWP(${l.id})" style="background:#00d1b2; color:white; border:none; padding:5px 15px; cursor:pointer; border-radius:4px; font-weight:bold; font-size:0.75rem;">EDIT PATTERN</button>
+                            <button onclick="deleteWP(${l.id})" style="color:#ff4757; background:none; border:1px solid #ff4757; padding:4px 10px; cursor:pointer; border-radius:4px; font-size:0.75rem;">DEL</button>
+                        </div>
+                    </div>
+                    ${sectionsHtml}
+                </div>`;
+            }).join('');
+        } catch(e) { console.error("WP Fetch Error", e); }
+    };
+
+    window.editWP = async (id) => {
+        const res = await fetch(`${WP_API}/${id}`);
+        const wp = await res.json();
+        const body = document.getElementById('modal-body-wp');
+        body.innerHTML = `<input type="hidden" id="wp-id" value="${wp.id}">`;
+        
+        groups.forEach(g => {
+            let groupHtml = `<div style="grid-column: span 10; margin:15px 0 5px 0; font-size:0.75rem; border-bottom:1px solid #00d1b2; color:#00d1b2; padding-bottom:1px; text-transform:uppercase; font-weight:bold;">${g.name}</div><div style="display:grid; grid-template-columns: repeat(10, 1fr); gap:4px; width:100%; margin-bottom:10px;">`;
+            g.fields.forEach(f => {
+                let val = wp[f] === null ? "" : wp[f];
+                if (typeof val === 'object') val = JSON.stringify(val);
+                const isBool = typeof wp[f] === 'boolean';
+                const label = f.replace(g.prefix, '').replace(/_/g, ' ').toUpperCase();
+                groupHtml += `
+                <div style="background:white; padding:4px; border-radius:3px; border:1px solid #ddd;">
+                    <label style="display:block; font-size:0.5rem; font-weight:bold; color:#000; margin-bottom:2px;">${label}</label>
+                    ${isBool ? `
+                        <select id="wp-${f}" style="width:100%; padding:2px; border:1px solid #eee; font-size:0.65rem;">
+                            <option value="true" ${val===true?'selected':''}>YES</option>
+                            <option value="false" ${val===false?'selected':''}>NO</option>
+                        </select>
+                    ` : `<input type="text" id="wp-${f}" value='${val}' style="width:100%; padding:2px; border:1px solid #eee; font-size:0.65rem;">`}
+                </div>`;
+            });
+            body.innerHTML += groupHtml + `</div>`;
+        });
+        document.getElementById('modal-wp').style.display = 'flex';
+    };
+
+    window.submitWPUpdate = async () => {
+        const id = document.getElementById('wp-id').value;
+        const payload = {};
+        allFields.forEach(f => {
+            const el = document.getElementById('wp-' + f);
+            if (!el) return;
+            if (el.tagName === 'SELECT') payload[f] = el.value === 'true';
+            else {
+                if (f === 'extracted_data') {
+                    try { payload[f] = JSON.parse(el.value); } catch(e) { payload[f] = el.value; }
+                } else if (f === 'probability_score' || f === 'pref_location_id') {
+                    payload[f] = parseInt(el.value) || 0;
+                } else {
+                    payload[f] = el.value;
+                }
+            }
+        });
+        const res = await fetch(`${WP_API}/${id}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) { document.getElementById('modal-wp').style.display = 'none'; loadWPs(); }
+    };
+
+    window.deleteWP = async (id) => {
+        if(confirm("Permanently delete winning pattern #" + id + "?")) {
+            await fetch(`${WP_API}/${id}`, { method: 'DELETE' });
+            loadWPs();
+        }
+    };
+    loadWPs();
+})();
+</script>
