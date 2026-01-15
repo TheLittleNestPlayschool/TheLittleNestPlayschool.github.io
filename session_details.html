@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Details Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 800px; border-radius: 8px; }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Session Details (Curriculum Library)</h1>
+            <button onclick="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Add New Session</button>
+        </div>
+
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <table class="min-w-full leading-normal">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase">#</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase">Topic 1</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase">Topic 2</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase">Manners</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="sessionTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="sessionModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle" class="text-2xl font-bold mb-4">Add Session</h2>
+            <form id="sessionForm" class="grid grid-cols-2 gap-4">
+                <input type="hidden" id="sessionId">
+                
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-700">Session Number</label>
+                    <input type="number" id="session_num" class="mt-1 block w-full border border-gray-300 rounded-md p-2" required>
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-700">Theme Color (Hex)</label>
+                    <input type="text" id="theme_color" placeholder="#FF5733" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                </div>
+
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-700">Lesson 1 Title</label>
+                    <input type="text" id="lesson_1_title" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-700">Lesson 1 Category</label>
+                    <select id="lesson_1_cat" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                        <option value="Alphabet">Alphabet</option>
+                        <option value="Numbers">Numbers</option>
+                        <option value="Motor Skills">Motor Skills</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-700">Lesson 2 Title</label>
+                    <input type="text" id="lesson_2_title" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-700">Lesson 2 Category</label>
+                    <select id="lesson_2_cat" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                        <option value="Alphabet">Alphabet</option>
+                        <option value="Numbers">Numbers</option>
+                        <option value="Motor Skills">Motor Skills</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Manner Topic</label>
+                    <input type="text" id="manner_topic" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Objectives (1, 2, 3)</label>
+                    <input type="text" id="obj_text_1" placeholder="Objective 1" class="mt-1 block w-full border border-gray-300 rounded-md p-2 mb-2">
+                    <input type="text" id="obj_text_2" placeholder="Objective 2" class="mt-1 block w-full border border-gray-300 rounded-md p-2 mb-2">
+                    <input type="text" id="obj_text_3" placeholder="Objective 3" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                </div>
+
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-700">Physical Activity</label>
+                    <input type="text" id="physical_activity" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-sm font-medium text-gray-700">Home Time Activity</label>
+                    <input type="text" id="home_time_activity" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Map Icon URL</label>
+                    <input type="text" id="map_icon_url" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Full Lesson Plan (Copy/Paste Here)</label>
+                    <textarea id="full_lesson_plan" rows="5" class="mt-1 block w-full border border-gray-300 rounded-md p-2"></textarea>
+                </div>
+
+                <div class="col-span-2 flex justify-end space-x-3 mt-4">
+                    <button type="button" onclick="closeModal()" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save Session</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details";
+
+        async function fetchSessions() {
+            try {
+                const response = await fetch(API_BASE);
+                const sessions = await response.json();
+                const tbody = document.getElementById('sessionTableBody');
+                tbody.innerHTML = '';
+
+                sessions.forEach(session => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                <span class="font-bold">#${session.session_num}</span>
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                ${session.lesson_1_title} <br><span class="text-xs text-gray-500">${session.lesson_1_cat}</span>
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                ${session.lesson_2_title} <br><span class="text-xs text-gray-500">${session.lesson_2_cat}</span>
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${session.manner_topic}</td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                <button onclick="editSession(${session.id})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                                <button onclick="deleteSession(${session.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error fetching sessions:', error);
+            }
+        }
+
+        document.getElementById('sessionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('sessionId').value;
+            const data = {
+                session_num: parseInt(document.getElementById('session_num').value),
+                lesson_1_title: document.getElementById('lesson_1_title').value,
+                lesson_1_cat: document.getElementById('lesson_1_cat').value,
+                lesson_2_title: document.getElementById('lesson_2_title').value,
+                lesson_2_cat: document.getElementById('lesson_2_cat').value,
+                manner_topic: document.getElementById('manner_topic').value,
+                obj_text_1: document.getElementById('obj_text_1').value,
+                obj_text_2: document.getElementById('obj_text_2').value,
+                obj_text_3: document.getElementById('obj_text_3').value,
+                physical_activity: document.getElementById('physical_activity').value,
+                theme_color: document.getElementById('theme_color').value,
+                map_icon_url: document.getElementById('map_icon_url').value,
+                full_lesson_plan: document.getElementById('full_lesson_plan').value,
+                home_time_activity: document.getElementById('home_time_activity').value
+            };
+
+            const url = id ? `${API_BASE}/${id}` : API_BASE;
+            const method = id ? 'PATCH' : 'POST';
+
+            await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            closeModal();
+            fetchSessions();
+        });
+
+        async function editSession(id) {
+            const response = await fetch(`${API_BASE}/${id}`);
+            const session = await response.json();
+            
+            document.getElementById('sessionId').value = session.id;
+            document.getElementById('session_num').value = session.session_num;
+            document.getElementById('lesson_1_title').value = session.lesson_1_title;
+            document.getElementById('lesson_1_cat').value = session.lesson_1_cat;
+            document.getElementById('lesson_2_title').value = session.lesson_2_title;
+            document.getElementById('lesson_2_cat').value = session.lesson_2_cat;
+            document.getElementById('manner_topic').value = session.manner_topic;
+            document.getElementById('obj_text_1').value = session.obj_text_1;
+            document.getElementById('obj_text_2').value = session.obj_text_2;
+            document.getElementById('obj_text_3').value = session.obj_text_3;
+            document.getElementById('physical_activity').value = session.physical_activity;
+            document.getElementById('theme_color').value = session.theme_color;
+            document.getElementById('map_icon_url').value = session.map_icon_url;
+            document.getElementById('full_lesson_plan').value = session.full_lesson_plan;
+            document.getElementById('home_time_activity').value = session.home_time_activity;
+
+            document.getElementById('modalTitle').innerText = "Edit Session";
+            openModal();
+        }
+
+        async function deleteSession(id) {
+            if (confirm('Are you sure you want to delete this session?')) {
+                await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+                fetchSessions();
+            }
+        }
+
+        function openModal() {
+            document.getElementById('sessionModal').style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById('sessionModal').style.display = "none";
+            document.getElementById('sessionForm').reset();
+            document.getElementById('sessionId').value = '';
+            document.getElementById('modalTitle').innerText = "Add Session";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('sessionModal')) closeModal();
+        }
+
+        fetchSessions();
+    </script>
+</body>
+</html>
