@@ -18,7 +18,7 @@
     <div style="width: 100px;">Phone</div>
     <div style="width: 150px;">Address</div>
     <div style="width: 110px;">Franchise</div>
-    <div style="flex-grow: 1; padding: 0 10px;">Inactivation Reason</div>
+    <div style="flex-grow: 1; padding: 0 10px;">Comments</div>
     <div style="width: 70px; text-align: center;">Status</div>
     <div style="width: 130px; text-align: right;">Actions</div>
 </div>
@@ -30,7 +30,7 @@
 <div id="modal-parent" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
     <div style="background:white; width:700px; border-radius:8px; display:flex; flex-direction:column; max-height:95vh; overflow: hidden;">
         <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#1a1a1a; display:flex; justify-content:space-between; align-items:center;">
-            <h2 id="parent-modal-title" style="margin:0; font-size:1.1rem; color: #00d1b2;">Parent Record Detail</h2>
+            <h2 id="parent-modal-title" style="margin:0; font-size:1.1rem; color: #00d1b2;">Parent Record</h2>
             <button onclick="document.getElementById('modal-parent').style.display='none'" style="cursor:pointer; border:none; background:#333; color: white; padding:5px 10px; border-radius:4px;">CLOSE</button>
         </div>
         
@@ -60,29 +60,25 @@
             </div>
 
             <label style="display:block; font-size:0.65rem; font-weight:bold; color:#666; margin-bottom:3px;">HOME ADDRESS</label>
-            <textarea id="pa-address" style="width:100%; padding:8px; height:60px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;"></textarea>
+            <textarea id="pa-address" style="width:100%; padding:8px; height:50px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;"></textarea>
 
             <label style="display:block; font-size:0.65rem; font-weight:bold; color:#666; margin-bottom:3px;">FRANCHISE ASSIGNMENT</label>
             <select id="pa-franchise" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;"></select>
 
             <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #eee;">
                 <label style="display:flex; align-items:center; gap:10px; font-size:0.8rem; font-weight:900; color:#333; cursor:pointer; margin-bottom:10px;">
-                    <input type="checkbox" id="pa-active" checked onchange="window.toggleInactivationField()"> PARENT ACCOUNT IS ACTIVE
+                    <input type="checkbox" id="pa-active" checked onchange="window.toggleInactivationField()"> ACTIVE
                 </label>
                 
                 <div id="pa-inactive-wrap" style="display:none;">
-                    <label style="display:block; font-size:0.65rem; font-weight:bold; color:#d9534f; margin-bottom:3px;">REASON FOR INACTIVATION</label>
+                    <label style="display:block; font-size:0.65rem; font-weight:bold; color:#666; margin-bottom:3px;">COMMENTS</label>
                     <textarea id="pa-inactive-reason" style="width:100%; padding:8px; height:60px; border:1px solid #ddd; border-radius:4px;"></textarea>
                 </div>
-            </div>
-            
-            <div id="pa-meta" style="margin-top: 15px; font-size: 0.65rem; color: #999; display: none;">
-                Record created: <span id="pa-created"></span>
             </div>
         </div>
 
         <div style="padding:15px 20px; border-top:1px solid #eee; background:#f9f9f9;">
-            <button onclick="window.saveParent()" style="background:#00d1b2; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:4px; width: 100%;">SAVE PARENT PROFILE</button>
+            <button onclick="window.saveParent()" style="background:#00d1b2; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:4px; width: 100%;">SAVE PARENT</button>
         </div>
     </div>
 </div>
@@ -96,12 +92,10 @@ window.initParentModule = async function() {
     try {
         const res = await fetch(window.F_API);
         window.pa_franchises = await res.json();
-        
         document.getElementById('pa-franchise').innerHTML = window.pa_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
         document.getElementById('parent-franchise-filter').innerHTML += window.pa_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
-        
         window.loadParents();
-    } catch (err) { console.error("Initialization Error:", err); }
+    } catch (err) { console.error(err); }
 };
 
 window.loadParents = async function() {
@@ -117,14 +111,14 @@ window.loadParents = async function() {
                 <div style="width: 30px; color: #999;">${p.id}</div>
                 <div style="width: 130px; font-weight:700;">${p.first_name}</div>
                 <div style="width: 130px; font-weight:700;">${p.last_name}</div>
-                <div style="width: 160px; color: #00d1b2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.email}</div>
+                <div style="width: 160px; color: #00d1b2;">${p.email}</div>
                 <div style="width: 100px;">${p.phone || '-'}</div>
-                <div style="width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #666;">${p.address || ''}</div>
+                <div style="width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.address || ''}</div>
                 <div style="width: 110px; font-weight: 600;">${fran ? (fran.location_name || fran.name) : 'ID: '+p.franchise_id}</div>
-                <div style="flex-grow: 1; padding: 0 10px; color: #d9534f; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.inactivation_reason_comments || ''}</div>
+                <div style="flex-grow: 1; padding: 0 10px; color: #666; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.inactivation_reason_comments || ''}</div>
                 
                 <div style="width: 70px; text-align: center;">
-                    <span style="font-size:0.55rem; background:${p.is_active ? '#e1fcf2' : '#ffebeb'}; color:${p.is_active ? '#008c6a' : '#d9534f'}; padding:2px 6px; border-radius:4px; font-weight:bold;">
+                    <span style="font-size:0.55rem; background:${p.is_active ? '#e1fcf2' : '#f5f5f5'}; color:${p.is_active ? '#008c6a' : '#999'}; padding:2px 6px; border-radius:4px; font-weight:bold;">
                         ${p.is_active ? 'ACTIVE' : 'INACTIVE'}
                     </span>
                 </div>
@@ -134,7 +128,7 @@ window.loadParents = async function() {
                     <button onclick="window.deleteParent(${p.id})" style="border:1px solid red; color:red; background:none; padding:3px 8px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.6rem;">DELETE</button>
                 </div>
             </div>`;
-    }).join('') || '<div style="text-align:center; padding:20px; color:#999;">No records.</div>';
+    }).join('') || '<div style="text-align:center; padding:20px; color:#999;">No records found.</div>';
 };
 
 window.toggleInactivationField = function() {
@@ -151,7 +145,6 @@ window.openNewParentModal = function() {
     document.getElementById('pa-address').value = "";
     document.getElementById('pa-active').checked = true;
     document.getElementById('pa-inactive-reason').value = "";
-    document.getElementById('pa-meta').style.display = 'none';
     window.toggleInactivationField();
     document.getElementById('modal-parent').style.display = 'flex';
 };
@@ -168,13 +161,6 @@ window.editParent = async function(id) {
     document.getElementById('pa-franchise').value = p.franchise_id;
     document.getElementById('pa-active').checked = p.is_active;
     document.getElementById('pa-inactive-reason').value = p.inactivation_reason_comments || "";
-    
-    // Created At Info
-    if(p.created_at) {
-        document.getElementById('pa-created').innerText = new Date(p.created_at).toLocaleString();
-        document.getElementById('pa-meta').style.display = 'block';
-    }
-    
     window.toggleInactivationField();
     document.getElementById('modal-parent').style.display = 'flex';
 };
@@ -191,23 +177,20 @@ window.saveParent = async function() {
         is_active: document.getElementById('pa-active').checked,
         inactivation_reason_comments: document.getElementById('pa-inactive-reason').value
     };
-    
     const method = id ? 'PUT' : 'POST';
     const url = id ? window.PA_API + '/' + id : window.PA_API;
-    
     const res = await fetch(url, {
         method, headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
     });
-    
     if(res.ok) {
         document.getElementById('modal-parent').style.display = 'none';
         window.loadParents();
-    } else { alert("Error saving data."); }
+    } else { alert("Error saving."); }
 };
 
 window.deleteParent = async function(id) {
-    if(confirm("Delete parent record?")) {
+    if(confirm("Delete record?")) {
         await fetch(window.PA_API + '/' + id, { method: 'DELETE' });
         window.loadParents();
     }
