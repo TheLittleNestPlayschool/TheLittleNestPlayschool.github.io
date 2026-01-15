@@ -1,236 +1,191 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Session Details Management</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
-        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 800px; border-radius: 8px; }
-    </style>
-</head>
-<body class="bg-gray-100 p-8">
-    <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-800">Session Details (Curriculum Library)</h1>
-            <button onclick="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Add New Session</button>
-        </div>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+    .nest-title { font-family: 'Playfair Display', serif; color: #1a365d; }
+    .nest-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+    .nest-modal-content { background: white; margin: 2% auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 1000px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .nest-input { border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 6px; width: 100%; margin-top: 4px; }
+    .nest-label { font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .nest-btn { padding: 10px 20px; border-radius: 6px; font-weight: 700; transition: all 0.2s; cursor: pointer; }
+</style>
 
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <table class="min-w-full leading-normal">
-                <thead>
-                    <tr class="bg-gray-200">
-                        <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase">#</th>
-                        <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase">Topic 1</th>
-                        <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase">Topic 2</th>
-                        <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase">Manners</th>
-                        <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="sessionTableBody">
-                    </tbody>
-            </table>
-        </div>
+<div class="max-w-6xl mx-auto py-6">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 30px;">
+        <h1 class="text-4xl nest-title">Session Details</h1>
+        <button onclick="openNestModal()" class="nest-btn bg-[#00d1b2] text-white hover:opacity-90">+ ADD NEW SESSION</button>
     </div>
 
-    <div id="sessionModal" class="modal">
-        <div class="modal-content">
-            <h2 id="modalTitle" class="text-2xl font-bold mb-4">Add Session</h2>
-            <form id="sessionForm" class="grid grid-cols-2 gap-4">
-                <input type="hidden" id="sessionId">
-                
-                <div class="col-span-1">
-                    <label class="block text-sm font-medium text-gray-700">Session Number</label>
-                    <input type="number" id="session_num" class="mt-1 block w-full border border-gray-300 rounded-md p-2" required>
-                </div>
-                <div class="col-span-1">
-                    <label class="block text-sm font-medium text-gray-700">Theme Color (Hex)</label>
-                    <input type="text" id="theme_color" placeholder="#FF5733" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                </div>
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                    <th class="p-4 nest-label">#</th>
+                    <th class="p-4 nest-label">Lessons</th>
+                    <th class="p-4 nest-label">Manner Topic</th>
+                    <th class="p-4 nest-label" style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="sessionTableBody">
+                </tbody>
+        </table>
+    </div>
+</div>
 
-                <div class="col-span-1">
-                    <label class="block text-sm font-medium text-gray-700">Lesson 1 Title</label>
-                    <input type="text" id="lesson_1_title" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+<div id="nestModal" class="nest-modal">
+    <div class="nest-modal-content">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <h2 id="nestModalTitle" class="text-2xl nest-title">Manage Session</h2>
+            <button onclick="closeNestModal()" style="font-size: 24px; color: #94a3b8;">&times;</button>
+        </div>
+        
+        <form id="nestSessionForm">
+            <input type="hidden" id="nest_id">
+            <div style="display: grid; grid-template-cols: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
+                <div>
+                    <label class="nest-label">Session Num</label>
+                    <input type="number" id="nest_num" class="nest-input" required>
                 </div>
-                <div class="col-span-1">
-                    <label class="block text-sm font-medium text-gray-700">Lesson 1 Category</label>
-                    <select id="lesson_1_cat" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                <div>
+                    <label class="nest-label">Theme Color</label>
+                    <input type="text" id="nest_color" placeholder="#FF5733" class="nest-input">
+                </div>
+                <div>
+                    <label class="nest-label">Map Icon URL</label>
+                    <input type="text" id="nest_icon" class="nest-input">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <label class="nest-label">Lesson 1</label>
+                    <input type="text" id="nest_l1_t" placeholder="Title" class="nest-input mb-2">
+                    <select id="nest_l1_c" class="nest-input">
                         <option value="Alphabet">Alphabet</option>
                         <option value="Numbers">Numbers</option>
                         <option value="Motor Skills">Motor Skills</option>
                         <option value="Other">Other</option>
                     </select>
                 </div>
-
-                <div class="col-span-1">
-                    <label class="block text-sm font-medium text-gray-700">Lesson 2 Title</label>
-                    <input type="text" id="lesson_2_title" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                </div>
-                <div class="col-span-1">
-                    <label class="block text-sm font-medium text-gray-700">Lesson 2 Category</label>
-                    <select id="lesson_2_cat" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <label class="nest-label">Lesson 2</label>
+                    <input type="text" id="nest_l2_t" placeholder="Title" class="nest-input mb-2">
+                    <select id="nest_l2_c" class="nest-input">
                         <option value="Alphabet">Alphabet</option>
                         <option value="Numbers">Numbers</option>
                         <option value="Motor Skills">Motor Skills</option>
                         <option value="Other">Other</option>
                     </select>
                 </div>
+            </div>
 
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-700">Manner Topic</label>
-                    <input type="text" id="manner_topic" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                </div>
+            <div style="margin-bottom: 20px;">
+                <label class="nest-label">Manner Topic</label>
+                <input type="text" id="nest_manner" class="nest-input">
+            </div>
 
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-700">Objectives (1, 2, 3)</label>
-                    <input type="text" id="obj_text_1" placeholder="Objective 1" class="mt-1 block w-full border border-gray-300 rounded-md p-2 mb-2">
-                    <input type="text" id="obj_text_2" placeholder="Objective 2" class="mt-1 block w-full border border-gray-300 rounded-md p-2 mb-2">
-                    <input type="text" id="obj_text_3" placeholder="Objective 3" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+                <div><label class="nest-label">Objective 1</label><input type="text" id="nest_obj1" class="nest-input"></div>
+                <div><label class="nest-label">Objective 2</label><input type="text" id="nest_obj2" class="nest-input"></div>
+                <div><label class="nest-label">Objective 3</label><input type="text" id="nest_obj3" class="nest-input"></div>
+            </div>
 
-                <div class="col-span-1">
-                    <label class="block text-sm font-medium text-gray-700">Physical Activity</label>
-                    <input type="text" id="physical_activity" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                </div>
-                <div class="col-span-1">
-                    <label class="block text-sm font-medium text-gray-700">Home Time Activity</label>
-                    <input type="text" id="home_time_activity" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                </div>
+            <div style="margin-bottom: 20px;">
+                <label class="nest-label">Full Lesson Plan Source</label>
+                <textarea id="nest_full" rows="4" class="nest-input"></textarea>
+            </div>
 
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-700">Map Icon URL</label>
-                    <input type="text" id="map_icon_url" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                </div>
-
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-700">Full Lesson Plan (Copy/Paste Here)</label>
-                    <textarea id="full_lesson_plan" rows="5" class="mt-1 block w-full border border-gray-300 rounded-md p-2"></textarea>
-                </div>
-
-                <div class="col-span-2 flex justify-end space-x-3 mt-4">
-                    <button type="button" onclick="closeModal()" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save Session</button>
-                </div>
-            </form>
-        </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eee; padding-top: 20px;">
+                <button type="button" onclick="closeNestModal()" class="nest-btn bg-gray-100 text-gray-600">Cancel</button>
+                <button type="submit" class="nest-btn bg-blue-600 text-white">Save Session</button>
+            </div>
+        </form>
     </div>
+</div>
 
-    <script>
-        const API_BASE = "https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details";
+<script>
+(function() {
+    const API_URL = "https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details";
 
-        async function fetchSessions() {
-            try {
-                const response = await fetch(API_BASE);
-                const sessions = await response.json();
-                const tbody = document.getElementById('sessionTableBody');
-                tbody.innerHTML = '';
+    window.openNestModal = function() { document.getElementById('nestModal').style.display = 'block'; };
+    window.closeNestModal = function() { 
+        document.getElementById('nestModal').style.display = 'none'; 
+        document.getElementById('nestSessionForm').reset();
+        document.getElementById('nest_id').value = '';
+    };
 
-                sessions.forEach(session => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                <span class="font-bold">#${session.session_num}</span>
-                            </td>
-                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                ${session.lesson_1_title} <br><span class="text-xs text-gray-500">${session.lesson_1_cat}</span>
-                            </td>
-                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                ${session.lesson_2_title} <br><span class="text-xs text-gray-500">${session.lesson_2_cat}</span>
-                            </td>
-                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${session.manner_topic}</td>
-                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                <button onclick="editSession(${session.id})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
-                                <button onclick="deleteSession(${session.id})" class="text-red-600 hover:text-red-900">Delete</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } catch (error) {
-                console.error('Error fetching sessions:', error);
-            }
-        }
+    async function loadData() {
+        try {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            const tbody = document.getElementById('sessionTableBody');
+            tbody.innerHTML = data.map(s => `
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                    <td class="p-4 font-bold text-gray-500 text-sm">#${s.session_num}</td>
+                    <td class="p-4">
+                        <div class="text-sm font-bold text-gray-800">${s.lesson_1_title || '---'}</div>
+                        <div class="text-xs text-gray-400">${s.lesson_2_title || '---'}</div>
+                    </td>
+                    <td class="p-4 text-sm text-gray-600 italic">${s.manner_topic || ''}</td>
+                    <td class="p-4 text-right">
+                        <button onclick="editNest(${s.id})" style="color: blue; font-weight: bold; font-size: 12px; margin-right: 10px;">EDIT</button>
+                        <button onclick="deleteNest(${s.id})" style="color: red; font-weight: bold; font-size: 12px;">DEL</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) { console.error("Session Load Error:", e); }
+    }
 
-        document.getElementById('sessionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('sessionId').value;
-            const data = {
-                session_num: parseInt(document.getElementById('session_num').value),
-                lesson_1_title: document.getElementById('lesson_1_title').value,
-                lesson_1_cat: document.getElementById('lesson_1_cat').value,
-                lesson_2_title: document.getElementById('lesson_2_title').value,
-                lesson_2_cat: document.getElementById('lesson_2_cat').value,
-                manner_topic: document.getElementById('manner_topic').value,
-                obj_text_1: document.getElementById('obj_text_1').value,
-                obj_text_2: document.getElementById('obj_text_2').value,
-                obj_text_3: document.getElementById('obj_text_3').value,
-                physical_activity: document.getElementById('physical_activity').value,
-                theme_color: document.getElementById('theme_color').value,
-                map_icon_url: document.getElementById('map_icon_url').value,
-                full_lesson_plan: document.getElementById('full_lesson_plan').value,
-                home_time_activity: document.getElementById('home_time_activity').value
-            };
+    window.editNest = async function(id) {
+        const res = await fetch(\`\${API_URL}/\${id}\`);
+        const s = await res.json();
+        document.getElementById('nest_id').value = s.id;
+        document.getElementById('nest_num').value = s.session_num;
+        document.getElementById('nest_l1_t').value = s.lesson_1_title;
+        document.getElementById('nest_l1_c').value = s.lesson_1_cat;
+        document.getElementById('nest_l2_t').value = s.lesson_2_title;
+        document.getElementById('nest_l2_c').value = s.lesson_2_cat;
+        document.getElementById('nest_manner').value = s.manner_topic;
+        document.getElementById('nest_obj1').value = s.obj_text_1;
+        document.getElementById('nest_obj2').value = s.obj_text_2;
+        document.getElementById('nest_obj3').value = s.obj_text_3;
+        document.getElementById('nest_color').value = s.theme_color;
+        document.getElementById('nest_icon').value = s.map_icon_url;
+        document.getElementById('nest_full').value = s.full_lesson_plan;
+        openNestModal();
+    };
 
-            const url = id ? `${API_BASE}/${id}` : API_BASE;
-            const method = id ? 'PATCH' : 'POST';
-
-            await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            closeModal();
-            fetchSessions();
+    document.getElementById('nestSessionForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('nest_id').value;
+        const payload = {
+            session_num: parseInt(document.getElementById('nest_num').value),
+            lesson_1_title: document.getElementById('nest_l1_t').value,
+            lesson_1_cat: document.getElementById('nest_l1_c').value,
+            lesson_2_title: document.getElementById('nest_l2_t').value,
+            lesson_2_cat: document.getElementById('nest_l2_c').value,
+            manner_topic: document.getElementById('nest_manner').value,
+            obj_text_1: document.getElementById('nest_obj1').value,
+            obj_text_2: document.getElementById('nest_obj2').value,
+            obj_text_3: document.getElementById('nest_obj3').value,
+            theme_color: document.getElementById('nest_color').value,
+            map_icon_url: document.getElementById('nest_icon').value,
+            full_lesson_plan: document.getElementById('nest_full').value
+        };
+        await fetch(id ? \`\${API_URL}/\${id}\` : API_URL, {
+            method: id ? 'PATCH' : 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
         });
+        closeNestModal();
+        loadData();
+    };
 
-        async function editSession(id) {
-            const response = await fetch(`${API_BASE}/${id}`);
-            const session = await response.json();
-            
-            document.getElementById('sessionId').value = session.id;
-            document.getElementById('session_num').value = session.session_num;
-            document.getElementById('lesson_1_title').value = session.lesson_1_title;
-            document.getElementById('lesson_1_cat').value = session.lesson_1_cat;
-            document.getElementById('lesson_2_title').value = session.lesson_2_title;
-            document.getElementById('lesson_2_cat').value = session.lesson_2_cat;
-            document.getElementById('manner_topic').value = session.manner_topic;
-            document.getElementById('obj_text_1').value = session.obj_text_1;
-            document.getElementById('obj_text_2').value = session.obj_text_2;
-            document.getElementById('obj_text_3').value = session.obj_text_3;
-            document.getElementById('physical_activity').value = session.physical_activity;
-            document.getElementById('theme_color').value = session.theme_color;
-            document.getElementById('map_icon_url').value = session.map_icon_url;
-            document.getElementById('full_lesson_plan').value = session.full_lesson_plan;
-            document.getElementById('home_time_activity').value = session.home_time_activity;
-
-            document.getElementById('modalTitle').innerText = "Edit Session";
-            openModal();
+    window.deleteNest = async function(id) {
+        if(confirm('Delete?')) {
+            await fetch(\`\${API_URL}/\${id}\`, {method: 'DELETE'});
+            loadData();
         }
+    };
 
-        async function deleteSession(id) {
-            if (confirm('Are you sure you want to delete this session?')) {
-                await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
-                fetchSessions();
-            }
-        }
-
-        function openModal() {
-            document.getElementById('sessionModal').style.display = "block";
-        }
-
-        function closeModal() {
-            document.getElementById('sessionModal').style.display = "none";
-            document.getElementById('sessionForm').reset();
-            document.getElementById('sessionId').value = '';
-            document.getElementById('modalTitle').innerText = "Add Session";
-        }
-
-        window.onclick = function(event) {
-            if (event.target == document.getElementById('sessionModal')) closeModal();
-        }
-
-        fetchSessions();
-    </script>
-</body>
-</html>
+    loadData();
+})();
+</script>
