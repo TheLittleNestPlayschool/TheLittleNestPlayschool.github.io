@@ -1,105 +1,134 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-    <h1 style="margin:0;">Progress Questions (Bank)</h1>
-    <button onclick="openNewQuestionModal()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">+ ADD NEW QUESTION</button>
+    <h1 style="margin:0;">Progress Question Bank</h1>
+    <button onclick="openNewProgressQModal()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">+ ADD NEW CRITERIA</button>
 </div>
 
-<div id="questions-list" style="display: flex; flex-direction: column; gap: 10px;">
-    </div>
+<div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #eee;">
+    <input type="text" id="pq-search" onkeyup="filterProgressQuestions()" placeholder="Search questions..." style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ddd;">
+</div>
 
-<div id="modal-question" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
-    <div style="background:white; width:500px; border-radius:8px; display:flex; flex-direction:column; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+<div id="progress-q-list" style="display: flex; flex-direction: column; gap: 12px;">
+    <div style="text-align:center; padding:50px; background:white; border:1px solid #eee; border-radius:8px;">Initializing Question Bank...</div>
+</div>
+
+<div id="modal-progress-q" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
+    <div style="background:white; width:550px; border-radius:8px; display:flex; flex-direction:column; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#1a1a1a; display:flex; justify-content:space-between; align-items:center;">
-            <h2 id="modal-title" style="margin:0; font-size:1.1rem; color: #00d1b2;">Question Details</h2>
-            <button onclick="document.getElementById('modal-question').style.display='none'" style="cursor:pointer; border:none; background:#333; color: white; padding:5px 10px; border-radius:4px;">CLOSE</button>
+            <h2 id="pq-modal-title" style="margin:0; font-size:1.1rem; color: #00d1b2;">Criteria Details</h2>
+            <button onclick="document.getElementById('modal-progress-q').style.display='none'" style="cursor:pointer; border:none; background:#333; color: white; padding:5px 10px; border-radius:4px;">CLOSE</button>
         </div>
         
         <div style="padding:20px;">
-            <input type="hidden" id="q-id">
+            <input type="hidden" id="pq-id">
             
-            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">CRITERIA / QUESTION TEXT</label>
-            <textarea id="q-text" style="width:100%; padding:10px; height:100px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;" placeholder="e.g. Can recognize and name shapes."></textarea>
+            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">QUESTION / CRITERIA TEXT</label>
+            <textarea id="pq-text" style="width:100%; padding:12px; height:120px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px; font-family: inherit; font-size: 0.95rem;" placeholder="e.g. Demonstrates ability to share toys with peers."></textarea>
 
-            <label style="display:flex; align-items:center; gap:10px; font-size:0.8rem; font-weight:bold; color:#333; cursor:pointer;">
-                <input type="checkbox" id="q-active" checked> IS ACTIVE (Show in reports)
-            </label>
+            <div style="background: #f9f9f9; padding: 12px; border-radius: 4px; border: 1px solid #eee;">
+                <label style="display:flex; align-items:center; gap:10px; font-size:0.85rem; font-weight:bold; color:#333; cursor:pointer;">
+                    <input type="checkbox" id="pq-active" checked> IS ACTIVE (Show in dropdowns)
+                </label>
+            </div>
         </div>
 
         <div style="padding:15px 20px; border-top:1px solid #eee; background:#f9f9f9; text-align:right;">
-            <button onclick="submitQuestion()" style="background:#00d1b2; color:white; border:none; padding:12px 25px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE QUESTION</button>
+            <button onclick="saveProgressQuestion()" style="background:#00d1b2; color:white; border:none; padding:12px 25px; cursor:pointer; font-weight:bold; border-radius:4px; width: 100%;">SAVE TO BANK</button>
         </div>
     </div>
 </div>
 
 <script>
 (function() {
-    // API ENDPOINT
-    const Q_API = 'https://x8ki-letl-twmt.n7.xano.io/api:535aM7Wn/student_progress_question'; 
+    // API endpoint for the Progress Questions library table
+    const PQ_API = 'https://x8ki-letl-twmt.n7.xano.io/api:535aM7Wn/student_progress_question'; 
+    let allQuestions = [];
 
-    window.loadQuestions = async () => {
-        const res = await fetch(Q_API + '?t=' + Date.now());
-        const data = await res.json();
-        const list = Array.isArray(data) ? data : (data.items || []);
+    window.loadProgressQuestions = async () => {
+        try {
+            const res = await fetch(PQ_API + '?t=' + Date.now());
+            const data = await res.json();
+            allQuestions = Array.isArray(data) ? data : (data.items || []);
+            renderProgressQuestions(allQuestions);
+        } catch (err) {
+            document.getElementById('progress-q-list').innerHTML = '<div style="color:red; text-align:center;">Failed to connect to Xano.</div>';
+        }
+    };
 
-        document.getElementById('questions-list').innerHTML = list.map(q => `
-            <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
-                <div style="flex-grow:1;">
-                    <span style="font-size:0.65rem; background:${q.is_active ? '#e1fcf2' : '#f5f5f5'}; color:${q.is_active ? '#008c6a' : '#999'}; padding:3px 8px; border-radius:10px; font-weight:bold; margin-bottom:5px; display:inline-block;">
-                        ${q.is_active ? 'ACTIVE' : 'INACTIVE'}
+    window.renderProgressQuestions = (list) => {
+        document.getElementById('progress-q-list').innerHTML = list.map(q => `
+            <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div style="flex-grow:1; padding-right: 20px;">
+                    <span style="font-size:0.6rem; background:${q.is_active ? '#e1fcf2' : '#f5f5f5'}; color:${q.is_active ? '#008c6a' : '#999'}; padding:2px 8px; border-radius:4px; font-weight:bold; display:inline-block; margin-bottom:8px;">
+                        ${q.is_active ? 'ENABLED' : 'DISABLED'}
                     </span>
-                    <h3 style="margin:0; font-size:1rem; color:#333;">${q.the_question}</h3>
+                    <div style="font-size:1rem; color:#1a1a1a; line-height: 1.4;">${q.the_question}</div>
                 </div>
                 <div style="display:flex; gap:10px;">
-                    <button onclick="editQuestion(${q.id})" style="border:1.5px solid blue; color:blue; background:#fff; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">EDIT</button>
-                    <button onclick="deleteQuestion(${q.id})" style="border:1.5px solid red; color:red; background:none; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">DELETE</button>
+                    <button onclick="editProgressQ(${q.id})" style="border:1.5px solid blue; color:blue; background:none; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">EDIT</button>
+                    <button onclick="deleteProgressQ(${q.id})" style="border:1.5px solid red; color:red; background:none; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">DELETE</button>
                 </div>
             </div>
-        `).join('');
+        `).join('') || '<div style="text-align:center; color:#999; padding:20px;">No criteria found.</div>';
     };
 
-    window.openNewQuestionModal = () => {
-        document.getElementById('q-id').value = "";
-        document.getElementById('q-text').value = "";
-        document.getElementById('q-active').checked = true;
-        document.getElementById('modal-question').style.display = 'flex';
+    window.filterProgressQuestions = () => {
+        const term = document.getElementById('pq-search').value.toLowerCase();
+        const filtered = allQuestions.filter(q => q.the_question.toLowerCase().includes(term));
+        renderProgressQuestions(filtered);
     };
 
-    window.editQuestion = async (id) => {
-        const res = await fetch(\`\${Q_API}/\${id}\`);
+    window.openNewProgressQModal = () => {
+        document.getElementById('pq-id').value = "";
+        document.getElementById('pq-text').value = "";
+        document.getElementById('pq-active').checked = true;
+        document.getElementById('pq-modal-title').innerText = "Add New Criteria to Bank";
+        document.getElementById('modal-progress-q').style.display = 'flex';
+    };
+
+    window.editProgressQ = async (id) => {
+        const res = await fetch(\`\${PQ_API}/\${id}\`);
         const q = await res.json();
-        document.getElementById('q-id').value = q.id;
-        document.getElementById('q-text').value = q.the_question;
-        document.getElementById('q-active').checked = q.is_active;
-        document.getElementById('modal-question').style.display = 'flex';
+        document.getElementById('pq-id').value = q.id;
+        document.getElementById('pq-text').value = q.the_question;
+        document.getElementById('pq-active').checked = q.is_active;
+        document.getElementById('pq-modal-title').innerText = "Edit Criteria Detail";
+        document.getElementById('modal-progress-q').style.display = 'flex';
     };
 
-    window.submitQuestion = async () => {
-        const id = document.getElementById('q-id').value;
+    window.saveProgressQuestion = async () => {
+        const id = document.getElementById('pq-id').value;
         const payload = {
-            the_question: document.getElementById('q-text').value,
-            is_active: document.getElementById('q-active').checked
+            the_question: document.getElementById('pq-text').value,
+            is_active: document.getElementById('pq-active').checked
         };
 
-        const method = id ? 'PUT' : 'POST';
-        const url = id ? \`\${Q_API}/\${id}\` : Q_API;
+        if (!payload.the_question) { alert("Question text is required."); return; }
 
-        await fetch(url, {
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? \`\${PQ_API}/\${id}\` : PQ_API;
+
+        const response = await fetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        document.getElementById('modal-question').style.display = 'none';
-        loadQuestions();
-    };
-
-    window.deleteQuestion = async (id) => {
-        if(confirm("Are you sure you want to delete this criteria?")) {
-            await fetch(\`\${Q_API}/\${id}\`, { method: 'DELETE' });
-            loadQuestions();
+        if (response.ok) {
+            document.getElementById('modal-progress-q').style.display = 'none';
+            loadProgressQuestions();
+        } else {
+            alert("Error saving to Xano.");
         }
     };
 
-    // Initial Load
-    loadQuestions();
+    window.deleteProgressQ = async (id) => {
+        if(confirm("Permanently delete this criteria from the bank?")) {
+            await fetch(\`\${PQ_API}/\${id}\`, { method: 'DELETE' });
+            loadProgressQuestions();
+        }
+    };
+
+    // Run loader on load
+    loadProgressQuestions();
 })();
 </script>
