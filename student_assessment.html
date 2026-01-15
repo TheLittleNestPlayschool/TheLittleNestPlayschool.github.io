@@ -198,7 +198,6 @@
         toggleProspectMode();
 
         if (isProspect) {
-            // Extract name from "PROSPECT: Name | Original Comment"
             const parts = as.comments.split(' | ');
             document.getElementById('prospect-name').value = parts[0].replace('PROSPECT: ', '');
             document.getElementById('as-comments').value = parts[1] || "";
@@ -224,6 +223,7 @@
         const pName = document.getElementById('prospect-name').value;
         const baseComments = document.getElementById('as-comments').value;
 
+        // Base payload with always-present fields
         const payload = {
             franchise_id: parseInt(document.getElementById('as-franchise').value),
             student_id: isProspect ? 0 : parseInt(document.getElementById('as-student').value),
@@ -232,17 +232,42 @@
             comments: isProspect ? `PROSPECT: ${pName} | ${baseComments}` : baseComments
         };
 
+        // Loop through slots. If a question is NOT selected, we do NOT send those fields.
+        // This prevents Xano from rejecting the record due to ID 0 or empty string relationships.
         for (let i = 1; i <= 10; i++) {
-            payload[`question_${i}_id`] = parseInt(document.getElementById(`q-id-${i}`).value) || 0;
-            payload[`recorded_answer_${i}`] = document.getElementById(`r-ans-${i}`).value;
+            const qIdVal = parseInt(document.getElementById(`q-id-${i}`).value);
+            const ansVal = document.getElementById(`r-ans-${i}`).value;
+
+            if (qIdVal > 0) {
+                payload[`question_${i}_id`] = qIdVal;
+                payload[`recorded_answer_${i}`] = ansVal;
+            } else {
+                // If question isn't selected, send null to Xano so it clears any old data
+                payload[`question_${i}_id`] = null;
+                payload[`recorded_answer_${i}`] = null;
+            }
         }
 
         const method = id ? 'PUT' : 'POST';
         const url = id ? `${AS_API}/${id}` : AS_API;
 
-        await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)});
-        document.getElementById('modal-assessment').style.display = 'none';
-        loadAssessments();
+        try {
+            const response = await fetch(url, { 
+                method, 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Xano Error:", errorData);
+                alert("Error saving: " + (errorData.message || "Check console"));
+            } else {
+                document.getElementById('modal-assessment').style.display = 'none';
+                loadAssessments();
+            }
+        } catch (e) {
+            console.error("Fetch Error:", e);
+        }
     };
 
     window.printAssessmentSheet = () => { window.print(); };
