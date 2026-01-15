@@ -15,24 +15,28 @@
 </div>
 
 <div id="modal-assessment" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
-    <div style="background:white; width:900px; border-radius:8px; display:flex; flex-direction:column; max-height:95vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <div style="background:white; width:950px; border-radius:8px; display:flex; flex-direction:column; max-height:95vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#1a1a1a; display:flex; justify-content:space-between; align-items:center;">
             <h2 id="modal-title" style="margin:0; font-size:1.1rem; color: #00d1b2;">Assessment Details</h2>
             <button onclick="document.getElementById('modal-assessment').style.display='none'" style="cursor:pointer; border:none; background:#333; color: white; padding:5px 10px; border-radius:4px;">CLOSE</button>
         </div>
         
-        <div id="modal-body" style="padding:20px; overflow-y:auto; flex-grow:1; display: grid; grid-template-columns: 300px 1fr; gap: 20px;">
+        <div id="modal-body" style="padding:20px; overflow-y:auto; flex-grow:1; display: grid; grid-template-columns: 320px 1fr; gap: 20px;">
             <div style="border-right: 1px solid #eee; padding-right: 20px;">
                 <input type="hidden" id="as-id">
                 
-                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">FRANCHISE</label>
-                <select id="as-franchise" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;"></select>
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">1. SELECT FRANCHISE</label>
+                <select id="as-franchise" onchange="filterPeopleByFranchise()" style="width:100%; padding:8px; margin-bottom:12px; border:1.5px solid #00d1b2; border-radius:4px; font-weight:bold;"></select>
 
-                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">STUDENT ID</label>
-                <input type="number" id="as-student" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">2. SELECT STUDENT</label>
+                <select id="as-student" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
+                    <option value="">-- Select Franchise First --</option>
+                </select>
 
-                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">TEACHER ID</label>
-                <input type="number" id="as-teacher" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">3. SELECT TEACHER</label>
+                <select id="as-teacher" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
+                    <option value="">-- Select Franchise First --</option>
+                </select>
 
                 <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">ASSESSMENT TYPE</label>
                 <input type="text" id="as-type" placeholder="e.g. Midterm" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
@@ -62,11 +66,32 @@
     const AS_API = 'https://x8ki-letl-twmt.n7.xano.io/api:zxOLzrsb/student_assessment';
     const Q_API = 'https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions';
     const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
+    const STU_API = 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student';
+    const TEA_API = 'https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher';
 
     let questionsBank = [];
     let franchises = [];
+    let allStudents = [];
+    let allTeachers = [];
 
-    // Initialize Slots
+    // Filter Students and Teachers based on selected Franchise
+    window.filterPeopleByFranchise = () => {
+        const selectedFranchiseId = document.getElementById('as-franchise').value;
+        const studentSelect = document.getElementById('as-student');
+        const teacherSelect = document.getElementById('as-teacher');
+
+        const filteredStudents = allStudents.filter(s => s.franchise_id == selectedFranchiseId && s.is_active);
+        const filteredTeachers = allTeachers.filter(t => t.franchise_id == selectedFranchiseId && t.is_active);
+
+        studentSelect.innerHTML = filteredStudents.length 
+            ? filteredStudents.map(s => `<option value="${s.id}">${s.name}</option>`).join('')
+            : '<option value="">No Active Students Found</option>';
+
+        teacherSelect.innerHTML = filteredTeachers.length
+            ? filteredTeachers.map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('')
+            : '<option value="">No Active Teachers Found</option>';
+    };
+
     function createSlots() {
         const container = document.getElementById('qa-slots');
         container.innerHTML = '';
@@ -113,13 +138,14 @@
 
         document.getElementById('assessments-list').innerHTML = list.map(as => {
             const fran = franchises.find(f => f.id == as.franchise_id);
+            const stu = allStudents.find(s => s.id == as.student_id);
             return `
             <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
                 <div style="display:flex; gap:30px; align-items:center;">
                     <span style="font-size:0.65rem; background:#eee; color:#666; padding:3px 8px; border-radius:10px; font-weight:bold;">${fran ? (fran.location_name || fran.name) : 'ID: '+as.franchise_id}</span>
                     <div>
                         <h3 style="margin:0; font-size:1rem;">${as.assessment_type || 'General Assessment'}</h3>
-                        <span style="font-size:0.75rem; color:#888;">Student: ${as.student_id} | Teacher: ${as.teacher_id}</span>
+                        <span style="font-size:0.75rem; color:#888;">Student: ${stu ? stu.name : 'ID:'+as.student_id} | Teacher ID: ${as.teacher_id}</span>
                     </div>
                 </div>
                 <div style="display:flex; gap:10px;">
@@ -134,6 +160,7 @@
         document.getElementById('modal-title').innerText = "Create Assessment Blueprint";
         document.getElementById('as-id').value = "";
         createSlots();
+        filterPeopleByFranchise(); // Trigger initial filter
         document.getElementById('modal-assessment').style.display = 'flex';
     };
 
@@ -142,6 +169,10 @@
         const as = await res.json();
         document.getElementById('as-id').value = as.id;
         document.getElementById('as-franchise').value = as.franchise_id;
+        
+        // Filter students/teachers before setting values
+        filterPeopleByFranchise();
+        
         document.getElementById('as-student').value = as.student_id;
         document.getElementById('as-teacher').value = as.teacher_id;
         document.getElementById('as-type').value = as.assessment_type;
@@ -171,21 +202,23 @@
         }
 
         const method = id ? 'PUT' : 'POST';
-        const url = id ? `${AS_API}/${id}` : AS_API;
-
-        await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)});
+        await fetch(id ? `${AS_API}/${id}` : AS_API, { 
+            method, 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify(payload)
+        });
         document.getElementById('modal-assessment').style.display = 'none';
         loadAssessments();
     };
 
-    window.printAssessmentSheet = () => {
-        window.print();
-    };
-
     (async () => {
-        const [qRes, fRes] = await Promise.all([fetch(Q_API), fetch(F_API)]);
+        const [qRes, fRes, sRes, tRes] = await Promise.all([
+            fetch(Q_API), fetch(F_API), fetch(STU_API), fetch(TEA_API)
+        ]);
         questionsBank = await qRes.json();
         franchises = await fRes.json();
+        allStudents = await sRes.json();
+        allTeachers = await tRes.json();
         
         document.getElementById('as-franchise').innerHTML = franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
         document.getElementById('assessment-franchise-filter').innerHTML += franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
