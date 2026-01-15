@@ -1,6 +1,6 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
     <h1 style="margin:0;">Session Master List</h1>
-    <button onclick="openNewSessionModal()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; border-radius:4px; font-weight:bold;">+ ADD NEW SESSION</button>
+    <button onclick="openNewSessionModal()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold;">+ ADD NEW SESSION</button>
 </div>
 
 <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #eee;">
@@ -10,7 +10,7 @@
     </select>
 </div>
 
-<div id="session-container" style="display: flex; flex-direction: column; gap: 15px;">
+<div id="session-container" style="display: flex; flex-direction: column; gap: 10px;">
     <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff;">Syncing Blueprint...</div>
 </div>
 
@@ -106,25 +106,31 @@
                 const statusColor = s.is_active ? '#00d1b2' : '#ff4757';
                 const franchise = franchiseList.find(f => f.id === s.franchise_id);
                 const franchiseDisplay = franchise ? (franchise.location_name || franchise.name) : `ID: ${s.franchise_id}`;
+                const descText = s.description && s.description.trim() !== "" ? s.description : "";
 
                 return `
-                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
-                    <div style="flex: 2;">
-                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
-                            <span style="background:${statusColor}; width:10px; height:10px; border-radius:50%;"></span>
-                            <h3 style="margin:0; font-size:1.1rem; color:#333;">${s.name}</h3>
-                            <span style="font-size:0.7rem; background:#f0f0f0; color:#666; padding:2px 8px; border-radius:10px;">${franchiseDisplay}</span>
+                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="display:flex; align-items:center; gap:20px; flex-grow:1; overflow:hidden;">
+                        <span style="background:${statusColor}; width:10px; height:10px; min-width:10px; border-radius:50%;"></span>
+                        
+                        <div style="display:flex; flex-direction:column; min-width:250px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <h3 style="margin:0; font-size:1.05rem; color:#333; white-space:nowrap;">${s.name}</h3>
+                                <span style="font-size:0.65rem; background:#f0f0f0; color:#666; padding:2px 8px; border-radius:10px; white-space:nowrap;">${franchiseDisplay}</span>
+                            </div>
+                            <span style="font-size:0.8rem; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${descText}</span>
                         </div>
-                        <p style="margin:0 0 8px 0; font-size:0.85rem; color:#888;">${s.description || 'No description provided.'}</p>
-                        <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:bold; color:#444;">
+
+                        <div style="display:flex; gap:20px; font-size:0.75rem; font-weight:bold; color:#444; white-space:nowrap;">
                             <span>🗓 ${days}</span>
                             <span>⏰ ${s.start_time_text} - ${s.end_time_text}</span>
                             <span>👥 Max: ${s.max_students} Students</span>
                         </div>
                     </div>
-                    <div style="display:flex; gap:10px;">
-                        <button onclick="editSession(${s.id})" style="border:1.5px solid blue; color:blue; background:#fff; padding:6px 15px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.75rem; text-transform:uppercase;">EDIT FULL RECORD</button>
-                        <button onclick="deleteSession(${s.id})" style="border:1.5px solid red; color:red; background:none; padding:6px 15px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.75rem; text-transform:uppercase;">DELETE</button>
+
+                    <div style="display:flex; gap:10px; margin-left:20px;">
+                        <button onclick="editSession(${s.id})" style="border:1.5px solid blue; color:blue; background:#fff; padding:5px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.7rem; text-transform:uppercase; white-space:nowrap;">EDIT FULL RECORD</button>
+                        <button onclick="deleteSession(${s.id})" style="border:1.5px solid red; color:red; background:none; padding:5px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.7rem; text-transform:uppercase; white-space:nowrap;">DELETE</button>
                     </div>
                 </div>`;
             }).join('');
