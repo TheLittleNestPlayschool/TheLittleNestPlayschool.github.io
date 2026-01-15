@@ -1,1 +1,218 @@
-  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <h1 style="margin:0;">Student Progress Reports</h1>
+    <button onclick="openNewProgressModal()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">+ CREATE NEW REPORT</button>
+</div>
+
+<div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #eee;">
+    <span style="font-size: 0.75rem; font-weight: 800; color: #666; text-transform: uppercase;">View by Franchise:</span>
+    <select id="progress-franchise-filter" onchange="window.loadProgressReports()" style="padding: 8px 15px; border-radius: 4px; border: 1px solid #ddd; background: white; min-width: 200px; font-weight: bold;">
+        <option value="all">All Branches</option>
+    </select>
+</div>
+
+<div id="progress-list" style="display: flex; flex-direction: column; gap: 15px;">
+    <div style="text-align:center; padding:50px; background:white; border:1px solid #eee; border-radius:8px;">Loading Reports...</div>
+</div>
+
+<div id="modal-progress" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
+    <div style="background:white; width:1000px; border-radius:8px; display:flex; flex-direction:column; max-height:95vh;">
+        <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#1a1a1a; display:flex; justify-content:space-between; align-items:center;">
+            <h2 id="p-modal-title" style="margin:0; font-size:1.1rem; color: #00d1b2;">Progress Report Details</h2>
+            <button onclick="document.getElementById('modal-progress').style.display='none'" style="cursor:pointer; border:none; background:#333; color: white; padding:5px 10px; border-radius:4px;">CLOSE</button>
+        </div>
+        
+        <div style="padding:20px; overflow-y:auto; flex-grow:1; display: grid; grid-template-columns: 320px 1fr; gap: 20px;">
+            <div style="border-right: 1px solid #eee; padding-right: 20px;">
+                <input type="hidden" id="p-id">
+                
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">FRANCHISE</label>
+                <select id="p-franchise" onchange="window.filterPeopleByFranchise()" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;"></select>
+
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">STUDENT</label>
+                <select id="p-student" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;"></select>
+
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">TEACHER</label>
+                <select id="p-teacher" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;"></select>
+
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">REPORT DATE</label>
+                <input type="date" id="p-date" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
+
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">OVERALL NOTES</label>
+                <textarea id="p-overall" style="width:100%; padding:8px; height:80px; border:1px solid #ddd; border-radius:4px; margin-bottom:12px;"></textarea>
+
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">NEXT STEPS</label>
+                <textarea id="p-next" style="width:100%; padding:8px; height:80px; border:1px solid #ddd; border-radius:4px;"></textarea>
+            </div>
+
+            <div id="p-slots" style="display: flex; flex-direction: column; gap: 15px;">
+                </div>
+        </div>
+
+        <div style="padding:15px 20px; border-top:1px solid #eee; background:#f9f9f9; display: flex; gap: 10px;">
+            <button onclick="window.saveProgressReport()" style="background:#00d1b2; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:4px; flex-grow: 1;">SAVE PROGRESS REPORT</button>
+            <button onclick="window.printCurrentReport()" id="print-btn" style="display:none; background:#333; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:4px;">PRINT</button>
+        </div>
+    </div>
+</div>
+
+<script>
+window.P_API = 'https://x8ki-letl-twmt.n7.xano.io/api:46pn22VY/student_progress';
+window.PQ_API = 'https://x8ki-letl-twmt.n7.xano.io/api:535aM7Wn/student_progress_question';
+window.F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
+window.S_API = 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student';
+window.T_API = 'https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher';
+
+window.p_questions = []; window.p_franchises = []; window.p_students = []; window.p_teachers = [];
+
+window.initProgressModule = async function() {
+    const [qR, fR, sR, tR] = await Promise.all([fetch(window.PQ_API), fetch(window.F_API), fetch(window.S_API), fetch(window.T_API)]);
+    window.p_questions = await qR.json(); window.p_franchises = await fR.json(); 
+    window.p_students = await sR.json(); window.p_teachers = await tR.json();
+
+    document.getElementById('p-franchise').innerHTML = window.p_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
+    document.getElementById('progress-franchise-filter').innerHTML += window.p_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
+    
+    window.createProgressSlots();
+    window.loadProgressReports();
+};
+
+window.filterPeopleByFranchise = function() {
+    const fid = document.getElementById('p-franchise').value;
+    document.getElementById('p-student').innerHTML = window.p_students.filter(s => s.franchise_id == fid).map(s => `<option value="${s.id}">${s.name}</option>`).join('') || '<option value="">No Students</option>';
+    document.getElementById('p-teacher').innerHTML = window.p_teachers.filter(t => t.franchise_id == fid).map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('') || '<option value="">No Teachers</option>';
+};
+
+window.createProgressSlots = function() {
+    const container = document.getElementById('p-slots');
+    container.innerHTML = '';
+    const ratings = ["improving", "staying_the_same", "needs_work", "saw_great_improvement"];
+    
+    for (let i = 1; i <= 10; i++) {
+        container.innerHTML += `
+        <div style="border: 1px solid #f0f0f0; padding: 10px; border-radius: 6px; background: #fff;">
+            <div style="display: grid; grid-template-columns: 1fr 200px; gap: 10px; margin-bottom: 8px;">
+                <select id="p-q-id-${i}" style="width:100%; padding:5px; font-weight:bold;">
+                    <option value="0">-- Select Question ${i} --</option>
+                    ${window.p_questions.filter(q => q.is_active).map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}
+                </select>
+                <select id="p-rating-${i}" style="width:100%; padding:5px;">
+                    <option value="">-- Rating --</option>
+                    ${ratings.map(r => `<option value="${r}">${r.replace(/_/g, ' ')}</option>`).join('')}
+                </select>
+            </div>
+            <textarea id="p-comment-${i}" placeholder="Specific comments for this criteria..." style="width:100%; padding:8px; height:40px; border:1px solid #eee; border-radius:4px; font-size:0.85rem;"></textarea>
+        </div>`;
+    }
+};
+
+window.loadProgressReports = async function() {
+    const fFilter = document.getElementById('progress-franchise-filter').value;
+    const res = await fetch(window.P_API + '?t=' + Date.now());
+    let list = await res.json();
+    if (fFilter !== 'all') list = list.filter(r => r.franchise_id == fFilter);
+
+    document.getElementById('progress-list').innerHTML = list.map(r => {
+        const stu = window.p_students.find(s => s.id == r.student_id);
+        const fran = window.p_franchises.find(f => f.id == (stu?.franchise_id));
+        
+        let qaRows = "";
+        for(let i=1; i<=10; i++) {
+            if(r[`question_${i}_id`]) {
+                const qText = window.p_questions.find(pq => pq.id == r[`question_${i}_id`])?.the_question || "Question "+i;
+                qaRows += `<div style="display:flex; font-size:0.8rem; margin-top:5px; padding-left:10px; border-left:2.5px solid #00d1b2;">
+                    <div style="width:350px; flex-shrink:0;"><b>Q:</b> ${qText}</div>
+                    <div><b>| Rating:</b> <span style="color:#00d1b2; font-weight:bold;">${r[`rating_${i}`]?.replace(/_/g, ' ') || 'None'}</span></div>
+                </div>`;
+            }
+        }
+
+        return `<div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #f8f8f8; padding-bottom:8px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:0.65rem; background:#eee; color:#666; padding:3px 8px; border-radius:4px; font-weight:bold;">${fran?.location_name || "Branch"}</span>
+                    <span style="font-size:1rem; font-weight:800;">${stu?.name || "Student ID: "+r.student_id}</span>
+                    <span style="color:#999; font-size:0.75rem;">${r.report_date}</span>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button onclick="window.editProgressReport(${r.id})" style="border:1px solid blue; color:blue; background:none; padding:5px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">EDIT</button>
+                    <button onclick="window.deleteProgressReport(${r.id})" style="border:1px solid red; color:red; background:none; padding:5px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">DELETE</button>
+                </div>
+            </div>
+            <div>${qaRows}</div>
+        </div>`;
+    }).join('');
+};
+
+window.openNewProgressModal = function() {
+    document.getElementById('p-id').value = "";
+    document.getElementById('p-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('p-overall').value = "";
+    document.getElementById('p-next').value = "";
+    document.getElementById('print-btn').style.display = 'none';
+    for(let i=1; i<=10; i++) {
+        document.getElementById(`p-q-id-${i}`).value = "0";
+        document.getElementById(`p-rating-${i}`).value = "";
+        document.getElementById(`p-comment-${i}`).value = "";
+    }
+    window.filterPeopleByFranchise();
+    document.getElementById('modal-progress').style.display = 'flex';
+};
+
+window.editProgressReport = async function(id) {
+    const res = await fetch(window.P_API + '/' + id);
+    const r = await res.json();
+    document.getElementById('p-id').value = r.id;
+    document.getElementById('p-student').value = r.student_id;
+    document.getElementById('p-teacher').value = r.teacher_id;
+    document.getElementById('p-date').value = r.report_date;
+    document.getElementById('p-overall').value = r.overall_notes;
+    document.getElementById('p-next').value = r.next_steps;
+    document.getElementById('print-btn').style.display = 'block';
+
+    for(let i=1; i<=10; i++) {
+        document.getElementById(`p-q-id-${i}`).value = r[`question_${i}_id`] || "0";
+        document.getElementById(`p-rating-${i}`).value = r[`rating_${i}`] || "";
+        document.getElementById(`p-comment-${i}`).value = r[`comment_${i}`] || "";
+    }
+    document.getElementById('modal-progress').style.display = 'flex';
+};
+
+window.saveProgressReport = async function() {
+    const id = document.getElementById('p-id').value;
+    const payload = {
+        student_id: parseInt(document.getElementById('p-student').value),
+        teacher_id: parseInt(document.getElementById('p-teacher').value),
+        report_date: document.getElementById('p-date').value,
+        overall_notes: document.getElementById('p-overall').value,
+        next_steps: document.getElementById('p-next').value
+    };
+
+    for(let i=1; i<=10; i++) {
+        const qVal = parseInt(document.getElementById(`p-q-id-${i}`).value);
+        payload[`question_${i}_id`] = qVal > 0 ? qVal : null;
+        payload[`rating_${i}`] = qVal > 0 ? document.getElementById(`p-rating-${i}`).value : null;
+        payload[`comment_${i}`] = qVal > 0 ? document.getElementById(`p-comment_${i}`).value : null;
+    }
+
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? window.P_API + '/' + id : window.P_API;
+    const res = await fetch(url, {
+        method, headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+
+    if(res.ok) {
+        document.getElementById('modal-progress').style.display = 'none';
+        window.loadProgressReports();
+    } else { alert("Error saving report."); }
+};
+
+window.deleteProgressReport = async function(id) {
+    if(confirm("Delete report?")) {
+        await fetch(window.P_API + '/' + id, { method: 'DELETE' });
+        window.loadProgressReports();
+    }
+};
+
+window.initProgressModule();
+</script>
