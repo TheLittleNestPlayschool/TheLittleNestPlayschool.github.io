@@ -1,0 +1,161 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <h1 style="margin:0;">Session Master List</h1>
+    <button onclick="openNewSessionModal()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; border-radius:4px; font-weight:bold;">+ ADD NEW SESSION</button>
+</div>
+
+<div id="session-container" style="display: flex; flex-direction: column; gap: 15px;">
+    <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff;">Loading Session Master Blueprint...</div>
+</div>
+
+<div id="modal-session" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
+    <div style="background:white; width:500px; border-radius:8px; display:flex; flex-direction:column; max-height:90vh;">
+        <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center;">
+            <h2 id="modal-title" style="margin:0; font-size:1.1rem;">Edit Session</h2>
+            <button onclick="document.getElementById('modal-session').style.display='none'" style="cursor:pointer; border:none; background:#eee; padding:5px 10px; border-radius:4px;">CLOSE</button>
+        </div>
+        <div id="modal-body-session" style="padding:20px; overflow-y:auto; flex-grow:1;">
+            <input type="hidden" id="sess-id">
+            
+            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">SESSION NAME</label>
+            <input type="text" id="sess-name" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:4px;">
+
+            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">FRANCHISE ID</label>
+            <input type="number" id="sess-franchise" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:4px;">
+
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <div style="flex:1;">
+                    <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">START TIME</label>
+                    <input type="text" id="sess-start" placeholder="e.g. 09:00 AM" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px;">
+                </div>
+                <div style="flex:1;">
+                    <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">END TIME</label>
+                    <input type="text" id="sess-end" placeholder="e.g. 11:30 AM" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px;">
+                </div>
+            </div>
+
+            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">MAX STUDENTS</label>
+            <input type="number" id="sess-max" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:4px;">
+
+            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">SCHEDULED DAYS (Comma Separated)</label>
+            <input type="text" id="sess-days" placeholder="Monday, Wednesday, Friday" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:4px;">
+
+            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">DESCRIPTION</label>
+            <textarea id="sess-desc" style="width:100%; padding:10px; height:60px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;"></textarea>
+
+            <label style="display:flex; align-items:center; gap:10px; font-weight:bold; font-size:0.8rem; cursor:pointer;">
+                <input type="checkbox" id="sess-active"> SESSION IS ACTIVE
+            </label>
+        </div>
+        <div style="padding:15px 20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; background:#f9f9f9;">
+            <button onclick="submitSession()" style="background:#00d1b2; color:white; border:none; padding:10px 25px; cursor:pointer; font-weight:bold; border-radius:4px; width:100%;">SAVE SESSION</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const S_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session';
+
+    window.loadSessions = async () => {
+        const container = document.getElementById('session-container');
+        try {
+            const res = await fetch(S_API + '?t=' + Date.now());
+            const data = await res.json();
+            let list = Array.isArray(data) ? data : (data.items || []);
+
+            container.innerHTML = list.map(s => {
+                const days = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : (s.scheduled_days || 'Not set');
+                const statusColor = s.is_active ? '#00d1b2' : '#ff4757';
+                
+                return `
+                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="flex: 2;">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                            <span style="background:${statusColor}; width:10px; height:10px; border-radius:50%;" title="${s.is_active ? 'Active' : 'Inactive'}"></span>
+                            <h3 style="margin:0; font-size:1.1rem; color:#333;">${s.name}</h3>
+                            <span style="font-size:0.7rem; background:#f0f0f0; color:#666; padding:2px 8px; border-radius:10px;">Franchise #${s.franchise_id}</span>
+                        </div>
+                        <p style="margin:0 0 8px 0; font-size:0.85rem; color:#888;">${s.description || 'No description provided.'}</p>
+                        <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:bold; color:#444;">
+                            <span>🗓 ${days}</span>
+                            <span>⏰ ${s.start_time_text} - ${s.end_time_text}</span>
+                            <span>👥 Max: ${s.max_students} Students</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="editSession(${s.id})" style="border:1px solid #ddd; background:#fff; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.8rem;">EDIT</button>
+                        <button onclick="deleteSession(${s.id})" style="border:1px solid #ff4757; color:#ff4757; background:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-size:0.8rem;">DEL</button>
+                    </div>
+                </div>`;
+            }).join('');
+        } catch(e) { console.error(e); }
+    };
+
+    window.openNewSessionModal = () => {
+        document.getElementById('modal-title').innerText = "Add New Session";
+        document.getElementById('sess-id').value = "";
+        document.getElementById('sess-name').value = "";
+        document.getElementById('sess-franchise').value = "";
+        document.getElementById('sess-start').value = "";
+        document.getElementById('sess-end').value = "";
+        document.getElementById('sess-max').value = "";
+        document.getElementById('sess-days').value = "";
+        document.getElementById('sess-desc').value = "";
+        document.getElementById('sess-active').checked = true;
+        document.getElementById('modal-session').style.display = 'flex';
+    };
+
+    window.editSession = async (id) => {
+        const res = await fetch(`${S_API}/${id}`);
+        const s = await res.json();
+        document.getElementById('modal-title').innerText = "Edit Session Blueprint";
+        document.getElementById('sess-id').value = s.id;
+        document.getElementById('sess-name').value = s.name;
+        document.getElementById('sess-franchise').value = s.franchise_id;
+        document.getElementById('sess-start').value = s.start_time_text;
+        document.getElementById('sess-end').value = s.end_time_text;
+        document.getElementById('sess-max').value = s.max_students;
+        document.getElementById('sess-days').value = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : s.scheduled_days;
+        document.getElementById('sess-desc').value = s.description;
+        document.getElementById('sess-active').checked = s.is_active;
+        document.getElementById('modal-session').style.display = 'flex';
+    };
+
+    window.submitSession = async () => {
+        const id = document.getElementById('sess-id').value;
+        const daysInput = document.getElementById('sess-days').value;
+        const payload = {
+            name: document.getElementById('sess-name').value,
+            franchise_id: parseInt(document.getElementById('sess-franchise').value),
+            start_time_text: document.getElementById('sess-start').value,
+            end_time_text: document.getElementById('sess-end').value,
+            max_students: parseInt(document.getElementById('sess-max').value),
+            scheduled_days: daysInput.split(',').map(d => d.trim()),
+            description: document.getElementById('sess-desc').value,
+            is_active: document.getElementById('sess-active').checked
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `${S_API}/${id}` : S_API;
+
+        const res = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            document.getElementById('modal-session').style.display = 'none';
+            loadSessions();
+        }
+    };
+
+    window.deleteSession = async (id) => {
+        if(confirm("Confirm deletion of this session blueprint? This may affect enrollment records.")) {
+            await fetch(`${S_API}/${id}`, { method: 'DELETE' });
+            loadSessions();
+        }
+    };
+
+    loadSessions();
+})();
+</script>
