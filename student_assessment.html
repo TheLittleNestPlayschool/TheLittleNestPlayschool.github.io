@@ -25,7 +25,7 @@
             <div style="border-right: 1px solid #eee; padding-right: 20px;">
                 <input type="hidden" id="as-id">
                 
-                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">1. SELECT FRANCHISE</label>
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">1. FRANCHISE</label>
                 <select id="as-franchise" onchange="filterPeopleByFranchise()" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;"></select>
 
                 <div style="background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee; margin-bottom: 12px;">
@@ -44,7 +44,7 @@
                     </div>
                 </div>
 
-                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">3. SELECT TEACHER</label>
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">3. TEACHER</label>
                 <select id="as-teacher" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;"></select>
 
                 <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">ASSESSMENT DATE</label>
@@ -123,19 +123,24 @@
         document.getElementById('assessments-list').innerHTML = list.map(as => {
             const fran = franchises.find(fr => fr.id == as.franchise_id);
             const stu = allStudents.find(s => s.id == as.student_id);
-            let nameDisplay = as.student_id === 0 ? "PROSPECT" : (stu?.name || as.student_id);
+            
+            // Name Logic
+            let nameDisplay = (as.student_id === 0) ? "PROSPECT" : (stu?.name || "Student ID: " + as.student_id);
             if(as.student_id === 0 && as.comments.includes("PROSPECT:")) {
                 nameDisplay = as.comments.split('|')[0].replace("PROSPECT:", "").trim();
             }
 
+            // Question Display Logic
             let qaLines = "";
             for (let i = 1; i <= 10; i++) {
                 const qId = as[`question_${i}_id`];
                 const ans = as[`recorded_answer_${i}`];
                 if (qId && ans) {
-                    const qText = questionsBank.find(qb => qb.id == qId)?.the_question || `Question ${qId}`;
-                    qaLines += `<div style="font-size: 0.8rem; margin-top: 4px; color: #444; padding-left: 10px; border-left: 2px solid #00d1b2;">
-                        <b>Q:</b> ${qText} | <b>A:</b> <span style="color:#00d1b2;">${ans}</span>
+                    const qData = questionsBank.find(qb => qb.id == qId);
+                    const qText = qData ? qData.the_question : "Question ID: " + qId;
+                    qaLines += `<div style="font-size: 0.8rem; margin-top: 5px; color: #444; padding-left: 10px; border-left: 2px solid #00d1b2;">
+                        <b>Q:</b> ${qText}<br>
+                        <b>A:</b> <span style="color:#00d1b2; font-weight:bold;">${ans}</span>
                     </div>`;
                 }
             }
@@ -145,7 +150,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <div style="display:flex; align-items:center; gap:12px;">
                         <span style="font-size:0.65rem; background:#eee; color:#666; padding:3px 8px; border-radius:4px; font-weight:bold;">${fran?.location_name || fran?.name || "Branch"}</span>
-                        <span style="font-size: 1rem; font-weight: 800; color: #1a1a1a;">${as.assessment_type} - ${nameDisplay}</span>
+                        <span style="font-size: 1rem; font-weight: 800; color: #1a1a1a;">${as.assessment_type} - ${as.student_id === 0 ? '<span style="color:#d33;">PROSPECT:</span> ' : ''}${nameDisplay}</span>
                         <span style="color: #999; font-size: 0.75rem;">${as.assessment_date}</span>
                     </div>
                     <div style="display:flex; gap:10px;">
@@ -162,6 +167,7 @@
         document.getElementById('as-id').value = "";
         document.getElementById('as-date').value = new Date().toISOString().split('T')[0];
         document.getElementById('is-prospect').checked = false;
+        document.getElementById('prospect-name').value = "";
         document.getElementById('as-comments').value = "";
         toggleProspectMode(); createSlots(); filterPeopleByFranchise();
         document.getElementById('modal-assessment').style.display = 'flex';
@@ -232,10 +238,18 @@
     window.deleteAssessment = async (id) => { if(confirm("Delete?")) { await fetch(`${AS_API}/${id}`, { method: 'DELETE' }); loadAssessments(); }};
 
     (async () => {
-        const [q, f, s, t] = await Promise.all([fetch(Q_API), fetch(F_API), fetch(STU_API), fetch(TEA_API)]);
-        questionsBank = await q.json(); franchises = await f.json(); allStudents = await s.json(); allTeachers = await t.json();
+        // LOAD DATA
+        const [qRes, fRes, sRes, tRes] = await Promise.all([fetch(Q_API), fetch(F_API), fetch(STU_API), fetch(TEA_API)]);
+        questionsBank = await qRes.json();
+        franchises = await fRes.json();
+        allStudents = await sRes.json();
+        allTeachers = await tRes.json();
+        
+        // POPULATE DROPDOWNS
         document.getElementById('as-franchise').innerHTML = franchises.map(x => `<option value="${x.id}">${x.location_name || x.name}</option>`).join('');
         document.getElementById('assessment-franchise-filter').innerHTML += franchises.map(x => `<option value="${x.id}">${x.location_name || x.name}</option>`).join('');
+        
+        // REFRESH LIST NOW THAT QUESTIONS ARE LOADED
         loadAssessments();
     })();
 })();
