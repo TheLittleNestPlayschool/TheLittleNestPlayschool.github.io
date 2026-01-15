@@ -81,7 +81,7 @@
             container.innerHTML += `
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px;">
                 <div><select id="q-id-${i}" onchange="updateAnswers(${i})" style="width:100%; padding:5px;"><option value="0">-- Question ${i} --</option>${questionsBank.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}</select></div>
-                <div><select id="r-ans-${i}" style="width:100%; padding:5px;"><option value="">-- Answer --</option></select></div>
+                <div><select id="r-ans-${i}" style="width:100%; padding:5px;"><option value="">-- Select Answer --</option></select></div>
             </div>`;
         }
     };
@@ -92,8 +92,8 @@
         const aSel = document.getElementById(`r-ans-${num}`);
         if(q) {
             const opts = [q.answer_1, q.answer_2, q.answer_3, q.answer_4, q.answer_5, q.answer_6].filter(a => a);
-            aSel.innerHTML = '<option value="">-- Select --</option>' + opts.map(o => `<option value="${o}" ${o === savedVal ? 'selected' : ''}>${o}</option>`).join('');
-        } else aSel.innerHTML = '<option value="">-- Answer --</option>';
+            aSel.innerHTML = '<option value="">-- Select Answer --</option>' + opts.map(o => `<option value="${o}" ${o === savedVal ? 'selected' : ''}>${o}</option>`).join('');
+        } else aSel.innerHTML = '<option value="">-- Select Answer --</option>';
     };
 
     window.loadAssessments = async () => {
@@ -112,25 +112,29 @@
             for (let i = 1; i <= 10; i++) {
                 const qId = as[`question_${i}_id`];
                 const ans = as[`recorded_answer_${i}`];
-                if (qId && ans) {
+                if (qId) {
                     const qData = questionsBank.find(qb => qb.id == qId);
-                    qaLines += `<div style="font-size: 0.8rem; margin-top: 4px; padding-left: 8px; border-left: 2px solid #00d1b2;"><b>Q:</b> ${qData?.the_question || 'ID '+qId} | <b>A:</b> <span style="color:#00d1b2;">${ans}</span></div>`;
+                    qaLines += `
+                    <div style="display: flex; font-size: 0.8rem; margin-top: 6px; padding-left: 10px; border-left: 2.5px solid #00d1b2;">
+                        <div style="width: 350px; flex-shrink: 0; color: #444;"><b>Q:</b> ${qData?.the_question || 'Question '+qId}</div>
+                        <div style="color: #00d1b2;"><b>| A:</b> <span style="font-weight:600;">${ans || "Answer Not Selected"}</span></div>
+                    </div>`;
                 }
             }
 
             return `<div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <div style="display:flex; align-items:center; gap:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid #f8f8f8;">
+                    <div style="display:flex; align-items:center; gap:12px;">
                         <span style="font-size:0.65rem; background:#eee; color:#666; padding:3px 8px; border-radius:4px; font-weight:bold;">${fran?.location_name || fran?.name || "Branch"}</span>
                         <span style="font-size:0.95rem; font-weight:800;">${as.assessment_type} - ${nameDisplay}</span>
                         <span style="color:#999; font-size:0.75rem;">${as.assessment_date}</span>
                     </div>
                     <div style="display:flex; gap:8px;">
-                        <button onclick="editAssessment(${as.id})" style="border:1px solid blue; color:blue; background:#fff; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">EDIT</button>
+                        <button onclick="editAssessment(${as.id})" style="border:1px solid blue; color:blue; background:#fff; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">EDIT RECORD</button>
                         <button onclick="deleteAssessment(${as.id})" style="border:1px solid red; color:red; background:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">DELETE</button>
                     </div>
                 </div>
-                <div>${qaLines || '<i style="color:#ccc; font-size:0.75rem;">No answers recorded.</i>'}</div>
+                <div style="display: flex; flex-direction: column;">${qaLines || '<i style="color:#ccc; font-size:0.75rem;">No answers recorded.</i>'}</div>
             </div>`;
         }).join('');
     };
@@ -185,11 +189,11 @@
 
         for (let i = 1; i <= 10; i++) {
             const qVal = parseInt(document.getElementById(`q-id-${i}`).value);
-            const rAns = document.getElementById(`r-ans-${i}`).value;
-            // Only send the question and answer if BOTH are present
-            if (qVal > 0 && rAns && rAns !== "") {
+            const rawAns = document.getElementById(`r-ans-${i}`).value;
+            if (qVal > 0) {
                 payload[`question_${i}_id`] = qVal;
-                payload[`recorded_answer_${i}`] = rAns;
+                // If a question is selected but answer is "-- Select Answer --", save as "Answer Not Selected"
+                payload[`recorded_answer_${i}`] = (rawAns === "" || rawAns === "-- Select Answer --") ? "Answer Not Selected" : rawAns;
             } else {
                 payload[`question_${i}_id`] = null;
                 payload[`recorded_answer_${i}`] = null;
@@ -200,10 +204,7 @@
             method: id ? 'PUT' : 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
         });
         if (res.ok) { document.getElementById('modal-assessment').style.display = 'none'; loadAssessments(); }
-        else { 
-            const error = await res.json();
-            alert("Save Failed: " + (error.message || "Ensure all required fields are filled.")); 
-        }
+        else { alert("Error saving record."); }
     };
 
     window.deleteAssessment = async (id) => { if(confirm("Delete?")) { await fetch(`${AS_API}/${id}`, { method: 'DELETE' }); loadAssessments(); }};
