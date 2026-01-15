@@ -10,7 +10,17 @@
     </select>
 </div>
 
-<div id="parent-list" style="display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; padding: 10px 15px; background: #eee; border-radius: 4px; margin-bottom: 10px; font-size: 0.7rem; font-weight: 900; color: #666; text-transform: uppercase; letter-spacing: 1px;">
+    <div style="width: 180px;">Name</div>
+    <div style="width: 200px;">Email</div>
+    <div style="width: 120px;">Phone</div>
+    <div style="flex-grow: 1; padding-right: 20px;">Address</div>
+    <div style="width: 140px;">Franchise</div>
+    <div style="width: 80px; text-align: center;">Status</div>
+    <div style="width: 140px; text-align: right;">Actions</div>
+</div>
+
+<div id="parent-list" style="display: flex; flex-direction: column; gap: 5px;">
     <div style="text-align:center; padding:50px; background:white; border:1px solid #eee; border-radius:8px;">Initializing Parent Directory...</div>
 </div>
 
@@ -20,10 +30,8 @@
             <h2 id="parent-modal-title" style="margin:0; font-size:1.1rem; color: #00d1b2;">Parent Details</h2>
             <button onclick="document.getElementById('modal-parent').style.display='none'" style="cursor:pointer; border:none; background:#333; color: white; padding:5px 10px; border-radius:4px;">CLOSE</button>
         </div>
-        
         <div style="padding:20px; overflow-y:auto;">
             <input type="hidden" id="pa-id">
-            
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                 <div>
                     <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">FIRST NAME</label>
@@ -34,31 +42,24 @@
                     <input type="text" id="pa-lname" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                 </div>
             </div>
-
             <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">EMAIL ADDRESS</label>
             <input type="email" id="pa-email" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;">
-
             <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">PHONE NUMBER</label>
             <input type="text" id="pa-phone" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;">
-
             <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">HOME ADDRESS</label>
             <textarea id="pa-address" style="width:100%; padding:8px; height:60px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;"></textarea>
-
             <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">ASSIGNED FRANCHISE</label>
             <select id="pa-franchise" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;"></select>
-
             <div style="background: #f9f9f9; padding: 15px; border-radius: 4px; border: 1px solid #eee; margin-bottom: 15px;">
                 <label style="display:flex; align-items:center; gap:10px; font-size:0.85rem; font-weight:bold; color:#333; cursor:pointer; margin-bottom:10px;">
                     <input type="checkbox" id="pa-active" checked onchange="window.toggleInactivationField()"> ACCOUNT IS ACTIVE
                 </label>
-                
                 <div id="pa-inactive-wrap" style="display:none;">
                     <label style="display:block; font-size:0.7rem; font-weight:bold; color:#d9534f; margin-bottom:5px;">REASON FOR INACTIVATION</label>
                     <textarea id="pa-inactive-reason" style="width:100%; padding:8px; height:60px; border:1px solid #ddd; border-radius:4px;"></textarea>
                 </div>
             </div>
         </div>
-
         <div style="padding:15px 20px; border-top:1px solid #eee; background:#f9f9f9;">
             <button onclick="window.saveParent()" style="background:#00d1b2; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:4px; width: 100%;">SAVE PARENT PROFILE</button>
         </div>
@@ -74,10 +75,8 @@ window.initParentModule = async function() {
     try {
         const res = await fetch(window.F_API);
         window.parent_franchises = await res.json();
-        
         document.getElementById('pa-franchise').innerHTML = window.parent_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
         document.getElementById('parent-franchise-filter').innerHTML += window.parent_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
-        
         window.loadParents();
     } catch (err) { console.error("Init Error:", err); }
 };
@@ -91,18 +90,22 @@ window.loadParents = async function() {
     document.getElementById('parent-list').innerHTML = list.map(p => {
         const fran = window.parent_franchises.find(f => f.id == p.franchise_id);
         return `
-            <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:10px 15px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div style="display:flex; align-items:center; gap:20px; flex-grow:1;">
-                    <div style="font-size:1rem; font-weight:700; color:#1a1a1a; min-width: 200px;">${p.last_name}, ${p.first_name}</div>
-                    <div style="color: #666; font-size: 0.85rem; width: 250px;">${p.email}</div>
-                    <span style="font-size:0.65rem; background:#eee; color:#666; padding:3px 8px; border-radius:4px; font-weight:bold;">${fran?.location_name || "Branch"}</span>
+            <div style="background:#fff; border:1px solid #eee; border-radius:4px; padding:8px 15px; display:flex; align-items:center; font-size: 0.85rem; color: #333;">
+                <div style="width: 180px; font-weight:bold;">${p.last_name}, ${p.first_name}</div>
+                <div style="width: 200px; color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.email}</div>
+                <div style="width: 120px;">${p.phone || 'N/A'}</div>
+                <div style="flex-grow: 1; padding-right: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #888;">${p.address || ''}</div>
+                <div style="width: 140px; font-weight: 600;">${fran?.location_name || "Branch"}</div>
+                
+                <div style="width: 80px; text-align: center;">
                     <span style="font-size:0.6rem; background:${p.is_active ? '#e1fcf2' : '#ffebeb'}; color:${p.is_active ? '#008c6a' : '#d9534f'}; padding:3px 8px; border-radius:4px; font-weight:bold;">
                         ${p.is_active ? 'ACTIVE' : 'INACTIVE'}
                     </span>
                 </div>
-                <div style="display:flex; gap:8px;">
-                    <button onclick="window.editParent(${p.id})" style="border:1px solid blue; color:blue; background:none; padding:4px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">EDIT</button>
-                    <button onclick="window.deleteParent(${p.id})" style="border:1px solid red; color:red; background:none; padding:4px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">DELETE</button>
+
+                <div style="width: 140px; text-align: right; display:flex; gap:5px; justify-content: flex-end;">
+                    <button onclick="window.editParent(${p.id})" style="border:1px solid blue; color:blue; background:none; padding:3px 10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.65rem;">EDIT</button>
+                    <button onclick="window.deleteParent(${p.id})" style="border:1px solid red; color:red; background:none; padding:3px 10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.65rem;">DELETE</button>
                 </div>
             </div>`;
     }).join('') || '<div style="text-align:center; padding:20px; color:#999;">No parents found.</div>';
@@ -154,15 +157,12 @@ window.saveParent = async function() {
         is_active: document.getElementById('pa-active').checked,
         inactivation_reason_comments: document.getElementById('pa-inactive-reason').value
     };
-    
     const method = id ? 'PUT' : 'POST';
     const url = id ? window.PA_API + '/' + id : window.PA_API;
-    
     const res = await fetch(url, {
         method, headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
     });
-    
     if(res.ok) {
         document.getElementById('modal-parent').style.display = 'none';
         window.loadParents();
