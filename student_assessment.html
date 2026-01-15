@@ -11,7 +11,7 @@
 </div>
 
 <div id="assessments-list" style="display: flex; flex-direction: column; gap: 15px;">
-    <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff;">Loading Assessments...</div>
+    <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff;">Initializing Academic DNA...</div>
 </div>
 
 <div id="modal-assessment" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
@@ -25,7 +25,7 @@
             <div style="border-right: 1px solid #eee; padding-right: 20px;">
                 <input type="hidden" id="as-id">
                 
-                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">1. FRANCHISE</label>
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">1. SELECT FRANCHISE</label>
                 <select id="as-franchise" onchange="filterPeopleByFranchise()" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;"></select>
 
                 <div style="background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee; margin-bottom: 12px;">
@@ -44,7 +44,7 @@
                     </div>
                 </div>
 
-                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">3. TEACHER</label>
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">3. SELECT TEACHER</label>
                 <select id="as-teacher" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;"></select>
 
                 <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">ASSESSMENT DATE</label>
@@ -97,7 +97,7 @@
                 <div><span style="font-size: 0.6rem; color: #999;">Question ${i}</span>
                 <select id="q-id-${i}" onchange="updateAnswers(${i})" style="width: 100%; padding: 5px;">
                     <option value="0">-- Select Question --</option>${questionsBank.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}</select></div>
-                <div><span style="font-size: 0.6rem; color: #999;">Answer ${i}</span>
+                <div><span style="font-size: 0.6rem; color: #999;">Recorded Answer ${i}</span>
                 <select id="r-ans-${i}" style="width: 100%; padding: 5px;"><option value="">-- No Answer --</option></select></div>
             </div>`;
         }
@@ -124,13 +124,13 @@
             const fran = franchises.find(fr => fr.id == as.franchise_id);
             const stu = allStudents.find(s => s.id == as.student_id);
             
-            // Name Logic
-            let nameDisplay = (as.student_id === 0) ? "PROSPECT" : (stu?.name || "Student ID: " + as.student_id);
+            // Name Logic for first line
+            let nameDisplay = (as.student_id === 0) ? "PROSPECT" : (stu?.name || "Student: " + as.student_id);
             if(as.student_id === 0 && as.comments.includes("PROSPECT:")) {
-                nameDisplay = as.comments.split('|')[0].replace("PROSPECT:", "").trim();
+                nameDisplay = "PROSPECT: " + as.comments.split('|')[0].replace("PROSPECT:", "").trim();
             }
 
-            // Question Display Logic
+            // Question Display Logic (One per line)
             let qaLines = "";
             for (let i = 1; i <= 10; i++) {
                 const qId = as[`question_${i}_id`];
@@ -150,7 +150,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <div style="display:flex; align-items:center; gap:12px;">
                         <span style="font-size:0.65rem; background:#eee; color:#666; padding:3px 8px; border-radius:4px; font-weight:bold;">${fran?.location_name || fran?.name || "Branch"}</span>
-                        <span style="font-size: 1rem; font-weight: 800; color: #1a1a1a;">${as.assessment_type} - ${as.student_id === 0 ? '<span style="color:#d33;">PROSPECT:</span> ' : ''}${nameDisplay}</span>
+                        <span style="font-size: 1rem; font-weight: 800; color: #1a1a1a;">${as.assessment_type} - ${nameDisplay}</span>
                         <span style="color: #999; font-size: 0.75rem;">${as.assessment_date}</span>
                     </div>
                     <div style="display:flex; gap:10px;">
@@ -238,7 +238,7 @@
     window.deleteAssessment = async (id) => { if(confirm("Delete?")) { await fetch(`${AS_API}/${id}`, { method: 'DELETE' }); loadAssessments(); }};
 
     (async () => {
-        // LOAD DATA
+        // FETCH ALL DATA FIRST
         const [qRes, fRes, sRes, tRes] = await Promise.all([fetch(Q_API), fetch(F_API), fetch(STU_API), fetch(TEA_API)]);
         questionsBank = await qRes.json();
         franchises = await fRes.json();
@@ -249,7 +249,7 @@
         document.getElementById('as-franchise').innerHTML = franchises.map(x => `<option value="${x.id}">${x.location_name || x.name}</option>`).join('');
         document.getElementById('assessment-franchise-filter').innerHTML += franchises.map(x => `<option value="${x.id}">${x.location_name || x.name}</option>`).join('');
         
-        // REFRESH LIST NOW THAT QUESTIONS ARE LOADED
+        // NOW LOAD LIST
         loadAssessments();
     })();
 })();
