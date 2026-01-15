@@ -92,12 +92,15 @@
             const data = await res.json();
             let list = Array.isArray(data) ? data : (data.items || []);
 
+            // SORT BY FRANCHISE ID
+            list.sort((a, b) => a.franchise_id - b.franchise_id);
+
             if (filterVal !== 'all') {
                 list = list.filter(s => s.franchise_id.toString() === filterVal);
             }
 
             if (list.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">No sessions found for this selection.</div>';
+                container.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">No sessions found.</div>';
                 return;
             }
 
@@ -111,13 +114,13 @@
                 return `
                 <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
                     <div style="display:flex; align-items:center; gap:20px; flex-grow:1; overflow:hidden;">
-                        <span style="background:${statusColor}; width:10px; height:10px; min-width:10px; border-radius:50%;"></span>
                         
-                        <div style="display:flex; flex-direction:column; min-width:250px;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <h3 style="margin:0; font-size:1.05rem; color:#333; white-space:nowrap;">${s.name}</h3>
-                                <span style="font-size:0.65rem; background:#f0f0f0; color:#666; padding:2px 8px; border-radius:10px; white-space:nowrap;">${franchiseDisplay}</span>
-                            </div>
+                        <div style="min-width:140px;">
+                            <span style="font-size:0.75rem; font-weight:800; background:#1a1a1a; color:#00d1b2; padding:4px 10px; border-radius:4px; text-transform:uppercase;">${franchiseDisplay}</span>
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; min-width:200px;">
+                            <h3 style="margin:0; font-size:1.05rem; color:#333; white-space:nowrap;">${s.name}</h3>
                             <span style="font-size:0.8rem; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${descText}</span>
                         </div>
 
@@ -128,7 +131,12 @@
                         </div>
                     </div>
 
-                    <div style="display:flex; gap:10px; margin-left:20px;">
+                    <div style="display:flex; align-items:center; gap:15px; margin-left:20px;">
+                        <div style="display:flex; align-items:center; gap:6px; font-size:0.7rem; font-weight:bold; color:#666; text-transform:uppercase; min-width:70px;">
+                            <span style="background:${statusColor}; width:8px; height:8px; border-radius:50%;"></span>
+                            Active
+                        </div>
+
                         <button onclick="editSession(${s.id})" style="border:1.5px solid blue; color:blue; background:#fff; padding:5px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.7rem; text-transform:uppercase; white-space:nowrap;">EDIT FULL RECORD</button>
                         <button onclick="deleteSession(${s.id})" style="border:1.5px solid red; color:red; background:none; padding:5px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.7rem; text-transform:uppercase; white-space:nowrap;">DELETE</button>
                     </div>
