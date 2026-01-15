@@ -7,8 +7,8 @@
     <input type="text" id="pq-search" onkeyup="window.filterProgressQuestions()" placeholder="Search questions..." style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ddd;">
 </div>
 
-<div id="progress-q-list" style="display: flex; flex-direction: column; gap: 12px;">
-    <div style="text-align:center; padding:50px; background:white; border:1px solid #eee; border-radius:8px;">Loading Questions...</div>
+<div id="progress-q-list" style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="text-align:center; padding:30px; background:white; border:1px solid #eee; border-radius:8px;">Loading Questions...</div>
 </div>
 
 <div id="modal-progress-q" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
@@ -20,7 +20,7 @@
         <div style="padding:20px;">
             <input type="hidden" id="pq-id">
             <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">QUESTION / CRITERIA TEXT</label>
-            <textarea id="pq-text" style="width:100%; padding:12px; height:120px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;"></textarea>
+            <textarea id="pq-text" style="width:100%; padding:12px; height:120px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px; font-family:inherit;"></textarea>
             <label style="display:flex; align-items:center; gap:10px; font-size:0.85rem; font-weight:bold; color:#333; cursor:pointer;">
                 <input type="checkbox" id="pq-active" checked> IS ACTIVE
             </label>
@@ -32,7 +32,6 @@
 </div>
 
 <script>
-// Attach functions to window so loadFrame can see them
 window.PQ_API = 'https://x8ki-letl-twmt.n7.xano.io/api:535aM7Wn/student_progress_question';
 window.allProgressQuestions = [];
 
@@ -51,16 +50,16 @@ window.renderProgressQuestions = function(list) {
     const container = document.getElementById('progress-q-list');
     if (!container) return;
     container.innerHTML = list.map(q => `
-        <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
-            <div style="flex-grow:1;">
-                <span style="font-size:0.6rem; background:${q.is_active ? '#e1fcf2' : '#f5f5f5'}; color:${q.is_active ? '#008c6a' : '#999'}; padding:2px 8px; border-radius:4px; font-weight:bold; display:inline-block; margin-bottom:5px;">
+        <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:10px 15px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="display:flex; align-items:center; gap:20px; flex-grow:1;">
+                <div style="font-size:0.95rem; font-weight:600; color:#1a1a1a;">${q.the_question}</div>
+                <span style="font-size:0.6rem; background:${q.is_active ? '#e1fcf2' : '#f5f5f5'}; color:${q.is_active ? '#008c6a' : '#999'}; padding:3px 8px; border-radius:4px; font-weight:bold; min-width:50px; text-align:center;">
                     ${q.is_active ? 'ACTIVE' : 'INACTIVE'}
                 </span>
-                <div style="font-size:1rem; color:#1a1a1a;">${q.the_question}</div>
             </div>
-            <div style="display:flex; gap:10px;">
-                <button onclick="editProgressQ(${q.id})" style="border:1.5px solid blue; color:blue; background:none; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">EDIT</button>
-                <button onclick="deleteProgressQ(${q.id})" style="border:1.5px solid red; color:red; background:none; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">DELETE</button>
+            <div style="display:flex; gap:8px;">
+                <button onclick="editProgressQ(${q.id})" style="border:1px solid blue; color:blue; background:none; padding:4px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">EDIT</button>
+                <button onclick="deleteProgressQ(${q.id})" style="border:1px solid red; color:red; background:none; padding:4px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">DELETE</button>
             </div>
         </div>
     `).join('') || '<div style="text-align:center; color:#999; padding:20px;">No questions in bank.</div>';
@@ -116,6 +115,5 @@ window.deleteProgressQ = async function(id) {
     }
 };
 
-// Initial trigger
 window.loadProgressQuestions();
 </script>
