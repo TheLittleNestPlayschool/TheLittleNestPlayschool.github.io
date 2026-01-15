@@ -1,6 +1,6 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
     <h1 style="margin:0;">Session Master List</h1>
-    <button onclick="openNewSessionModal()" style="background:#00d1b2; color:white; border:none; padding:12px 25px; cursor:pointer; border-radius:4px; font-weight:900; letter-spacing:1px; box-shadow: 0 2px 4px rgba(0,209,178,0.3);">+ ADD NEW SESSION</button>
+    <button onclick="openNewSessionModal()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; border-radius:4px; font-weight:bold;">+ ADD NEW SESSION</button>
 </div>
 
 <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #eee;">
@@ -15,10 +15,10 @@
 </div>
 
 <div id="modal-session" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
-    <div style="background:white; width:500px; border-radius:8px; display:flex; flex-direction:column; max-height:90vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-        <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#1a1a1a; display:flex; justify-content:space-between; align-items:center;">
-            <h2 id="modal-title" style="margin:0; font-size:1.1rem; color: #00d1b2;">Edit Session</h2>
-            <button onclick="document.getElementById('modal-session').style.display='none'" style="cursor:pointer; border:none; background:#333; color: white; padding:5px 10px; border-radius:4px;">CLOSE</button>
+    <div style="background:white; width:500px; border-radius:8px; display:flex; flex-direction:column; max-height:90vh;">
+        <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center;">
+            <h2 id="modal-title" style="margin:0; font-size:1.1rem;">Edit Session</h2>
+            <button onclick="document.getElementById('modal-session').style.display='none'" style="cursor:pointer; border:none; background:#eee; padding:5px 10px; border-radius:4px;">CLOSE</button>
         </div>
         <div id="modal-body-session" style="padding:20px; overflow-y:auto; flex-grow:1;">
             <input type="hidden" id="sess-id">
@@ -56,7 +56,7 @@
             </label>
         </div>
         <div style="padding:15px 20px; border-top:1px solid #eee; background:#f9f9f9;">
-            <button onclick="submitSession()" style="background:#00d1b2; color:white; border:none; padding:12px; cursor:pointer; font-weight:900; border-radius:4px; width:100%; letter-spacing:1px;">SAVE SESSION MASTER</button>
+            <button onclick="submitSession()" style="background:#00d1b2; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:4px; width:100%;">SAVE SESSION</button>
         </div>
     </div>
 </div>
@@ -92,7 +92,6 @@
             const data = await res.json();
             let list = Array.isArray(data) ? data : (data.items || []);
 
-            // Apply Client-side filter
             if (filterVal !== 'all') {
                 list = list.filter(s => s.franchise_id.toString() === filterVal);
             }
@@ -109,22 +108,23 @@
                 const franchiseDisplay = franchise ? (franchise.location_name || franchise.name) : `ID: ${s.franchise_id}`;
 
                 return `
-                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:18px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-left: 6px solid ${statusColor};">
+                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
                     <div style="flex: 2;">
-                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                            <h3 style="margin:0; font-size:1.2rem; color:#1a1a1a;">${s.name}</h3>
-                            <span style="font-size:0.7rem; font-weight:bold; background:#1a1a1a; color:#00d1b2; padding:3px 10px; border-radius:4px; text-transform:uppercase;">${franchiseDisplay}</span>
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                            <span style="background:${statusColor}; width:10px; height:10px; border-radius:50%;"></span>
+                            <h3 style="margin:0; font-size:1.1rem; color:#333;">${s.name}</h3>
+                            <span style="font-size:0.7rem; background:#f0f0f0; color:#666; padding:2px 8px; border-radius:10px;">${franchiseDisplay}</span>
                         </div>
-                        <p style="margin:0 0 10px 0; font-size:0.9rem; color:#666; font-style:italic;">${s.description || 'No description provided.'}</p>
-                        <div style="display:flex; gap:20px; font-size:0.85rem; font-weight:bold; color:#444;">
-                            <span style="background:#f0f0f0; padding:4px 8px; border-radius:4px;">🗓 ${days}</span>
-                            <span style="background:#f0f0f0; padding:4px 8px; border-radius:4px;">⏰ ${s.start_time_text} - ${s.end_time_text}</span>
-                            <span style="background:#f0f0f0; padding:4px 8px; border-radius:4px;">👥 Max: ${s.max_students}</span>
+                        <p style="margin:0 0 8px 0; font-size:0.85rem; color:#888;">${s.description || 'No description provided.'}</p>
+                        <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:bold; color:#444;">
+                            <span>🗓 ${days}</span>
+                            <span>⏰ ${s.start_time_text} - ${s.end_time_text}</span>
+                            <span>👥 Max: ${s.max_students} Students</span>
                         </div>
                     </div>
-                    <div style="display:flex; gap:12px;">
-                        <button onclick="editSession(${s.id})" style="background:#1a1a1a; color:#00d1b2; border:2px solid #00d1b2; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:900; font-size:0.85rem; letter-spacing:1px; transition: 0.2s;">EDIT SESSION</button>
-                        <button onclick="deleteSession(${s.id})" style="color:#ff4757; background:none; border:1px solid #ff4757; padding:10px 15px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:bold;">DEL</button>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="editSession(${s.id})" style="border:1px solid #ddd; background:#fff; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.8rem;">EDIT</button>
+                        <button onclick="deleteSession(${s.id})" style="border:1px solid #ff4757; color:#ff4757; background:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-size:0.8rem;">DEL</button>
                     </div>
                 </div>`;
             }).join('');
@@ -132,7 +132,7 @@
     };
 
     window.openNewSessionModal = () => {
-        document.getElementById('modal-title').innerText = "Create New Session Master";
+        document.getElementById('modal-title').innerText = "Add New Session";
         document.getElementById('sess-id').value = "";
         document.getElementById('sess-name').value = "";
         document.getElementById('sess-franchise-select').value = franchiseList[0]?.id || "";
@@ -148,7 +148,7 @@
     window.editSession = async (id) => {
         const res = await fetch(`${S_API}/${id}`);
         const s = await res.json();
-        document.getElementById('modal-title').innerText = "Update Session Blueprint";
+        document.getElementById('modal-title').innerText = "Edit Session";
         document.getElementById('sess-id').value = s.id;
         document.getElementById('sess-name').value = s.name;
         document.getElementById('sess-franchise-select').value = s.franchise_id;
