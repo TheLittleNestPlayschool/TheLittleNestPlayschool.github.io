@@ -19,8 +19,10 @@
             <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">SESSION NAME</label>
             <input type="text" id="sess-name" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:4px;">
 
-            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">FRANCHISE ID</label>
-            <input type="number" id="sess-franchise" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:4px;">
+            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">ASSIGNED FRANCHISE</label>
+            <select id="sess-franchise-select" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:4px; background:white;">
+                <option value="">Loading Franchises...</option>
+            </select>
 
             <div style="display:flex; gap:10px; margin-bottom:15px;">
                 <div style="flex:1;">
@@ -55,6 +57,19 @@
 <script>
 (function() {
     const S_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session';
+    const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
+    let franchiseList = [];
+
+    // Pre-load Franchise List for the dropdown
+    const fetchFranchises = async () => {
+        try {
+            const res = await fetch(F_API);
+            const data = await res.json();
+            franchiseList = Array.isArray(data) ? data : (data.items || []);
+            const select = document.getElementById('sess-franchise-select');
+            select.innerHTML = franchiseList.map(f => `<option value="${f.id}">${f.location_name || f.name || 'Franchise ' + f.id}</option>`).join('');
+        } catch (e) { console.error("Error fetching franchises", e); }
+    };
 
     window.loadSessions = async () => {
         const container = document.getElementById('session-container');
@@ -67,13 +82,17 @@
                 const days = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : (s.scheduled_days || 'Not set');
                 const statusColor = s.is_active ? '#00d1b2' : '#ff4757';
                 
+                // Find franchise name from our cached list if possible
+                const franchise = franchiseList.find(f => f.id === s.franchise_id);
+                const franchiseDisplay = franchise ? (franchise.location_name || franchise.name) : `ID: ${s.franchise_id}`;
+
                 return `
                 <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
                     <div style="flex: 2;">
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
                             <span style="background:${statusColor}; width:10px; height:10px; border-radius:50%;" title="${s.is_active ? 'Active' : 'Inactive'}"></span>
                             <h3 style="margin:0; font-size:1.1rem; color:#333;">${s.name}</h3>
-                            <span style="font-size:0.7rem; background:#f0f0f0; color:#666; padding:2px 8px; border-radius:10px;">Franchise #${s.franchise_id}</span>
+                            <span style="font-size:0.7rem; background:#f0f0f0; color:#666; padding:2px 8px; border-radius:10px;">${franchiseDisplay}</span>
                         </div>
                         <p style="margin:0 0 8px 0; font-size:0.85rem; color:#888;">${s.description || 'No description provided.'}</p>
                         <div style="display:flex; gap:15px; font-size:0.8rem; font-weight:bold; color:#444;">
@@ -95,7 +114,7 @@
         document.getElementById('modal-title').innerText = "Add New Session";
         document.getElementById('sess-id').value = "";
         document.getElementById('sess-name').value = "";
-        document.getElementById('sess-franchise').value = "";
+        document.getElementById('sess-franchise-select').value = franchiseList[0]?.id || "";
         document.getElementById('sess-start').value = "";
         document.getElementById('sess-end').value = "";
         document.getElementById('sess-max').value = "";
@@ -111,7 +130,7 @@
         document.getElementById('modal-title').innerText = "Edit Session Blueprint";
         document.getElementById('sess-id').value = s.id;
         document.getElementById('sess-name').value = s.name;
-        document.getElementById('sess-franchise').value = s.franchise_id;
+        document.getElementById('sess-franchise-select').value = s.franchise_id;
         document.getElementById('sess-start').value = s.start_time_text;
         document.getElementById('sess-end').value = s.end_time_text;
         document.getElementById('sess-max').value = s.max_students;
@@ -126,11 +145,11 @@
         const daysInput = document.getElementById('sess-days').value;
         const payload = {
             name: document.getElementById('sess-name').value,
-            franchise_id: parseInt(document.getElementById('sess-franchise').value),
+            franchise_id: parseInt(document.getElementById('sess-franchise-select').value),
             start_time_text: document.getElementById('sess-start').value,
             end_time_text: document.getElementById('sess-end').value,
             max_students: parseInt(document.getElementById('sess-max').value),
-            scheduled_days: daysInput.split(',').map(d => d.trim()),
+            scheduled_days: daysInput.split(',').map(d => d.trim()).filter(d => d !== ""),
             description: document.getElementById('sess-desc').value,
             is_active: document.getElementById('sess-active').checked
         };
@@ -150,12 +169,16 @@
     };
 
     window.deleteSession = async (id) => {
-        if(confirm("Confirm deletion of this session blueprint? This may affect enrollment records.")) {
+        if(confirm("Confirm deletion of this session blueprint?")) {
             await fetch(`${S_API}/${id}`, { method: 'DELETE' });
             loadSessions();
         }
     };
 
-    loadSessions();
+    // Initialize
+    (async () => {
+        await fetchFranchises();
+        loadSessions();
+    })();
 })();
 </script>
