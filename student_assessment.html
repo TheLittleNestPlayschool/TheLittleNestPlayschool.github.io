@@ -54,7 +54,6 @@
 
 <script>
 (function() {
-    // USING QUERY ENDPOINTS (Without {id} suffix for listing)
     const AS_API = 'https://x8ki-letl-twmt.n7.xano.io/api:zxOLzrsb/student_assessment';
     const Q_API = 'https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions';
     const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
@@ -99,7 +98,6 @@
 
     window.loadAssessments = async () => {
         const fFilter = document.getElementById('assessment-franchise-filter').value;
-        // Query All Records endpoint
         const res = await fetch(AS_API + '?t=' + Date.now());
         const data = await res.json();
         let list = Array.isArray(data) ? data : (data.items || []);
@@ -184,16 +182,28 @@
             assessment_type: document.getElementById('as-type').value,
             comments: isP ? `PROSPECT: ${document.getElementById('prospect-name').value} | ${document.getElementById('as-comments').value}` : document.getElementById('as-comments').value
         };
+
         for (let i = 1; i <= 10; i++) {
             const qVal = parseInt(document.getElementById(`q-id-${i}`).value);
-            payload[`question_${i}_id`] = qVal > 0 ? qVal : null;
-            payload[`recorded_answer_${i}`] = qVal > 0 ? document.getElementById(`r-ans-${i}`).value : null;
+            const rAns = document.getElementById(`r-ans-${i}`).value;
+            // Only send the question and answer if BOTH are present
+            if (qVal > 0 && rAns && rAns !== "") {
+                payload[`question_${i}_id`] = qVal;
+                payload[`recorded_answer_${i}`] = rAns;
+            } else {
+                payload[`question_${i}_id`] = null;
+                payload[`recorded_answer_${i}`] = null;
+            }
         }
+
         const res = await fetch(id ? `${AS_API}/${id}` : AS_API, { 
             method: id ? 'PUT' : 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
         });
         if (res.ok) { document.getElementById('modal-assessment').style.display = 'none'; loadAssessments(); }
-        else { alert("Error saving record."); }
+        else { 
+            const error = await res.json();
+            alert("Save Failed: " + (error.message || "Ensure all required fields are filled.")); 
+        }
     };
 
     window.deleteAssessment = async (id) => { if(confirm("Delete?")) { await fetch(`${AS_API}/${id}`, { method: 'DELETE' }); loadAssessments(); }};
