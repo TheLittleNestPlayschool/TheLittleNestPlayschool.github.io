@@ -1,0 +1,180 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <h1 style="margin:0;">Parent Management</h1>
+    <button onclick="window.openNewParentModal()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">+ ADD NEW PARENT</button>
+</div>
+
+<div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #eee;">
+    <span style="font-size: 0.75rem; font-weight: 800; color: #666; text-transform: uppercase;">Filter by Franchise:</span>
+    <select id="parent-franchise-filter" onchange="window.loadParents()" style="padding: 8px 15px; border-radius: 4px; border: 1px solid #ddd; background: white; min-width: 200px; font-weight: bold;">
+        <option value="all">All Branches</option>
+    </select>
+</div>
+
+<div id="parent-list" style="display: flex; flex-direction: column; gap: 10px;">
+    <div style="text-align:center; padding:50px; background:white; border:1px solid #eee; border-radius:8px;">Initializing Parent Directory...</div>
+</div>
+
+<div id="modal-parent" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
+    <div style="background:white; width:600px; border-radius:8px; display:flex; flex-direction:column; max-height:90vh;">
+        <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#1a1a1a; display:flex; justify-content:space-between; align-items:center;">
+            <h2 id="parent-modal-title" style="margin:0; font-size:1.1rem; color: #00d1b2;">Parent Details</h2>
+            <button onclick="document.getElementById('modal-parent').style.display='none'" style="cursor:pointer; border:none; background:#333; color: white; padding:5px 10px; border-radius:4px;">CLOSE</button>
+        </div>
+        
+        <div style="padding:20px; overflow-y:auto;">
+            <input type="hidden" id="pa-id">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div>
+                    <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">FIRST NAME</label>
+                    <input type="text" id="pa-fname" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">LAST NAME</label>
+                    <input type="text" id="pa-lname" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                </div>
+            </div>
+
+            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">EMAIL ADDRESS</label>
+            <input type="email" id="pa-email" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;">
+
+            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">PHONE NUMBER</label>
+            <input type="text" id="pa-phone" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;">
+
+            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">HOME ADDRESS</label>
+            <textarea id="pa-address" style="width:100%; padding:8px; height:60px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;"></textarea>
+
+            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">ASSIGNED FRANCHISE</label>
+            <select id="pa-franchise" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;"></select>
+
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 4px; border: 1px solid #eee; margin-bottom: 15px;">
+                <label style="display:flex; align-items:center; gap:10px; font-size:0.85rem; font-weight:bold; color:#333; cursor:pointer; margin-bottom:10px;">
+                    <input type="checkbox" id="pa-active" checked onchange="window.toggleInactivationField()"> ACCOUNT IS ACTIVE
+                </label>
+                
+                <div id="pa-inactive-wrap" style="display:none;">
+                    <label style="display:block; font-size:0.7rem; font-weight:bold; color:#d9534f; margin-bottom:5px;">REASON FOR INACTIVATION</label>
+                    <textarea id="pa-inactive-reason" style="width:100%; padding:8px; height:60px; border:1px solid #ddd; border-radius:4px;"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div style="padding:15px 20px; border-top:1px solid #eee; background:#f9f9f9;">
+            <button onclick="window.saveParent()" style="background:#00d1b2; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:4px; width: 100%;">SAVE PARENT PROFILE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+window.PA_API = 'https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent';
+window.F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
+window.parent_franchises = [];
+
+window.initParentModule = async function() {
+    try {
+        const res = await fetch(window.F_API);
+        window.parent_franchises = await res.json();
+        
+        document.getElementById('pa-franchise').innerHTML = window.parent_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
+        document.getElementById('parent-franchise-filter').innerHTML += window.parent_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
+        
+        window.loadParents();
+    } catch (err) { console.error("Init Error:", err); }
+};
+
+window.loadParents = async function() {
+    const fFilter = document.getElementById('parent-franchise-filter').value;
+    const res = await fetch(window.PA_API + '?t=' + Date.now());
+    let list = await res.json();
+    if (fFilter !== 'all') list = list.filter(p => p.franchise_id == fFilter);
+
+    document.getElementById('parent-list').innerHTML = list.map(p => {
+        const fran = window.parent_franchises.find(f => f.id == p.franchise_id);
+        return `
+            <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:10px 15px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display:flex; align-items:center; gap:20px; flex-grow:1;">
+                    <div style="font-size:1rem; font-weight:700; color:#1a1a1a; min-width: 200px;">${p.last_name}, ${p.first_name}</div>
+                    <div style="color: #666; font-size: 0.85rem; width: 250px;">${p.email}</div>
+                    <span style="font-size:0.65rem; background:#eee; color:#666; padding:3px 8px; border-radius:4px; font-weight:bold;">${fran?.location_name || "Branch"}</span>
+                    <span style="font-size:0.6rem; background:${p.is_active ? '#e1fcf2' : '#ffebeb'}; color:${p.is_active ? '#008c6a' : '#d9534f'}; padding:3px 8px; border-radius:4px; font-weight:bold;">
+                        ${p.is_active ? 'ACTIVE' : 'INACTIVE'}
+                    </span>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button onclick="window.editParent(${p.id})" style="border:1px solid blue; color:blue; background:none; padding:4px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">EDIT</button>
+                    <button onclick="window.deleteParent(${p.id})" style="border:1px solid red; color:red; background:none; padding:4px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">DELETE</button>
+                </div>
+            </div>`;
+    }).join('') || '<div style="text-align:center; padding:20px; color:#999;">No parents found.</div>';
+};
+
+window.toggleInactivationField = function() {
+    const isA = document.getElementById('pa-active').checked;
+    document.getElementById('pa-inactive-wrap').style.display = isA ? 'none' : 'block';
+};
+
+window.openNewParentModal = function() {
+    document.getElementById('pa-id').value = "";
+    document.getElementById('pa-fname').value = "";
+    document.getElementById('pa-lname').value = "";
+    document.getElementById('pa-email').value = "";
+    document.getElementById('pa-phone').value = "";
+    document.getElementById('pa-address').value = "";
+    document.getElementById('pa-active').checked = true;
+    document.getElementById('pa-inactive-reason').value = "";
+    window.toggleInactivationField();
+    document.getElementById('modal-parent').style.display = 'flex';
+};
+
+window.editParent = async function(id) {
+    const res = await fetch(window.PA_API + '/' + id);
+    const p = await res.json();
+    document.getElementById('pa-id').value = p.id;
+    document.getElementById('pa-fname').value = p.first_name;
+    document.getElementById('pa-lname').value = p.last_name;
+    document.getElementById('pa-email').value = p.email;
+    document.getElementById('pa-phone').value = p.phone;
+    document.getElementById('pa-address').value = p.address;
+    document.getElementById('pa-franchise').value = p.franchise_id;
+    document.getElementById('pa-active').checked = p.is_active;
+    document.getElementById('pa-inactive-reason').value = p.inactivation_reason_comments || "";
+    window.toggleInactivationField();
+    document.getElementById('modal-parent').style.display = 'flex';
+};
+
+window.saveParent = async function() {
+    const id = document.getElementById('pa-id').value;
+    const payload = {
+        first_name: document.getElementById('pa-fname').value,
+        last_name: document.getElementById('pa-lname').value,
+        email: document.getElementById('pa-email').value,
+        phone: document.getElementById('pa-phone').value,
+        address: document.getElementById('pa-address').value,
+        franchise_id: parseInt(document.getElementById('pa-franchise').value),
+        is_active: document.getElementById('pa-active').checked,
+        inactivation_reason_comments: document.getElementById('pa-inactive-reason').value
+    };
+    
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? window.PA_API + '/' + id : window.PA_API;
+    
+    const res = await fetch(url, {
+        method, headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+    
+    if(res.ok) {
+        document.getElementById('modal-parent').style.display = 'none';
+        window.loadParents();
+    } else { alert("Error saving parent record."); }
+};
+
+window.deleteParent = async function(id) {
+    if(confirm("Delete parent profile?")) {
+        await fetch(window.PA_API + '/' + id, { method: 'DELETE' });
+        window.loadParents();
+    }
+};
+
+window.initParentModule();
+</script>
