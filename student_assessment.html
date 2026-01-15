@@ -32,17 +32,15 @@
                     <label style="display:flex; align-items:center; gap:8px; font-size:0.75rem; font-weight:bold; color: #d33; cursor:pointer; margin-bottom: 8px;">
                         <input type="checkbox" id="is-prospect" onchange="toggleProspectMode()"> NEW ENROLLMENT PROSPECT
                     </label>
-                    
                     <div id="student-select-wrap">
                         <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">2. SELECT STUDENT</label>
                         <select id="as-student" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                             <option value="">-- Select Franchise First --</option>
                         </select>
                     </div>
-
                     <div id="prospect-name-wrap" style="display:none;">
                         <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">CHILD'S FULL NAME</label>
-                        <input type="text" id="prospect-name" placeholder="Enter name for temporary record" style="width:100%; padding:8px; border:1.5px solid #d33; border-radius:4px;">
+                        <input type="text" id="prospect-name" placeholder="Enter name" style="width:100%; padding:8px; border:1.5px solid #d33; border-radius:4px;">
                     </div>
                 </div>
 
@@ -50,6 +48,9 @@
                 <select id="as-teacher" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
                     <option value="">-- Select Franchise First --</option>
                 </select>
+
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">ASSESSMENT DATE</label>
+                <input type="date" id="as-date" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
 
                 <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">ASSESSMENT TYPE</label>
                 <input type="text" id="as-type" placeholder="e.g. Initial Evaluation" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
@@ -59,11 +60,7 @@
             </div>
 
             <div>
-                <div style="background: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-weight: bold; font-size: 0.8rem;">
-                    Assessment Questions (Pick from Bank & Record Answers)
-                </div>
-                <div id="qa-slots" style="display: flex; flex-direction: column; gap: 10px;">
-                    </div>
+                <div id="qa-slots" style="display: flex; flex-direction: column; gap: 10px;"></div>
             </div>
         </div>
 
@@ -82,32 +79,20 @@
     const STU_API = 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student';
     const TEA_API = 'https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher';
 
-    let questionsBank = [];
-    let franchises = [];
-    let allStudents = [];
-    let allTeachers = [];
+    let questionsBank = [], franchises = [], allStudents = [], allTeachers = [];
 
     window.toggleProspectMode = () => {
-        const isProspect = document.getElementById('is-prospect').checked;
-        document.getElementById('student-select-wrap').style.display = isProspect ? 'none' : 'block';
-        document.getElementById('prospect-name-wrap').style.display = isProspect ? 'block' : 'none';
+        const isP = document.getElementById('is-prospect').checked;
+        document.getElementById('student-select-wrap').style.display = isP ? 'none' : 'block';
+        document.getElementById('prospect-name-wrap').style.display = isP ? 'block' : 'none';
     };
 
     window.filterPeopleByFranchise = () => {
-        const selectedFranchiseId = document.getElementById('as-franchise').value;
-        const studentSelect = document.getElementById('as-student');
-        const teacherSelect = document.getElementById('as-teacher');
-
-        const filteredStudents = allStudents.filter(s => s.franchise_id == selectedFranchiseId);
-        const filteredTeachers = allTeachers.filter(t => t.franchise_id == selectedFranchiseId);
-
-        studentSelect.innerHTML = filteredStudents.length 
-            ? filteredStudents.map(s => `<option value="${s.id}">${s.name}</option>`).join('')
-            : '<option value="">No Students in this branch</option>';
-
-        teacherSelect.innerHTML = filteredTeachers.length
-            ? filteredTeachers.map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('')
-            : '<option value="">No Teachers in this branch</option>';
+        const fid = document.getElementById('as-franchise').value;
+        const sSel = document.getElementById('as-student'), tSel = document.getElementById('as-teacher');
+        const fS = allStudents.filter(s => s.franchise_id == fid), fT = allTeachers.filter(t => t.franchise_id == fid);
+        sSel.innerHTML = fS.map(s => `<option value="${s.id}">${s.name}</option>`).join('') || '<option value="">No Students</option>';
+        tSel.innerHTML = fT.map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('') || '<option value="">No Teachers</option>';
     };
 
     function createSlots() {
@@ -116,182 +101,87 @@
         for (let i = 1; i <= 10; i++) {
             container.innerHTML += `
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px;">
-                <div>
-                    <span style="font-size: 0.6rem; color: #999;">Question ${i}</span>
-                    <select id="q-id-${i}" onchange="updateAnswers(${i})" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
-                        <option value="0">-- Select Question --</option>
-                        ${questionsBank.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}
-                    </select>
-                </div>
-                <div>
-                    <span style="font-size: 0.6rem; color: #999;">Recorded Answer ${i}</span>
-                    <select id="r-ans-${i}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
-                        <option value="">-- Select Answer --</option>
-                    </select>
-                </div>
+                <div><span style="font-size: 0.6rem; color: #999;">Question ${i}</span>
+                <select id="q-id-${i}" onchange="updateAnswers(${i})" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="0">-- Select Question --</option>${questionsBank.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}</select></div>
+                <div><span style="font-size: 0.6rem; color: #999;">Recorded Answer ${i}</span>
+                <select id="r-ans-${i}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;"><option value="">-- Select Answer --</option></select></div>
             </div>`;
         }
     }
 
-    window.updateAnswers = (slotNum) => {
-        const qId = document.getElementById(`q-id-${slotNum}`).value;
-        const ansSelect = document.getElementById(`r-ans-${slotNum}`);
-        const question = questionsBank.find(q => q.id == qId);
-        if (question) {
-            const opts = [question.answer_1, question.answer_2, question.answer_3, question.answer_4, question.answer_5, question.answer_6].filter(a => a && a.trim() !== "");
-            ansSelect.innerHTML = '<option value="">-- Select --</option>' + opts.map(o => `<option value="${o}">${o}</option>`).join('');
-        } else {
-            ansSelect.innerHTML = '<option value="">-- No Answer --</option>';
-        }
+    window.updateAnswers = (num) => {
+        const qId = document.getElementById(`q-id-${num}`).value;
+        const q = questionsBank.find(x => x.id == qId);
+        const aSel = document.getElementById(`r-ans-${num}`);
+        if(q) {
+            const opts = [q.answer_1, q.answer_2, q.answer_3, q.answer_4, q.answer_5, q.answer_6].filter(a => a);
+            aSel.innerHTML = '<option value="">-- Select --</option>' + opts.map(o => `<option value="${o}">${o}</option>`).join('');
+        } else aSel.innerHTML = '<option value="">-- Select --</option>';
     };
 
     window.loadAssessments = async () => {
-        const filter = document.getElementById('assessment-franchise-filter').value;
+        const f = document.getElementById('assessment-franchise-filter').value;
         const res = await fetch(AS_API + '?t=' + Date.now());
         const data = await res.json();
         let list = Array.isArray(data) ? data : (data.items || []);
-        if (filter !== 'all') list = list.filter(a => a.franchise_id == filter);
-
+        if (f !== 'all') list = list.filter(a => a.franchise_id == f);
         document.getElementById('assessments-list').innerHTML = list.map(as => {
-            const fran = franchises.find(f => f.id == as.franchise_id);
+            const fran = franchises.find(fr => fr.id == as.franchise_id);
             const stu = allStudents.find(s => s.id == as.student_id);
-            const displayLabel = (as.student_id === 0) ? "PROSPECT" : (stu ? stu.name : 'ID:'+as.student_id);
-            
-            return `
-            <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
-                <div style="display:flex; gap:30px; align-items:center;">
-                    <span style="font-size:0.65rem; background:#eee; color:#666; padding:3px 8px; border-radius:10px; font-weight:bold;">${fran ? (fran.location_name || fran.name) : 'ID: '+as.franchise_id}</span>
-                    <div>
-                        <h3 style="margin:0; font-size:1rem;">${as.assessment_type || 'General Assessment'}</h3>
-                        <span style="font-size:0.75rem; color:#888;">Student: <b>${displayLabel}</b></span>
-                    </div>
-                </div>
-                <div style="display:flex; gap:10px;">
-                    <button onclick="editAssessment(${as.id})" style="border:1.5px solid blue; color:blue; background:#fff; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">EDIT / TRANSCRIBE</button>
-                    <button onclick="deleteAssessment(${as.id})" style="border:1.5px solid red; color:red; background:none; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">DELETE</button>
-                </div>
-            </div>`;
+            return `<div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
+                <div><span style="font-size:0.65rem; background:#eee; color:#666; padding:3px 8px; border-radius:10px; font-weight:bold;">${fran?.location_name || fran?.name || as.franchise_id}</span>
+                <h3 style="margin:5px 0 0 0; font-size:1rem;">${as.assessment_type} - <b>${as.student_id === 0 ? "PROSPECT" : (stu?.name || as.student_id)}</b></h3></div>
+                <div style="display:flex; gap:10px;"><button onclick="editAssessment(${as.id})" style="border:1.5px solid blue; color:blue; background:#fff; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">EDIT</button>
+                <button onclick="deleteAssessment(${as.id})" style="border:1.5px solid red; color:red; background:none; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">DELETE</button></div></div>`;
         }).join('');
     };
 
     window.openNewAssessmentModal = () => {
         document.getElementById('modal-title').innerText = "Create Assessment Blueprint";
         document.getElementById('as-id').value = "";
+        document.getElementById('as-date').value = new Date().toISOString().split('T')[0];
         document.getElementById('is-prospect').checked = false;
         document.getElementById('prospect-name').value = "";
         document.getElementById('as-comments').value = "";
-        toggleProspectMode();
-        createSlots();
-        filterPeopleByFranchise();
-        document.getElementById('modal-assessment').style.display = 'flex';
-    };
-
-    window.editAssessment = async (id) => {
-        const res = await fetch(`${AS_API}/${id}`);
-        const as = await res.json();
-        document.getElementById('as-id').value = as.id;
-        document.getElementById('as-franchise').value = as.franchise_id;
-        filterPeopleByFranchise();
-
-        const isProspect = as.student_id === 0;
-        document.getElementById('is-prospect').checked = isProspect;
-        toggleProspectMode();
-
-        if (isProspect) {
-            const parts = as.comments.split(' | ');
-            document.getElementById('prospect-name').value = parts[0].replace('PROSPECT: ', '');
-            document.getElementById('as-comments').value = parts[1] || "";
-        } else {
-            document.getElementById('as-student').value = as.student_id;
-            document.getElementById('as-comments').value = as.comments;
-        }
-
-        document.getElementById('as-teacher').value = as.teacher_id;
-        document.getElementById('as-type').value = as.assessment_type;
-
-        for (let i = 1; i <= 10; i++) {
-            document.getElementById(`q-id-${i}`).value = as[`question_${i}_id`] || 0;
-            updateAnswers(i);
-            document.getElementById(`r-ans-${i}`).value = as[`recorded_answer_${i}`] || "";
-        }
+        toggleProspectMode(); createSlots(); filterPeopleByFranchise();
         document.getElementById('modal-assessment').style.display = 'flex';
     };
 
     window.submitAssessment = async () => {
         const id = document.getElementById('as-id').value;
-        const isProspect = document.getElementById('is-prospect').checked;
-        const pName = document.getElementById('prospect-name').value;
-        const baseComments = document.getElementById('as-comments').value;
-
-        // Base payload with always-present fields
+        const isP = document.getElementById('is-prospect').checked;
         const payload = {
             franchise_id: parseInt(document.getElementById('as-franchise').value),
-            student_id: isProspect ? 0 : parseInt(document.getElementById('as-student').value),
+            student_id: isP ? 0 : parseInt(document.getElementById('as-student').value),
             teacher_id: parseInt(document.getElementById('as-teacher').value),
+            assessment_date: document.getElementById('as-date').value,
             assessment_type: document.getElementById('as-type').value,
-            comments: isProspect ? `PROSPECT: ${pName} | ${baseComments}` : baseComments
+            comments: isP ? `PROSPECT: ${document.getElementById('prospect-name').value} | ${document.getElementById('as-comments').value}` : document.getElementById('as-comments').value
         };
 
-        // Loop through slots. If a question is NOT selected, we do NOT send those fields.
-        // This prevents Xano from rejecting the record due to ID 0 or empty string relationships.
         for (let i = 1; i <= 10; i++) {
-            const qIdVal = parseInt(document.getElementById(`q-id-${i}`).value);
-            const ansVal = document.getElementById(`r-ans-${i}`).value;
-
-            if (qIdVal > 0) {
-                payload[`question_${i}_id`] = qIdVal;
-                payload[`recorded_answer_${i}`] = ansVal;
-            } else {
-                // If question isn't selected, send null to Xano so it clears any old data
-                payload[`question_${i}_id`] = null;
-                payload[`recorded_answer_${i}`] = null;
-            }
+            const q = parseInt(document.getElementById(`q-id-${i}`).value);
+            payload[`question_${i}_id`] = q > 0 ? q : null;
+            payload[`recorded_answer_${i}`] = q > 0 ? document.getElementById(`r-ans-${i}`).value : null;
         }
 
-        const method = id ? 'PUT' : 'POST';
-        const url = id ? `${AS_API}/${id}` : AS_API;
-
-        try {
-            const response = await fetch(url, { 
-                method, 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error("Xano Error:", errorData);
-                alert("Error saving: " + (errorData.message || "Check console"));
-            } else {
-                document.getElementById('modal-assessment').style.display = 'none';
-                loadAssessments();
-            }
-        } catch (e) {
-            console.error("Fetch Error:", e);
-        }
+        const res = await fetch(id ? `${AS_API}/${id}` : AS_API, { 
+            method: id ? 'PUT' : 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) { document.getElementById('modal-assessment').style.display = 'none'; loadAssessments(); }
+        else { const err = await res.json(); alert("Error saving: " + (err.message || "Missing assessment_date")); }
     };
 
-    window.printAssessmentSheet = () => { window.print(); };
-
-    window.deleteAssessment = async (id) => {
-        if(confirm("Delete this assessment record?")) {
-            await fetch(`${AS_API}/${id}`, { method: 'DELETE' });
-            loadAssessments();
-        }
-    };
+    window.deleteAssessment = async (id) => { if(confirm("Delete?")) { await fetch(`${AS_API}/${id}`, { method: 'DELETE' }); loadAssessments(); }};
 
     (async () => {
-        const [qRes, fRes, sRes, tRes] = await Promise.all([
-            fetch(Q_API), fetch(F_API), fetch(STU_API), fetch(TEA_API)
-        ]);
-        questionsBank = await qRes.json();
-        franchises = await fRes.json();
-        allStudents = await sRes.json();
-        allTeachers = await tRes.json();
-        
-        document.getElementById('as-franchise').innerHTML = franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
-        document.getElementById('assessment-franchise-filter').innerHTML += franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
-        
-        createSlots();
+        const [q, f, s, t] = await Promise.all([fetch(Q_API), fetch(F_API), fetch(STU_API), fetch(TEA_API)]);
+        questionsBank = await q.json(); franchises = await f.json(); allStudents = await s.json(); allTeachers = await t.json();
+        document.getElementById('as-franchise').innerHTML = franchises.map(x => `<option value="${x.id}">${x.location_name || x.name}</option>`).join('');
+        document.getElementById('assessment-franchise-filter').innerHTML += franchises.map(x => `<option value="${x.id}">${x.location_name || x.name}</option>`).join('');
         loadAssessments();
     })();
 })();
