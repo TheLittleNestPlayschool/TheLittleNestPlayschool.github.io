@@ -1,0 +1,197 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <h1 style="margin:0;">Student Assessments</h1>
+    <button onclick="openNewAssessmentModal()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold;">+ CREATE NEW ASSESSMENT</button>
+</div>
+
+<div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #eee;">
+    <span style="font-size: 0.75rem; font-weight: 800; color: #666; text-transform: uppercase;">View by Franchise:</span>
+    <select id="assessment-franchise-filter" onchange="loadAssessments()" style="padding: 8px 15px; border-radius: 4px; border: 1px solid #ddd; background: white; min-width: 200px; font-weight: bold;">
+        <option value="all">All Branches</option>
+    </select>
+</div>
+
+<div id="assessments-list" style="display: flex; flex-direction: column; gap: 10px;">
+    <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff;">Loading Assessments...</div>
+</div>
+
+<div id="modal-assessment" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
+    <div style="background:white; width:900px; border-radius:8px; display:flex; flex-direction:column; max-height:95vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#1a1a1a; display:flex; justify-content:space-between; align-items:center;">
+            <h2 id="modal-title" style="margin:0; font-size:1.1rem; color: #00d1b2;">Assessment Details</h2>
+            <button onclick="document.getElementById('modal-assessment').style.display='none'" style="cursor:pointer; border:none; background:#333; color: white; padding:5px 10px; border-radius:4px;">CLOSE</button>
+        </div>
+        
+        <div id="modal-body" style="padding:20px; overflow-y:auto; flex-grow:1; display: grid; grid-template-columns: 300px 1fr; gap: 20px;">
+            <div style="border-right: 1px solid #eee; padding-right: 20px;">
+                <input type="hidden" id="as-id">
+                
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">FRANCHISE</label>
+                <select id="as-franchise" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;"></select>
+
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">STUDENT ID</label>
+                <input type="number" id="as-student" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
+
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">TEACHER ID</label>
+                <input type="number" id="as-teacher" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
+
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">ASSESSMENT TYPE</label>
+                <input type="text" id="as-type" placeholder="e.g. Midterm" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
+
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">COMMENTS</label>
+                <textarea id="as-comments" style="width:100%; padding:8px; height:80px; border:1px solid #ddd; border-radius:4px;"></textarea>
+            </div>
+
+            <div>
+                <div style="background: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-weight: bold; font-size: 0.8rem;">
+                    Assessment Questions (Pick from Bank & Record Answers)
+                </div>
+                <div id="qa-slots" style="display: flex; flex-direction: column; gap: 10px;">
+                    </div>
+            </div>
+        </div>
+
+        <div style="padding:15px 20px; border-top:1px solid #eee; background:#f9f9f9; display: flex; gap: 10px;">
+            <button onclick="printAssessmentSheet()" style="background:#444; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:4px; flex: 1;">🖨 PRINT SHEET</button>
+            <button onclick="submitAssessment()" style="background:#00d1b2; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:4px; flex: 2;">SAVE ASSESSMENT DATA</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const AS_API = 'https://x8ki-letl-twmt.n7.xano.io/api:zxOLzrsb/student_assessment';
+    const Q_API = 'https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions';
+    const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
+
+    let questionsBank = [];
+    let franchises = [];
+
+    // Initialize Slots
+    function createSlots() {
+        const container = document.getElementById('qa-slots');
+        container.innerHTML = '';
+        for (let i = 1; i <= 10; i++) {
+            container.innerHTML += `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                <div>
+                    <span style="font-size: 0.6rem; color: #999;">Question ${i} Selector</span>
+                    <select id="q-id-${i}" onchange="updateAnswers(${i})" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="0">-- Select Question --</option>
+                        ${questionsBank.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}
+                    </select>
+                </div>
+                <div>
+                    <span style="font-size: 0.6rem; color: #999;">Recorded Answer ${i}</span>
+                    <select id="r-ans-${i}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="">-- No Answer --</option>
+                    </select>
+                </div>
+            </div>`;
+        }
+    }
+
+    window.updateAnswers = (slotNum) => {
+        const qId = document.getElementById(`q-id-${slotNum}`).value;
+        const ansSelect = document.getElementById(`r-ans-${slotNum}`);
+        const question = questionsBank.find(q => q.id == qId);
+        
+        if (question) {
+            const opts = [question.answer_1, question.answer_2, question.answer_3, question.answer_4, question.answer_5, question.answer_6].filter(a => a);
+            ansSelect.innerHTML = '<option value="">-- Select Answer --</option>' + opts.map(o => `<option value="${o}">${o}</option>`).join('');
+        } else {
+            ansSelect.innerHTML = '<option value="">-- No Answer --</option>';
+        }
+    };
+
+    window.loadAssessments = async () => {
+        const filter = document.getElementById('assessment-franchise-filter').value;
+        const res = await fetch(AS_API + '?t=' + Date.now());
+        const data = await res.json();
+        let list = Array.isArray(data) ? data : (data.items || []);
+
+        if (filter !== 'all') list = list.filter(a => a.franchise_id == filter);
+
+        document.getElementById('assessments-list').innerHTML = list.map(as => {
+            const fran = franchises.find(f => f.id == as.franchise_id);
+            return `
+            <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; gap:30px; align-items:center;">
+                    <span style="font-size:0.65rem; background:#eee; color:#666; padding:3px 8px; border-radius:10px; font-weight:bold;">${fran ? (fran.location_name || fran.name) : 'ID: '+as.franchise_id}</span>
+                    <div>
+                        <h3 style="margin:0; font-size:1rem;">${as.assessment_type || 'General Assessment'}</h3>
+                        <span style="font-size:0.75rem; color:#888;">Student: ${as.student_id} | Teacher: ${as.teacher_id}</span>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="editAssessment(${as.id})" style="border:1.5px solid blue; color:blue; background:#fff; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">EDIT FULL RECORD</button>
+                    <button onclick="deleteAssessment(${as.id})" style="border:1.5px solid red; color:red; background:none; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">DELETE</button>
+                </div>
+            </div>`;
+        }).join('');
+    };
+
+    window.openNewAssessmentModal = () => {
+        document.getElementById('modal-title').innerText = "Create Assessment Blueprint";
+        document.getElementById('as-id').value = "";
+        createSlots();
+        document.getElementById('modal-assessment').style.display = 'flex';
+    };
+
+    window.editAssessment = async (id) => {
+        const res = await fetch(`${AS_API}/${id}`);
+        const as = await res.json();
+        document.getElementById('as-id').value = as.id;
+        document.getElementById('as-franchise').value = as.franchise_id;
+        document.getElementById('as-student').value = as.student_id;
+        document.getElementById('as-teacher').value = as.teacher_id;
+        document.getElementById('as-type').value = as.assessment_type;
+        document.getElementById('as-comments').value = as.comments;
+
+        for (let i = 1; i <= 10; i++) {
+            document.getElementById(`q-id-${i}`).value = as[`question_${i}_id`] || 0;
+            updateAnswers(i);
+            document.getElementById(`r-ans-${i}`).value = as[`recorded_answer_${i}`] || "";
+        }
+        document.getElementById('modal-assessment').style.display = 'flex';
+    };
+
+    window.submitAssessment = async () => {
+        const id = document.getElementById('as-id').value;
+        const payload = {
+            franchise_id: parseInt(document.getElementById('as-franchise').value),
+            student_id: parseInt(document.getElementById('as-student').value),
+            teacher_id: parseInt(document.getElementById('as-teacher').value),
+            assessment_type: document.getElementById('as-type').value,
+            comments: document.getElementById('as-comments').value
+        };
+
+        for (let i = 1; i <= 10; i++) {
+            payload[`question_${i}_id`] = parseInt(document.getElementById(`q-id-${i}`).value) || 0;
+            payload[`recorded_answer_${i}`] = document.getElementById(`r-ans-${i}`).value;
+        }
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `${AS_API}/${id}` : AS_API;
+
+        await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)});
+        document.getElementById('modal-assessment').style.display = 'none';
+        loadAssessments();
+    };
+
+    window.printAssessmentSheet = () => {
+        window.print();
+    };
+
+    (async () => {
+        const [qRes, fRes] = await Promise.all([fetch(Q_API), fetch(F_API)]);
+        questionsBank = await qRes.json();
+        franchises = await fRes.json();
+        
+        document.getElementById('as-franchise').innerHTML = franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
+        document.getElementById('assessment-franchise-filter').innerHTML += franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
+        
+        createSlots();
+        loadAssessments();
+    })();
+})();
+</script>
