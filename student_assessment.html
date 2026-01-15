@@ -10,54 +10,63 @@
     </select>
 </div>
 
-<div id="assessments-list" style="display: flex; flex-direction: column; gap: 15px;">
+<div id="assessments-list" style="display: flex; flex-direction: column; gap: 20px;">
     <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff;">Loading Assessments...</div>
 </div>
 
 <div id="modal-assessment" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
-    <div style="background:white; width:950px; border-radius:8px; display:flex; flex-direction:column; max-height:95vh;">
+    <div style="background:white; width:950px; border-radius:8px; display:flex; flex-direction:column; max-height:95vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#1a1a1a; display:flex; justify-content:space-between; align-items:center;">
             <h2 id="modal-title" style="margin:0; font-size:1.1rem; color: #00d1b2;">Assessment Details</h2>
             <button onclick="document.getElementById('modal-assessment').style.display='none'" style="cursor:pointer; border:none; background:#333; color: white; padding:5px 10px; border-radius:4px;">CLOSE</button>
         </div>
         
-        <div style="padding:20px; overflow-y:auto; flex-grow:1; display: grid; grid-template-columns: 320px 1fr; gap: 20px;">
+        <div id="modal-body" style="padding:20px; overflow-y:auto; flex-grow:1; display: grid; grid-template-columns: 320px 1fr; gap: 20px;">
             <div style="border-right: 1px solid #eee; padding-right: 20px;">
                 <input type="hidden" id="as-id">
                 
                 <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">1. FRANCHISE</label>
-                <select id="as-franchise" onchange="filterPeopleByFranchise()" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;"></select>
+                <select id="as-franchise" onchange="filterPeopleByFranchise()" style="width:100%; padding:8px; margin-bottom:12px; border:1.5px solid #00d1b2; border-radius:4px; font-weight:bold;"></select>
 
                 <div style="background: #fff5f5; padding: 10px; border-radius: 4px; border: 1px solid #ffdada; margin-bottom: 12px;">
-                    <label style="display:flex; align-items:center; gap:8px; font-size:0.75rem; font-weight:bold; color: #d33; cursor:pointer;">
-                        <input type="checkbox" id="is-prospect" onchange="toggleProspectMode()"> NEW PROSPECT
+                    <label style="display:flex; align-items:center; gap:8px; font-size:0.75rem; font-weight:bold; color: #d33; cursor:pointer; margin-bottom: 8px;">
+                        <input type="checkbox" id="is-prospect" onchange="toggleProspectMode()"> NEW ENROLLMENT PROSPECT
                     </label>
-                    <div id="student-select-wrap" style="margin-top:10px;">
+                    
+                    <div id="student-select-wrap">
+                        <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">2. SELECT STUDENT</label>
                         <select id="as-student" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;"></select>
                     </div>
-                    <div id="prospect-name-wrap" style="display:none; margin-top:10px;">
-                        <input type="text" id="prospect-name" placeholder="Child's Full Name" style="width:100%; padding:8px; border:1.5px solid #d33; border-radius:4px;">
+
+                    <div id="prospect-name-wrap" style="display:none;">
+                        <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">CHILD'S FULL NAME</label>
+                        <input type="text" id="prospect-name" placeholder="Enter name" style="width:100%; padding:8px; border:1.5px solid #d33; border-radius:4px;">
                     </div>
                 </div>
 
-                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">2. TEACHER</label>
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">3. TEACHER</label>
                 <select id="as-teacher" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;"></select>
 
-                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">3. DATE</label>
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">ASSESSMENT DATE</label>
                 <input type="date" id="as-date" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
 
-                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">4. TYPE</label>
-                <input type="text" id="as-type" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
+                <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">ASSESSMENT TYPE</label>
+                <input type="text" id="as-type" placeholder="e.g. Initial Evaluation" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px;">
 
                 <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">COMMENTS</label>
                 <textarea id="as-comments" style="width:100%; padding:8px; height:80px; border:1px solid #ddd; border-radius:4px;"></textarea>
             </div>
 
-            <div id="qa-slots" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            <div>
+                <div style="background: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-weight: bold; font-size: 0.8rem;">
+                    Record Results
+                </div>
+                <div id="qa-slots" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
         </div>
 
-        <div style="padding:15px 20px; border-top:1px solid #eee; background:#f9f9f9; display: flex; gap: 10px;">
-            <button onclick="submitAssessment()" style="background:#00d1b2; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:4px; width:100%;">SAVE RECORD</button>
+        <div style="padding:15px 20px; border-top:1px solid #eee; background:#f9f9f9;">
+            <button onclick="submitAssessment()" style="background:#00d1b2; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:4px; width: 100%;">SAVE ASSESSMENT RECORD</button>
         </div>
     </div>
 </div>
@@ -80,9 +89,8 @@
 
     window.filterPeopleByFranchise = () => {
         const fid = document.getElementById('as-franchise').value;
-        const sSel = document.getElementById('as-student'), tSel = document.getElementById('as-teacher');
-        sSel.innerHTML = allStudents.filter(s => s.franchise_id == fid).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-        tSel.innerHTML = allTeachers.filter(t => t.franchise_id == fid).map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
+        document.getElementById('as-student').innerHTML = allStudents.filter(s => s.franchise_id == fid).map(s => `<option value="${s.id}">${s.name}</option>`).join('') || '<option value="">No Students</option>';
+        document.getElementById('as-teacher').innerHTML = allTeachers.filter(t => t.franchise_id == fid).map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('') || '<option value="">No Teachers</option>';
     };
 
     function createSlots() {
@@ -94,8 +102,8 @@
                 <div><span style="font-size: 0.6rem; color: #999;">Question ${i}</span>
                 <select id="q-id-${i}" onchange="updateAnswers(${i})" style="width: 100%; padding: 5px;">
                     <option value="0">-- Select Question --</option>${questionsBank.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}</select></div>
-                <div><span style="font-size: 0.6rem; color: #999;">Answer ${i}</span>
-                <select id="r-ans-${i}" style="width: 100%; padding: 5px;"><option value="">-- Select --</option></select></div>
+                <div><span style="font-size: 0.6rem; color: #999;">Recorded Answer ${i}</span>
+                <select id="r-ans-${i}" style="width: 100%; padding: 5px;"><option value="">-- No Answer --</option></select></div>
             </div>`;
         }
     }
@@ -107,54 +115,54 @@
         if(q) {
             const opts = [q.answer_1, q.answer_2, q.answer_3, q.answer_4, q.answer_5, q.answer_6].filter(a => a);
             aSel.innerHTML = '<option value="">-- Select --</option>' + opts.map(o => `<option value="${o}" ${o === savedVal ? 'selected' : ''}>${o}</option>`).join('');
-        } else aSel.innerHTML = '<option value="">-- Select --</option>';
+        } else aSel.innerHTML = '<option value="">-- No Answer --</option>';
     };
 
     window.loadAssessments = async () => {
-        const f = document.getElementById('assessment-franchise-filter').value;
+        const fFilter = document.getElementById('assessment-franchise-filter').value;
         const res = await fetch(AS_API + '?t=' + Date.now());
         const data = await res.json();
         let list = Array.isArray(data) ? data : (data.items || []);
-        if (f !== 'all') list = list.filter(a => a.franchise_id == f);
+        if (fFilter !== 'all') list = list.filter(a => a.franchise_id == fFilter);
 
         document.getElementById('assessments-list').innerHTML = list.map(as => {
             const fran = franchises.find(fr => fr.id == as.franchise_id);
             const stu = allStudents.find(s => s.id == as.student_id);
             let nameDisplay = as.student_id === 0 ? "PROSPECT" : (stu?.name || as.student_id);
             if(as.student_id === 0 && as.comments.includes("PROSPECT:")) {
-                nameDisplay = "PROSPECT: " + as.comments.split('|')[0].replace("PROSPECT:", "").trim();
+                nameDisplay = as.comments.split('|')[0].replace("PROSPECT:", "").trim();
             }
 
-            // GATHER ANSWERS FOR DISPLAY
-            let qaSummary = "";
+            let qaLines = "";
             for (let i = 1; i <= 10; i++) {
                 const qId = as[`question_${i}_id`];
                 const ans = as[`recorded_answer_${i}`];
                 if (qId && ans) {
-                    const qData = questionsBank.find(qb => qb.id == qId);
-                    qaSummary += `<div style="font-size: 0.75rem; color: #555; margin-bottom: 3px;">
-                        <b style="color: #333;">Q:</b> ${qData?.the_question || 'Question ID '+qId} <b style="color: #00d1b2;">A:</b> ${ans}
+                    const qText = questionsBank.find(qb => qb.id == qId)?.the_question || `Question ${qId}`;
+                    qaLines += `<div style="font-size: 0.8rem; margin-top: 5px; color: #444; border-left: 3px solid #00d1b2; padding-left: 10px;">
+                        <b style="color:#000;">Q:</b> ${qText}<br>
+                        <b style="color:#00d1b2;">A:</b> ${ans}
                     </div>`;
                 }
             }
 
             return `
-            <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 12px;">
-                    <div>
-                        <span style="font-size:0.65rem; background:#eee; color:#666; padding:3px 8px; border-radius:10px; font-weight:bold;">${fran?.location_name || fran?.name || "Branch"}</span>
-                        <h3 style="margin:5px 0 0 0; font-size:1.1rem; color: #1a1a1a;">${as.assessment_type} - <b>${nameDisplay}</b></h3>
-                        <div style="font-size: 0.7rem; color: #999; margin-top: 3px;">Date: ${as.assessment_date}</div>
+            <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; margin-bottom: 12px;">
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <span style="font-size:0.65rem; background:#1a1a1a; color:#fff; padding:4px 10px; border-radius:4px; font-weight:bold; text-transform:uppercase;">${fran?.location_name || fran?.name || "Branch"}</span>
+                        <span style="font-size: 0.95rem; font-weight: 800; color: #d33;">PROSPECT: ${nameDisplay}</span>
+                        <span style="color: #999; font-size: 0.8rem;">Date: ${as.assessment_date}</span>
                     </div>
                     <div style="display:flex; gap:10px;">
-                        <button onclick="editAssessment(${as.id})" style="border:1.5px solid blue; color:blue; background:#fff; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size: 0.75rem;">EDIT RECORD</button>
-                        <button onclick="deleteAssessment(${as.id})" style="border:1.5px solid red; color:red; background:none; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size: 0.75rem;">DELETE</button>
+                        <button onclick="editAssessment(${as.id})" style="border:1.5px solid blue; color:blue; background:#fff; padding:5px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">EDIT RECORD</button>
+                        <button onclick="deleteAssessment(${as.id})" style="border:1.5px solid red; color:red; background:none; padding:5px 15px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">DELETE</button>
                     </div>
                 </div>
-                <div style="background: #fcfcfc; border: 1px dashed #eee; padding: 10px; border-radius: 6px;">
-                    <div style="font-size: 0.65rem; font-weight: 800; color: #bbb; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Assessment Results</div>
-                    ${qaSummary || '<span style="font-size: 0.75rem; color: #aaa; font-style: italic;">No questions recorded for this session.</span>'}
+                <div>
+                    ${qaLines || '<i style="color:#aaa; font-size:0.8rem;">No results transcribed yet.</i>'}
                 </div>
+                <div style="margin-top: 10px; font-size: 0.75rem; color: #888;">Type: ${as.assessment_type} | Comments: ${as.comments.includes('|') ? as.comments.split('|')[1] : as.comments}</div>
             </div>`;
         }).join('');
     };
@@ -162,7 +170,7 @@
     window.openNewAssessmentModal = () => {
         document.getElementById('as-id').value = "";
         document.getElementById('as-date').value = new Date().toISOString().split('T')[0];
-        document.getElementById('is-prospect').checked = false;
+        document.getElementById('is-prospect').checked = true;
         document.getElementById('prospect-name').value = "";
         document.getElementById('as-comments').value = "";
         toggleProspectMode(); createSlots(); filterPeopleByFranchise();
@@ -214,9 +222,9 @@
         };
 
         for (let i = 1; i <= 10; i++) {
-            const q = parseInt(document.getElementById(`q-id-${i}`).value);
-            payload[`question_${i}_id`] = q > 0 ? q : null;
-            payload[`recorded_answer_${i}`] = q > 0 ? document.getElementById(`r-ans-${i}`).value : null;
+            const qId = parseInt(document.getElementById(`q-id-${i}`).value);
+            payload[`question_${i}_id`] = qId > 0 ? qId : null;
+            payload[`recorded_answer_${i}`] = qId > 0 ? document.getElementById(`r-ans-${i}`).value : null;
         }
 
         const res = await fetch(id ? `${AS_API}/${id}` : AS_API, { 
@@ -225,10 +233,10 @@
             body: JSON.stringify(payload)
         });
         if (res.ok) { document.getElementById('modal-assessment').style.display = 'none'; loadAssessments(); }
-        else { const err = await res.json(); alert("Error: " + (err.message || "Save Failed")); }
+        else { alert("Save Error: Verify all required fields including Assessment Date."); }
     };
 
-    window.deleteAssessment = async (id) => { if(confirm("Delete?")) { await fetch(`${AS_API}/${id}`, { method: 'DELETE' }); loadAssessments(); }};
+    window.deleteAssessment = async (id) => { if(confirm("Delete this assessment?")) { await fetch(`${AS_API}/${id}`, { method: 'DELETE' }); loadAssessments(); }};
 
     (async () => {
         const [q, f, s, t] = await Promise.all([fetch(Q_API), fetch(F_API), fetch(STU_API), fetch(TEA_API)]);
