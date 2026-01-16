@@ -11,14 +11,14 @@
         .nest-table th { background: #f8fafc; padding: 12px; font-size: 0.75rem; color: #475569; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; text-align: left; }
         .nest-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; color: #333; }
         
-        .nest-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .nest-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); overflow-y: auto; }
         .nest-modal-content { background: white; margin: 5% auto; padding: 30px; border-radius: 4px; width: 90%; max-width: 600px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
         
         .btn-teal { background-color: #00d1b2; color: white; padding: 8px 16px; border-radius: 4px; font-weight: 900; border: none; cursor: pointer; font-size: 0.8rem; letter-spacing: 1px; }
         .btn-gray { background-color: #94a3b8; color: white; padding: 8px 16px; border-radius: 4px; font-weight: bold; border: none; cursor: pointer; }
         
-        .action-edit { color: blue; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
-        .action-del { color: red; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+        .action-edit { color: blue; font-weight: bold; cursor: pointer; font-size: 0.8rem; text-decoration: none; }
+        .action-del { color: red; font-weight: bold; cursor: pointer; font-size: 0.8rem; text-decoration: none; }
         
         label { display: block; font-size: 0.7rem; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 4px; margin-top: 15px; }
         input, select { width: 100%; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px; font-size: 0.9rem; box-sizing: border-box; }
@@ -26,7 +26,7 @@
 </head>
 <body class="bg-gray-50">
 
-<div class="max-w-6xl mx-auto p-6">
+<div class="max-w-7xl mx-auto p-6">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h1 class="text-5xl nest-header">Student Management</h1>
         <button onclick="openModal()" class="btn-teal">+ NEW STUDENT</button>
@@ -36,16 +36,17 @@
         <table class="nest-table">
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th style="width: 50px;">ID</th>
                     <th>Name</th>
+                    <th>Parent / Guardian</th>
                     <th>Date of Birth</th>
                     <th>Status</th>
                     <th>Franchise</th>
-                    <th style="text-align: center;">Actions</th>
+                    <th style="text-align: center; width: 100px;">Actions</th>
                 </tr>
             </thead>
             <tbody id="studentTableBody">
-            </tbody>
+                </tbody>
         </table>
     </div>
 </div>
@@ -75,7 +76,7 @@
 
             <div style="margin-top: 20px; display: flex; align-items: center; gap: 10px;">
                 <input type="checkbox" id="is_active" style="width: auto;" checked>
-                <label style="margin: 0;">Active Student</label>
+                <label style="margin: 0; font-size: 0.8rem; font-weight: bold; color: #4a5568;">ACTIVE STUDENT</label>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
@@ -87,121 +88,126 @@
 </div>
 
 <script>
-    (function() {
-        const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
-        const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent";
-        const FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
+(function() {
+    const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
+    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent";
+    const FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
 
-        window.openModal = function() { document.getElementById('studentModal').style.display = 'block'; }
-        window.closeModal = function() { 
-            document.getElementById('studentModal').style.display = 'none'; 
-            document.getElementById('studentForm').reset();
-            document.getElementById('studentId').value = '';
-            document.getElementById('modalTitle').innerText = "Add Student";
-        }
+    let parentMap = {};
+    let franchiseMap = {};
 
-        async function loadParents() {
-            try {
-                const res = await fetch(PARENT_API);
-                const parents = await res.json();
-                const select = document.getElementById('parent_id');
-                select.innerHTML = '<option value="">Select a Parent...</option>';
-                parents.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.id;
-                    opt.textContent = `${p.first_name} ${p.last_name}`;
-                    select.appendChild(opt);
-                });
-            } catch (e) { console.error("Parent Load Error", e); }
-        }
+    window.openModal = function() { document.getElementById('studentModal').style.display = 'block'; }
+    window.closeModal = function() { 
+        document.getElementById('studentModal').style.display = 'none'; 
+        document.getElementById('studentForm').reset();
+        document.getElementById('studentId').value = '';
+        document.getElementById('modalTitle').innerText = "Manage Student";
+    }
 
-        async function loadFranchises() {
-            try {
-                const res = await fetch(FRANCHISE_API);
-                const franchises = await res.json();
-                const select = document.getElementById('franchise_id');
-                select.innerHTML = '<option value="">Select a Franchise...</option>';
-                franchises.forEach(f => {
-                    const opt = document.createElement('option');
-                    opt.value = f.id;
-                    opt.textContent = f.name || `Franchise #${f.id}`;
-                    select.appendChild(opt);
-                });
-            } catch (e) { console.error("Franchise Load Error", e); }
-        }
-
-        window.loadStudents = async function() {
-            try {
-                const res = await fetch(STUDENT_API);
-                const data = await res.json();
-                const tbody = document.getElementById('studentTableBody');
-                tbody.innerHTML = data.map(s => `
-                    <tr>
-                        <td style="color: #94a3b8;">${s.id}</td>
-                        <td style="font-weight: bold;">${s.name}</td>
-                        <td>${s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString() : 'N/A'}</td>
-                        <td>
-                            <span style="padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; background: ${s.is_active ? '#e6fffa' : '#fff5f5'}; color: ${s.is_active ? '#2c7a7b' : '#c53030'};">
-                                ${s.is_active ? 'ACTIVE' : 'INACTIVE'}
-                            </span>
-                        </td>
-                        <td>${s.franchise_id}</td>
-                        <td style="text-align: center;">
-                            <span onclick="editStudent(${s.id})" class="action-edit">Edit</span> 
-                            <span style="color: #ddd; margin: 0 5px;">|</span> 
-                            <span onclick="deleteStudent(${s.id})" class="action-del">Del</span>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (e) { console.error("Student Load Error", e); }
-        }
-
-        window.editStudent = async function(id) {
-            const res = await fetch(`${STUDENT_API}/${id}`);
-            const s = await res.json();
-            
-            document.getElementById('studentId').value = s.id;
-            document.getElementById('name').value = s.name;
-            document.getElementById('date_of_birth').value = s.date_of_birth ? new Date(s.date_of_birth).toISOString().split('T')[0] : '';
-            document.getElementById('parent_id').value = s.parent_id;
-            document.getElementById('franchise_id').value = s.franchise_id;
-            document.getElementById('is_active').checked = s.is_active;
-            
-            document.getElementById('modalTitle').innerText = "Edit Student";
-            openModal();
-        }
-
-        document.getElementById('studentForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('studentId').value;
-            const payload = {
-                name: document.getElementById('name').value,
-                date_of_birth: document.getElementById('date_of_birth').value,
-                parent_id: parseInt(document.getElementById('parent_id').value),
-                franchise_id: parseInt(document.getElementById('franchise_id').value),
-                is_active: document.getElementById('is_active').checked
-            };
-
-            await fetch(id ? `${STUDENT_API}/${id}` : STUDENT_API, {
-                method: id ? 'PATCH' : 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
+    async function loadResources() {
+        try {
+            // Load Parents
+            const pRes = await fetch(PARENT_API);
+            const parents = await pRes.json();
+            const pSelect = document.getElementById('parent_id');
+            pSelect.innerHTML = '<option value="">Select a Parent...</option>';
+            parents.forEach(p => {
+                parentMap[p.id] = `${p.first_name} ${p.last_name}`;
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = `${p.first_name} ${p.last_name}`;
+                pSelect.appendChild(opt);
             });
-            closeModal();
+
+            // Load Franchises
+            const fRes = await fetch(FRANCHISE_API);
+            const franchises = await fRes.json();
+            const fSelect = document.getElementById('franchise_id');
+            fSelect.innerHTML = '<option value="">Select a Franchise...</option>';
+            franchises.forEach(f => {
+                franchiseMap[f.id] = f.name || `Franchise #${f.id}`;
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.textContent = f.name || `Franchise #${f.id}`;
+                fSelect.appendChild(opt);
+            });
+
             loadStudents();
+        } catch (e) { console.error("Resource Load Error", e); }
+    }
+
+    window.loadStudents = async function() {
+        try {
+            const res = await fetch(STUDENT_API);
+            const data = await res.json();
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = data.map(s => `
+                <tr>
+                    <td style="color: #94a3b8;">${s.id}</td>
+                    <td style="font-weight: bold;">${s.name}</td>
+                    <td>${parentMap[s.parent_id] || 'Unknown Parent'}</td>
+                    <td>${s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString() : 'N/A'}</td>
+                    <td>
+                        <span style="padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; background: ${s.is_active ? '#e6fffa' : '#fff5f5'}; color: ${s.is_active ? '#2c7a7b' : '#c53030'};">
+                            ${s.is_active ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                    </td>
+                    <td>${franchiseMap[s.franchise_id] || s.franchise_id}</td>
+                    <td style="text-align: center;">
+                        <span onclick="editStudent(${s.id})" class="action-edit">Edit</span> 
+                        <span style="color: #ddd; margin: 0 5px;">|</span> 
+                        <span onclick="deleteStudent(${s.id})" class="action-del">Del</span>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) { console.error("Student Load Error", e); }
+    }
+
+    window.editStudent = async function(id) {
+        const res = await fetch(`${STUDENT_API}/${id}`);
+        const s = await res.json();
+        
+        document.getElementById('studentId').value = s.id;
+        document.getElementById('name').value = s.name;
+        document.getElementById('date_of_birth').value = s.date_of_birth ? new Date(s.date_of_birth).toISOString().split('T')[0] : '';
+        document.getElementById('parent_id').value = s.parent_id;
+        document.getElementById('franchise_id').value = s.franchise_id;
+        document.getElementById('is_active').checked = s.is_active;
+        
+        document.getElementById('modalTitle').innerText = "Edit Student";
+        openModal();
+    }
+
+    document.getElementById('studentForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('studentId').value;
+        const payload = {
+            name: document.getElementById('name').value,
+            date_of_birth: document.getElementById('date_of_birth').value,
+            parent_id: parseInt(document.getElementById('parent_id').value),
+            franchise_id: parseInt(document.getElementById('franchise_id').value),
+            is_active: document.getElementById('is_active').checked
         };
 
-        window.deleteStudent = async function(id) {
-            if(confirm('Delete this student?')) {
-                await fetch(`${STUDENT_API}/${id}`, {method: 'DELETE'});
-                loadStudents();
-            }
-        };
-
-        loadParents();
-        loadFranchises();
+        await fetch(id ? `${STUDENT_API}/${id}` : STUDENT_API, {
+            method: id ? 'PATCH' : 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        closeModal();
         loadStudents();
-    })();
+    };
+
+    window.deleteStudent = async function(id) {
+        if(confirm('Delete this student?')) {
+            await fetch(`${STUDENT_API}/${id}`, {method: 'DELETE'});
+            loadStudents();
+        }
+    };
+
+    loadResources();
+})();
 </script>
+
 </body>
 </html>
