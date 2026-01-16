@@ -1,50 +1,182 @@
-<div id="step-pickup" class="step-container step-locked">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="font-size: 0.9rem;" class="nest-header"><span class="badge-step">4</span> Authorized Pickup</h2>
-        <span id="pickup-success" class="success-check" style="display:none;">✓ Complete</span>
+<style>
+    .nest-header { font-family: 'Georgia', serif; color: #1a365d; }
+    .step-container { background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 10px; margin-bottom: 6px; transition: all 0.3s ease; }
+    .step-locked { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
+    .step-active { border-left: 3px solid #00d1b2; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .step-saved { border-left: 3px solid #00d1b2; background: #f8fafc; padding: 4px 10px; }
+    .step-saved form { display: none; }
+    
+    label { display: block; font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 1px; margin-top: 2px; }
+    input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 4px 6px; border-radius: 2px; font-size: 0.7rem; background: #fff; box-sizing: border-box; }
+    .btn-teal { background-color: #00d1b2; color: white; padding: 5px 12px; border-radius: 2px; font-weight: 900; border: none; cursor: pointer; font-size: 0.65rem; text-transform: uppercase; }
+    .badge-step { background: #1a365d; color: white; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.6rem; margin-right: 6px; }
+    .success-check { color: #00d1b2; font-weight: bold; font-size: 0.65rem; font-style: italic; }
+    .pickup-entry { font-size: 0.65rem; color: #444; border-bottom: 1px solid #eee; padding: 2px 0; }
+</style>
+
+<div style="max-width: 950px; margin: 0 auto;">
+    <div id="enrollment-progress" style="text-align: right; font-size: 0.55rem; font-weight: 800; color: #94a3b8; margin-bottom: 5px;">STEP 1 OF 5</div>
+
+    <div id="step-parent" class="step-container step-active">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 0.85rem;" class="nest-header"><span class="badge-step">1</span> Parent Information</h2>
+            <span id="parent-success" class="success-check" style="display:none;">✓ Saved</span>
+        </div>
+        <form id="parentForm">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                <div><label>First Name</label><input type="text" id="p_first_name" required></div>
+                <div><label>Last Name</label><input type="text" id="p_last_name" required></div>
+                <div><label>Email</label><input type="email" id="p_email" required></div>
+                <div><label>Phone</label><input type="text" id="p_phone" required></div>
+                <div style="grid-column: span 2;"><label>Home Address</label><input type="text" id="p_address" required></div>
+                <div><label>Franchise</label><select id="p_franchise_id" required><option value="">Select...</option></select></div>
+            </div>
+            <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn-teal">Save & Continue</button>
+            </div>
+        </form>
     </div>
-    <div id="added-pickups-list" style="margin-bottom: 5px;"></div>
-    <form id="pickupForm" style="margin-top: 5px;">
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
-            <div><label>Contact Name</label><input type="text" id="pk_name" required></div>
-            <div><label>Relationship</label><input type="text" id="pk_relationship" required></div>
-            <div><label>Phone</label><input type="text" id="pk_phone" required></div>
-            <div><label>Type</label><select id="pk_type"><option value="Pickup">Pickup</option><option value="Emergency">Emergency</option><option value="Photo Release">Photo Release</option><option value="Other">Other</option></select></div>
+
+    <div id="step-student" class="step-container step-locked">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 0.85rem;" class="nest-header"><span class="badge-step">2</span> Student Details</h2>
+            <span id="student-success" class="success-check" style="display:none;">✓ Saved</span>
         </div>
-        <div style="margin-top: 8px; display: flex; justify-content: space-between;">
-            <button type="button" onclick="finalizePickups()" class="btn-teal" style="background:#64748b;">Next Step</button>
-            <button type="submit" class="btn-teal">+ Add Contact</button>
+        <form id="studentForm">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px;">
+                <div><label>Full Name</label><input type="text" id="s_name" required></div>
+                <div><label>Date of Birth</label><input type="date" id="s_date_of_birth" required></div>
+            </div>
+            <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn-teal">Save & Continue</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="step-assessment" class="step-container step-locked">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 0.85rem;" class="nest-header"><span class="badge-step">3</span> Student Assessment</h2>
+            <span id="assessment-success" class="success-check" style="display:none;">✓ Saved</span>
         </div>
-    </form>
+        <form id="assessmentForm">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                <div><label>Teacher</label><select id="a_teacher_id" required><option value="">Select...</option></select></div>
+                <div><label>Date</label><input type="date" id="a_assessment_date" required></div>
+                <div><label>Type</label><input type="text" id="a_assessment_type" value="Initial Assessment" required></div>
+            </div>
+            <div id="assessment-questions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 15px; margin-top: 8px; border-top: 1px solid #eee; padding-top: 5px;"></div>
+            <div><label>Comments</label><textarea id="a_comments" rows="2"></textarea></div>
+            <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn-teal">Save & Continue</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="step-pickup" class="step-container step-locked">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 0.85rem;" class="nest-header"><span class="badge-step">4</span> Authorized Pickup</h2>
+            <span id="pickup-success" class="success-check" style="display:none;">✓ Complete</span>
+        </div>
+        <div id="added-pickups" style="margin-bottom: 5px;"></div>
+        <form id="pickupForm">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                <div><label>Name</label><input type="text" id="pk_name" required></div>
+                <div><label>Relationship</label><input type="text" id="pk_relationship" required></div>
+                <div><label>Phone</label><input type="text" id="pk_phone" required></div>
+                <div><label>Type</label><select id="pk_type"><option value="Pickup">Pickup</option><option value="Emergency">Emergency</option><option value="Photo Release">Photo Release</option><option value="Other">Other</option></select></div>
+            </div>
+            <div style="margin-top: 8px; display: flex; justify-content: space-between;">
+                <button type="button" onclick="finalizePickups()" class="btn-teal" style="background:#64748b;">Finalize & Next Step</button>
+                <button type="submit" class="btn-teal">+ Add Contact</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
 (function() {
+    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent";
+    const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
+    const FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
+    const TEACHER_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
+    const QUESTIONS_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions";
+    const ASSESSMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_assessment";
     const PICKUP_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_authorized_pickup";
+
+    let curParentId, curStudentId, curFranchiseId, questionMap = [];
+
+    async function init() {
+        try {
+            const [fRes, qRes] = await Promise.all([fetch(FRANCHISE_API), fetch(QUESTIONS_API)]);
+            const [franchises, questions] = await Promise.all([fRes.json(), qRes.json()]);
+            
+            const fSel = document.getElementById('p_franchise_id');
+            franchises.forEach(f => { fSel.innerHTML += `<option value="${f.id}">${f.name || f.id}</option>`; });
+
+            const qCont = document.getElementById('assessment-questions');
+            questionMap = questions.slice(0, 10);
+            questionMap.forEach((q, idx) => {
+                qCont.innerHTML += `<div><label>${q.question_text || 'Q'+(idx+1)}</label><input type="text" id="a_ans_${idx+1}"></div>`;
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadTeachers(fid) {
+        const res = await fetch(TEACHER_API);
+        const data = await res.json();
+        const tSel = document.getElementById('a_teacher_id');
+        tSel.innerHTML = '<option value="">Select...</option>';
+        data.filter(t => t.franchise_id === fid).forEach(t => {
+            tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`;
+        });
+    }
+
+    function advance(cur, next, success, prog) {
+        document.getElementById(success).style.display = 'inline';
+        document.getElementById(cur).classList.replace('step-active', 'step-saved');
+        document.getElementById(next).classList.remove('step-locked');
+        document.getElementById(next).classList.add('step-active');
+        document.getElementById('enrollment-progress').textContent = prog;
+    }
+
+    document.getElementById('parentForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const payload = { first_name: document.getElementById('p_first_name').value, last_name: document.getElementById('p_last_name').value, email: document.getElementById('p_email').value, phone: document.getElementById('p_phone').value, address: document.getElementById('p_address').value, franchise_id: parseInt(document.getElementById('p_franchise_id').value), is_active: true };
+        const res = await fetch(PARENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if(data.id) { curParentId = data.id; curFranchiseId = data.franchise_id; advance('step-parent', 'step-student', 'parent-success', 'STEP 2 OF 5'); }
+    };
+
+    document.getElementById('studentForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const payload = { name: document.getElementById('s_name').value, date_of_birth: document.getElementById('s_date_of_birth').value, parent_id: curParentId, franchise_id: curFranchiseId, is_active: true };
+        const res = await fetch(STUDENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if(data.id) { curStudentId = data.id; await loadTeachers(curFranchiseId); advance('step-student', 'step-assessment', 'student-success', 'STEP 3 OF 5'); }
+    };
+
+    document.getElementById('assessmentForm').onsubmit = async (e) => {
+        e.preventDefault();
+        let payload = { student_id: curStudentId, teacher_id: parseInt(document.getElementById('a_teacher_id').value), assessment_date: document.getElementById('a_assessment_date').value, assessment_type: document.getElementById('a_assessment_type').value, comments: document.getElementById('a_comments').value, franchise_id: curFranchiseId };
+        questionMap.forEach((q, i) => { payload[`question_${i+1}_id`] = q.id; payload[`recorded_answer_${i+1}`] = document.getElementById(`a_ans_${i+1}`).value; });
+        const res = await fetch(ASSESSMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if(data.id) { advance('step-assessment', 'step-pickup', 'assessment-success', 'STEP 4 OF 5'); }
+    };
 
     document.getElementById('pickupForm').onsubmit = async (e) => {
         e.preventDefault();
-        const payload = { 
-            student_id: curStudentId, 
-            name: document.getElementById('pk_name').value, 
-            relationship: document.getElementById('pk_relationship').value, 
-            phone: document.getElementById('pk_phone').value, 
-            type: document.getElementById('pk_type').value, 
-            is_active: true 
-        };
+        const payload = { student_id: curStudentId, name: document.getElementById('pk_name').value, relationship: document.getElementById('pk_relationship').value, phone: document.getElementById('pk_phone').value, type: document.getElementById('pk_type').value, is_active: true };
         const res = await fetch(PICKUP_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
         const data = await res.json();
         if(data.id) {
-            const list = document.getElementById('added-pickups-list');
-            list.innerHTML += `<div style="font-size:0.75rem; padding:4px; border-bottom:1px solid #eee;"><strong>${data.name}</strong> (${data.type}) - ${data.phone}</div>`;
+            document.getElementById('added-pickups').innerHTML += `<div class="pickup-entry"><strong>${data.name}</strong> (${data.type})</div>`;
             document.getElementById('pickupForm').reset();
         }
     };
 
-    window.finalizePickups = () => {
-        document.getElementById('pickup-success').style.display = 'inline';
-        document.getElementById('step-pickup').classList.replace('step-active', 'step-saved');
-        alert("Contacts Finalized. Ready for Step 5.");
-    };
+    window.finalizePickups = () => { advance('step-pickup', 'step-final', 'pickup-success', 'STEP 5 OF 5'); };
+
+    init();
 })();
 </script>
