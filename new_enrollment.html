@@ -116,19 +116,22 @@
             const qCont = document.getElementById('assessment-questions');
             questionMap = questions.slice(0, 10);
             questionMap.forEach((q, idx) => {
-                qCont.innerHTML += `<div><label>${q.question_text || 'Q'+(idx+1)}</label><input type="text" id="a_ans_${idx+1}"></div>`;
+                const labelText = q.question_text || `Question ${idx + 1}`;
+                qCont.innerHTML += `<div><label>Q${idx+1}: ${labelText}</label><input type="text" id="a_ans_${idx+1}"></div>`;
             });
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Initialization error:", e); }
     }
 
     async function loadTeachers(fid) {
-        const res = await fetch(TEACHER_API);
-        const data = await res.json();
-        const tSel = document.getElementById('a_teacher_id');
-        tSel.innerHTML = '<option value="">Select...</option>';
-        data.filter(t => t.franchise_id === fid).forEach(t => {
-            tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`;
-        });
+        try {
+            const res = await fetch(TEACHER_API);
+            const data = await res.json();
+            const tSel = document.getElementById('a_teacher_id');
+            tSel.innerHTML = '<option value="">Select...</option>';
+            data.filter(t => t.franchise_id === fid).forEach(t => {
+                tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`;
+            });
+        } catch (e) { console.error("Teacher load error:", e); }
     }
 
     function advance(cur, next, success, prog) {
