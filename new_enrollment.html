@@ -64,7 +64,8 @@
                 <div><label>Date</label><input type="date" id="a_assessment_date" required></div>
                 <div><label>Type</label><input type="text" id="a_assessment_type" value="Initial Assessment" required></div>
             </div>
-            <div id="assessment-questions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 15px; margin-top: 8px; border-top: 1px solid #eee; padding-top: 5px;"></div>
+            <div id="assessment-questions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 15px; margin-top: 8px; border-top: 1px solid #eee; padding-top: 5px;">
+                </div>
             <div><label>Comments</label><textarea id="a_comments" rows="2"></textarea></div>
             <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
                 <button type="submit" class="btn-teal">Save & Continue</button>
@@ -115,23 +116,34 @@
 
             const qCont = document.getElementById('assessment-questions');
             questionMap = questions.slice(0, 10);
+            
             questionMap.forEach((q, idx) => {
-                const labelText = q.question_text || `Question ${idx + 1}`;
-                qCont.innerHTML += `<div><label>Q${idx+1}: ${labelText}</label><input type="text" id="a_ans_${idx+1}"></div>`;
+                const i = idx + 1;
+                let inputHtml = '';
+                
+                // Check if possible answers exist (comma separated string)
+                if (q.possible_answers && q.possible_answers.trim() !== "") {
+                    const options = q.possible_answers.split(',').map(o => o.trim());
+                    inputHtml = `<select id="a_ans_${i}"><option value="">Select...</option>`;
+                    options.forEach(opt => { inputHtml += `<option value="${opt}">${opt}</option>`; });
+                    inputHtml += `</select>`;
+                } else {
+                    inputHtml = `<input type="text" id="a_ans_${i}" placeholder="Enter result">`;
+                }
+
+                qCont.innerHTML += `<div><label>Q${i}: ${q.question_text || 'Assessment'}</label>${inputHtml}</div>`;
             });
-        } catch (e) { console.error("Initialization error:", e); }
+        } catch (e) { console.error("Init failed:", e); }
     }
 
     async function loadTeachers(fid) {
-        try {
-            const res = await fetch(TEACHER_API);
-            const data = await res.json();
-            const tSel = document.getElementById('a_teacher_id');
-            tSel.innerHTML = '<option value="">Select...</option>';
-            data.filter(t => t.franchise_id === fid).forEach(t => {
-                tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`;
-            });
-        } catch (e) { console.error("Teacher load error:", e); }
+        const res = await fetch(TEACHER_API);
+        const data = await res.json();
+        const tSel = document.getElementById('a_teacher_id');
+        tSel.innerHTML = '<option value="">Select...</option>';
+        data.filter(t => t.franchise_id === fid).forEach(t => {
+            tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`;
+        });
     }
 
     function advance(cur, next, success, prog) {
