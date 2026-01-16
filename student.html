@@ -46,7 +46,7 @@
                 </tr>
             </thead>
             <tbody id="studentTableBody">
-                </tbody>
+            </tbody>
         </table>
     </div>
 </div>
@@ -69,11 +69,6 @@
                 <option value="">Select a Parent...</option>
             </select>
 
-            <label>Franchise Location</label>
-            <select id="franchise_id" required>
-                <option value="">Select a Franchise...</option>
-            </select>
-
             <div style="margin-top: 20px; display: flex; align-items: center; gap: 10px;">
                 <input type="checkbox" id="is_active" style="width: auto;" checked>
                 <label style="margin: 0; font-size: 0.8rem; font-weight: bold; color: #4a5568;">ACTIVE STUDENT</label>
@@ -93,7 +88,7 @@
     const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent";
     const FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
 
-    let parentMap = {};
+    let parentDataStore = {}; // Stores full parent objects to access franchise_id
     let franchiseMap = {};
 
     window.openModal = function() { document.getElementById('studentModal').style.display = 'block'; }
@@ -112,24 +107,18 @@
             const pSelect = document.getElementById('parent_id');
             pSelect.innerHTML = '<option value="">Select a Parent...</option>';
             parents.forEach(p => {
-                parentMap[p.id] = `${p.first_name} ${p.last_name}`;
+                parentDataStore[p.id] = p; // Store full object
                 const opt = document.createElement('option');
                 opt.value = p.id;
                 opt.textContent = `${p.first_name} ${p.last_name}`;
                 pSelect.appendChild(opt);
             });
 
-            // Load Franchises
+            // Load Franchises for display mapping
             const fRes = await fetch(FRANCHISE_API);
             const franchises = await fRes.json();
-            const fSelect = document.getElementById('franchise_id');
-            fSelect.innerHTML = '<option value="">Select a Franchise...</option>';
             franchises.forEach(f => {
                 franchiseMap[f.id] = f.name || `Franchise #${f.id}`;
-                const opt = document.createElement('option');
-                opt.value = f.id;
-                opt.textContent = f.name || `Franchise #${f.id}`;
-                fSelect.appendChild(opt);
             });
 
             loadStudents();
@@ -145,7 +134,7 @@
                 <tr>
                     <td style="color: #94a3b8;">${s.id}</td>
                     <td style="font-weight: bold;">${s.name}</td>
-                    <td>${parentMap[s.parent_id] || 'Unknown Parent'}</td>
+                    <td>${parentDataStore[s.parent_id] ? parentDataStore[s.parent_id].first_name + ' ' + parentDataStore[s.parent_id].last_name : 'Unknown Parent'}</td>
                     <td>${s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString() : 'N/A'}</td>
                     <td>
                         <span style="padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; background: ${s.is_active ? '#e6fffa' : '#fff5f5'}; color: ${s.is_active ? '#2c7a7b' : '#c53030'};">
@@ -171,7 +160,6 @@
         document.getElementById('name').value = s.name;
         document.getElementById('date_of_birth').value = s.date_of_birth ? new Date(s.date_of_birth).toISOString().split('T')[0] : '';
         document.getElementById('parent_id').value = s.parent_id;
-        document.getElementById('franchise_id').value = s.franchise_id;
         document.getElementById('is_active').checked = s.is_active;
         
         document.getElementById('modalTitle').innerText = "Edit Student";
@@ -181,11 +169,17 @@
     document.getElementById('studentForm').onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('studentId').value;
+        const selectedParentId = parseInt(document.getElementById('parent_id').value);
+        
+        // Grab the franchise_id from the stored parent object
+        const selectedParent = parentDataStore[selectedParentId];
+        const franchiseId = selectedParent ? selectedParent.franchise_id : 0;
+
         const payload = {
             name: document.getElementById('name').value,
             date_of_birth: document.getElementById('date_of_birth').value,
-            parent_id: parseInt(document.getElementById('parent_id').value),
-            franchise_id: parseInt(document.getElementById('franchise_id').value),
+            parent_id: selectedParentId,
+            franchise_id: franchiseId, // Auto-inherited from Parent
             is_active: document.getElementById('is_active').checked
         };
 
@@ -208,6 +202,5 @@
     loadResources();
 })();
 </script>
-
 </body>
 </html>
