@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Enrollment Workflow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .nest-header { font-family: 'Georgia', serif; color: #1a365d; }
+        .step-container { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin-bottom: 20px; transition: all 0.3s ease; }
+        .step-locked { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
+        .step-active { border-left: 5px solid #00d1b2; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        
+        label { display: block; font-size: 0.7rem; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 4px; margin-top: 15px; }
+        input, select { width: 100%; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px; font-size: 0.9rem; }
+        
+        .btn-teal { background-color: #00d1b2; color: white; padding: 10px 20px; border-radius: 4px; font-weight: 900; border: none; cursor: pointer; font-size: 0.8rem; letter-spacing: 1px; }
+        .badge-step { background: #1a365d; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 10px; }
+        .success-check { color: #00d1b2; font-weight: bold; margin-left: 10px; display: none; }
+    </style>
+</head>
+<body class="bg-gray-50 p-8">
+
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-5xl nest-header mb-8 text-center">New Enrollment</h1>
+
+    <div id="step-parent" class="step-container step-active">
+        <h2 class="text-2xl nest-header flex items-center">
+            <span class="badge-step">1</span> Parent Information
+            <span id="parent-success" class="success-check">✓ Saved</span>
+        </h2>
+        <form id="parentForm" class="grid grid-cols-2 gap-4">
+            <div>
+                <label>First Name</label>
+                <input type="text" id="p_first_name" required>
+            </div>
+            <div>
+                <label>Last Name</label>
+                <input type="text" id="p_last_name" required>
+            </div>
+            <div>
+                <label>Email Address</label>
+                <input type="email" id="p_email" required>
+            </div>
+            <div>
+                <label>Phone Number</label>
+                <input type="text" id="p_phone" required>
+            </div>
+            <div class="col-span-2">
+                <label>Home Address</label>
+                <input type="text" id="p_address" required>
+            </div>
+            <div>
+                <label>Franchise Location</label>
+                <select id="p_franchise_id" required>
+                    <option value="">Select Franchise...</option>
+                </select>
+            </div>
+            <div class="col-span-2 mt-4 text-right">
+                <button type="submit" id="btn-save-parent" class="btn-teal">SAVE PARENT & CONTINUE</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="step-student" class="step-container step-locked">
+        <h2 class="text-2xl nest-header flex items-center">
+            <span class="badge-step">2</span> Student Details
+            <span id="student-success" class="success-check">✓ Saved</span>
+        </h2>
+        <form id="studentForm" class="grid grid-cols-2 gap-4">
+            <div class="col-span-2">
+                <label>Student Full Name</label>
+                <input type="text" id="s_name" required>
+            </div>
+            <div>
+                <label>Date of Birth</label>
+                <input type="date" id="s_date_of_birth" required>
+            </div>
+            <div class="col-span-2 mt-4 text-right">
+                <button type="submit" id="btn-save-student" class="btn-teal">SAVE STUDENT & CONTINUE</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="step-assessment" class="step-container step-locked">
+        <h2 class="text-2xl nest-header flex items-center"><span class="badge-step">3</span> Student Assessment</h2>
+        <p class="text-gray-400 text-sm mt-2">Complete previous steps to unlock.</p>
+    </div>
+</div>
+
+<script>
+(function() {
+    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent";
+    const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
+    const FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
+
+    let currentParentId = null;
+    let currentFranchiseId = null;
+
+    // Initialize: Load Franchises
+    async function init() {
+        try {
+            const res = await fetch(FRANCHISE_API);
+            const data = await res.json();
+            const select = document.getElementById('p_franchise_id');
+            data.forEach(f => {
+                let opt = document.createElement('option');
+                opt.value = f.id;
+                opt.textContent = f.name || `Franchise #${f.id}`;
+                select.appendChild(opt);
+            });
+        } catch (e) { console.error("Failed to load franchises", e); }
+    }
+
+    // Step 1: Parent Submission
+    document.getElementById('parentForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const payload = {
+            first_name: document.getElementById('p_first_name').value,
+            last_name: document.getElementById('p_last_name').value,
+            email: document.getElementById('p_email').value,
+            phone: document.getElementById('p_phone').value,
+            address: document.getElementById('p_address').value,
+            franchise_id: parseInt(document.getElementById('p_franchise_id').value),
+            is_active: true
+        };
+
+        try {
+            const res = await fetch(PARENT_API, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const parent = await res.json();
+            
+            if (parent.id) {
+                currentParentId = parent.id;
+                currentFranchiseId = parent.franchise_id;
+                
+                // Unlock Step 2
+                document.getElementById('parent-success').style.display = 'inline';
+                document.getElementById('step-parent').classList.remove('step-active');
+                document.getElementById('step-student').classList.remove('step-locked');
+                document.getElementById('step-student').classList.add('step-active');
+                document.getElementById('btn-save-parent').disabled = true;
+                document.getElementById('btn-save-parent').style.opacity = '0.5';
+            }
+        } catch (e) { alert("Error saving parent record."); }
+    };
+
+    // Step 2: Student Submission
+    document.getElementById('studentForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const payload = {
+            name: document.getElementById('s_name').value,
+            date_of_birth: document.getElementById('s_date_of_birth').value,
+            parent_id: currentParentId,
+            franchise_id: currentFranchiseId,
+            is_active: true
+        };
+
+        try {
+            const res = await fetch(STUDENT_API, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const student = await res.json();
+
+            if (student.id) {
+                document.getElementById('student-success').style.display = 'inline';
+                document.getElementById('step-student').classList.remove('step-active');
+                // Future Step 3 logic will go here
+                alert("Student saved. Ready for Assessment.");
+            }
+        } catch (e) { alert("Error saving student record."); }
+    };
+
+    init();
+})();
+</script>
+</body>
+</html>
