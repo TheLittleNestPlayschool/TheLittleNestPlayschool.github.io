@@ -1,1 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Engine Dashboard</title>
+    <style>
+        html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; }
+        .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; position: fixed; left: 0; top: 0; padding: 0; z-index: 10000; }
+        .main-content { margin-left: 250px; padding: 25px; width: calc(100% - 250px); min-height: 100vh; background: #fff; box-sizing: border-box; }
+        .btn { padding: 10px 20px; cursor: pointer; font-weight: 700; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-save { background: #00d1b2; color: #1a1a1a; border: none; }
+    </style>
+</head>
+<body>
 
+    <div id="nav-placeholder"></div>
+
+    <main class="main-content" id="dashboard-content">
+        <div id="content-inner" style="text-align: center; margin-top: 20vh;">
+            <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
+            <p>Select a module from the menu to begin.</p>
+        </div>
+    </main>
+
+    <script>
+        // 1. This loads your menu into the placeholder
+        fetch('enginemenu.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('nav-placeholder').innerHTML = data;
+            });
+
+        // 2. These are the functions that make your menu buttons work
+        function resetDashboard() {
+            const indicator = document.getElementById('screen-name');
+            if(indicator) indicator.textContent = 'Home';
+            document.getElementById('dashboard-content').innerHTML = `
+                <div id="content-inner" style="text-align: center; margin-top: 20vh;">
+                    <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
+                </div>
+            `;
+        }
+
+        async function loadFrame(url, name) {
+            const container = document.getElementById('dashboard-content');
+            const indicator = document.getElementById('screen-name');
+            if(indicator) indicator.textContent = name;
+            
+            container.innerHTML = '<div style="padding:20px;">Loading ' + name + '...</div>';
+            try {
+                const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999));
+                const html = await response.text();
+                container.innerHTML = html;
+            } catch (e) {
+                container.innerHTML = '<h2 style="color:red; padding:20px;">Error loading module.</h2>';
+            }
+        }
+    </script>
+</body>
+</html>
