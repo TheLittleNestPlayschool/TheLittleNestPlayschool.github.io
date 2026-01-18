@@ -1,36 +1,40 @@
-<div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <div style="margin-bottom: 20px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px;">1. Select School Location</label>
-        <select id="franchiseSelect" onchange="loadDependencies()" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+<div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <div style="margin-bottom: 15px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">1. Location</label>
+        <select id="franchiseSelect" onchange="loadDependencies()" style="width:100%; padding:12px; border-radius:6px; border:1px solid #ddd; font-size:16px;">
             <option value="">-- Choose Location --</option>
         </select>
     </div>
 
-    <div id="fileSection" style="margin-bottom: 20px; display:none;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px;">2. Select Image or Video</label>
-        <input type="file" id="fileInput" accept="image/*,video/*" onchange="handlePreview()" style="width:100%;">
+    <div id="fileSection" style="margin-bottom: 15px; display:none;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">2. Select Batch (Max 20)</label>
+        <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="startQueue()" style="width:100%;">
         <div id="previewContainer" class="preview-box">
-            <span style="color:#888;">No file selected</span>
+            <span id="queueCount" class="queue-badge" style="display:none;">0 left</span>
+            <span style="color:#888;">Tap to select photos/videos</span>
         </div>
     </div>
 
-    <div style="margin-bottom: 20px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px;">3. Who is the Teacher?</label>
-        <select id="teacherSelect" disabled style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
-            <option value="">-- Select Teacher --</option>
-        </select>
-    </div>
+    <div id="metaSection" style="display:none;">
+        <div style="margin-bottom: 15px;">
+            <label style="display:block; font-weight:bold; margin-bottom:5px;">3. Teacher</label>
+            <select id="teacherSelect" style="width:100%; padding:12px; border-radius:6px; border:1px solid #ddd; font-size:16px;">
+                <option value="">-- Select Teacher --</option>
+            </select>
+        </div>
 
-    <div style="margin-bottom: 20px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px;">4. Select the Student</label>
-        <select id="studentSelect" disabled style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
-            <option value="">-- Select Student --</option>
-        </select>
-    </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display:block; font-weight:bold; margin-bottom:5px;">4. Student in this photo</label>
+            <select id="studentSelect" style="width:100%; padding:12px; border-radius:6px; border:1px solid #ddd; font-size:16px;">
+                <option value="">-- Select Student --</option>
+            </select>
+        </div>
 
-    <button id="uploadBtn" onclick="handleUpload()" style="width:100%; background:#1e3a8a; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer;">
-        Upload to Vault
-    </button>
+        <button id="uploadBtn" onclick="processCurrentFile()" style="width:100%; background:#1e3a8a; color:white; border:none; padding:15px; border-radius:6px; font-weight:bold; font-size:16px;">
+            Upload & Next
+        </button>
+    </div>
+    
     <div id="status" style="margin-top:15px; font-size:14px; text-align:center; color:#666;">Ready.</div>
 
     <script>
@@ -40,80 +44,83 @@
         const AK = 'P7GI5LQMI4OX2SPAV1YA';
         const SK = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
 
+        let fileQueue = [];
+        let currentFileIndex = 0;
+
         const s3Client = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
 
         async function initMenu() {
-            try {
-                const r = await fetch(`${X_BASE}/uploader_get_franchises`);
-                const data = await r.json();
-                const sel = document.getElementById('franchiseSelect');
-                data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
-            } catch (e) { document.getElementById('status').innerText = "Xano Connection Error."; }
+            const r = await fetch(`${X_BASE}/uploader_get_franchises`);
+            const data = await r.json();
+            const sel = document.getElementById('franchiseSelect');
+            data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
         }
 
         async function loadDependencies() {
             const fid = document.getElementById('franchiseSelect').value;
             if(!fid) return;
-            
             document.getElementById('fileSection').style.display = 'block';
-            document.getElementById('status').innerText = "Syncing lists...";
+            const [t, s] = await Promise.all([
+                fetch(`${X_BASE}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
+                fetch(`${X_BASE}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
+            ]);
+            const ts = document.getElementById('teacherSelect');
+            ts.innerHTML = '<option value="">-- Select Teacher --</option>';
+            t.forEach(item => ts.innerHTML += `<option value="${item.id}">${item.first_name}</option>`);
             
-            try {
-                const [t, s] = await Promise.all([
-                    fetch(`${X_BASE}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
-                    fetch(`${X_BASE}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
-                ]);
-                const ts = document.getElementById('teacherSelect');
-                ts.innerHTML = '<option value="">-- Select Teacher --</option>';
-                t.forEach(item => ts.innerHTML += `<option value="${item.id}">${item.first_name}</option>`);
-                ts.disabled = false;
-                
-                const ss = document.getElementById('studentSelect');
-                ss.innerHTML = '<option value="">-- Select Student --</option>';
-                s.forEach(item => ss.innerHTML += `<option value="${item.id}">${item.name}</option>`);
-                ss.disabled = false;
-                document.getElementById('status').innerText = "Ready. Pick your file.";
-            } catch (e) { document.getElementById('status').innerText = "Error syncing lists."; }
+            const ss = document.getElementById('studentSelect');
+            ss.innerHTML = '<option value="">-- Select Student --</option>';
+            s.forEach(item => ss.innerHTML += `<option value="${item.id}">${item.name}</option>`);
         }
 
-        function handlePreview() {
-            const file = document.getElementById('fileInput').files[0];
+        function startQueue() {
+            const files = document.getElementById('fileInput').files;
+            if (files.length === 0) return;
+            fileQueue = Array.from(files);
+            currentFileIndex = 0;
+            document.getElementById('metaSection').style.display = 'block';
+            showCurrentFile();
+        }
+
+        function showCurrentFile() {
+            const file = fileQueue[currentFileIndex];
             const container = document.getElementById('previewContainer');
-            if (!file) return;
+            const badge = document.getElementById('queueCount');
+            
+            badge.style.display = 'block';
+            badge.innerText = `${currentFileIndex + 1} of ${fileQueue.length}`;
 
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
-                reader.onload = (e) => container.innerHTML = `<img src="${e.target.result}">`;
+                reader.onload = (e) => container.innerHTML = `<span id="queueCount" class="queue-badge">${currentFileIndex + 1} of ${fileQueue.length}</span><img src="${e.target.result}">`;
                 reader.readAsDataURL(file);
-            } else if (file.type.startsWith('video/')) {
-                container.innerHTML = `<span style="font-size:40px;">🎬</span><br>Video ready`;
+            } else {
+                container.innerHTML = `<span id="queueCount" class="queue-badge">${currentFileIndex + 1} of ${fileQueue.length}</span><div style="text-align:center;color:white;">🎬<br>${file.name}</div>`;
             }
         }
 
-        async function handleUpload() {
-            let file = document.getElementById('fileInput').files[0];
+        async function processCurrentFile() {
+            let file = fileQueue[currentFileIndex];
             const fid = document.getElementById('franchiseSelect').value;
             const sid = document.getElementById('studentSelect').value;
             const tid = document.getElementById('teacherSelect').value;
 
-            if (!file || !fid || !sid || !tid) return alert("Select all fields.");
+            if (!sid || !tid) return alert("Please identify the teacher and student.");
+
             const btn = document.getElementById('uploadBtn');
             const status = document.getElementById('status');
             btn.disabled = true;
 
             if (file.type.startsWith('image/')) {
-                status.innerText = "Optimizing image for vault...";
-                try {
-                    file = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
-                } catch (error) { console.error("Compression failed:", error); }
+                status.innerText = "Compressing...";
+                file = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920 });
             }
 
-            status.innerText = "Uploading to Wasabi...";
+            status.innerText = `Uploading ${currentFileIndex + 1}/${fileQueue.length}...`;
             const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
 
             try {
                 const up = await s3Client.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
-                status.innerText = "Registering file in database...";
                 await fetch(`${X_BASE}/uploader_register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -122,9 +129,16 @@
                         file_url: up.Location, file_type: file.type.includes('image') ? 'image' : 'video'
                     })
                 });
-                status.innerText = "Success! Upload secured.";
-                document.getElementById('fileInput').value = "";
-                document.getElementById('previewContainer').innerHTML = '<span style="color:#888;">No file selected</span>';
+
+                currentFileIndex++;
+                if (currentFileIndex < fileQueue.length) {
+                    status.innerText = "Saved. Load next student...";
+                    showCurrentFile();
+                } else {
+                    status.innerText = "All uploads complete!";
+                    document.getElementById('metaSection').style.display = 'none';
+                    document.getElementById('previewContainer').innerHTML = 'Done!';
+                }
             } catch (e) { status.innerText = "Error: " + e.message; }
             finally { btn.disabled = false; }
         }
