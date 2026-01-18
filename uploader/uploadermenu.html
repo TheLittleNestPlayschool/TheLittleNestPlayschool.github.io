@@ -22,7 +22,7 @@
 
 <div id="finalSummary" class="card" style="display:none; padding:20px;">
     <h3 style="margin-top:0; color:#1e3a8a;">The Little Nest Vault</h3>
-    <p style="font-size:14px; color:#64748b;">Reviewing your batch below. Wait for green borders before closing.</p>
+    <p style="font-size:14px; color:#64748b;">Batch tagged! Please wait for green borders before closing.</p>
     <div id="summaryGrid" class="summary-grid"></div>
     <button onclick="location.reload()" class="btn-upload" style="margin-top:20px; background:#64748b;">Start New Batch</button>
 </div>
@@ -36,7 +36,7 @@
 
     let fileQueue = [];
     let currentFileIndex = 0;
-    let uploadQueue = []; 
+    let pendingUploads = [];
     let isProcessing = false;
 
     const s3Client = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
@@ -63,7 +63,7 @@
         if (files.length === 0) return;
         fileQueue = Array.from(files);
         currentFileIndex = 0;
-        uploadQueue = [];
+        pendingUploads = [];
         document.getElementById('setupView').style.display = 'none';
         document.getElementById('batchCard').style.display = 'block';
         showCurrentFile();
@@ -90,22 +90,23 @@
     function queueAndNext() {
         const sid = document.getElementById('studentSelect').value;
         const sName = document.getElementById('studentSelect').options[document.getElementById('studentSelect').selectedIndex].text;
-        if (!sid) return alert("Please select a student.");
+        if (!sid) return alert("Select a student.");
 
         const file = fileQueue[currentFileIndex];
         const fid = document.getElementById('franchiseSelect').value;
         const localSrc = document.getElementById('activePreview') ? document.getElementById('activePreview').src : null;
 
-        // Add to background list
-        uploadQueue.push({ file, sid, sName, fid, localSrc });
+        // Add to background processor
+        pendingUploads.push({ file, sid, sName, fid, localSrc });
         
+        // Show status bar
         document.getElementById('task-counter').style.display = 'block';
-        document.getElementById('pending-count').innerText = uploadQueue.length;
+        document.getElementById('pending-count').innerText = pendingUploads.length;
 
-        // Kick off processing
-        if (!isProcessing) processQueue();
+        // Kick off processing in the background (DO NOT AWAIT)
+        if (!isProcessing) processNextInQueue();
 
-        // Immediate UI Advance
+        // INSTANTLY MOVE TO NEXT PHOTO
         currentFileIndex++;
         if (currentFileIndex < fileQueue.length) {
             showCurrentFile();
@@ -116,16 +117,16 @@
         }
     }
 
-    async function processQueue() {
-        if (uploadQueue.length === 0) {
+    async function processNextInQueue() {
+        if (pendingUploads.length === 0) {
             isProcessing = false;
             document.getElementById('task-counter').style.background = "#059669";
-            document.getElementById('task-counter').innerText = "All Uploads Secured! ✓";
+            document.getElementById('task-counter').innerText = "All Secure! ✓";
             return;
         }
 
         isProcessing = true;
-        const task = uploadQueue[0];
+        const task = pendingUploads[0];
         const safeId = "sum-" + task.file.name.replace(/[^a-z0-9]/gi, '');
 
         try {
@@ -147,30 +148,27 @@
             });
 
             const el = document.getElementById(safeId);
-            if(el) {
-                el.style.borderColor = "#059669";
-                if(task.localSrc) el.innerHTML = `<img src="${task.localSrc}"><div class="summary-name">${task.sName}</div>`;
-            }
+            if(el) el.style.borderColor = "#059669";
         } catch (e) {
             console.error(e);
             const el = document.getElementById(safeId);
             if(el) el.style.borderColor = "red";
         }
 
-        // Always remove and move to next, even on error
-        uploadQueue.shift();
-        document.getElementById('pending-count').innerText = uploadQueue.length;
-        processQueue(); 
+        pendingUploads.shift(); // Remove task
+        document.getElementById('pending-count').innerText = pendingUploads.length;
+        processNextInQueue(); // Loop
     }
 
     function renderSummary() {
         const grid = document.getElementById('summaryGrid');
         grid.innerHTML = "";
         fileQueue.forEach(file => {
+            const task = pendingUploads.find(t => t.file === file) || { sName: "Done", localSrc: "" };
             const div = document.createElement('div');
             div.className = 'summary-item';
             div.id = "sum-" + file.name.replace(/[^a-z0-9]/gi, '');
-            div.innerHTML = `<div style="padding:10px; font-size:10px;">Pending...</div>`;
+            div.innerHTML = `<div style="padding:10px; font-size:10px;">Securing...</div>`;
             grid.appendChild(div);
         });
     }
