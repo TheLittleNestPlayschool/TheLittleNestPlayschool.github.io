@@ -21,8 +21,8 @@
 </div>
 
 <div id="finalSummary" class="card" style="display:none; padding:20px;">
-    <h3 style="margin-top:0; color:#1e3a8a;">Batch Tagged!</h3>
-    <p style="font-size:14px; color:#64748b;">Reviewing uploads below. Do not close the app until background tasks reach 0.</p>
+    <h3 style="margin-top:0; color:#1e3a8a;">The Little Nest Vault</h3>
+    <p style="font-size:14px; color:#64748b;">Tagging complete! Review the live sync status below:</p>
     <div id="summaryGrid" class="summary-grid"></div>
     <button onclick="location.reload()" class="btn-upload" style="margin-top:20px; background:#64748b;">Finish Batch</button>
 </div>
@@ -84,25 +84,26 @@
         }
     }
 
-    function triggerBackgroundUpload() {
+    async function triggerBackgroundUpload() {
         const sid = document.getElementById('studentSelect').value;
         const sName = document.getElementById('studentSelect').options[document.getElementById('studentSelect').selectedIndex].text;
-        if (!sid) return alert("Please select a student.");
+        if (!sid) return alert("Select a student.");
 
-        const fileToUpload = fileQueue[currentFileIndex];
-        const localImgData = document.getElementById('activePreview') ? document.getElementById('activePreview').src : null;
-        const franchiseId = document.getElementById('franchiseSelect').value;
+        const file = fileQueue[currentFileIndex];
+        const fid = document.getElementById('franchiseSelect').value;
+        const previewSrc = document.getElementById('activePreview') ? document.getElementById('activePreview').src : null;
 
-        // Visual update for Task Counter
+        // Visual tracking
         pendingTasks++;
         const counter = document.getElementById('task-counter');
         counter.style.display = 'block';
-        document.getElementById('pending-count').innerText = pendingTasks;
+        counter.style.background = '#1e3a8a';
+        document.getElementById('pending-count').innerText = `${pendingTasks} remaining...`;
 
-        // Kick off background work
-        uploadInBackground(fileToUpload, sid, sName, franchiseId, localImgData);
+        // Start processing (Non-blocking)
+        uploadInParallel(file, sid, sName, fid, previewSrc);
 
-        // Instant UI Flip
+        // Move UI immediately
         currentFileIndex++;
         if (currentFileIndex < fileQueue.length) {
             showCurrentFile();
@@ -112,25 +113,24 @@
         }
     }
 
-    async function uploadInBackground(file, sid, sName, fid, localSrc) {
+    async function uploadInParallel(file, sid, sName, fid, localSrc) {
         const grid = document.getElementById('summaryGrid');
         const itemDiv = document.createElement('div');
         itemDiv.className = 'summary-item';
-        
-        // Show local preview immediately so the summary isn't empty
         itemDiv.innerHTML = localSrc 
             ? `<img src="${localSrc}"><div class="summary-name">${sName}</div>`
             : `<div style="padding:10px; font-size:10px; color:#1e3a8a;">🎬 ${sName}</div>`;
         grid.appendChild(itemDiv);
 
         try {
-            let processedFile = file;
+            let blob = file;
             if (file.type.startsWith('image/')) {
-                processedFile = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
+                // Slightly lighter compression to prevent mobile hang
+                blob = await imageCompression(file, { maxSizeMB: 0.6, maxWidthOrHeight: 1400 });
             }
 
-            const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${processedFile.name}`;
-            const up = await s3Client.upload({ Bucket: BKT, Key: key, Body: processedFile, ContentType: processedFile.type, ACL: 'public-read' }).promise();
+            const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${blob.name}`;
+            const up = await s3Client.upload({ Bucket: BKT, Key: key, Body: blob, ContentType: blob.type, ACL: 'public-read' }).promise();
 
             await fetch(`${X_BASE}/uploader_register`, {
                 method: 'POST',
@@ -140,16 +140,17 @@
                     file_url: up.Location, file_type: file.type.includes('image') ? 'image' : 'video'
                 })
             });
-            itemDiv.style.borderColor = "#059669"; // Green border when 100% synced
+            itemDiv.style.borderColor = "#059669"; // Green on success
         } catch (e) {
             itemDiv.style.borderColor = "red";
-            console.error(e);
+            console.error("Task Failed:", e);
         } finally {
             pendingTasks--;
-            document.getElementById('pending-count').innerText = pendingTasks;
-            if(pendingTasks === 0) {
+            if (pendingTasks <= 0) {
                 document.getElementById('task-counter').style.background = "#059669";
                 document.getElementById('task-counter').innerText = "All Uploads Secured! ✓";
+            } else {
+                document.getElementById('pending-count').innerText = `${pendingTasks} remaining...`;
             }
         }
     }
