@@ -35,7 +35,6 @@
         <button id="uploadBtn" onclick="handleUpload()" style="width:100%; background:#1e3a8a; color:white; border:none; padding:18px; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer;">
             Upload & Next Photo
         </button>
-        <div id="statusMessage" style="margin-top:15px; font-size:14px; text-align:center; color:#64748b; font-weight:500;">Ready.</div>
     </div>
 
     <script>
@@ -47,8 +46,14 @@
 
         let currentBatch = [];
         let index = 0;
-
         const s3 = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
+
+        // Safely update status without causing a 'null' crash
+        function updateStatus(text) {
+            const el = document.getElementById('statusMessage');
+            if (el) el.innerText = text;
+            else console.log("Status update (el not found):", text);
+        }
 
         async function init() {
             try {
@@ -56,12 +61,13 @@
                 const data = await r.json();
                 const sel = document.getElementById('franchiseSelect');
                 data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
-            } catch (e) { console.error(e); }
+            } catch (e) { updateStatus("Error loading franchises."); }
         }
 
         async function loadLists() {
             const fid = document.getElementById('franchiseSelect').value;
             if(!fid) return;
+            updateStatus("Syncing school records...");
             try {
                 const [t, s] = await Promise.all([
                     fetch(`${X_URL}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
@@ -74,7 +80,8 @@
                 const sSel = document.getElementById('studentSelect');
                 sSel.innerHTML = '<option value="">-- Select Student --</option>';
                 s.forEach(item => sSel.innerHTML += `<option value="${item.id}">${item.name}</option>`);
-            } catch (e) { console.error(e); }
+                updateStatus("Vault synced. Ready for batch.");
+            } catch (e) { updateStatus("Sync error. Check connection."); }
         }
 
         function startBatch() {
@@ -84,7 +91,6 @@
             
             currentBatch = Array.from(files).slice(0, 10);
             index = 0;
-            
             document.getElementById('setupForm').style.display = 'none';
             document.getElementById('taggingArea').style.display = 'block';
             showPhoto();
@@ -94,16 +100,17 @@
             const file = currentBatch[index];
             const box = document.getElementById('previewBox');
             const badge = document.getElementById('batchCounter');
+            const counterText = `PHOTO ${index + 1} OF ${currentBatch.length}`;
             
-            badge.innerText = `PHOTO ${index + 1} OF ${currentBatch.length}`;
+            if (badge) badge.innerText = counterText;
             document.getElementById('studentSelect').value = "";
 
             if (file.type.startsWith('image/')) {
                 const r = new FileReader();
-                r.onload = (e) => box.innerHTML = `<div class="batch-badge">${badge.innerText}</div><img src="${e.target.result}">`;
+                r.onload = (e) => box.innerHTML = `<div id="batchCounter" class="batch-badge">${counterText}</div><img src="${e.target.result}">`;
                 r.readAsDataURL(file);
             } else {
-                box.innerHTML = `<div class="batch-badge">${badge.innerText}</div><div style="color:white;text-align:center;">🎬<br>Video Ready</div>`;
+                box.innerHTML = `<div id="batchCounter" class="batch-badge">${counterText}</div><div style="color:white;text-align:center;">🎬<br>Video Ready</div>`;
             }
         }
 
@@ -113,23 +120,22 @@
             const tid = document.getElementById('teacherSelect').value;
             const fid = document.getElementById('franchiseSelect').value;
 
-            if (!sid) return alert("Please select a student.");
+            if (!sid) return alert("Please identify the student.");
 
             const btn = document.getElementById('uploadBtn');
-            const msg = document.getElementById('statusMessage');
             btn.disabled = true;
 
             try {
                 if (file.type.startsWith('image/')) {
-                    msg.innerText = "Optimizing photo...";
+                    updateStatus("Optimizing batch photo...");
                     file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
                 }
 
-                msg.innerText = `Uploading ${index + 1} of ${currentBatch.length}...`;
+                updateStatus(`Uploading ${index + 1} of ${currentBatch.length}...`);
                 const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
                 const up = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
 
-                msg.innerText = "Saving record to vault...";
+                updateStatus("Saving to Xano database...");
                 await fetch(`${X_URL}/uploader_register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -144,15 +150,15 @@
 
                 index++;
                 if (index < currentBatch.length) {
-                    msg.innerText = "Success! Loading next student...";
+                    updateStatus("Saved. Loading next...");
                     showPhoto();
                 } else {
-                    msg.innerText = "✓ Batch Complete!";
-                    alert("All photos successfully secured in the vault.");
+                    updateStatus("✓ Batch Secured!");
+                    alert("The entire batch has been successfully secured.");
                     location.reload();
                 }
             } catch (e) {
-                msg.innerText = "Error: " + e.message;
+                updateStatus("Error: " + e.message);
             } finally {
                 btn.disabled = false;
             }
