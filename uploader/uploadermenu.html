@@ -4,7 +4,7 @@
         <option value="">-- Choose Location --</option>
     </select>
     <div id="filePickerSection" style="display:none; text-align:center; padding:40px 20px; border:2px dashed #cbd5e1; border-radius:12px; background:#f8fafc;">
-        <p style="margin-bottom:15px; color:#1e3a8a; font-weight:bold;">Tap to select up to 20 files</p>
+        <p style="margin-bottom:15px; color:#1e3a8a; font-weight:bold;">Tap to select batch (Max 20)</p>
         <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="startQueue()" style="font-size:14px;">
     </div>
 </div>
@@ -16,16 +16,15 @@
     <div class="form-padding">
         <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">WHO IS IN THIS PHOTO?</label>
         <select id="studentSelect"><option value="">-- Select Student --</option></select>
-        <button id="uploadBtn" onclick="triggerBackgroundUpload()" class="btn-upload">Tag & Next</button>
-        <div id="activeStatus" style="margin-top:10px; font-size:12px; color:#1e3a8a; text-align:center;"></div>
+        <button id="uploadBtn" onclick="triggerBackgroundUpload()" class="btn-upload">Tag & Next Photo</button>
     </div>
 </div>
 
 <div id="finalSummary" class="card" style="display:none; padding:20px;">
-    <h3 style="margin-top:0; color:#1e3a8a;">The Little Nest Vault ✅</h3>
-    <p style="font-size:14px; color:#64748b;">Batch processing complete. Summary below:</p>
+    <h3 style="margin-top:0; color:#1e3a8a;">Batch Tagged!</h3>
+    <p style="font-size:14px; color:#64748b;">Reviewing uploads below. Do not close the app until background tasks reach 0.</p>
     <div id="summaryGrid" class="summary-grid"></div>
-    <button onclick="location.reload()" class="btn-upload" style="margin-top:20px;">Finish & Clear</button>
+    <button onclick="location.reload()" class="btn-upload" style="margin-top:20px; background:#64748b;">Finish Batch</button>
 </div>
 
 <script>
@@ -37,7 +36,7 @@
 
     let fileQueue = [];
     let currentFileIndex = 0;
-    let backgroundTasks = 0;
+    let pendingTasks = 0;
     const s3Client = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
 
     async function initMenu() {
@@ -77,7 +76,7 @@
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                container.innerHTML = `<div class="batch-badge" id="queueBadge">${badge.innerText}</div><img src="${e.target.result}">`;
+                container.innerHTML = `<div class="batch-badge" id="queueBadge">${badge.innerText}</div><img src="${e.target.result}" id="activePreview">`;
             };
             reader.readAsDataURL(file);
         } else {
@@ -88,16 +87,22 @@
     function triggerBackgroundUpload() {
         const sid = document.getElementById('studentSelect').value;
         const sName = document.getElementById('studentSelect').options[document.getElementById('studentSelect').selectedIndex].text;
-        if (!sid) return alert("Select a student first.");
+        if (!sid) return alert("Please select a student.");
 
         const fileToUpload = fileQueue[currentFileIndex];
+        const localImgData = document.getElementById('activePreview') ? document.getElementById('activePreview').src : null;
         const franchiseId = document.getElementById('franchiseSelect').value;
 
-        // Start the background process without 'await' to free up the UI
-        backgroundTasks++;
-        uploadInBackground(fileToUpload, sid, sName, franchiseId);
+        // Visual update for Task Counter
+        pendingTasks++;
+        const counter = document.getElementById('task-counter');
+        counter.style.display = 'block';
+        document.getElementById('pending-count').innerText = pendingTasks;
 
-        // Move to next photo immediately
+        // Kick off background work
+        uploadInBackground(fileToUpload, sid, sName, franchiseId, localImgData);
+
+        // Instant UI Flip
         currentFileIndex++;
         if (currentFileIndex < fileQueue.length) {
             showCurrentFile();
@@ -107,11 +112,15 @@
         }
     }
 
-    async function uploadInBackground(file, sid, sName, fid) {
+    async function uploadInBackground(file, sid, sName, fid, localSrc) {
         const grid = document.getElementById('summaryGrid');
         const itemDiv = document.createElement('div');
         itemDiv.className = 'summary-item';
-        itemDiv.innerHTML = `<div style="padding:10px; font-size:10px;">⏳ Processing...</div>`;
+        
+        // Show local preview immediately so the summary isn't empty
+        itemDiv.innerHTML = localSrc 
+            ? `<img src="${localSrc}"><div class="summary-name">${sName}</div>`
+            : `<div style="padding:10px; font-size:10px; color:#1e3a8a;">🎬 ${sName}</div>`;
         grid.appendChild(itemDiv);
 
         try {
@@ -127,22 +136,21 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    franchise_id: parseInt(fid),
-                    student_id: parseInt(sid),
-                    teacher_id: 8,
-                    file_url: up.Location,
-                    file_type: file.type.includes('image') ? 'image' : 'video'
+                    franchise_id: parseInt(fid), student_id: parseInt(sid), teacher_id: 8,
+                    file_url: up.Location, file_type: file.type.includes('image') ? 'image' : 'video'
                 })
             });
-
-            // Update summary item with actual image now that it's uploaded
-            itemDiv.innerHTML = file.type.startsWith('image/') 
-                ? `<img src="${up.Location}"><div class="summary-name">${sName}</div>` 
-                : `<div style="padding:10px; font-size:10px;">🎬 ${sName}</div>`;
+            itemDiv.style.borderColor = "#059669"; // Green border when 100% synced
         } catch (e) {
-            itemDiv.innerHTML = `<div style="color:red; font-size:8px;">Error</div>`;
+            itemDiv.style.borderColor = "red";
+            console.error(e);
         } finally {
-            backgroundTasks--;
+            pendingTasks--;
+            document.getElementById('pending-count').innerText = pendingTasks;
+            if(pendingTasks === 0) {
+                document.getElementById('task-counter').style.background = "#059669";
+                document.getElementById('task-counter').innerText = "All Uploads Secured! ✓";
+            }
         }
     }
     initMenu();
