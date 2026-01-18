@@ -1,5 +1,5 @@
 <div style="background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
-    <div id="selectionHeader">
+    <div id="setupForm">
         <div style="margin-bottom: 15px;">
             <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">1. SCHOOL LOCATION</label>
             <select id="franchiseSelect" onchange="loadLists()" style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;">
@@ -13,18 +13,16 @@
                 <option value="">-- Select Teacher --</option>
             </select>
         </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#1e3a8a;">3. SELECT BATCH (MAX 10)</label>
+            <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="startBatch()" style="width:100%; font-size:14px;">
+        </div>
     </div>
 
-    <hr style="border:0; border-top:1px solid #f1f5f9; margin:20px 0;">
-
-    <div id="filePickerSection" style="margin-bottom: 15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#1e3a8a;">3. SELECT PHOTOS/VIDEOS (MAX 10)</label>
-        <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="prepareBatch()" style="width:100%; font-size:14px;">
-    </div>
-
-    <div id="taggingSection" style="display:none;">
+    <div id="taggingArea" style="display:none;">
         <div class="preview-box" id="previewBox">
-            <div id="batchBadge" class="batch-count"></div>
+            <div id="batchCounter" class="batch-badge"></div>
         </div>
 
         <div style="margin-bottom: 20px;">
@@ -48,8 +46,8 @@
         const AK = 'P7GI5LQMI4OX2SPAV1YA';
         const SK = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
 
-        let batchFiles = [];
-        let currentIndex = 0;
+        let currentBatch = [];
+        let index = 0;
 
         const s3 = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
 
@@ -65,7 +63,7 @@
         async function loadLists() {
             const fid = document.getElementById('franchiseSelect').value;
             if(!fid) return;
-            document.getElementById('status').innerText = "Syncing lists...";
+            document.getElementById('status').innerText = "Syncing students...";
             try {
                 const [t, s] = await Promise.all([
                     fetch(`${X_URL}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
@@ -78,49 +76,47 @@
                 const sSel = document.getElementById('studentSelect');
                 sSel.innerHTML = '<option value="">-- Select Student --</option>';
                 s.forEach(item => sSel.innerHTML += `<option value="${item.id}">${item.name}</option>`);
-                
                 document.getElementById('status').innerText = "Lists ready.";
             } catch (e) { document.getElementById('status').innerText = "Sync error."; }
         }
 
-        function prepareBatch() {
+        function startBatch() {
             const files = document.getElementById('fileInput').files;
+            if (!document.getElementById('teacherSelect').value) return alert("Select teacher first.");
             if (files.length === 0) return;
             
-            batchFiles = Array.from(files).slice(0, 10); // Enforce 10 file limit
-            currentIndex = 0;
+            currentBatch = Array.from(files).slice(0, 10);
+            index = 0;
             
-            document.getElementById('filePickerSection').style.display = 'none';
-            document.getElementById('selectionHeader').style.opacity = '0.5';
-            document.getElementById('taggingSection').style.display = 'block';
-            
-            showCurrentFile();
+            document.getElementById('setupForm').style.display = 'none';
+            document.getElementById('taggingArea').style.display = 'block';
+            showPhoto();
         }
 
-        function showCurrentFile() {
-            const file = batchFiles[currentIndex];
+        function showPhoto() {
+            const file = currentBatch[index];
             const box = document.getElementById('previewBox');
-            const badge = document.getElementById('batchBadge');
+            const badge = document.getElementById('batchCounter');
             
-            badge.innerText = `PHOTO ${currentIndex + 1} OF ${batchFiles.length}`;
+            badge.innerText = `PHOTO ${index + 1} OF ${currentBatch.length}`;
             document.getElementById('studentSelect').value = "";
 
             if (file.type.startsWith('image/')) {
                 const r = new FileReader();
-                r.onload = (e) => box.innerHTML = `<div class="batch-count">${badge.innerText}</div><img src="${e.target.result}">`;
+                r.onload = (e) => box.innerHTML = `<div class="batch-badge">${badge.innerText}</div><img src="${e.target.result}">`;
                 r.readAsDataURL(file);
             } else {
-                box.innerHTML = `<div class="batch-count">${badge.innerText}</div><div style="color:white;text-align:center;">🎬<br>Video Ready</div>`;
+                box.innerHTML = `<div class="batch-badge">${badge.innerText}</div><div style="color:white;text-align:center;">🎬<br>Video Ready</div>`;
             }
         }
 
         async function handleUpload() {
-            let file = batchFiles[currentIndex];
-            const fid = document.getElementById('franchiseSelect').value;
-            const tid = document.getElementById('teacherSelect').value;
+            let file = currentBatch[index];
             const sid = document.getElementById('studentSelect').value;
+            const tid = document.getElementById('teacherSelect').value;
+            const fid = document.getElementById('franchiseSelect').value;
 
-            if (!sid) return alert("Please select the student in this picture.");
+            if (!sid) return alert("Please select a student.");
 
             const btn = document.getElementById('uploadBtn');
             const st = document.getElementById('status');
@@ -128,11 +124,11 @@
 
             try {
                 if (file.type.startsWith('image/')) {
-                    st.innerText = `Optimizing ${currentIndex + 1}/${batchFiles.length}...`;
+                    st.innerText = "Optimizing...";
                     file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
                 }
 
-                st.innerText = `Uploading to vault...`;
+                st.innerText = `Uploading ${index + 1}/${currentBatch.length}...`;
                 const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
                 const up = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
 
@@ -148,17 +144,15 @@
                     })
                 });
 
-                currentIndex++;
-                
-                if (currentIndex < batchFiles.length) {
-                    st.innerText = "Saved! Loading next photo...";
-                    showCurrentFile();
+                index++;
+                if (index < currentBatch.length) {
+                    st.innerText = "Saved! Next photo...";
+                    showPhoto();
                 } else {
                     st.innerText = "✓ Batch Complete!";
-                    alert("All photos successfully secured in the vault.");
-                    location.reload(); // Reset for next batch
+                    alert("All photos saved.");
+                    location.reload();
                 }
-                
             } catch (e) {
                 st.innerText = "Error: " + e.message;
             } finally {
