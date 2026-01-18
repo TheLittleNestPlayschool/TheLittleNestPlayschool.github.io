@@ -3,7 +3,6 @@
     <select id="franchiseSelect" onchange="loadDependencies()">
         <option value="">-- Choose Location --</option>
     </select>
-
     <div id="filePickerSection" style="display:none; text-align:center; padding:40px 20px; border:2px dashed #cbd5e1; border-radius:12px; background:#f8fafc;">
         <p style="margin-bottom:15px; color:#1e3a8a; font-weight:bold;">Ready! Select up to 20 files</p>
         <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="startQueue()" style="font-size:14px;">
@@ -13,19 +12,28 @@
 <div id="batchCard" class="card" style="display:none;">
     <div class="preview-area" id="previewContainer">
         <div class="batch-badge" id="queueBadge">1 of 1</div>
-        </div>
-
+    </div>
     <div class="form-padding">
         <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">WHO IS IN THIS PHOTO?</label>
-        <select id="studentSelect">
-            <option value="">-- Select Student --</option>
-        </select>
+        <select id="studentSelect"><option value="">-- Select Student --</option></select>
+        <input type="hidden" id="teacherSelect" value="8">
+
+        <button id="uploadBtn" onclick="processCurrentFile()" class="btn-upload">Save & Next</button>
         
-        <input type="hidden" id="teacherSelect" value="8"> <button id="uploadBtn" onclick="processCurrentFile()" class="btn-upload">
-            Save & Next Photo
-        </button>
-        <div id="status-bar">Waiting for selection...</div>
+        <div id="statusChecklist" style="margin-top:15px; border-top:1px solid #f1f5f9; padding-top:10px;">
+            <div id="step-name" style="font-size:12px; font-weight:bold; color:#1e3a8a; margin-bottom:5px;"></div>
+            <div id="step1" class="status-line">○ Optimizing image size...</div>
+            <div id="step2" class="status-line">○ Uploading to Singapore vault...</div>
+            <div id="step3" class="status-line">○ Securing database record...</div>
+        </div>
     </div>
+</div>
+
+<div id="finalSummary" class="card" style="display:none; padding:20px;">
+    <h3 style="margin-top:0; color:#1e3a8a;">Batch Complete! ✅</h3>
+    <p style="font-size:14px; color:#64748b;">The following items were secured in the vault:</p>
+    <div id="summaryGrid" class="summary-grid"></div>
+    <button onclick="location.reload()" class="btn-upload" style="margin-top:20px;">Start New Batch</button>
 </div>
 
 <script>
@@ -37,6 +45,7 @@
 
     let fileQueue = [];
     let currentFileIndex = 0;
+    let uploadedItems = [];
     const s3Client = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
 
     async function initMenu() {
@@ -50,7 +59,6 @@
         const fid = document.getElementById('franchiseSelect').value;
         if(!fid) return;
         document.getElementById('filePickerSection').style.display = 'block';
-        
         const sData = await fetch(`${X_BASE}/uploader_get_students?franchise_id=${fid}`).then(res => res.json());
         const ss = document.getElementById('studentSelect');
         ss.innerHTML = '<option value="">-- Select Student --</option>';
@@ -62,7 +70,7 @@
         if (files.length === 0) return;
         fileQueue = Array.from(files);
         currentFileIndex = 0;
-        
+        uploadedItems = [];
         document.getElementById('setupView').style.display = 'none';
         document.getElementById('batchCard').style.display = 'block';
         showCurrentFile();
@@ -72,9 +80,11 @@
         const file = fileQueue[currentFileIndex];
         const container = document.getElementById('previewContainer');
         const badge = document.getElementById('queueBadge');
+        document.getElementById('step-name').innerText = `PROCESSING: ${file.name}`;
+        ['step1','step2','step3'].forEach(id => document.getElementById(id).className = 'status-line');
         
+        document.getElementById('studentSelect').value = "";
         badge.innerText = `PHOTO ${currentFileIndex + 1} OF ${fileQueue.length}`;
-        document.getElementById('studentSelect').value = ""; // Reset student for each photo
 
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
@@ -83,56 +93,76 @@
             };
             reader.readAsDataURL(file);
         } else {
-            container.innerHTML = `<div class="batch-badge" id="queueBadge">${badge.innerText}</div><div style="color:white;text-align:center;">🎬<br>Video File</div>`;
+            container.innerHTML = `<div class="batch-badge" id="queueBadge">${badge.innerText}</div><div style="color:white;">🎬 Video Ready</div>`;
         }
     }
 
     async function processCurrentFile() {
         let file = fileQueue[currentFileIndex];
-        const fid = document.getElementById('franchiseSelect').value;
         const sid = document.getElementById('studentSelect').value;
-        const tid = document.getElementById('teacherSelect').value;
-
-        if (!sid) return alert("Please select which student is in this photo.");
+        const sName = document.getElementById('studentSelect').options[document.getElementById('studentSelect').selectedIndex].text;
+        if (!sid) return alert("Select a student.");
 
         const btn = document.getElementById('uploadBtn');
-        const status = document.getElementById('status-bar');
         btn.disabled = true;
 
+        // Step 1: Compress
+        const s1 = document.getElementById('step1');
+        s1.className = 'status-line active';
         if (file.type.startsWith('image/')) {
-            status.innerText = "✨ Optimizing Image...";
             file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
         }
+        s1.className = 'status-line done';
+        s1.innerText = '✓ Optimized';
 
-        status.innerText = `🚀 Uploading ${currentFileIndex + 1} of ${fileQueue.length}...`;
-        const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
+        // Step 2: Wasabi
+        const s2 = document.getElementById('step2');
+        s2.className = 'status-line active';
+        const key = `vault/franchise_${document.getElementById('franchiseSelect').value}/student_${sid}/${Date.now()}_${file.name}`;
+        const up = await s3Client.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
+        s2.className = 'status-line done';
+        s2.innerText = '✓ Uploaded to Wasabi';
 
-        try {
-            const up = await s3Client.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
-            await fetch(`${X_BASE}/uploader_register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    franchise_id: parseInt(fid), student_id: parseInt(sid), teacher_id: parseInt(tid),
-                    file_url: up.Location, file_type: file.type.includes('image') ? 'image' : 'video'
-                })
-            });
+        // Step 3: Xano
+        const s3 = document.getElementById('step3');
+        s3.className = 'status-line active';
+        await fetch(`${X_BASE}/uploader_register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                franchise_id: parseInt(document.getElementById('franchiseSelect').value),
+                student_id: parseInt(sid),
+                teacher_id: 8,
+                file_url: up.Location,
+                file_type: file.type.includes('image') ? 'image' : 'video'
+            })
+        });
+        s3.className = 'status-line done';
+        s3.innerText = '✓ Secured in Xano';
 
-            currentFileIndex++;
-            if (currentFileIndex < fileQueue.length) {
-                status.innerText = "Success! Loading next...";
-                showCurrentFile();
-            } else {
-                status.innerText = "✅ Batch Complete!";
-                alert("All photos saved to the vault.");
-                location.reload(); // Restart the app
-            }
-        } catch (e) { 
-            status.innerText = "❌ Error: " + e.message; 
-            console.error(e);
-        } finally { 
-            btn.disabled = false; 
+        // Record for Summary
+        uploadedItems.push({ url: up.Location, name: sName, type: file.type });
+
+        currentFileIndex++;
+        if (currentFileIndex < fileQueue.length) {
+            setTimeout(showCurrentFile, 800);
+        } else {
+            showSummary();
         }
+        btn.disabled = false;
+    }
+
+    function showSummary() {
+        document.getElementById('batchCard').style.display = 'none';
+        const summary = document.getElementById('finalSummary');
+        summary.style.display = 'block';
+        const grid = document.getElementById('summaryGrid');
+        uploadedItems.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'summary-item';
+            div.innerHTML = item.type.startsWith('image/') ? `<img src="${item.url}">` : `<div style="padding:10px;font-size:10px;word-break:break-all;">🎬 ${item.name}</div>`;
+            grid.appendChild(div);
+        });
     }
     initMenu();
 </script>
