@@ -4,7 +4,7 @@
         <option value="">-- Choose Location --</option>
     </select>
     <div id="filePickerSection" style="display:none; text-align:center; padding:40px 20px; border:2px dashed #cbd5e1; border-radius:12px; background:#f8fafc;">
-        <p style="margin-bottom:15px; color:#1e3a8a; font-weight:bold;">Tap to select batch (Max 20)</p>
+        <p style="margin-bottom:15px; color:#1e3a8a; font-weight:bold;">Tap to select up to 20 files</p>
         <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="startQueue()" style="font-size:14px;">
     </div>
 </div>
@@ -16,15 +16,15 @@
     <div class="form-padding">
         <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">WHO IS IN THIS PHOTO?</label>
         <select id="studentSelect"><option value="">-- Select Student --</option></select>
-        <button id="uploadBtn" onclick="triggerBackgroundUpload()" class="btn-upload">Tag & Next Photo</button>
+        <button id="uploadBtn" onclick="queueAndNext()" class="btn-upload">Tag & Next Photo</button>
     </div>
 </div>
 
 <div id="finalSummary" class="card" style="display:none; padding:20px;">
     <h3 style="margin-top:0; color:#1e3a8a;">The Little Nest Vault</h3>
-    <p style="font-size:14px; color:#64748b;">Tagging complete! Review the live sync status below:</p>
+    <p style="font-size:14px; color:#64748b;">Reviewing your batch. Do not close this window until the bottom bar turns green.</p>
     <div id="summaryGrid" class="summary-grid"></div>
-    <button onclick="location.reload()" class="btn-upload" style="margin-top:20px; background:#64748b;">Finish Batch</button>
+    <button onclick="location.reload()" class="btn-upload" style="margin-top:20px; background:#64748b;">Start New Batch</button>
 </div>
 
 <script>
@@ -36,7 +36,9 @@
 
     let fileQueue = [];
     let currentFileIndex = 0;
-    let pendingTasks = 0;
+    let uploadQueue = []; // For sequential background processing
+    let isProcessing = false;
+
     const s3Client = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
 
     async function initMenu() {
@@ -61,6 +63,7 @@
         if (files.length === 0) return;
         fileQueue = Array.from(files);
         currentFileIndex = 0;
+        uploadQueue = [];
         document.getElementById('setupView').style.display = 'none';
         document.getElementById('batchCard').style.display = 'block';
         showCurrentFile();
@@ -76,83 +79,106 @@
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                container.innerHTML = `<div class="batch-badge" id="queueBadge">${badge.innerText}</div><img src="${e.target.result}" id="activePreview">`;
+                container.innerHTML = `<div class="batch-badge">${badge.innerText}</div><img src="${e.target.result}" id="activePreview">`;
             };
             reader.readAsDataURL(file);
         } else {
-            container.innerHTML = `<div class="batch-badge" id="queueBadge">${badge.innerText}</div><div style="color:white;text-align:center;">🎬<br>Video File</div>`;
+            container.innerHTML = `<div class="batch-badge">${badge.innerText}</div><div style="color:white;text-align:center;">🎬<br>Video File</div>`;
         }
     }
 
-    async function triggerBackgroundUpload() {
+    function queueAndNext() {
         const sid = document.getElementById('studentSelect').value;
         const sName = document.getElementById('studentSelect').options[document.getElementById('studentSelect').selectedIndex].text;
-        if (!sid) return alert("Select a student.");
+        if (!sid) return alert("Please select a student.");
 
         const file = fileQueue[currentFileIndex];
         const fid = document.getElementById('franchiseSelect').value;
-        const previewSrc = document.getElementById('activePreview') ? document.getElementById('activePreview').src : null;
+        const localSrc = document.getElementById('activePreview') ? document.getElementById('activePreview').src : null;
 
-        // Visual tracking
-        pendingTasks++;
-        const counter = document.getElementById('task-counter');
-        counter.style.display = 'block';
-        counter.style.background = '#1e3a8a';
-        document.getElementById('pending-count').innerText = `${pendingTasks} remaining...`;
+        // Add task to the background queue
+        uploadQueue.push({ file, sid, sName, fid, localSrc });
+        
+        // Show status bar
+        document.getElementById('task-counter').style.display = 'block';
+        updateStatus();
 
-        // Start processing (Non-blocking)
-        uploadInParallel(file, sid, sName, fid, previewSrc);
+        // Start processing if idle
+        if (!isProcessing) processQueue();
 
-        // Move UI immediately
+        // UI Flip
         currentFileIndex++;
         if (currentFileIndex < fileQueue.length) {
             showCurrentFile();
         } else {
             document.getElementById('batchCard').style.display = 'none';
             document.getElementById('finalSummary').style.display = 'block';
+            renderSummary();
         }
     }
 
-    async function uploadInParallel(file, sid, sName, fid, localSrc) {
-        const grid = document.getElementById('summaryGrid');
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'summary-item';
-        itemDiv.innerHTML = localSrc 
-            ? `<img src="${localSrc}"><div class="summary-name">${sName}</div>`
-            : `<div style="padding:10px; font-size:10px; color:#1e3a8a;">🎬 ${sName}</div>`;
-        grid.appendChild(itemDiv);
+    function updateStatus() {
+        document.getElementById('pending-count').innerText = uploadQueue.length;
+    }
+
+    async function processQueue() {
+        if (uploadQueue.length === 0) {
+            isProcessing = false;
+            document.getElementById('task-counter').style.background = "#059669";
+            document.getElementById('task-counter').innerText = "All Uploads Secured! ✓";
+            return;
+        }
+
+        isProcessing = true;
+        const task = uploadQueue[0];
+        const safeId = "sum-" + task.file.name.replace(/[^a-z0-9]/gi, '');
 
         try {
-            let blob = file;
-            if (file.type.startsWith('image/')) {
-                // Slightly lighter compression to prevent mobile hang
-                blob = await imageCompression(file, { maxSizeMB: 0.6, maxWidthOrHeight: 1400 });
+            let blob = task.file;
+            if (task.file.type.startsWith('image/')) {
+                blob = await imageCompression(task.file, { maxSizeMB: 0.6, maxWidthOrHeight: 1400 });
             }
 
-            const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${blob.name}`;
+            const key = `vault/franchise_${task.fid}/student_${task.sid}/${Date.now()}_${blob.name}`;
             const up = await s3Client.upload({ Bucket: BKT, Key: key, Body: blob, ContentType: blob.type, ACL: 'public-read' }).promise();
 
             await fetch(`${X_BASE}/uploader_register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    franchise_id: parseInt(fid), student_id: parseInt(sid), teacher_id: 8,
-                    file_url: up.Location, file_type: file.type.includes('image') ? 'image' : 'video'
+                    franchise_id: parseInt(task.fid), student_id: parseInt(task.sid), teacher_id: 8,
+                    file_url: up.Location, file_type: task.file.type.includes('image') ? 'image' : 'video'
                 })
             });
-            itemDiv.style.borderColor = "#059669"; // Green on success
+
+            const el = document.getElementById(safeId);
+            if(el) el.style.borderColor = "#059669";
         } catch (e) {
-            itemDiv.style.borderColor = "red";
-            console.error("Task Failed:", e);
+            console.error(e);
+            const el = document.getElementById(safeId);
+            if(el) el.style.borderColor = "red";
         } finally {
-            pendingTasks--;
-            if (pendingTasks <= 0) {
-                document.getElementById('task-counter').style.background = "#059669";
-                document.getElementById('task-counter').innerText = "All Uploads Secured! ✓";
-            } else {
-                document.getElementById('pending-count').innerText = `${pendingTasks} remaining...`;
-            }
+            uploadQueue.shift(); // Remove first task
+            updateStatus();
+            processQueue(); // Loop to next task
         }
     }
+
+    function renderSummary() {
+        const grid = document.getElementById('summaryGrid');
+        grid.innerHTML = "";
+        fileQueue.forEach(file => {
+            const div = document.createElement('div');
+            div.className = 'summary-item';
+            div.id = "sum-" + file.name.replace(/[^a-z0-9]/gi, '');
+            
+            // Note: Since we need to show the image even if it hasn't uploaded yet,
+            // we'd normally store the local dataURL, but for a clean summary,
+            // we just show a placeholder if the task is still pending.
+            div.innerHTML = `<div style="padding:10px; font-size:10px;">Syncing...</div>`;
+            grid.appendChild(div);
+        });
+    }
+
     initMenu();
 </script>
