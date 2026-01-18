@@ -1,36 +1,40 @@
-<div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+<div style="background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
     <div style="margin-bottom: 15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:13px;">1. SCHOOL LOCATION</label>
-        <select id="franchiseSelect" onchange="loadLists()" style="width:100%; padding:12px; border-radius:6px; border:1px solid #ddd;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">1. SCHOOL LOCATION</label>
+        <select id="franchiseSelect" onchange="loadLists()" style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;">
             <option value="">-- Choose Location --</option>
         </select>
     </div>
 
     <div style="margin-bottom: 15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:13px;">2. TEACHER</label>
-        <select id="teacherSelect" style="width:100%; padding:12px; border-radius:6px; border:1px solid #ddd;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">2. TEACHER</label>
+        <select id="teacherSelect" style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;">
             <option value="">-- Select Teacher --</option>
         </select>
     </div>
 
+    <hr style="border:0; border-top:1px solid #f1f5f9; margin:20px 0;">
+
     <div style="margin-bottom: 15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:13px;">3. STUDENT</label>
-        <select id="studentSelect" style="width:100%; padding:12px; border-radius:6px; border:1px solid #ddd;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#1e3a8a;">3. SELECT PHOTO OR VIDEO</label>
+        <input type="file" id="fileInput" accept="image/*,video/*" onchange="doPreview()" style="width:100%; font-size:14px;">
+        <div id="previewBox" class="preview-box">
+            <span style="color:#94a3b8;">No file selected</span>
+        </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">4. WHO IS IN THIS PICTURE?</label>
+        <select id="studentSelect" style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;">
             <option value="">-- Select Student --</option>
         </select>
     </div>
 
-    <div style="margin-bottom: 15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:13px;">4. SELECT PHOTO/VIDEO</label>
-        <input type="file" id="fileInput" accept="image/*,video/*" onchange="doPreview()" style="width:100%;">
-        <div id="previewBox" class="preview-box">No file selected</div>
-    </div>
-
-    <button id="uploadBtn" onclick="handleUpload()" style="width:100%; background:#1e3a8a; color:white; border:none; padding:15px; border-radius:6px; font-weight:bold; font-size:16px; cursor:pointer;">
-        Upload to Vault
+    <button id="uploadBtn" onclick="handleUpload()" style="width:100%; background:#1e3a8a; color:white; border:none; padding:18px; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer;">
+        Save to Vault
     </button>
     
-    <div id="status" style="margin-top:15px; font-size:14px; text-align:center; color:#666; font-weight:bold;">Ready.</div>
+    <div id="status" style="margin-top:15px; font-size:14px; text-align:center; color:#64748b; font-weight:500;">Ready.</div>
 
     <script>
         const X_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL';
@@ -53,7 +57,7 @@
         async function loadLists() {
             const fid = document.getElementById('franchiseSelect').value;
             if(!fid) return;
-            document.getElementById('status').innerText = "Updating lists...";
+            document.getElementById('status').innerText = "Syncing lists...";
             try {
                 const [t, s] = await Promise.all([
                     fetch(`${X_URL}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
@@ -67,7 +71,7 @@
                 sSel.innerHTML = '<option value="">-- Select Student --</option>';
                 s.forEach(item => sSel.innerHTML += `<option value="${item.id}">${item.name}</option>`);
                 
-                document.getElementById('status').innerText = "Lists synced.";
+                document.getElementById('status').innerText = "Lists ready.";
             } catch (e) { document.getElementById('status').innerText = "Sync error."; }
         }
 
@@ -80,7 +84,7 @@
                 r.onload = (e) => box.innerHTML = `<img src="${e.target.result}">`;
                 r.readAsDataURL(file);
             } else {
-                box.innerHTML = "Video selected.";
+                box.innerHTML = `<div style="color:white;text-align:center;">🎬<br>Video Ready</div>`;
             }
         }
 
@@ -90,7 +94,7 @@
             const tid = document.getElementById('teacherSelect').value;
             const sid = document.getElementById('studentSelect').value;
 
-            if (!file || !fid || !tid || !sid) return alert("Fill all fields.");
+            if (!file || !fid || !tid || !sid) return alert("Please select the teacher, file, and student.");
 
             const btn = document.getElementById('uploadBtn');
             const st = document.getElementById('status');
@@ -98,15 +102,15 @@
 
             try {
                 if (file.type.startsWith('image/')) {
-                    st.innerText = "Optimizing...";
+                    st.innerText = "Optimizing photo...";
                     file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
                 }
 
-                st.innerText = "Uploading...";
+                st.innerText = "Uploading to vault...";
                 const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
                 const up = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
 
-                st.innerText = "Securing record...";
+                st.innerText = "Finalizing record...";
                 await fetch(`${X_URL}/uploader_register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -119,9 +123,12 @@
                     })
                 });
 
-                st.innerText = "Success! Upload secured.";
+                st.innerText = "✓ Success! Record secured.";
+                // Reset file and student, but KEEP teacher and franchise
                 document.getElementById('fileInput').value = "";
-                document.getElementById('previewBox').innerHTML = "No file selected";
+                document.getElementById('studentSelect').value = "";
+                document.getElementById('previewBox').innerHTML = '<span style="color:#94a3b8;">No file selected</span>';
+                
             } catch (e) {
                 st.innerText = "Error: " + e.message;
             } finally {
