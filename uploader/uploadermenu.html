@@ -1,38 +1,43 @@
 <div style="background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
-    <div style="margin-bottom: 15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">1. SCHOOL LOCATION</label>
-        <select id="franchiseSelect" onchange="loadLists()" style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;">
-            <option value="">-- Choose Location --</option>
-        </select>
-    </div>
+    <div id="selectionHeader">
+        <div style="margin-bottom: 15px;">
+            <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">1. SCHOOL LOCATION</label>
+            <select id="franchiseSelect" onchange="loadLists()" style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;">
+                <option value="">-- Choose Location --</option>
+            </select>
+        </div>
 
-    <div style="margin-bottom: 15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">2. TEACHER</label>
-        <select id="teacherSelect" style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;">
-            <option value="">-- Select Teacher --</option>
-        </select>
+        <div style="margin-bottom: 15px;">
+            <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">2. TEACHER</label>
+            <select id="teacherSelect" style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;">
+                <option value="">-- Select Teacher --</option>
+            </select>
+        </div>
     </div>
 
     <hr style="border:0; border-top:1px solid #f1f5f9; margin:20px 0;">
 
-    <div style="margin-bottom: 15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#1e3a8a;">3. SELECT PHOTO OR VIDEO</label>
-        <input type="file" id="fileInput" accept="image/*,video/*" onchange="doPreview()" style="width:100%; font-size:14px;">
-        <div id="previewBox" class="preview-box">
-            <span style="color:#94a3b8;">No file selected</span>
+    <div id="filePickerSection" style="margin-bottom: 15px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#1e3a8a;">3. SELECT PHOTOS/VIDEOS (MAX 10)</label>
+        <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="prepareBatch()" style="width:100%; font-size:14px;">
+    </div>
+
+    <div id="taggingSection" style="display:none;">
+        <div class="preview-box" id="previewBox">
+            <div id="batchBadge" class="batch-count"></div>
         </div>
-    </div>
 
-    <div style="margin-bottom: 20px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">4. WHO IS IN THIS PICTURE?</label>
-        <select id="studentSelect" style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;">
-            <option value="">-- Select Student --</option>
-        </select>
-    </div>
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">4. WHO IS IN THIS PICTURE?</label>
+            <select id="studentSelect" style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;">
+                <option value="">-- Select Student --</option>
+            </select>
+        </div>
 
-    <button id="uploadBtn" onclick="handleUpload()" style="width:100%; background:#1e3a8a; color:white; border:none; padding:18px; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer;">
-        Save to Vault
-    </button>
+        <button id="uploadBtn" onclick="handleUpload()" style="width:100%; background:#1e3a8a; color:white; border:none; padding:18px; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer;">
+            Upload & Next Photo
+        </button>
+    </div>
     
     <div id="status" style="margin-top:15px; font-size:14px; text-align:center; color:#64748b; font-weight:500;">Ready.</div>
 
@@ -42,6 +47,9 @@
         const BKT = 'the-little-nest-media';
         const AK = 'P7GI5LQMI4OX2SPAV1YA';
         const SK = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
+
+        let batchFiles = [];
+        let currentIndex = 0;
 
         const s3 = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
 
@@ -75,26 +83,44 @@
             } catch (e) { document.getElementById('status').innerText = "Sync error."; }
         }
 
-        function doPreview() {
-            const file = document.getElementById('fileInput').files[0];
+        function prepareBatch() {
+            const files = document.getElementById('fileInput').files;
+            if (files.length === 0) return;
+            
+            batchFiles = Array.from(files).slice(0, 10); // Enforce 10 file limit
+            currentIndex = 0;
+            
+            document.getElementById('filePickerSection').style.display = 'none';
+            document.getElementById('selectionHeader').style.opacity = '0.5';
+            document.getElementById('taggingSection').style.display = 'block';
+            
+            showCurrentFile();
+        }
+
+        function showCurrentFile() {
+            const file = batchFiles[currentIndex];
             const box = document.getElementById('previewBox');
-            if (!file) return;
+            const badge = document.getElementById('batchBadge');
+            
+            badge.innerText = `PHOTO ${currentIndex + 1} OF ${batchFiles.length}`;
+            document.getElementById('studentSelect').value = "";
+
             if (file.type.startsWith('image/')) {
                 const r = new FileReader();
-                r.onload = (e) => box.innerHTML = `<img src="${e.target.result}">`;
+                r.onload = (e) => box.innerHTML = `<div class="batch-count">${badge.innerText}</div><img src="${e.target.result}">`;
                 r.readAsDataURL(file);
             } else {
-                box.innerHTML = `<div style="color:white;text-align:center;">🎬<br>Video Ready</div>`;
+                box.innerHTML = `<div class="batch-count">${badge.innerText}</div><div style="color:white;text-align:center;">🎬<br>Video Ready</div>`;
             }
         }
 
         async function handleUpload() {
-            let file = document.getElementById('fileInput').files[0];
+            let file = batchFiles[currentIndex];
             const fid = document.getElementById('franchiseSelect').value;
             const tid = document.getElementById('teacherSelect').value;
             const sid = document.getElementById('studentSelect').value;
 
-            if (!file || !fid || !tid || !sid) return alert("Please select the teacher, file, and student.");
+            if (!sid) return alert("Please select the student in this picture.");
 
             const btn = document.getElementById('uploadBtn');
             const st = document.getElementById('status');
@@ -102,15 +128,14 @@
 
             try {
                 if (file.type.startsWith('image/')) {
-                    st.innerText = "Optimizing photo...";
+                    st.innerText = `Optimizing ${currentIndex + 1}/${batchFiles.length}...`;
                     file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
                 }
 
-                st.innerText = "Uploading to vault...";
+                st.innerText = `Uploading to vault...`;
                 const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
                 const up = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
 
-                st.innerText = "Finalizing record...";
                 await fetch(`${X_URL}/uploader_register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -123,11 +148,16 @@
                     })
                 });
 
-                st.innerText = "✓ Success! Record secured.";
-                // Reset file and student, but KEEP teacher and franchise
-                document.getElementById('fileInput').value = "";
-                document.getElementById('studentSelect').value = "";
-                document.getElementById('previewBox').innerHTML = '<span style="color:#94a3b8;">No file selected</span>';
+                currentIndex++;
+                
+                if (currentIndex < batchFiles.length) {
+                    st.innerText = "Saved! Loading next photo...";
+                    showCurrentFile();
+                } else {
+                    st.innerText = "✓ Batch Complete!";
+                    alert("All photos successfully secured in the vault.");
+                    location.reload(); // Reset for next batch
+                }
                 
             } catch (e) {
                 st.innerText = "Error: " + e.message;
