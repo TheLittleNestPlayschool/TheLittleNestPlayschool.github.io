@@ -1,10 +1,20 @@
 <div id="setupView">
-    <label style="display:block; font-weight:bold; margin-bottom:8px; font-size:12px; color:#475569;">SELECT SCHOOL</label>
-    <select id="franchiseSelect" onchange="loadDependencies()">
-        <option value="">-- Choose Location --</option>
-    </select>
-    <div id="filePickerSection" style="display:none; text-align:center; padding:40px 20px; border:2px dashed #cbd5e1; border-radius:12px; background:#f8fafc;">
-        <p style="margin-bottom:15px; color:#1e3a8a; font-weight:bold;">Tap to select batch (Max 20)</p>
+    <div style="margin-bottom:15px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#475569;">1. SCHOOL LOCATION</label>
+        <select id="franchiseSelect" onchange="loadDependencies()">
+            <option value="">-- Choose Location --</option>
+        </select>
+    </div>
+
+    <div id="teacherSection" style="display:none; margin-bottom:15px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#475569;">2. TEACHER NAME</label>
+        <select id="teacherSelect">
+            <option value="">-- Select Teacher --</option>
+        </select>
+    </div>
+
+    <div id="filePickerSection" style="display:none; text-align:center; padding:30px 20px; border:2px dashed #cbd5e1; border-radius:12px; background:#f8fafc;">
+        <p style="margin-bottom:10px; color:#1e3a8a; font-weight:bold;">3. Select Photos/Videos (Max 20)</p>
         <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="startQueue()" style="font-size:14px;">
     </div>
 </div>
@@ -14,7 +24,7 @@
         <div class="batch-badge" id="queueBadge">1 of 1</div>
     </div>
     <div class="form-padding">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">WHO IS IN THIS PHOTO?</label>
+        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">4. WHO IS IN THIS PHOTO?</label>
         <select id="studentSelect"><option value="">-- Select Student --</option></select>
         <button id="uploadBtn" onclick="queueAndNext()" class="btn-upload">Tag & Next Photo</button>
     </div>
@@ -22,9 +32,9 @@
 
 <div id="finalSummary" class="card" style="display:none; padding:20px;">
     <h3 style="margin-top:0; color:#1e3a8a;">The Little Nest Vault</h3>
-    <p style="font-size:14px; color:#64748b;">Batch tagged! Please wait for green borders before closing.</p>
+    <p style="font-size:14px; color:#64748b;">All photos tagged! Processing in background...</p>
     <div id="summaryGrid" class="summary-grid"></div>
-    <button onclick="location.reload()" class="btn-upload" style="margin-top:20px; background:#64748b;">Start New Batch</button>
+    <button onclick="location.reload()" class="btn-upload" style="margin-top:20px; background:#64748b;">Reset for New Batch</button>
 </div>
 
 <script>
@@ -36,8 +46,8 @@
 
     let fileQueue = [];
     let currentFileIndex = 0;
-    let pendingUploads = [];
-    let isProcessing = false;
+    let uploadQueue = [];
+    let isUploading = false;
 
     const s3Client = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
 
@@ -51,8 +61,19 @@
     async function loadDependencies() {
         const fid = document.getElementById('franchiseSelect').value;
         if(!fid) return;
+        
+        document.getElementById('teacherSection').style.display = 'block';
         document.getElementById('filePickerSection').style.display = 'block';
-        const sData = await fetch(`${X_BASE}/uploader_get_students?franchise_id=${fid}`).then(res => res.json());
+        
+        const [tData, sData] = await Promise.all([
+            fetch(`${X_BASE}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
+            fetch(`${X_BASE}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
+        ]);
+
+        const ts = document.getElementById('teacherSelect');
+        ts.innerHTML = '<option value="">-- Select Teacher --</option>';
+        tData.forEach(item => { ts.innerHTML += `<option value="${item.id}">${item.first_name}</option>`; });
+
         const ss = document.getElementById('studentSelect');
         ss.innerHTML = '<option value="">-- Select Student --</option>';
         sData.forEach(item => { ss.innerHTML += `<option value="${item.id}">${item.name}</option>`; });
@@ -60,10 +81,12 @@
 
     function startQueue() {
         const files = document.getElementById('fileInput').files;
+        const tid = document.getElementById('teacherSelect').value;
+        if (!tid) return alert("Please select a teacher first.");
         if (files.length === 0) return;
+
         fileQueue = Array.from(files);
         currentFileIndex = 0;
-        pendingUploads = [];
         document.getElementById('setupView').style.display = 'none';
         document.getElementById('batchCard').style.display = 'block';
         showCurrentFile();
@@ -83,30 +106,26 @@
             };
             reader.readAsDataURL(file);
         } else {
-            container.innerHTML = `<div class="batch-badge">${badge.innerText}</div><div style="color:white;text-align:center;">🎬<br>Video File</div>`;
+            container.innerHTML = `<div class="batch-badge">${badge.innerText}</div><div style="color:white;text-align:center;">🎬<br>Video Ready</div>`;
         }
     }
 
     function queueAndNext() {
         const sid = document.getElementById('studentSelect').value;
         const sName = document.getElementById('studentSelect').options[document.getElementById('studentSelect').selectedIndex].text;
-        if (!sid) return alert("Select a student.");
-
-        const file = fileQueue[currentFileIndex];
+        const tid = document.getElementById('teacherSelect').value;
         const fid = document.getElementById('franchiseSelect').value;
+        const file = fileQueue[currentFileIndex];
         const localSrc = document.getElementById('activePreview') ? document.getElementById('activePreview').src : null;
 
-        // Add to background processor
-        pendingUploads.push({ file, sid, sName, fid, localSrc });
-        
-        // Show status bar
+        if (!sid) return alert("Select a student.");
+
+        uploadQueue.push({ file, sid, sName, tid, fid, localSrc });
         document.getElementById('task-counter').style.display = 'block';
-        document.getElementById('pending-count').innerText = pendingUploads.length;
+        document.getElementById('pending-count').innerText = uploadQueue.length;
 
-        // Kick off processing in the background (DO NOT AWAIT)
-        if (!isProcessing) processNextInQueue();
+        if (!isUploading) processQueue();
 
-        // INSTANTLY MOVE TO NEXT PHOTO
         currentFileIndex++;
         if (currentFileIndex < fileQueue.length) {
             showCurrentFile();
@@ -117,16 +136,16 @@
         }
     }
 
-    async function processNextInQueue() {
-        if (pendingUploads.length === 0) {
-            isProcessing = false;
+    async function processQueue() {
+        if (uploadQueue.length === 0) {
+            isUploading = false;
             document.getElementById('task-counter').style.background = "#059669";
             document.getElementById('task-counter').innerText = "All Secure! ✓";
             return;
         }
 
-        isProcessing = true;
-        const task = pendingUploads[0];
+        isUploading = true;
+        const task = uploadQueue[0];
         const safeId = "sum-" + task.file.name.replace(/[^a-z0-9]/gi, '');
 
         try {
@@ -142,33 +161,38 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    franchise_id: parseInt(task.fid), student_id: parseInt(task.sid), teacher_id: 8,
-                    file_url: up.Location, file_type: task.file.type.includes('image') ? 'image' : 'video'
+                    franchise_id: parseInt(task.fid),
+                    student_id: parseInt(task.sid),
+                    teacher_id: parseInt(task.tid),
+                    file_url: up.Location,
+                    file_type: task.file.type.includes('image') ? 'image' : 'video'
                 })
             });
 
             const el = document.getElementById(safeId);
-            if(el) el.style.borderColor = "#059669";
+            if(el) {
+                el.style.borderColor = "#059669";
+                if(task.localSrc) el.innerHTML = `<img src="${task.localSrc}"><div class="summary-name">${task.sName}</div>`;
+            }
         } catch (e) {
             console.error(e);
             const el = document.getElementById(safeId);
             if(el) el.style.borderColor = "red";
         }
 
-        pendingUploads.shift(); // Remove task
-        document.getElementById('pending-count').innerText = pendingUploads.length;
-        processNextInQueue(); // Loop
+        uploadQueue.shift();
+        document.getElementById('pending-count').innerText = uploadQueue.length;
+        processQueue(); 
     }
 
     function renderSummary() {
         const grid = document.getElementById('summaryGrid');
         grid.innerHTML = "";
         fileQueue.forEach(file => {
-            const task = pendingUploads.find(t => t.file === file) || { sName: "Done", localSrc: "" };
             const div = document.createElement('div');
             div.className = 'summary-item';
             div.id = "sum-" + file.name.replace(/[^a-z0-9]/gi, '');
-            div.innerHTML = `<div style="padding:10px; font-size:10px;">Securing...</div>`;
+            div.innerHTML = `<div style="padding:10px; font-size:10px;">Pending...</div>`;
             grid.appendChild(div);
         });
     }
