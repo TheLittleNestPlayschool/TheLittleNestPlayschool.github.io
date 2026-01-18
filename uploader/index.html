@@ -9,29 +9,23 @@
     <style>
         :root { --primary: #1e3a8a; --bg: #f8fafc; }
         body { font-family: sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        header { width: 100%; padding: 40px 20px; text-align: center; background: white; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px; box-sizing: border-box; }
-        h1 { color: var(--primary); margin: 0; font-size: 28px; }
-        p.subtitle { color: #64748b; margin-top: 10px; }
-        #module-container { width: 100%; max-width: 500px; padding: 20px; box-sizing: border-box; }
-        .preview-box { width: 100%; height: 200px; background: #eee; border-radius: 8px; margin-top: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px dashed #ccc; }
+        header { width: 100%; padding: 20px; text-align: center; background: white; border-bottom: 1px solid #e2e8f0; box-sizing: border-box; }
+        h1 { color: var(--primary); margin: 0; font-size: 22px; }
+        #module-container { width: 100%; max-width: 500px; padding: 15px; box-sizing: border-box; }
+        .preview-box { width: 100%; height: 250px; background: #000; border-radius: 8px; margin-top: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
         .preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .queue-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Digital File Vault</h1>
-        <p class="subtitle">Upload and manage school documents, images, and student records.</p>
-    </header>
+    <header><h1>The Little Nest Vault</h1></header>
     <main id="module-container">
-        <div id="uploader-target">
-            <p style="text-align: center; color: #94a3b8;">Loading Uploader Module...</p>
-        </div>
+        <div id="uploader-target"><p style="text-align: center;">Loading...</p></div>
     </main>
     <script>
         async function loadUploader() {
             try {
                 const response = await fetch('uploadermenu.html');
-                if (!response.ok) throw new Error('uploadermenu.html not found');
                 const htmlText = await response.text();
                 const target = document.getElementById('uploader-target');
                 target.innerHTML = htmlText;
@@ -41,9 +35,7 @@
                     newScript.text = scripts[i].innerHTML;
                     document.body.appendChild(newScript);
                 }
-            } catch (err) {
-                document.getElementById('uploader-target').innerHTML = `<p style="color:red; text-align:center;">Error: ${err.message}</p>`;
-            }
+            } catch (err) { console.error(err); }
         }
         window.onload = loadUploader;
     </script>
