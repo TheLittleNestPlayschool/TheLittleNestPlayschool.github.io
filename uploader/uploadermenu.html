@@ -4,7 +4,7 @@
         <option value="">-- Choose Location --</option>
     </select>
     <div id="filePickerSection" style="display:none; text-align:center; padding:40px 20px; border:2px dashed #cbd5e1; border-radius:12px; background:#f8fafc;">
-        <p style="margin-bottom:15px; color:#1e3a8a; font-weight:bold;">Tap to select up to 20 files</p>
+        <p style="margin-bottom:15px; color:#1e3a8a; font-weight:bold;">Tap to select batch (Max 20)</p>
         <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="startQueue()" style="font-size:14px;">
     </div>
 </div>
@@ -22,7 +22,7 @@
 
 <div id="finalSummary" class="card" style="display:none; padding:20px;">
     <h3 style="margin-top:0; color:#1e3a8a;">The Little Nest Vault</h3>
-    <p style="font-size:14px; color:#64748b;">Reviewing your batch. Do not close this window until the bottom bar turns green.</p>
+    <p style="font-size:14px; color:#64748b;">Reviewing your batch below. Wait for green borders before closing.</p>
     <div id="summaryGrid" class="summary-grid"></div>
     <button onclick="location.reload()" class="btn-upload" style="margin-top:20px; background:#64748b;">Start New Batch</button>
 </div>
@@ -36,7 +36,7 @@
 
     let fileQueue = [];
     let currentFileIndex = 0;
-    let uploadQueue = []; // For sequential background processing
+    let uploadQueue = []; 
     let isProcessing = false;
 
     const s3Client = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
@@ -96,17 +96,16 @@
         const fid = document.getElementById('franchiseSelect').value;
         const localSrc = document.getElementById('activePreview') ? document.getElementById('activePreview').src : null;
 
-        // Add task to the background queue
+        // Add to background list
         uploadQueue.push({ file, sid, sName, fid, localSrc });
         
-        // Show status bar
         document.getElementById('task-counter').style.display = 'block';
-        updateStatus();
+        document.getElementById('pending-count').innerText = uploadQueue.length;
 
-        // Start processing if idle
+        // Kick off processing
         if (!isProcessing) processQueue();
 
-        // UI Flip
+        // Immediate UI Advance
         currentFileIndex++;
         if (currentFileIndex < fileQueue.length) {
             showCurrentFile();
@@ -115,10 +114,6 @@
             document.getElementById('finalSummary').style.display = 'block';
             renderSummary();
         }
-    }
-
-    function updateStatus() {
-        document.getElementById('pending-count').innerText = uploadQueue.length;
     }
 
     async function processQueue() {
@@ -152,16 +147,20 @@
             });
 
             const el = document.getElementById(safeId);
-            if(el) el.style.borderColor = "#059669";
+            if(el) {
+                el.style.borderColor = "#059669";
+                if(task.localSrc) el.innerHTML = `<img src="${task.localSrc}"><div class="summary-name">${task.sName}</div>`;
+            }
         } catch (e) {
             console.error(e);
             const el = document.getElementById(safeId);
             if(el) el.style.borderColor = "red";
-        } finally {
-            uploadQueue.shift(); // Remove first task
-            updateStatus();
-            processQueue(); // Loop to next task
         }
+
+        // Always remove and move to next, even on error
+        uploadQueue.shift();
+        document.getElementById('pending-count').innerText = uploadQueue.length;
+        processQueue(); 
     }
 
     function renderSummary() {
@@ -171,11 +170,7 @@
             const div = document.createElement('div');
             div.className = 'summary-item';
             div.id = "sum-" + file.name.replace(/[^a-z0-9]/gi, '');
-            
-            // Note: Since we need to show the image even if it hasn't uploaded yet,
-            // we'd normally store the local dataURL, but for a clean summary,
-            // we just show a placeholder if the task is still pending.
-            div.innerHTML = `<div style="padding:10px; font-size:10px;">Syncing...</div>`;
+            div.innerHTML = `<div style="padding:10px; font-size:10px;">Pending...</div>`;
             grid.appendChild(div);
         });
     }
