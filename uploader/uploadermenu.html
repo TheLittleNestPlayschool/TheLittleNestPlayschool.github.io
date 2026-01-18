@@ -1,19 +1,17 @@
 <div class="card">
     <div id="setupForm" class="form-body">
         <label>1. School Location</label>
-        <select id="franchiseSelect" onchange="syncData()">
+        <select id="franchiseSelect" onchange="syncVaultData()">
             <option value="">-- Select Location --</option>
         </select>
-
         <label>2. Teacher Name</label>
         <select id="teacherSelect" disabled>
             <option value="">-- Choose Teacher --</option>
         </select>
-
-        <label>3. Upload Photos (Up to 10)</label>
+        <label>3. Select Photos (Up to 10)</label>
         <div style="padding: 30px; border: 2px dashed #cbd5e1; border-radius: 12px; text-align: center; background: #f8fafc; position: relative;">
-            <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="initBatch()" style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
-            <span style="color: #1e3a8a; font-weight: 600;">Tap to select photos</span>
+            <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="initBatchSession()" style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
+            <span style="color: #1e3a8a; font-weight: 600;">Tap to select batch</span>
         </div>
     </div>
 
@@ -26,42 +24,42 @@
             <select id="studentSelect">
                 <option value="">-- Identify Student --</option>
             </select>
-            <button id="nextBtn" onclick="uploadAndNext()" class="btn-action">Secure & Next</button>
-            <div id="status-bar">Ready.</div>
+            <button id="nextBtn" onclick="uploadAndSecure()" class="btn-action">Secure & Next</button>
         </div>
     </div>
 </div>
 
 <script>
-    const API_BASE = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL';
-    const WASABI_ENDPOINT = 's3.ap-southeast-1.wasabisys.com';
-    const BUCKET_NAME = 'the-little-nest-media';
-    const ACCESS_KEY = 'P7GI5LQMI4OX2SPAV1YA';
-    const SECRET_KEY = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
+    const API_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL';
+    const W_END = 's3.ap-southeast-1.wasabisys.com';
+    const BKT = 'the-little-nest-media';
+    const AK = 'P7GI5LQMI4OX2SPAV1YA';
+    const SK = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
 
-    let batch = [];
-    let activeIdx = 0;
-    const s3 = new AWS.S3({ endpoint: WASABI_ENDPOINT, accessKeyId: ACCESS_KEY, secretAccessKey: SECRET_KEY, s3ForcePathStyle: true, signatureVersion: 'v4' });
+    let vaultBatch = [];
+    let vaultIdx = 0;
+    let successfulUploads = 0;
+    const s3 = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
 
-    function setStatus(msg) {
-        const el = document.getElementById('status-bar');
-        if (el) el.innerText = msg;
+    function setVaultStatus(msg) {
+        const footer = document.getElementById('vault-footer');
+        if (footer) footer.innerText = msg;
     }
 
-    async function init() {
-        const r = await fetch(`${API_BASE}/uploader_get_franchises`);
+    async function initVault() {
+        const r = await fetch(`${API_URL}/uploader_get_franchises`);
         const data = await r.json();
         const sel = document.getElementById('franchiseSelect');
         data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
     }
 
-    async function syncData() {
+    async function syncVaultData() {
         const fid = document.getElementById('franchiseSelect').value;
         if (!fid) return;
-        setStatus("Syncing records...");
+        setVaultStatus("Syncing vault lists...");
         const [t, s] = await Promise.all([
-            fetch(`${API_BASE}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
-            fetch(`${API_BASE}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
+            fetch(`${API_URL}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
+            fetch(`${API_URL}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
         ]);
         
         const tSel = document.getElementById('teacherSelect');
@@ -72,28 +70,29 @@
         const sSel = document.getElementById('studentSelect');
         sSel.innerHTML = '<option value="">-- Identify Student --</option>';
         s.forEach(item => sSel.innerHTML += `<option value="${item.id}">${item.name}</option>`);
-        setStatus("Ready.");
+        setVaultStatus("Vault synced.");
     }
 
-    function initBatch() {
+    function initBatchSession() {
         const files = document.getElementById('fileInput').files;
         if (!document.getElementById('teacherSelect').value) return alert("Select teacher first.");
         if (files.length === 0) return;
         
-        batch = Array.from(files).slice(0, 10);
-        activeIdx = 0;
+        vaultBatch = Array.from(files).slice(0, 10);
+        vaultIdx = 0;
+        successfulUploads = 0;
         
         document.getElementById('setupForm').style.display = 'none';
         document.getElementById('taggingUI').style.display = 'block';
-        loadActivePhoto();
+        loadVaultPhoto();
     }
 
-    function loadActivePhoto() {
-        const file = batch[activeIdx];
+    function loadVaultPhoto() {
+        const file = vaultBatch[vaultIdx];
         const container = document.getElementById('previewContainer');
         const badge = document.getElementById('photoCounter');
         
-        badge.innerText = `PHOTO ${activeIdx + 1} OF ${batch.length}`;
+        badge.innerText = `PHOTO ${vaultIdx + 1} OF ${vaultBatch.length}`;
         document.getElementById('studentSelect').value = "";
 
         if (file.type.startsWith('image/')) {
@@ -101,32 +100,32 @@
             reader.onload = (e) => container.innerHTML = `<div id="photoCounter" class="counter-badge">${badge.innerText}</div><img src="${e.target.result}">`;
             reader.readAsDataURL(file);
         } else {
-            container.innerHTML = `<div id="photoCounter" class="counter-badge">${badge.innerText}</div><div style="color:white;text-align:center;">🎬<br>Video Prepared</div>`;
+            container.innerHTML = `<div id="photoCounter" class="counter-badge">${badge.innerText}</div><div style="color:white;text-align:center;">🎬<br>Video File</div>`;
         }
     }
 
-    async function uploadAndNext() {
-        let file = batch[activeIdx];
+    async function uploadAndSecure() {
+        let file = vaultBatch[vaultIdx];
         const sid = document.getElementById('studentSelect').value;
         const tid = document.getElementById('teacherSelect').value;
         const fid = document.getElementById('franchiseSelect').value;
 
         if (!sid) return alert("Please select a student.");
 
+        // Lock button to prevent double-click or "clunkiness"
         const btn = document.getElementById('nextBtn');
         btn.disabled = true;
+        setVaultStatus(`Processing ${vaultIdx + 1}/${vaultBatch.length}...`);
 
         try {
             if (file.type.startsWith('image/')) {
-                setStatus("Optimizing...");
                 file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
             }
 
-            setStatus(`Securing ${activeIdx + 1}/${batch.length}...`);
             const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
             const upload = await s3.upload({ Bucket: BUCKET_NAME, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
 
-            await fetch(`${API_BASE}/uploader_register`, {
+            await fetch(`${API_URL}/uploader_register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -138,20 +137,22 @@
                 })
             });
 
-            activeIdx++;
-            if (activeIdx < batch.length) {
-                setStatus("Saved! Next student...");
-                loadActivePhoto();
+            successfulUploads++;
+            setVaultStatus(`${successfulUploads} files secured in the vault.`);
+
+            vaultIdx++;
+            if (vaultIdx < vaultBatch.length) {
+                loadVaultPhoto();
             } else {
-                setStatus("Vault Secured! ✓");
-                alert("Batch successfully saved to The Little Nest Vault.");
-                location.reload();
+                setVaultStatus(`Batch Complete: ${successfulUploads} files secured.`);
+                setTimeout(() => location.reload(), 3000); // Auto-reset after 3 seconds
             }
         } catch (e) {
-            setStatus("Vault Error: " + e.message);
+            setVaultStatus("Sync Error. Please try again.");
+            console.error(e);
         } finally {
-            btn.disabled = false;
+            btn.disabled = false; // Unlock button
         }
     }
-    init();
+    initVault();
 </script>
