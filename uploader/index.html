@@ -13,31 +13,28 @@
         h1 { color: var(--primary); margin: 0; font-size: 28px; }
         p.subtitle { color: #64748b; margin-top: 10px; }
         #module-container { width: 100%; max-width: 500px; padding: 20px; box-sizing: border-box; }
+        .preview-box { width: 100%; height: 200px; background: #eee; border-radius: 8px; margin-top: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px dashed #ccc; }
+        .preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
     </style>
 </head>
 <body>
-
     <header>
         <h1>Digital File Vault</h1>
         <p class="subtitle">Upload and manage school documents, images, and student records.</p>
     </header>
-
     <main id="module-container">
         <div id="uploader-target">
             <p style="text-align: center; color: #94a3b8;">Loading Uploader Module...</p>
         </div>
     </main>
-
     <script>
         async function loadUploader() {
             try {
                 const response = await fetch('uploadermenu.html');
                 if (!response.ok) throw new Error('uploadermenu.html not found');
-                
                 const htmlText = await response.text();
                 const target = document.getElementById('uploader-target');
                 target.innerHTML = htmlText;
-                
                 const scripts = target.getElementsByTagName('script');
                 for (let i = 0; i < scripts.length; i++) {
                     const newScript = document.createElement('script');
@@ -45,8 +42,7 @@
                     document.body.appendChild(newScript);
                 }
             } catch (err) {
-                document.getElementById('uploader-target').innerHTML = 
-                    `<p style="color:red; text-align:center;">Error: ${err.message}</p>`;
+                document.getElementById('uploader-target').innerHTML = `<p style="color:red; text-align:center;">Error: ${err.message}</p>`;
             }
         }
         window.onload = loadUploader;
