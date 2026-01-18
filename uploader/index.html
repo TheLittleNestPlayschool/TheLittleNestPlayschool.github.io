@@ -1,199 +1,49 @@
-<div id="setupView">
-    <div style="margin-bottom:15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#475569;">1. SCHOOL LOCATION</label>
-        <select id="franchiseSelect" onchange="loadDependencies()">
-            <option value="">-- Choose Location --</option>
-        </select>
-    </div>
-
-    <div id="teacherSection" style="display:none; margin-bottom:15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#475569;">2. TEACHER NAME</label>
-        <select id="teacherSelect">
-            <option value="">-- Select Teacher --</option>
-        </select>
-    </div>
-
-    <div id="filePickerSection" style="display:none; text-align:center; padding:30px 20px; border:2px dashed #cbd5e1; border-radius:12px; background:#f8fafc;">
-        <p style="margin-bottom:10px; color:#1e3a8a; font-weight:bold;">3. Select Photos/Videos (Max 20)</p>
-        <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="startQueue()" style="font-size:14px;">
-    </div>
-</div>
-
-<div id="batchCard" class="card" style="display:none;">
-    <div class="preview-area" id="previewContainer">
-        </div>
-    <div class="form-padding">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">4. WHO IS IN THIS PHOTO?</label>
-        <select id="studentSelect">
-            <option value="">-- Select Student --</option>
-        </select>
-        <button id="uploadBtn" onclick="queueAndNext()" class="btn-upload">Tag & Next Photo</button>
-    </div>
-</div>
-
-<div id="finalSummary" class="card" style="display:none; padding:20px;">
-    <h3 style="margin-top:0; color:#1e3a8a;">The Little Nest Vault</h3>
-    <p style="font-size:14px; color:#64748b;">Batch processing! Wait for all items to turn green.</p>
-    <div id="summaryGrid" class="summary-grid"></div>
-    <button onclick="location.reload()" class="btn-upload" style="margin-top:20px; background:#64748b;">Start New Batch</button>
-</div>
-
-<script>
-    const X_BASE = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL';
-    const W_END = 's3.ap-southeast-1.wasabisys.com';
-    const BKT = 'the-little-nest-media';
-    const AK = 'P7GI5LQMI4OX2SPAV1YA';
-    const SK = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
-
-    let fileQueue = [];
-    let currentFileIndex = 0;
-    let backgroundQueue = [];
-    let isWorking = false;
-
-    const s3Client = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
-
-    async function initMenu() {
-        const r = await fetch(`${X_BASE}/uploader_get_franchises`);
-        const data = await r.json();
-        const sel = document.getElementById('franchiseSelect');
-        data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
-    }
-
-    async function loadDependencies() {
-        const fid = document.getElementById('franchiseSelect').value;
-        if(!fid) return;
-        document.getElementById('teacherSection').style.display = 'block';
-        document.getElementById('filePickerSection').style.display = 'block';
-        const [t, s] = await Promise.all([
-            fetch(`${X_BASE}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
-            fetch(`${X_BASE}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
-        ]);
-        const ts = document.getElementById('teacherSelect');
-        ts.innerHTML = '<option value="">-- Select Teacher --</option>';
-        t.forEach(item => ts.innerHTML += `<option value="${item.id}">${item.first_name}</option>`);
-        const ss = document.getElementById('studentSelect');
-        ss.innerHTML = '<option value="">-- Select Student --</option>';
-        s.forEach(item => ss.innerHTML += `<option value="${item.id}">${item.name}</option>`);
-    }
-
-    function startQueue() {
-        const files = document.getElementById('fileInput').files;
-        if (!document.getElementById('teacherSelect').value) return alert("Select teacher first.");
-        if (files.length === 0) return;
-        fileQueue = Array.from(files);
-        currentFileIndex = 0;
-        document.getElementById('setupView').style.display = 'none';
-        document.getElementById('batchCard').style.display = 'block';
-        showCurrentFile();
-    }
-
-    function showCurrentFile() {
-        const file = fileQueue[currentFileIndex];
-        const container = document.getElementById('previewContainer');
-        const badgeText = `PHOTO ${currentFileIndex + 1} OF ${fileQueue.length}`;
-        
-        // Clear current view entirely to prevent "sticking"
-        container.innerHTML = `<div class="batch-badge">${badgeText}</div><div style="color:white;">Loading next...</div>`;
-        document.getElementById('studentSelect').value = "";
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            container.innerHTML = `<div class="batch-badge">${badgeText}</div><img src="${e.target.result}" id="activeImg">`;
-        };
-        reader.readAsDataURL(file);
-    }
-
-    function queueAndNext() {
-        const sid = document.getElementById('studentSelect').value;
-        const sName = document.getElementById('studentSelect').options[document.getElementById('studentSelect').selectedIndex].text;
-        if (!sid) return alert("Select a student.");
-
-        const task = {
-            file: fileQueue[currentFileIndex],
-            sid: sid,
-            sName: sName,
-            tid: document.getElementById('teacherSelect').value,
-            fid: document.getElementById('franchiseSelect').value,
-            localSrc: document.getElementById('activeImg') ? document.getElementById('activeImg').src : null
-        };
-
-        backgroundQueue.push(task);
-        document.getElementById('task-counter').style.display = 'block';
-        document.getElementById('pending-count').innerText = backgroundQueue.length;
-
-        // Start processing background tasks if not already running
-        if (!isWorking) processBackgroundQueue();
-
-        // Advance UI
-        currentFileIndex++;
-        if (currentFileIndex < fileQueue.length) {
-            showCurrentFile();
-        } else {
-            document.getElementById('batchCard').style.display = 'none';
-            document.getElementById('finalSummary').style.display = 'block';
-            renderSummary();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Little Nest Vault</title>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1500.0.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    <style>
+        :root { --primary: #1e3a8a; --bg: #f1f5f9; --success: #059669; }
+        body { font-family: -apple-system, sans-serif; background-color: var(--bg); margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        header { width: 100%; padding: 15px; text-align: center; background: white; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: var(--primary); }
+        #module-container { width: 100%; max-width: 450px; padding: 15px; box-sizing: border-box; flex-grow: 1; padding-bottom: 100px; }
+        .card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .preview-area { width: 100%; height: 350px; background: #334155; display: flex; align-items: center; justify-content: center; position: relative; }
+        .preview-area img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .batch-badge { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.6); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; backdrop-filter: blur(4px); }
+        .form-padding { padding: 20px; }
+        select { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 16px; margin-bottom: 15px; background: white; }
+        .btn-upload { width: 100%; background: var(--primary); color: white; border: none; padding: 16px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        .summary-item { width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: #e2e8f0; border: 3px solid #cbd5e1; position: relative; }
+        .summary-name { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.7); color: white; font-size: 9px; text-align: center; padding: 3px 0; font-weight: bold; }
+        #task-counter { position: fixed; bottom: 0; width: 100%; background: #475569; color: white; padding: 15px; text-align: center; font-size: 14px; display: none; font-weight: bold; z-index: 200; }
+    </style>
+</head>
+<body>
+    <header>The Little Nest Vault</header>
+    <main id="module-container"><div id="uploader-target">Loading Vault...</div></main>
+    <div id="task-counter">Upload Queue: <span id="pending-count">0</span> remaining</div>
+    <script>
+        async function loadUploader() {
+            try {
+                const response = await fetch('uploadermenu.html');
+                const htmlText = await response.text();
+                const target = document.getElementById('uploader-target');
+                target.innerHTML = htmlText;
+                const scripts = target.getElementsByTagName('script');
+                for (let i = 0; i < scripts.length; i++) {
+                    const newScript = document.createElement('script');
+                    newScript.text = scripts[i].innerHTML;
+                    document.body.appendChild(newScript);
+                }
+            } catch (err) { console.error(err); }
         }
-    }
-
-    async function processBackgroundQueue() {
-        if (backgroundQueue.length === 0) {
-            isWorking = false;
-            document.getElementById('task-counter').style.background = "#059669";
-            document.getElementById('task-counter').innerText = "All Secure! ✓";
-            return;
-        }
-
-        isWorking = true;
-        const currentTask = backgroundQueue[0];
-        const domId = "sum-" + currentTask.file.name.replace(/[^a-z0-9]/gi, '');
-
-        try {
-            let processedFile = currentTask.file;
-            if (currentTask.file.type.startsWith('image/')) {
-                processedFile = await imageCompression(currentTask.file, { maxSizeMB: 0.6, maxWidthOrHeight: 1400 });
-            }
-
-            const key = `vault/franchise_${currentTask.fid}/student_${currentTask.sid}/${Date.now()}_${processedFile.name}`;
-            const upload = await s3Client.upload({ Bucket: BKT, Key: key, Body: processedFile, ContentType: processedFile.type, ACL: 'public-read' }).promise();
-
-            await fetch(`${X_BASE}/uploader_register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    franchise_id: parseInt(currentTask.fid),
-                    student_id: parseInt(currentTask.sid),
-                    teacher_id: parseInt(currentTask.tid),
-                    file_url: upload.Location,
-                    file_type: currentTask.file.type.includes('image') ? 'image' : 'video'
-                })
-            });
-
-            const el = document.getElementById(domId);
-            if(el) {
-                el.style.borderColor = "#059669";
-                if(currentTask.localSrc) el.innerHTML = `<img src="${currentTask.localSrc}"><div class="summary-name">${currentTask.sName}</div>`;
-            }
-        } catch (e) {
-            const el = document.getElementById(domId);
-            if(el) el.style.borderColor = "red";
-        }
-
-        backgroundQueue.shift(); // Remove finished item
-        document.getElementById('pending-count').innerText = backgroundQueue.length;
-        processBackgroundQueue(); // Loop to next item
-    }
-
-    function renderSummary() {
-        const grid = document.getElementById('summaryGrid');
-        grid.innerHTML = "";
-        fileQueue.forEach(f => {
-            const div = document.createElement('div');
-            div.className = 'summary-item';
-            div.id = "sum-" + f.name.replace(/[^a-z0-9]/gi, '');
-            div.innerHTML = `<div style="padding:10px; font-size:10px;">Securing...</div>`;
-            grid.appendChild(div);
-        });
-    }
-
-    initMenu();
-</script>
+        window.onload = loadUploader;
+    </script>
+</body>
+</html>
