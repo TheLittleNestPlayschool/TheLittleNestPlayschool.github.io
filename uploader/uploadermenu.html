@@ -1,168 +1,157 @@
-<div style="background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
-    <div id="setupForm">
-        <div style="margin-bottom: 15px;">
-            <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">1. SCHOOL LOCATION</label>
-            <select id="franchiseSelect" onchange="loadLists()" style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;">
-                <option value="">-- Choose Location --</option>
-            </select>
-        </div>
+<div class="card">
+    <div id="setupForm" class="form-body">
+        <label>1. School Location</label>
+        <select id="franchiseSelect" onchange="syncData()">
+            <option value="">-- Select Location --</option>
+        </select>
 
-        <div style="margin-bottom: 15px;">
-            <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">2. TEACHER</label>
-            <select id="teacherSelect" style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;">
-                <option value="">-- Select Teacher --</option>
-            </select>
-        </div>
+        <label>2. Teacher Name</label>
+        <select id="teacherSelect" disabled>
+            <option value="">-- Choose Teacher --</option>
+        </select>
 
-        <div style="margin-bottom: 15px;">
-            <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#1e3a8a;">3. SELECT BATCH (MAX 10)</label>
-            <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="startBatch()" style="width:100%; font-size:14px;">
+        <label>3. Upload Photos (Up to 10)</label>
+        <div style="padding: 30px; border: 2px dashed #cbd5e1; border-radius: 12px; text-align: center; background: #f8fafc; position: relative;">
+            <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="initBatch()" style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
+            <span style="color: #1e3a8a; font-weight: 600;">Tap to select photos</span>
         </div>
     </div>
 
-    <div id="taggingArea" style="display:none;">
-        <div class="preview-box" id="previewBox">
-            <div id="batchCounter" class="batch-badge"></div>
+    <div id="taggingUI" style="display:none;">
+        <div class="preview-area" id="previewContainer">
+            <div id="photoCounter" class="counter-badge"></div>
         </div>
-
-        <div style="margin-bottom: 20px;">
-            <label style="display:block; font-weight:bold; margin-bottom:5px; font-size:12px; color:#64748b;">4. WHO IS IN THIS PICTURE?</label>
-            <select id="studentSelect" style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:16px;">
-                <option value="">-- Select Student --</option>
+        <div class="form-body">
+            <label>Who is in this photo?</label>
+            <select id="studentSelect">
+                <option value="">-- Identify Student --</option>
             </select>
+            <button id="nextBtn" onclick="uploadAndNext()" class="btn-action">Secure & Next</button>
+            <div id="status-bar">Ready.</div>
         </div>
-
-        <button id="uploadBtn" onclick="handleUpload()" style="width:100%; background:#1e3a8a; color:white; border:none; padding:18px; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer;">
-            Upload & Next Photo
-        </button>
     </div>
-
-    <script>
-        const X_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL';
-        const W_END = 's3.ap-southeast-1.wasabisys.com';
-        const BKT = 'the-little-nest-media';
-        const AK = 'P7GI5LQMI4OX2SPAV1YA';
-        const SK = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
-
-        let currentBatch = [];
-        let index = 0;
-        const s3 = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
-
-        // Safely update status without causing a 'null' crash
-        function updateStatus(text) {
-            const el = document.getElementById('statusMessage');
-            if (el) el.innerText = text;
-            else console.log("Status update (el not found):", text);
-        }
-
-        async function init() {
-            try {
-                const r = await fetch(`${X_URL}/uploader_get_franchises`);
-                const data = await r.json();
-                const sel = document.getElementById('franchiseSelect');
-                data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
-            } catch (e) { updateStatus("Error loading franchises."); }
-        }
-
-        async function loadLists() {
-            const fid = document.getElementById('franchiseSelect').value;
-            if(!fid) return;
-            updateStatus("Syncing school records...");
-            try {
-                const [t, s] = await Promise.all([
-                    fetch(`${X_URL}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
-                    fetch(`${X_URL}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
-                ]);
-                const tSel = document.getElementById('teacherSelect');
-                tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
-                t.forEach(item => tSel.innerHTML += `<option value="${item.id}">${item.first_name}</option>`);
-                
-                const sSel = document.getElementById('studentSelect');
-                sSel.innerHTML = '<option value="">-- Select Student --</option>';
-                s.forEach(item => sSel.innerHTML += `<option value="${item.id}">${item.name}</option>`);
-                updateStatus("Vault synced. Ready for batch.");
-            } catch (e) { updateStatus("Sync error. Check connection."); }
-        }
-
-        function startBatch() {
-            const files = document.getElementById('fileInput').files;
-            if (!document.getElementById('teacherSelect').value) return alert("Select teacher first.");
-            if (files.length === 0) return;
-            
-            currentBatch = Array.from(files).slice(0, 10);
-            index = 0;
-            document.getElementById('setupForm').style.display = 'none';
-            document.getElementById('taggingArea').style.display = 'block';
-            showPhoto();
-        }
-
-        function showPhoto() {
-            const file = currentBatch[index];
-            const box = document.getElementById('previewBox');
-            const badge = document.getElementById('batchCounter');
-            const counterText = `PHOTO ${index + 1} OF ${currentBatch.length}`;
-            
-            if (badge) badge.innerText = counterText;
-            document.getElementById('studentSelect').value = "";
-
-            if (file.type.startsWith('image/')) {
-                const r = new FileReader();
-                r.onload = (e) => box.innerHTML = `<div id="batchCounter" class="batch-badge">${counterText}</div><img src="${e.target.result}">`;
-                r.readAsDataURL(file);
-            } else {
-                box.innerHTML = `<div id="batchCounter" class="batch-badge">${counterText}</div><div style="color:white;text-align:center;">🎬<br>Video Ready</div>`;
-            }
-        }
-
-        async function handleUpload() {
-            let file = currentBatch[index];
-            const sid = document.getElementById('studentSelect').value;
-            const tid = document.getElementById('teacherSelect').value;
-            const fid = document.getElementById('franchiseSelect').value;
-
-            if (!sid) return alert("Please identify the student.");
-
-            const btn = document.getElementById('uploadBtn');
-            btn.disabled = true;
-
-            try {
-                if (file.type.startsWith('image/')) {
-                    updateStatus("Optimizing batch photo...");
-                    file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
-                }
-
-                updateStatus(`Uploading ${index + 1} of ${currentBatch.length}...`);
-                const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
-                const up = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
-
-                updateStatus("Saving to Xano database...");
-                await fetch(`${X_URL}/uploader_register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        franchise_id: parseInt(fid),
-                        student_id: parseInt(sid),
-                        teacher_id: parseInt(tid),
-                        file_url: up.Location,
-                        file_type: file.type.includes('image') ? 'image' : 'video'
-                    })
-                });
-
-                index++;
-                if (index < currentBatch.length) {
-                    updateStatus("Saved. Loading next...");
-                    showPhoto();
-                } else {
-                    updateStatus("✓ Batch Secured!");
-                    alert("The entire batch has been successfully secured.");
-                    location.reload();
-                }
-            } catch (e) {
-                updateStatus("Error: " + e.message);
-            } finally {
-                btn.disabled = false;
-            }
-        }
-        init();
-    </script>
 </div>
+
+<script>
+    const API_BASE = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL';
+    const WASABI_ENDPOINT = 's3.ap-southeast-1.wasabisys.com';
+    const BUCKET_NAME = 'the-little-nest-media';
+    const ACCESS_KEY = 'P7GI5LQMI4OX2SPAV1YA';
+    const SECRET_KEY = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
+
+    let batch = [];
+    let activeIdx = 0;
+    const s3 = new AWS.S3({ endpoint: WASABI_ENDPOINT, accessKeyId: ACCESS_KEY, secretAccessKey: SECRET_KEY, s3ForcePathStyle: true, signatureVersion: 'v4' });
+
+    function setStatus(msg) {
+        const el = document.getElementById('status-bar');
+        if (el) el.innerText = msg;
+    }
+
+    async function init() {
+        const r = await fetch(`${API_BASE}/uploader_get_franchises`);
+        const data = await r.json();
+        const sel = document.getElementById('franchiseSelect');
+        data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
+    }
+
+    async function syncData() {
+        const fid = document.getElementById('franchiseSelect').value;
+        if (!fid) return;
+        setStatus("Syncing records...");
+        const [t, s] = await Promise.all([
+            fetch(`${API_BASE}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
+            fetch(`${API_BASE}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
+        ]);
+        
+        const tSel = document.getElementById('teacherSelect');
+        tSel.innerHTML = '<option value="">-- Choose Teacher --</option>';
+        t.forEach(item => tSel.innerHTML += `<option value="${item.id}">${item.first_name}</option>`);
+        tSel.disabled = false;
+
+        const sSel = document.getElementById('studentSelect');
+        sSel.innerHTML = '<option value="">-- Identify Student --</option>';
+        s.forEach(item => sSel.innerHTML += `<option value="${item.id}">${item.name}</option>`);
+        setStatus("Ready.");
+    }
+
+    function initBatch() {
+        const files = document.getElementById('fileInput').files;
+        if (!document.getElementById('teacherSelect').value) return alert("Select teacher first.");
+        if (files.length === 0) return;
+        
+        batch = Array.from(files).slice(0, 10);
+        activeIdx = 0;
+        
+        document.getElementById('setupForm').style.display = 'none';
+        document.getElementById('taggingUI').style.display = 'block';
+        loadActivePhoto();
+    }
+
+    function loadActivePhoto() {
+        const file = batch[activeIdx];
+        const container = document.getElementById('previewContainer');
+        const badge = document.getElementById('photoCounter');
+        
+        badge.innerText = `PHOTO ${activeIdx + 1} OF ${batch.length}`;
+        document.getElementById('studentSelect').value = "";
+
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => container.innerHTML = `<div id="photoCounter" class="counter-badge">${badge.innerText}</div><img src="${e.target.result}">`;
+            reader.readAsDataURL(file);
+        } else {
+            container.innerHTML = `<div id="photoCounter" class="counter-badge">${badge.innerText}</div><div style="color:white;text-align:center;">🎬<br>Video Prepared</div>`;
+        }
+    }
+
+    async function uploadAndNext() {
+        let file = batch[activeIdx];
+        const sid = document.getElementById('studentSelect').value;
+        const tid = document.getElementById('teacherSelect').value;
+        const fid = document.getElementById('franchiseSelect').value;
+
+        if (!sid) return alert("Please select a student.");
+
+        const btn = document.getElementById('nextBtn');
+        btn.disabled = true;
+
+        try {
+            if (file.type.startsWith('image/')) {
+                setStatus("Optimizing...");
+                file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
+            }
+
+            setStatus(`Securing ${activeIdx + 1}/${batch.length}...`);
+            const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
+            const upload = await s3.upload({ Bucket: BUCKET_NAME, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
+
+            await fetch(`${API_BASE}/uploader_register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    franchise_id: parseInt(fid),
+                    student_id: parseInt(sid),
+                    teacher_id: parseInt(tid),
+                    file_url: upload.Location,
+                    file_type: file.type.includes('image') ? 'image' : 'video'
+                })
+            });
+
+            activeIdx++;
+            if (activeIdx < batch.length) {
+                setStatus("Saved! Next student...");
+                loadActivePhoto();
+            } else {
+                setStatus("Vault Secured! ✓");
+                alert("Batch successfully saved to The Little Nest Vault.");
+                location.reload();
+            }
+        } catch (e) {
+            setStatus("Vault Error: " + e.message);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+    init();
+</script>
