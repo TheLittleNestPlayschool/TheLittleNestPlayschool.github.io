@@ -1,1 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Little Nest | Digital File Vault</title>
+    <style>
+        :root { --primary: #1e3a8a; --bg: #f8fafc; }
+        body { font-family: sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        header { width: 100%; padding: 40px 20px; text-align: center; background: white; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px; }
+        h1 { color: var(--primary); margin: 0; font-size: 28px; }
+        p { color: #64748b; margin-top: 10px; }
+        #module-container { width: 100%; max-width: 500px; padding: 20px; }
+        .loading-text { text-align: center; color: #94a3b8; font-style: italic; }
+    </style>
+</head>
+<body>
 
+    <header>
+        <h1>Digital File Vault</h1>
+        <p>Upload and manage school documents, images, and student records.</p>
+    </header>
+
+    <main id="module-container">
+        <div id="uploader-target">
+            <p class="loading-text">Loading Uploader Module...</p>
+        </div>
+    </main>
+
+    <script>
+        // This script pulls the content of your uploadermenu.html into this page
+        async function loadUploader() {
+            try {
+                const response = await fetch('uploadermenu.html');
+                if (!response.ok) throw new Error('Menu file not found');
+                const html = await response.json(); // Use .text() if file is raw HTML
+                document.getElementById('uploader-target').innerHTML = await response.text();
+                
+                // If your uploadermenu.html has <script> tags, they need to be manually executed
+                const scripts = document.getElementById('uploader-target').getElementsByTagName('script');
+                for (let n = 0; n < scripts.length; n++) {
+                    eval(scripts[n].innerHTML);
+                }
+            } catch (err) {
+                document.getElementById('uploader-target').innerHTML = 
+                    `<p style="color:red; text-align:center;">Error: Could not load the uploader menu. Please ensure uploadermenu.html exists in this folder.</p>`;
+            }
+        }
+
+        window.onload = loadUploader;
+    </script>
+</body>
+</html>
