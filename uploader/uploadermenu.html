@@ -1,53 +1,102 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Little Nest | Digital File Vault</title>
-    <style>
-        :root { --primary: #1e3a8a; --bg: #f8fafc; }
-        body { font-family: sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        header { width: 100%; padding: 40px 20px; text-align: center; background: white; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px; }
-        h1 { color: var(--primary); margin: 0; font-size: 28px; }
-        p { color: #64748b; margin-top: 10px; }
-        #module-container { width: 100%; max-width: 500px; padding: 20px; }
-        .loading-text { text-align: center; color: #94a3b8; font-style: italic; }
-    </style>
-</head>
-<body>
+<div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1500.0.min.js"></script>
+    
+    <div style="margin-bottom: 20px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">1. Select School Location</label>
+        <select id="franchiseSelect" onchange="loadDependencies()" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+            <option value="">-- Choose Location --</option>
+        </select>
+    </div>
 
-    <header>
-        <h1>Digital File Vault</h1>
-        <p>Upload and manage school documents, images, and student records.</p>
-    </header>
+    <div style="margin-bottom: 20px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">2. Teacher Name</label>
+        <select id="teacherSelect" disabled style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+            <option value="">-- Select Teacher --</option>
+        </select>
+    </div>
 
-    <main id="module-container">
-        <div id="uploader-target">
-            <p class="loading-text">Loading Uploader Module...</p>
-        </div>
-    </main>
+    <div style="margin-bottom: 20px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">3. Student Name</label>
+        <select id="studentSelect" disabled style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+            <option value="">-- Select Student --</option>
+        </select>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">4. Select File</label>
+        <input type="file" id="fileInput" accept="image/*,video/*" style="width:100%;">
+    </div>
+
+    <button id="uploadBtn" onclick="handleUpload()" style="width:100%; background:#1e3a8a; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer;">
+        Upload to Vault
+    </button>
+    <div id="status" style="margin-top:15px; font-size:14px; text-align:center; color:#666;">Initializing...</div>
 
     <script>
-        // This script pulls the content of your uploadermenu.html into this page
-        async function loadUploader() {
+        const X_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL';
+        const W_END = 's3.ap-southeast-1.wasabisys.com';
+        const BKT = 'the-little-nest-media';
+        const AK = 'P7GI5LQMI4OX2SPAV1YA';
+        const SK = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
+
+        const s3Conn = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
+
+        async function initMenu() {
             try {
-                const response = await fetch('uploadermenu.html');
-                if (!response.ok) throw new Error('Menu file not found');
-                const html = await response.json(); // Use .text() if file is raw HTML
-                document.getElementById('uploader-target').innerHTML = await response.text();
-                
-                // If your uploadermenu.html has <script> tags, they need to be manually executed
-                const scripts = document.getElementById('uploader-target').getElementsByTagName('script');
-                for (let n = 0; n < scripts.length; n++) {
-                    eval(scripts[n].innerHTML);
-                }
-            } catch (err) {
-                document.getElementById('uploader-target').innerHTML = 
-                    `<p style="color:red; text-align:center;">Error: Could not load the uploader menu. Please ensure uploadermenu.html exists in this folder.</p>`;
-            }
+                const r = await fetch(`${X_URL}/uploader_get_franchises`);
+                const data = await r.json();
+                const sel = document.getElementById('franchiseSelect');
+                data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
+                document.getElementById('status').innerText = "Ready.";
+            } catch (e) { document.getElementById('status').innerText = "Xano Error."; }
         }
 
-        window.onload = loadUploader;
+        async function loadDependencies() {
+            const fid = document.getElementById('franchiseSelect').value;
+            if(!fid) return;
+            document.getElementById('status').innerText = "Syncing lists...";
+            const [t, s] = await Promise.all([
+                fetch(`${X_URL}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
+                fetch(`${X_URL}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
+            ]);
+            const ts = document.getElementById('teacherSelect');
+            ts.innerHTML = '<option value="">-- Select Teacher --</option>';
+            t.forEach(item => ts.innerHTML += `<option value="${item.id}">${item.first_name}</option>`);
+            ts.disabled = false;
+            const ss = document.getElementById('studentSelect');
+            ss.innerHTML = '<option value="">-- Select Student --</option>';
+            s.forEach(item => ss.innerHTML += `<option value="${item.id}">${item.name}</option>`);
+            ss.disabled = false;
+            document.getElementById('status').innerText = "Ready to upload.";
+        }
+
+        async function handleUpload() {
+            const file = document.getElementById('fileInput').files[0];
+            const fid = document.getElementById('franchiseSelect').value;
+            const sid = document.getElementById('studentSelect').value;
+            const tid = document.getElementById('teacherSelect').value;
+            if (!file || !fid || !sid || !tid) return alert("Select all fields.");
+
+            const btn = document.getElementById('uploadBtn');
+            btn.disabled = true;
+            document.getElementById('status').innerText = "Uploading...";
+            const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
+
+            try {
+                const up = await s3Conn.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
+                await fetch(`${X_URL}/uploader_register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        franchise_id: parseInt(fid), student_id: parseInt(sid), teacher_id: parseInt(tid),
+                        file_url: up.Location, file_type: file.type.includes('image') ? 'image' : 'video'
+                    })
+                });
+                document.getElementById('status').innerText = "Success!";
+                document.getElementById('fileInput').value = "";
+            } catch (e) { document.getElementById('status').innerText = "Error: " + e.message; }
+            finally { btn.disabled = false; }
+        }
+        initMenu();
     </script>
-</body>
-</html>
+</div>
