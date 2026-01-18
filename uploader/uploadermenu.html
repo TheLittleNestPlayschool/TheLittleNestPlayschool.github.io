@@ -45,28 +45,33 @@
     }
 
     async function init() {
-        const r = await fetch(`${X_API}/uploader_get_franchises`);
-        const data = await r.json();
-        const sel = document.getElementById('franchiseSelect');
-        data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
+        try {
+            const r = await fetch(`${X_API}/uploader_get_franchises`);
+            const data = await r.json();
+            const sel = document.getElementById('franchiseSelect');
+            data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
+        } catch (e) { console.error("Init failed", e); }
     }
 
     async function syncVaultData() {
         const fid = document.getElementById('franchiseSelect').value;
         if (!fid) return;
         setStatus("Syncing...");
-        const [t, s] = await Promise.all([
-            fetch(`${X_API}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
-            fetch(`${X_API}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
-        ]);
-        const tSel = document.getElementById('teacherSelect');
-        tSel.innerHTML = '<option value="">-- Choose Teacher --</option>';
-        t.forEach(item => tSel.innerHTML += `<option value="${item.id}">${item.first_name}</option>`);
-        tSel.disabled = false;
-        const sSel = document.getElementById('studentSelect');
-        sSel.innerHTML = '<option value="">-- Identify Student --</option>';
-        s.forEach(item => sSel.innerHTML += `<option value="${item.id}">${item.name}</option>`);
-        setStatus("Ready.");
+        try {
+            const [t, s] = await Promise.all([
+                fetch(`${X_API}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
+                fetch(`${X_API}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
+            ]);
+            const tSel = document.getElementById('teacherSelect');
+            tSel.innerHTML = '<option value="">-- Choose Teacher --</option>';
+            t.forEach(item => tSel.innerHTML += `<option value="${item.id}">${item.first_name}</option>`);
+            tSel.disabled = false;
+            
+            const sSel = document.getElementById('studentSelect');
+            sSel.innerHTML = '<option value="">-- Identify Student --</option>';
+            s.forEach(item => sSel.innerHTML += `<option value="${item.id}">${item.name}</option>`);
+            setStatus("Ready.");
+        } catch (e) { setStatus("Sync error. Please refresh."); }
     }
 
     function startBatch() {
@@ -86,10 +91,11 @@
         const badgeText = `PHOTO ${idx + 1} OF ${files.length}`;
         container.innerHTML = `<div class="counter-badge">${badgeText}</div><div style="color:white;">Loading...</div>`;
         document.getElementById('studentSelect').value = "";
+        
         const reader = new FileReader();
         reader.onload = (e) => container.innerHTML = `<div class="counter-badge">${badgeText}</div><img src="${e.target.result}">`;
         reader.readAsDataURL(file);
-        setStatus(`Processing ${idx + 1} of ${files.length}`);
+        setStatus(`Tagging ${idx + 1} of ${files.length}`);
     }
 
     async function processUpload() {
@@ -105,8 +111,10 @@
 
         try {
             if (file.type.startsWith('image/')) {
+                setStatus("Optimizing...");
                 file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
             }
+            
             const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
             const up = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
 
@@ -114,22 +122,36 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    franchise_id: parseInt(fid), student_id: parseInt(sid), teacher_id: parseInt(tid),
-                    file_url: up.Location, file_type: file.type.includes('image') ? 'image' : 'video'
+                    franchise_id: parseInt(fid), 
+                    student_id: parseInt(sid), 
+                    teacher_id: parseInt(tid),
+                    file_url: up.Location, 
+                    file_type: file.type.includes('image') ? 'image' : 'video'
                 })
             });
 
             idx++;
             if (idx < files.length) {
                 loadPhoto();
+                btn.disabled = false;
             } else {
+                // FIRE AND FORGET: Trigger Xano background cleanup
+                fetch(`${X_API}/uploader_cleanup_batch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        student_id: parseInt(sid), 
+                        franchise_id: parseInt(fid) 
+                    })
+                });
+
                 setStatus("Batch successfully saved to The Little Nest Vault.");
                 btn.innerText = "Finish & Clear";
+                btn.disabled = false;
                 btn.onclick = () => location.reload();
             }
         } catch (e) {
-            setStatus("Error. Please try again.");
-        } finally {
+            setStatus("Upload error. Please try again.");
             btn.disabled = false;
         }
     }
