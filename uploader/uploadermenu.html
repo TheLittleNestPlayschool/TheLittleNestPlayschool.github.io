@@ -1,6 +1,4 @@
 <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1500.0.min.js"></script>
-    
     <div style="margin-bottom: 20px;">
         <label style="display:block; font-weight:bold; margin-bottom:5px;">1. Select School Location</label>
         <select id="franchiseSelect" onchange="loadDependencies()" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
@@ -33,124 +31,79 @@
     <div id="status" style="margin-top:15px; font-size:14px; text-align:center; color:#666;">Initializing...</div>
 
     <script>
-        // --- CONFIGURATION ---
-        const XANO_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL';
-        const WASABI_ENDPOINT = 's3.ap-southeast-1.wasabisys.com';
-        const BUCKET_NAME = 'the-little-nest-media';
-        const ACCESS_KEY = 'P7GI5LQMI4OX2SPAV1YA';
-        const SECRET_KEY = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
+        const X_BASE = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL';
+        const W_END = 's3.ap-southeast-1.wasabisys.com';
+        const BKT = 'the-little-nest-media';
+        const AK = 'P7GI5LQMI4OX2SPAV1YA';
+        const SK = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
 
-        // Set up Wasabi S3 connection
-        const s3 = new AWS.S3({ 
-            endpoint: WASABI_ENDPOINT, 
-            accessKeyId: ACCESS_KEY, 
-            secretAccessKey: SECRET_KEY, 
+        // This will now work because AWS is pre-loaded in the index.html
+        const s3Client = new AWS.S3({ 
+            endpoint: W_END, 
+            accessKeyId: AK, 
+            secretAccessKey: SK, 
             s3ForcePathStyle: true, 
             signatureVersion: 'v4' 
         });
 
-        // 1. Initial Load: Fetch Franchises
         async function initMenu() {
             try {
-                console.log("Fetching franchises from Xano...");
-                const response = await fetch(`${XANO_BASE_URL}/uploader_get_franchises`);
-                if (!response.ok) throw new Error('Network response was not ok');
-                
-                const data = await response.json();
-                const select = document.getElementById('franchiseSelect');
-                
-                data.forEach(f => { 
-                    select.innerHTML += `<option value="${f.id}">${f.name}</option>`; 
-                });
-                
+                const r = await fetch(`${X_BASE}/uploader_get_franchises`);
+                const data = await r.json();
+                const sel = document.getElementById('franchiseSelect');
+                data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
                 document.getElementById('status').innerText = "Ready. Select a location.";
-            } catch (err) {
-                console.error("Xano Error:", err);
-                document.getElementById('status').innerText = "Connection Error. Check Xano CORS.";
-            }
+            } catch (e) { document.getElementById('status').innerText = "Xano Connection Error."; }
         }
 
-        // 2. Load Teachers and Students when Franchise is selected
         async function loadDependencies() {
             const fid = document.getElementById('franchiseSelect').value;
             if(!fid) return;
-            
-            document.getElementById('status').innerText = "Syncing class lists...";
-            
+            document.getElementById('status').innerText = "Syncing lists...";
             try {
-                const [tData, sData] = await Promise.all([
-                    fetch(`${XANO_BASE_URL}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
-                    fetch(`${XANO_BASE_URL}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
+                const [t, s] = await Promise.all([
+                    fetch(`${X_BASE}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
+                    fetch(`${X_BASE}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
                 ]);
-
-                const tSelect = document.getElementById('teacherSelect');
-                tSelect.innerHTML = '<option value="">-- Select Teacher --</option>';
-                tData.forEach(item => { tSelect.innerHTML += `<option value="${item.id}">${item.first_name}</option>`; });
-                tSelect.disabled = false;
-
-                const sSelect = document.getElementById('studentSelect');
-                sSelect.innerHTML = '<option value="">-- Select Student --</option>';
-                sData.forEach(item => { sSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`; });
-                sSelect.disabled = false;
-
+                const ts = document.getElementById('teacherSelect');
+                ts.innerHTML = '<option value="">-- Select Teacher --</option>';
+                t.forEach(item => ts.innerHTML += `<option value="${item.id}">${item.first_name}</option>`);
+                ts.disabled = false;
+                const ss = document.getElementById('studentSelect');
+                ss.innerHTML = '<option value="">-- Select Student --</option>';
+                s.forEach(item => ss.innerHTML += `<option value="${item.id}">${item.name}</option>`);
+                ss.disabled = false;
                 document.getElementById('status').innerText = "Ready to upload.";
-            } catch (err) {
-                document.getElementById('status').innerText = "Error syncing lists.";
-            }
+            } catch (e) { document.getElementById('status').innerText = "Error syncing lists."; }
         }
 
-        // 3. Handle the direct upload to Wasabi and Registration to Xano
         async function handleUpload() {
             const file = document.getElementById('fileInput').files[0];
             const fid = document.getElementById('franchiseSelect').value;
             const sid = document.getElementById('studentSelect').value;
             const tid = document.getElementById('teacherSelect').value;
-
-            if (!file || !fid || !sid || !tid) return alert("Please fill all fields.");
+            if (!file || !fid || !sid || !tid) return alert("Select all fields.");
 
             const btn = document.getElementById('uploadBtn');
             btn.disabled = true;
             document.getElementById('status').innerText = "Uploading to Wasabi...";
-
             const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
 
             try {
-                // A. Direct Upload to Wasabi
-                const upload = await s3.upload({ 
-                    Bucket: BUCKET_NAME, 
-                    Key: key, 
-                    Body: file, 
-                    ContentType: file.type, 
-                    ACL: 'public-read' 
-                }).promise();
-                
-                document.getElementById('status').innerText = "Registering file in database...";
-
-                // B. Register file link in Xano
-                const register = await fetch(`${XANO_BASE_URL}/uploader_register`, {
+                const up = await s3Client.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
+                await fetch(`${X_BASE}/uploader_register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        franchise_id: parseInt(fid),
-                        student_id: parseInt(sid),
-                        teacher_id: parseInt(tid),
-                        file_url: upload.Location,
-                        file_type: file.type.includes('image') ? 'image' : 'video'
+                        franchise_id: parseInt(fid), student_id: parseInt(sid), teacher_id: parseInt(tid),
+                        file_url: up.Location, file_type: file.type.includes('image') ? 'image' : 'video'
                     })
                 });
-
-                if (register.ok) {
-                    document.getElementById('status').innerText = "Success! Upload secured.";
-                    document.getElementById('fileInput').value = "";
-                }
-            } catch (err) {
-                document.getElementById('status').innerText = "Error: " + err.message;
-            } finally {
-                btn.disabled = false;
-            }
+                document.getElementById('status').innerText = "Success! Upload secured.";
+                document.getElementById('fileInput').value = "";
+            } catch (e) { document.getElementById('status').innerText = "Error: " + e.message; }
+            finally { btn.disabled = false; }
         }
-
-        // Start the franchise fetch immediately
         initMenu();
     </script>
 </div>
