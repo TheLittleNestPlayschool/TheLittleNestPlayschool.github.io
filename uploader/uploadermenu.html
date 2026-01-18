@@ -115,9 +115,11 @@
                 file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
             }
             
+            setStatus(`Uploading ${idx + 1} of ${files.length}...`);
             const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
             const up = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
 
+            // Sending file_name and file_size for the duplicate check logic
             await fetch(`${X_API}/uploader_register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -126,7 +128,9 @@
                     student_id: parseInt(sid), 
                     teacher_id: parseInt(tid),
                     file_url: up.Location, 
-                    file_type: file.type.includes('image') ? 'image' : 'video'
+                    file_type: file.type.includes('image') ? 'image' : 'video',
+                    file_name: file.name,
+                    file_size: file.size
                 })
             });
 
@@ -135,7 +139,7 @@
                 loadPhoto();
                 btn.disabled = false;
             } else {
-                // FIRE AND FORGET: Trigger Xano background cleanup
+                // Background cleanup trigger
                 fetch(`${X_API}/uploader_cleanup_batch`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
