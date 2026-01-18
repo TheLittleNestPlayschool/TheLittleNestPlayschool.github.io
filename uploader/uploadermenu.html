@@ -33,7 +33,7 @@
 
 <div id="finalSummary" class="card" style="display:none; padding:20px;">
     <h3 style="margin-top:0; color:#1e3a8a;">The Little Nest Vault</h3>
-    <p style="font-size:14px; color:#64748b;">Batch processing! Wait for all items to turn green.</p>
+    <p style="font-size:14px; color:#64748b;">Processing batch... Wait for green borders before closing.</p>
     <div id="summaryGrid" class="summary-grid"></div>
     <button onclick="location.reload()" class="btn-upload" style="margin-top:20px; background:#64748b;">Start New Batch</button>
 </div>
@@ -47,8 +47,8 @@
 
     let fileQueue = [];
     let currentFileIndex = 0;
-    let backgroundQueue = [];
-    let isWorking = false;
+    let uploadTasks = [];
+    let isProcessing = false;
 
     const s3Client = new AWS.S3({ endpoint: W_END, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
 
@@ -90,15 +90,18 @@
     function showCurrentFile() {
         const file = fileQueue[currentFileIndex];
         const container = document.getElementById('previewContainer');
-        const badgeText = `PHOTO ${currentFileIndex + 1} OF ${fileQueue.length}`;
+        const badge = `PHOTO ${currentFileIndex + 1} OF ${fileQueue.length}`;
         
-        // Clear current view entirely to prevent "sticking"
-        container.innerHTML = `<div class="batch-badge">${badgeText}</div><div style="color:white;">Loading next...</div>`;
+        // Step 1: Memory Flush - Completely wipe the old preview
+        container.innerHTML = ""; 
         document.getElementById('studentSelect').value = "";
 
+        // Step 2: Load New Preview
         const reader = new FileReader();
         reader.onload = (e) => {
-            container.innerHTML = `<div class="batch-badge">${badgeText}</div><img src="${e.target.result}" id="activeImg">`;
+            container.innerHTML = `<div class="batch-badge">${badge}</div><img src="${e.target.result}" id="activeImg">`;
+            // Clean up the reader reference to save memory
+            reader.onload = null;
         };
         reader.readAsDataURL(file);
     }
@@ -108,6 +111,7 @@
         const sName = document.getElementById('studentSelect').options[document.getElementById('studentSelect').selectedIndex].text;
         if (!sid) return alert("Select a student.");
 
+        // Capture data for background task
         const task = {
             file: fileQueue[currentFileIndex],
             sid: sid,
@@ -117,14 +121,14 @@
             localSrc: document.getElementById('activeImg') ? document.getElementById('activeImg').src : null
         };
 
-        backgroundQueue.push(task);
+        uploadTasks.push(task);
         document.getElementById('task-counter').style.display = 'block';
-        document.getElementById('pending-count').innerText = backgroundQueue.length;
+        document.getElementById('pending-count').innerText = uploadTasks.length;
 
-        // Start processing background tasks if not already running
-        if (!isWorking) processBackgroundQueue();
+        // Start background worker if idle
+        if (!isProcessing) runWorker();
 
-        // Advance UI
+        // Step 3: Advance UI immediately
         currentFileIndex++;
         if (currentFileIndex < fileQueue.length) {
             showCurrentFile();
@@ -135,52 +139,52 @@
         }
     }
 
-    async function processBackgroundQueue() {
-        if (backgroundQueue.length === 0) {
-            isWorking = false;
+    async function runWorker() {
+        if (uploadTasks.length === 0) {
+            isProcessing = false;
             document.getElementById('task-counter').style.background = "#059669";
             document.getElementById('task-counter').innerText = "All Secure! ✓";
             return;
         }
 
-        isWorking = true;
-        const currentTask = backgroundQueue[0];
-        const domId = "sum-" + currentTask.file.name.replace(/[^a-z0-9]/gi, '');
+        isProcessing = true;
+        const current = uploadTasks[0];
+        const domId = "sum-" + current.file.name.replace(/[^a-z0-9]/gi, '');
 
         try {
-            let processedFile = currentTask.file;
-            if (currentTask.file.type.startsWith('image/')) {
-                processedFile = await imageCompression(currentTask.file, { maxSizeMB: 0.6, maxWidthOrHeight: 1400 });
+            let blob = current.file;
+            if (current.file.type.startsWith('image/')) {
+                blob = await imageCompression(current.file, { maxSizeMB: 0.6, maxWidthOrHeight: 1400 });
             }
 
-            const key = `vault/franchise_${currentTask.fid}/student_${currentTask.sid}/${Date.now()}_${processedFile.name}`;
-            const upload = await s3Client.upload({ Bucket: BKT, Key: key, Body: processedFile, ContentType: processedFile.type, ACL: 'public-read' }).promise();
+            const key = `vault/franchise_${current.fid}/student_${current.sid}/${Date.now()}_${blob.name}`;
+            const upload = await s3Client.upload({ Bucket: BKT, Key: key, Body: blob, ContentType: blob.type, ACL: 'public-read' }).promise();
 
             await fetch(`${X_BASE}/uploader_register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    franchise_id: parseInt(currentTask.fid),
-                    student_id: parseInt(currentTask.sid),
-                    teacher_id: parseInt(currentTask.tid),
+                    franchise_id: parseInt(current.fid),
+                    student_id: parseInt(current.sid),
+                    teacher_id: parseInt(current.tid),
                     file_url: upload.Location,
-                    file_type: currentTask.file.type.includes('image') ? 'image' : 'video'
+                    file_type: current.file.type.includes('image') ? 'image' : 'video'
                 })
             });
 
             const el = document.getElementById(domId);
             if(el) {
                 el.style.borderColor = "#059669";
-                if(currentTask.localSrc) el.innerHTML = `<img src="${currentTask.localSrc}"><div class="summary-name">${currentTask.sName}</div>`;
+                if(current.localSrc) el.innerHTML = `<img src="${current.localSrc}"><div class="summary-name">${current.sName}</div>`;
             }
         } catch (e) {
             const el = document.getElementById(domId);
             if(el) el.style.borderColor = "red";
         }
 
-        backgroundQueue.shift(); // Remove finished item
-        document.getElementById('pending-count').innerText = backgroundQueue.length;
-        processBackgroundQueue(); // Loop to next item
+        uploadTasks.shift(); // Move to next task
+        document.getElementById('pending-count').innerText = uploadTasks.length;
+        runWorker(); 
     }
 
     function renderSummary() {
