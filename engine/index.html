@@ -4,31 +4,16 @@
     <meta charset="UTF-8">
     <title>Engine Dashboard</title>
     <style>
-        html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; overflow: hidden; }
-        /* This is the container that was missing or misconfigured */
-        #nav-placeholder { 
-            width: 250px; 
-            height: 100vh; 
-            background: #1a1a1a; 
-            position: fixed; 
-            left: 0; 
-            top: 0; 
-            z-index: 10000; 
-        }
-        .main-content { 
-            margin-left: 250px; 
-            padding: 25px; 
-            width: calc(100% - 250px); 
-            min-height: 100vh; 
-            background: #fff; 
-            box-sizing: border-box; 
-            overflow-y: auto;
-        }
+        html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; }
+        .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; position: fixed; left: 0; top: 0; padding: 0; z-index: 10000; }
+        .main-content { margin-left: 250px; padding: 25px; width: calc(100% - 250px); min-height: 100vh; background: #fff; box-sizing: border-box; }
+        .btn { padding: 10px 20px; cursor: pointer; font-weight: 700; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-save { background: #00d1b2; color: #1a1a1a; border: none; }
     </style>
 </head>
 <body>
 
-    <div id="nav-placeholder"></div>
+    <div class="admin-sidebar" id="nav-placeholder"></div>
 
     <main class="main-content" id="dashboard-content">
         <div id="content-inner" style="text-align: center; margin-top: 20vh;">
@@ -38,17 +23,14 @@
     </main>
 
     <script>
+        // Global controller to stop the "jamming"
         let currentAbortController = null;
 
-        // 1. Load the sidebar menu into the fixed container
+        // 1. Load the menu
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => {
                 document.getElementById('nav-placeholder').innerHTML = data;
-            })
-            .catch(err => {
-                console.error("Failed to load menu:", err);
-                document.getElementById('nav-placeholder').innerHTML = '<div style="color:white; padding:20px;">Menu Load Error</div>';
             });
 
         function resetDashboard() {
@@ -66,25 +48,23 @@
             const container = document.getElementById('dashboard-content');
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = name;
-
+            
+            // Abort previous request if it's still running
             if (currentAbortController) currentAbortController.abort();
             currentAbortController = new AbortController();
-
-            container.innerHTML = '<div style="padding:20px; font-weight:bold; color:#666;">Loading ' + name + '...</div>';
+            
+            container.innerHTML = '<div style="padding:20px;">Loading ' + name + '...</div>';
             
             try {
+                // Fetch with the abort signal and a timestamp to bust cache
                 const response = await fetch(url + '?v=' + Date.now(), {
                     signal: currentAbortController.signal
                 });
-                if (!response.ok) throw new Error('Network response was not ok');
                 const html = await response.text();
-                
-                setTimeout(() => {
-                    container.innerHTML = html;
-                }, 10);
+                container.innerHTML = html;
             } catch (e) {
                 if (e.name !== 'AbortError') {
-                    container.innerHTML = '<h2 style="color:red; padding:20px;">Error loading ' + name + '.</h2>';
+                    container.innerHTML = '<h2 style="color:red; padding:20px;">Error loading module.</h2>';
                 }
             }
         }
