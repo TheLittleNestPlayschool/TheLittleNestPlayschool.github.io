@@ -7,60 +7,63 @@
     <div class="menu-section">
         <h3>SITE & IDENTITY</h3>
         <ul class="menu-list">
-            <li onclick="loadFrame('blog_manager.html', 'Blog Management')">Blog Management</li>
-            <li onclick="loadFrame('franchise_manager.html', 'Franchise Manager')">Franchise Manager</li>
-            <li onclick="loadFrame('parent_manager.html', 'Parent Management')">Parent Management</li>
-            <li onclick="loadFrame('student_manager.html', 'Student Management')">Student Management</li>
-            <li onclick="loadFrame('teacher_manager.html', 'Teacher Management')">Teacher Management</li>
+            <li onclick="loadModule('blog_manager.html', 'Blog Management')">Blog Management</li>
+            <li onclick="loadModule('franchise_manager.html', 'Franchise Manager')">Franchise Manager</li>
+            <li onclick="loadModule('parent_manager.html', 'Parent Management')">Parent Management</li>
+            <li onclick="loadModule('student_manager.html', 'Student Management')">Student Management</li>
+            <li onclick="loadModule('teacher_manager.html', 'Teacher Management')">Teacher Management</li>
         </ul>
     </div>
-    </div>
+</div>
 
 <script>
-    // 1. Define the controller outside the function so it persists between clicks
-    let menuAbortController = null;
+    // Global controller to kill pending Xano/Hostinger requests
+    let activeController = null;
 
-    function loadFrame(url, name) {
-        // 2. If a request is already running, KILL IT
-        if (menuAbortController) {
-            menuAbortController.abort();
-            console.log("Aborted previous connection to free browser slot.");
+    function loadModule(url, name) {
+        // 1. Abort previous click immediately
+        if (activeController) {
+            activeController.abort();
         }
 
-        // 3. Create a fresh controller for the new click
-        menuAbortController = new AbortController();
-        const signal = menuAbortController.signal;
+        // 2. Create fresh signal for this specific load
+        activeController = new AbortController();
+        const { signal } = activeController;
 
         // UI Updates
         const indicator = document.getElementById('screen-name');
         if (indicator) indicator.textContent = name;
         
-        const contentInner = window.parent.document.getElementById('content-inner');
+        // Use window.parent to reach the dashboard shell
+        const parentDoc = window.parent.document;
+        const contentInner = parentDoc.getElementById('content-inner');
+        const mainFrame = parentDoc.getElementById('main-frame');
+
         if (contentInner) contentInner.style.display = 'none';
 
-        const frame = window.parent.document.getElementById('main-frame');
-        
-        // 4. Reset the frame to clear the previous document
-        frame.src = 'about:blank';
+        // 3. Clear the frame so the browser can drop the old connection
+        mainFrame.src = 'about:blank';
 
-        // 5. Load the new URL with a timestamp [cite: 2026-01-13]
-        // We wrap this in a check to make sure we didn't JUST abort it
+        // 4. Load the new module
         const freshUrl = url + '?v=' + Date.now();
         
+        // Small delay ensures the 'abort' signals are processed by the network tab
         setTimeout(() => {
             if (!signal.aborted) {
-                frame.src = freshUrl;
+                mainFrame.src = freshUrl;
             }
-        }, 10);
+        }, 50);
     }
 
     function resetDashboard() {
-        if (menuAbortController) menuAbortController.abort();
-        const frame = window.parent.document.getElementById('main-frame');
-        frame.src = 'about:blank';
-        const contentInner = window.parent.document.getElementById('content-inner');
-        if (contentInner) contentInner.style.display = 'block';
+        if (activeController) activeController.abort();
+        const parentDoc = window.parent.document;
+        const mainFrame = parentDoc.getElementById('main-frame');
+        const contentInner = parentDoc.getElementById('content-inner');
         const indicator = document.getElementById('screen-name');
+
+        mainFrame.src = 'about:blank';
+        if (contentInner) contentInner.style.display = 'block';
         if (indicator) indicator.textContent = 'Home';
     }
 </script>
