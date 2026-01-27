@@ -9,9 +9,8 @@
         .main-content { margin-left: 250px; padding: 0; width: calc(100% - 250px); height: 100vh; background: #fff; box-sizing: border-box; overflow: hidden; position: relative; }
         .btn { padding: 10px 20px; cursor: pointer; font-weight: 700; border: 1px solid #ccc; border-radius: 4px; }
         .btn-save { background: #00d1b2; color: #1a1a1a; border: none; }
-        /* Style for our dual frames */
-        .hub-frame { width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; display: none; }
-        .active-frame { display: block; z-index: 2; }
+        /* Object styles to match your dashboard layout */
+        #data-wrapper { width: 100%; height: 100%; border: none; display: block; }
     </style>
 </head>
 <body>
@@ -19,19 +18,15 @@
     <div class="admin-sidebar" id="nav-placeholder"></div>
 
     <main class="main-content" id="dashboard-content">
-        <iframe id="frame-a" class="hub-frame" src="about:blank"></iframe>
-        <iframe id="frame-b" class="hub-frame" src="about:blank"></iframe>
-
         <div id="content-inner" style="text-align: center; margin-top: 20vh; position: absolute; width: 100%; top: 0; z-index: 10; pointer-events: none;">
             <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
             <p>Select a module from the menu to begin.</p>
         </div>
+        <div id="module-container" style="width:100%; height:100%;"></div>
     </main>
 
     <script>
-        let currentFrameId = 'frame-a';
-
-        // 1. Load the sidebar menu
+        // 1. Initial Menu Load
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => {
@@ -42,36 +37,32 @@
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = 'Home';
             
-            document.getElementById('frame-a').src = 'about:blank';
-            document.getElementById('frame-b').src = 'about:blank';
-            document.getElementById('frame-a').classList.remove('active-frame');
-            document.getElementById('frame-b').classList.remove('active-frame');
+            const container = document.getElementById('module-container');
+            // Completely empty the container to kill all network activity
+            container.innerHTML = '';
             document.getElementById('content-inner').style.display = 'block';
         }
 
         function loadFrame(url, name) {
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = name;
+            
+            const container = document.getElementById('module-container');
             document.getElementById('content-inner').style.display = 'none';
 
-            // Determine which frame is active and which is the "clean" one
-            const nextFrameId = currentFrameId === 'frame-a' ? 'frame-b' : 'frame-a';
-            const activeFrame = document.getElementById(currentFrameId);
-            const nextFrame = document.getElementById(nextFrameId);
-
-            // 1. Kill the old active frame's connections
-            try {
-                activeFrame.contentWindow.stop();
-                activeFrame.src = 'about:blank';
-            } catch(e) {}
-            activeFrame.classList.remove('active-frame');
-
-            // 2. Load the new content into the fresh frame
-            nextFrame.src = url + '?v=' + Date.now();
-            nextFrame.classList.add('active-frame');
-
-            // 3. Switch the tracker
-            currentFrameId = nextFrameId;
+            // 1. Clear previous module immediately
+            container.innerHTML = '';
+            
+            // 2. Short pause to let the browser recycle its 6 connection slots
+            setTimeout(() => {
+                // 3. Use an <object> tag instead of <iframe> for a harder reset
+                const obj = document.createElement('object');
+                obj.id = "data-wrapper";
+                obj.type = "text/html";
+                obj.data = url + '?v=' + Date.now();
+                
+                container.appendChild(obj);
+            }, 150);
         }
     </script>
 </body>
