@@ -31,17 +31,22 @@
                 document.getElementById('nav-placeholder').innerHTML = data;
             });
 
-        // 2. The Force Cleanup
+        // 2. The Absolute Cleanup
         function killConnections() {
-            const oldFrame = document.querySelector('iframe');
+            let oldFrame = document.querySelector('iframe');
             if (oldFrame) {
                 try {
-                    // Tell the frame to stop the Xano sync immediately
+                    // Tell the current page to stop everything
                     oldFrame.contentWindow.stop(); 
-                    // Navigate to an empty data string to release the network socket
-                    oldFrame.src = "data:text/plain,"; 
+                    // Point to a null data stream to kill the Xano socket
+                    oldFrame.src = "data:text/plain,";
+                    // Clear the content for garbage collection
+                    oldFrame.contentDocument.write('');
                 } catch(e) {}
+                
                 oldFrame.remove();
+                // Null the variable to free up browser memory
+                oldFrame = null; 
             }
         }
 
@@ -60,7 +65,7 @@
             const container = document.getElementById('dashboard-content');
             document.getElementById('content-inner').style.display = 'none';
             
-            // Kill existing connections before opening new ones
+            // Clear connections first
             killConnections();
             
             const newFrame = document.createElement('iframe');
@@ -69,11 +74,10 @@
             newFrame.style.border = "none";
             container.appendChild(newFrame);
             
-            // We use a slightly longer delay to ensure the browser has 
-            // successfully recycled the connection slot.
+            // We use a 300ms delay to ensure Xano has "released" the slot
             setTimeout(() => {
                 newFrame.src = url + '?v=' + Date.now();
-            }, 250); 
+            }, 300); 
         }
     </script>
 </body>
