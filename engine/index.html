@@ -23,6 +23,9 @@
     </main>
 
     <script>
+        // Track the current request ID
+        let lastRequestId = 0;
+
         // 1. This loads your menu into the placeholder
         fetch('enginemenu.html')
             .then(response => response.text())
@@ -30,8 +33,9 @@
                 document.getElementById('nav-placeholder').innerHTML = data;
             });
 
-        // 2. These are the functions that make your menu buttons work
+        // 2. Reset Dashboard function
         function resetDashboard() {
+            lastRequestId++; // Increment to ignore any pending loads
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = 'Home';
             document.getElementById('dashboard-content').innerHTML = `
@@ -41,18 +45,31 @@
             `;
         }
 
+        // 3. Stabilized Load function (Race-condition proof)
         async function loadFrame(url, name) {
             const container = document.getElementById('dashboard-content');
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = name;
             
+            // Create a unique ID for this specific click
+            const thisRequestId = ++lastRequestId;
+            
             container.innerHTML = '<div style="padding:20px;">Loading ' + name + '...</div>';
+            
             try {
                 const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999));
                 const html = await response.text();
-                container.innerHTML = html;
+                
+                // ONLY update the screen if this was the LAST thing clicked
+                if (thisRequestId === lastRequestId) {
+                    container.innerHTML = html;
+                } else {
+                    console.log("Ignored outdated response for: " + name);
+                }
             } catch (e) {
-                container.innerHTML = '<h2 style="color:red; padding:20px;">Error loading module.</h2>';
+                if (thisRequestId === lastRequestId) {
+                    container.innerHTML = '<h2 style="color:red; padding:20px;">Error loading module.</h2>';
+                }
             }
         }
     </script>
