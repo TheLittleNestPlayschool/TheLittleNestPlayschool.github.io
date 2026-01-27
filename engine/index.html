@@ -24,30 +24,23 @@
     </main>
 
     <script>
+        // 1. Initial Menu Load
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => {
                 document.getElementById('nav-placeholder').innerHTML = data;
             });
 
-        function cleanupFrame() {
+        // 2. The Force Cleanup
+        function killConnections() {
             const oldFrame = document.querySelector('iframe');
             if (oldFrame) {
                 try {
-                    // 1. Force the iframe to stop all network activity immediately
+                    // Tell the frame to stop the Xano sync immediately
                     oldFrame.contentWindow.stop(); 
-                    
-                    // 2. Wipe the internal document to kill any running Xano sync scripts
-                    oldFrame.contentDocument.write('');
-                    oldFrame.contentDocument.clear();
-                    
-                    // 3. Point to an empty source to release the GitHub/Hostinger connection
-                    oldFrame.src = "about:blank";
-                } catch(e) {
-                    console.log("Cleanup handled.");
-                }
-                
-                // 4. Finally, remove the element from the DOM
+                    // Navigate to an empty data string to release the network socket
+                    oldFrame.src = "data:text/plain,"; 
+                } catch(e) {}
                 oldFrame.remove();
             }
         }
@@ -55,10 +48,11 @@
         function resetDashboard() {
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = 'Home';
-            cleanupFrame();
+            killConnections();
             document.getElementById('content-inner').style.display = 'block';
         }
 
+        // 3. Load Function with Connection Reset
         function loadFrame(url, name) {
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = name;
@@ -66,21 +60,20 @@
             const container = document.getElementById('dashboard-content');
             document.getElementById('content-inner').style.display = 'none';
             
-            // Wipe everything first
-            cleanupFrame();
+            // Kill existing connections before opening new ones
+            killConnections();
             
-            // Rebuild the frame from scratch
             const newFrame = document.createElement('iframe');
             newFrame.style.width = "100%";
             newFrame.style.height = "100%";
             newFrame.style.border = "none";
             container.appendChild(newFrame);
             
-            // Wait slightly longer to ensure the browser has finished the "Cleanup" 
-            // and cleared the connection slots for Xano
+            // We use a slightly longer delay to ensure the browser has 
+            // successfully recycled the connection slot.
             setTimeout(() => {
                 newFrame.src = url + '?v=' + Date.now();
-            }, 200); 
+            }, 250); 
         }
     </script>
 </body>
