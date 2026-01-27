@@ -16,8 +16,8 @@
     <div class="admin-sidebar" id="nav-placeholder"></div>
 
     <main class="main-content" id="dashboard-content">
-        <iframe id="main-frame" src="about:blank" style="width: 100%; height: 100%; border: none;"></iframe>
-        <div id="content-inner" style="text-align: center; margin-top: 20vh; position: absolute; width: calc(100% - 250px); top: 0;">
+        <iframe id="main-frame" name="main-frame" src="about:blank" style="width: 100%; height: 100%; border: none;"></iframe>
+        <div id="content-inner" style="text-align: center; margin-top: 20vh; position: absolute; width: calc(100% - 250px); top: 0; pointer-events: none;">
             <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
             <p>Select a module from the menu to begin.</p>
         </div>
@@ -33,7 +33,8 @@
         function resetDashboard() {
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = 'Home';
-            document.getElementById('main-frame').src = 'about:blank';
+            const frame = document.getElementById('main-frame');
+            frame.src = 'about:blank';
             document.getElementById('content-inner').style.display = 'block';
         }
 
@@ -41,8 +42,16 @@
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = name;
             
+            const frame = document.getElementById('main-frame');
             document.getElementById('content-inner').style.display = 'none';
-            document.getElementById('main-frame').src = url + '?v=' + Math.floor(Math.random() * 999999);
+            
+            // 1. Force the frame to go blank first to clear old Xano/Syncing scripts
+            frame.src = 'about:blank';
+            
+            // 2. Load the new URL with a fresh timestamp after a tiny delay
+            setTimeout(() => {
+                frame.src = url + '?v=' + Date.now();
+            }, 50);
         }
     </script>
 </body>
