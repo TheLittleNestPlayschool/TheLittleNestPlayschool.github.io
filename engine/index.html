@@ -24,21 +24,32 @@
     </main>
 
     <script>
-        // 1. Load the sidebar menu
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => {
                 document.getElementById('nav-placeholder').innerHTML = data;
             });
 
+        function cleanupFrame() {
+            const oldFrame = document.querySelector('iframe');
+            if (oldFrame) {
+                // 1. Tell the iframe to stop all pending network requests
+                try {
+                    oldFrame.contentWindow.stop(); 
+                } catch(e) {}
+                
+                // 2. Clear the src to fully break the connection to the server
+                oldFrame.src = "";
+                
+                // 3. Remove it from the page
+                oldFrame.remove();
+            }
+        }
+
         function resetDashboard() {
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = 'Home';
-            
-            // Remove any existing iframe
-            const oldFrame = document.querySelector('iframe');
-            if(oldFrame) oldFrame.remove();
-            
+            cleanupFrame();
             document.getElementById('content-inner').style.display = 'block';
         }
 
@@ -49,22 +60,19 @@
             const container = document.getElementById('dashboard-content');
             document.getElementById('content-inner').style.display = 'none';
             
-            // 1. Kill the old iframe completely to stop all scripts
-            const oldFrame = document.querySelector('iframe');
-            if(oldFrame) oldFrame.remove();
+            // Clear the old frame and its connections
+            cleanupFrame();
             
-            // 2. Create a brand new, clean iframe element
+            // Create the new frame
             const newFrame = document.createElement('iframe');
             newFrame.style.width = "100%";
             newFrame.style.height = "100%";
             newFrame.style.border = "none";
-            
-            // 3. Append and then set the source with a timestamp
             container.appendChild(newFrame);
             
             setTimeout(() => {
                 newFrame.src = url + '?v=' + Date.now();
-            }, 50); 
+            }, 100); 
         }
     </script>
 </body>
