@@ -25,6 +25,7 @@
     </main>
 
     <script>
+        // 1. Load the sidebar menu
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => {
@@ -36,8 +37,7 @@
             if(indicator) indicator.textContent = 'Home';
             
             const frame = document.getElementById('main-frame');
-            // Force reset
-            frame.src = "data:text/html,<body style='background:white'></body>";
+            frame.src = 'about:blank';
             document.getElementById('content-inner').style.display = 'block';
         }
 
@@ -48,16 +48,19 @@
             const frame = document.getElementById('main-frame');
             document.getElementById('content-inner').style.display = 'none';
 
-            // 1. Force the frame to a data URL. 
-            // This forces the browser to treat the previous page as "dead" 
-            // because it's no longer on the same domain.
-            frame.src = "data:text/html,<body style='background:white'></body>";
+            // Stop any active scripts/syncs in the current frame
+            try {
+                frame.contentWindow.stop();
+            } catch(e) {}
 
-            // 2. Wait for the browser to acknowledge the domain change and drop the Xano sockets
+            // Set to blank first to ensure a clean slate
+            frame.src = 'about:blank';
+
+            // Wait 300ms—this is the sweet spot for the browser to clear 
+            // the 6-connection limit before starting the next module.
             setTimeout(() => {
-                const freshUrl = url + '?v=' + Date.now();
-                frame.location.replace(freshUrl);
-            }, 250);
+                frame.src = url + '?v=' + Date.now();
+            }, 300);
         }
     </script>
 </body>
