@@ -11,65 +11,26 @@
     </style>
 </head>
 <body>
-
     <div class="admin-sidebar" id="nav-placeholder"></div>
-
-    <main class="main-content" id="dashboard-content">
+    <main class="main-content">
         <div id="content-inner" style="text-align: center; margin-top: 20vh; position: absolute; width: 100%; top: 0; z-index: 10; pointer-events: none;">
             <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
-            <p>Select a module from the menu to begin.</p>
         </div>
         <iframe id="main-frame" name="main-frame" src="about:blank"></iframe>
     </main>
 
     <script>
-        // Track the active controller globally
-        let currentLoadController = null;
-
         fetch('enginemenu.html')
             .then(response => response.text())
-            .then(data => {
-                document.getElementById('nav-placeholder').innerHTML = data;
-            });
-
-        function resetDashboard() {
-            if (currentLoadController) currentLoadController.abort();
-            const indicator = document.getElementById('screen-name');
-            if(indicator) indicator.textContent = 'Home';
-            document.getElementById('main-frame').src = 'about:blank';
-            document.getElementById('content-inner').style.display = 'block';
-        }
+            .then(data => { document.getElementById('nav-placeholder').innerHTML = data; });
 
         function loadFrame(url, name) {
-            // 1. If a previous click is still trying to load, kill it now
-            if (currentLoadController) {
-                currentLoadController.abort();
-            }
-
-            // 2. Create a new controller for THIS click
-            currentLoadController = new AbortController();
-            const { signal } = currentLoadController;
-
-            const indicator = document.getElementById('screen-name');
-            if(indicator) indicator.textContent = name;
-            
             const frame = document.getElementById('main-frame');
             document.getElementById('content-inner').style.display = 'none';
-
-            // 3. Clear the frame immediately
             frame.src = 'about:blank';
-
-            // 4. Load the new content
-            // The timestamp helps Xano/Browser see it as a new request
-            const freshUrl = url + '?v=' + Date.now();
-            
-            // We use a slight delay to ensure the abort event is processed 
-            // by the browser's network stack before the new request starts.
             setTimeout(() => {
-                if (!signal.aborted) {
-                    frame.src = freshUrl;
-                }
-            }, 10);
+                frame.src = url + '?v=' + Date.now();
+            }, 50);
         }
     </script>
 </body>
