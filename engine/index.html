@@ -9,8 +9,7 @@
         .main-content { margin-left: 250px; padding: 0; width: calc(100% - 250px); height: 100vh; background: #fff; box-sizing: border-box; overflow: hidden; position: relative; }
         .btn { padding: 10px 20px; cursor: pointer; font-weight: 700; border: 1px solid #ccc; border-radius: 4px; }
         .btn-save { background: #00d1b2; color: #1a1a1a; border: none; }
-        /* Object styles to match your dashboard layout */
-        #data-wrapper { width: 100%; height: 100%; border: none; display: block; }
+        iframe { width: 100%; height: 100%; border: none; display: block; }
     </style>
 </head>
 <body>
@@ -22,11 +21,11 @@
             <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
             <p>Select a module from the menu to begin.</p>
         </div>
-        <div id="module-container" style="width:100%; height:100%;"></div>
+        <iframe id="main-frame" name="main-frame" src="about:blank"></iframe>
     </main>
 
     <script>
-        // 1. Initial Menu Load
+        // 1. Load the sidebar menu
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => {
@@ -37,9 +36,9 @@
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = 'Home';
             
-            const container = document.getElementById('module-container');
-            // Completely empty the container to kill all network activity
-            container.innerHTML = '';
+            const frame = document.getElementById('main-frame');
+            frame.contentWindow.stop();
+            frame.location.replace('about:blank');
             document.getElementById('content-inner').style.display = 'block';
         }
 
@@ -47,22 +46,22 @@
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = name;
             
-            const container = document.getElementById('module-container');
+            const frame = document.getElementById('main-frame');
             document.getElementById('content-inner').style.display = 'none';
 
-            // 1. Clear previous module immediately
-            container.innerHTML = '';
+            // 1. Stop all current Xano network activity in the frame
+            try {
+                frame.contentWindow.stop();
+            } catch(e) {}
+
+            // 2. Force a location replacement to clear the connection slot
+            // We use location.replace so it doesn't build a massive browser history
+            const freshUrl = url + '?v=' + Date.now();
             
-            // 2. Short pause to let the browser recycle its 6 connection slots
+            // 3. Short timeout to ensure the 'stop' command has cleared the socket
             setTimeout(() => {
-                // 3. Use an <object> tag instead of <iframe> for a harder reset
-                const obj = document.createElement('object');
-                obj.id = "data-wrapper";
-                obj.type = "text/html";
-                obj.data = url + '?v=' + Date.now();
-                
-                container.appendChild(obj);
-            }, 150);
+                frame.contentWindow.location.replace(freshUrl);
+            }, 100);
         }
     </script>
 </body>
