@@ -33,15 +33,21 @@
         function cleanupFrame() {
             const oldFrame = document.querySelector('iframe');
             if (oldFrame) {
-                // 1. Tell the iframe to stop all pending network requests
                 try {
+                    // 1. Force the iframe to stop all network activity immediately
                     oldFrame.contentWindow.stop(); 
-                } catch(e) {}
+                    
+                    // 2. Wipe the internal document to kill any running Xano sync scripts
+                    oldFrame.contentDocument.write('');
+                    oldFrame.contentDocument.clear();
+                    
+                    // 3. Point to an empty source to release the GitHub/Hostinger connection
+                    oldFrame.src = "about:blank";
+                } catch(e) {
+                    console.log("Cleanup handled.");
+                }
                 
-                // 2. Clear the src to fully break the connection to the server
-                oldFrame.src = "";
-                
-                // 3. Remove it from the page
+                // 4. Finally, remove the element from the DOM
                 oldFrame.remove();
             }
         }
@@ -60,19 +66,21 @@
             const container = document.getElementById('dashboard-content');
             document.getElementById('content-inner').style.display = 'none';
             
-            // Clear the old frame and its connections
+            // Wipe everything first
             cleanupFrame();
             
-            // Create the new frame
+            // Rebuild the frame from scratch
             const newFrame = document.createElement('iframe');
             newFrame.style.width = "100%";
             newFrame.style.height = "100%";
             newFrame.style.border = "none";
             container.appendChild(newFrame);
             
+            // Wait slightly longer to ensure the browser has finished the "Cleanup" 
+            // and cleared the connection slots for Xano
             setTimeout(() => {
                 newFrame.src = url + '?v=' + Date.now();
-            }, 100); 
+            }, 200); 
         }
     </script>
 </body>
