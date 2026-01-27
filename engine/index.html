@@ -25,7 +25,6 @@
     </main>
 
     <script>
-        // 1. Load the sidebar menu
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => {
@@ -37,8 +36,8 @@
             if(indicator) indicator.textContent = 'Home';
             
             const frame = document.getElementById('main-frame');
-            frame.contentWindow.stop();
-            frame.location.replace('about:blank');
+            // Force reset
+            frame.src = "data:text/html,<body style='background:white'></body>";
             document.getElementById('content-inner').style.display = 'block';
         }
 
@@ -49,19 +48,16 @@
             const frame = document.getElementById('main-frame');
             document.getElementById('content-inner').style.display = 'none';
 
-            // 1. Stop all current Xano network activity in the frame
-            try {
-                frame.contentWindow.stop();
-            } catch(e) {}
+            // 1. Force the frame to a data URL. 
+            // This forces the browser to treat the previous page as "dead" 
+            // because it's no longer on the same domain.
+            frame.src = "data:text/html,<body style='background:white'></body>";
 
-            // 2. Force a location replacement to clear the connection slot
-            // We use location.replace so it doesn't build a massive browser history
-            const freshUrl = url + '?v=' + Date.now();
-            
-            // 3. Short timeout to ensure the 'stop' command has cleared the socket
+            // 2. Wait for the browser to acknowledge the domain change and drop the Xano sockets
             setTimeout(() => {
-                frame.contentWindow.location.replace(freshUrl);
-            }, 100);
+                const freshUrl = url + '?v=' + Date.now();
+                frame.location.replace(freshUrl);
+            }, 250);
         }
     </script>
 </body>
