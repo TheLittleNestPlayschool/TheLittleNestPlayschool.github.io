@@ -7,7 +7,10 @@
         html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; }
         .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; position: fixed; left: 0; top: 0; padding: 0; z-index: 10000; }
         .main-content { margin-left: 250px; padding: 0; width: calc(100% - 250px); height: 100vh; background: #fff; box-sizing: border-box; overflow: hidden; position: relative; }
-        iframe { width: 100%; height: 100%; border: none; display: block; background: #fff; }
+        .btn { padding: 10px 20px; cursor: pointer; font-weight: 700; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-save { background: #00d1b2; color: #1a1a1a; border: none; }
+        .hub-frame { width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; display: none; }
+        .active-frame { display: block; z-index: 2; }
     </style>
 </head>
 <body>
@@ -15,7 +18,8 @@
     <div class="admin-sidebar" id="nav-placeholder"></div>
 
     <main class="main-content" id="dashboard-content">
-        <iframe id="main-frame" name="main-frame" src="about:blank"></iframe>
+        <iframe id="frame-a" class="hub-frame" src="about:blank"></iframe>
+        <iframe id="frame-b" class="hub-frame" src="about:blank"></iframe>
 
         <div id="content-inner" style="text-align: center; margin-top: 20vh; position: absolute; width: 100%; top: 0; z-index: 10; pointer-events: none;">
             <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
@@ -24,9 +28,10 @@
     </main>
 
     <script>
-        let loadController = null;
+        let currentFrameId = 'frame-a';
+        // Add the master controller here [cite: 2026-01-13]
+        let abortController = new AbortController();
 
-        // 1. Load the sidebar menu
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => {
@@ -34,35 +39,47 @@
             });
 
         function resetDashboard() {
-            if (loadController) loadController.abort();
+            abortController.abort(); // Kill any pending loads [cite: 2026-01-13]
+            abortController = new AbortController();
+
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = 'Home';
             
-            document.getElementById('main-frame').src = 'about:blank';
+            document.getElementById('frame-a').src = 'about:blank';
+            document.getElementById('frame-b').src = 'about:blank';
+            document.getElementById('frame-a').classList.remove('active-frame');
+            document.getElementById('frame-b').classList.remove('active-frame');
             document.getElementById('content-inner').style.display = 'block';
         }
 
         function loadFrame(url, name) {
-            // 2. Kill the previous connection signal [cite: 2026-01-13]
-            if (loadController) loadController.abort();
-            loadController = new AbortController();
-            const { signal } = loadController;
+            // 1. SIGNAL THE BROWSER TO ABORT [cite: 2026-01-13]
+            abortController.abort();
+            abortController = new AbortController();
+            const { signal } = abortController;
 
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = name;
-            
-            const frame = document.getElementById('main-frame');
             document.getElementById('content-inner').style.display = 'none';
 
-            // 3. Clear the frame immediately [cite: 2026-01-13]
-            frame.src = 'about:blank';
+            const nextFrameId = currentFrameId === 'frame-a' ? 'frame-b' : 'frame-a';
+            const activeFrame = document.getElementById(currentFrameId);
+            const nextFrame = document.getElementById(nextFrameId);
 
-            // 4. Load the new content with a cache-buster [cite: 2026-01-13]
+            // 2. Clear the old frame [cite: 2026-01-13]
+            try {
+                activeFrame.contentWindow.stop();
+                activeFrame.src = 'about:blank';
+            } catch(e) {}
+            activeFrame.classList.remove('active-frame');
+
+            // 3. Load with the signal and a 50ms breather [cite: 2026-01-13]
             const freshUrl = url + '?v=' + Date.now();
-            
             setTimeout(() => {
                 if (!signal.aborted) {
-                    frame.src = freshUrl;
+                    nextFrame.src = freshUrl;
+                    nextFrame.classList.add('active-frame');
+                    currentFrameId = nextFrameId;
                 }
             }, 50);
         }
