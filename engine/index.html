@@ -13,7 +13,7 @@
 </head>
 <body>
 
-    <div class="admin-sidebar" id="nav-placeholder"></div>
+    <div id="nav-placeholder"></div>
 
     <main class="main-content" id="dashboard-content">
         <div id="content-inner" style="text-align: center; margin-top: 20vh;">
@@ -23,18 +23,15 @@
     </main>
 
     <script>
-        // Global controller to stop the "jamming"
-        let currentAbortController = null;
-
-        // 1. Load the menu
+        // 1. This loads your menu into the placeholder
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => {
                 document.getElementById('nav-placeholder').innerHTML = data;
             });
 
+        // 2. These are the functions that make your menu buttons work
         function resetDashboard() {
-            if (currentAbortController) currentAbortController.abort();
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = 'Home';
             document.getElementById('dashboard-content').innerHTML = `
@@ -49,23 +46,13 @@
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = name;
             
-            // Abort previous request if it's still running
-            if (currentAbortController) currentAbortController.abort();
-            currentAbortController = new AbortController();
-            
             container.innerHTML = '<div style="padding:20px;">Loading ' + name + '...</div>';
-            
             try {
-                // Fetch with the abort signal and a timestamp to bust cache
-                const response = await fetch(url + '?v=' + Date.now(), {
-                    signal: currentAbortController.signal
-                });
+                const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999));
                 const html = await response.text();
                 container.innerHTML = html;
             } catch (e) {
-                if (e.name !== 'AbortError') {
-                    container.innerHTML = '<h2 style="color:red; padding:20px;">Error loading module.</h2>';
-                }
+                container.innerHTML = '<h2 style="color:red; padding:20px;">Error loading module.</h2>';
             }
         }
     </script>
