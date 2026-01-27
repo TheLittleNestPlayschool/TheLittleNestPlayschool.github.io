@@ -4,7 +4,7 @@
 </div>
 
 <div id="franchise-container" style="display: flex; flex-direction: column; gap: 20px;">
-    <div style="text-align:center; padding:50px; border:1px solid #eee;">Syncing Franchise Data..lklklkklklklklklkl.</div>
+    <div id="loading-indicator" style="text-align:center; padding:50px; border:1px solid #eee;">Syncing Franchise Data...</div>
 </div>
 
 <div id="modal-franchise" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
@@ -12,11 +12,8 @@
         <div style="padding:20px; border-bottom:1px solid #eee; background:#f9f9f9;">
             <h3 style="margin:0;">Franchise Profile Editor</h3>
         </div>
-        
         <div style="padding:25px; overflow-y:auto; flex-grow:1;">
             <input type="hidden" id="f-id">
-            
-            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px; margin-top:0;">1. Franchise & Brand Information</h4>
             <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin-bottom:25px;">
                 <div style="grid-column: span 2;"><label>Franchise Name</label><input type="text" id="f-name" style="width:100%; padding:8px;"></div>
                 <div><label>Status</label>
@@ -27,35 +24,8 @@
                         <option value="pending_opening">pending_opening</option>
                     </select>
                 </div>
-                <div style="grid-column: span 3;"><label>Full Address</label><input type="text" id="f-address" style="width:100%; padding:8px;"></div>
-                <div><label>Main Phone</label><input type="text" id="f-phone_number" style="width:100%; padding:8px;"></div>
-                <div><label>Franchise Email</label><input type="email" id="f-franchise_email" style="width:100%; padding:8px;"></div>
-                <div><label>Royalty Rate (%)</label><input type="number" id="f-royalty_rate" step="0.01" style="width:100%; padding:8px;"></div>
-                <div><label>Opening Date</label><input type="date" id="f-opening_date" style="width:100%; padding:8px;"></div>
-                <div><label>Business Tax ID</label><input type="text" id="f-business_tax_id" style="width:100%; padding:8px;"></div>
-                <div><label>Brand FB</label><input type="text" id="f-social_fb" style="width:100%; padding:8px;"></div>
-                <div><label>Brand IG</label><input type="text" id="f-social_ig" style="width:100%; padding:8px;"></div>
-                <div><label>Brand TikTok</label><input type="text" id="f-social_tiktok" style="width:100%; padding:8px;"></div>
-                <div><label>Brand LinkedIn</label><input type="text" id="f-social_li" style="width:100%; padding:8px;"></div>
             </div>
-
-            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px;">2. Owner 1 Details</h4>
-            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin-bottom:25px; background:#fcfcfc; padding:15px; border:1px solid #eee; border-radius:4px;">
-                <div><label>Owner 1 Name</label><input type="text" id="f-owner_1_name" style="width:100%; padding:8px;"></div>
-                <div><label>Owner 1 Phone</label><input type="text" id="f-owner_1_phone" style="width:100%; padding:8px;"></div>
-                <div><label>Owner 1 Email</label><input type="email" id="f-owner_1_email" style="width:100%; padding:8px;"></div>
             </div>
-
-            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px;">3. Owner 2 Details</h4>
-            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin-bottom:25px; background:#fcfcfc; padding:15px; border:1px solid #eee; border-radius:4px;">
-                <div><label>Owner 2 Name</label><input type="text" id="f-owner_2_name" style="width:100%; padding:8px;"></div>
-                <div><label>Owner 2 Phone</label><input type="text" id="f-owner_2_phone" style="width:100%; padding:8px;"></div>
-                <div><label>Owner 2 Email</label><input type="email" id="f-owner_2_email" style="width:100%; padding:8px;"></div>
-            </div>
-
-            <div><label>Internal Notes</label><textarea id="f-internal_notes" style="width:100%; height:60px; padding:8px;"></textarea></div>
-        </div>
-
         <div style="padding:20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:12px; background:#f9f9f9;">
             <button onclick="document.getElementById('modal-franchise').style.display='none'">CANCEL</button>
             <button onclick="submitFranchise()" style="background:#00d1b2; color:white; border:none; padding:10px 25px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE RECORD</button>
@@ -72,16 +42,23 @@
         'business_tax_id', 'internal_notes', 'social_fb', 'social_ig', 'social_li', 'social_tiktok'
     ];
 
-    // Load function [cite: 2025-12-29]
+    // Global load function [cite: 2025-12-29]
     async function loadFranchises() {
+        const container = document.getElementById('franchise-container');
+        if (!container) return;
+
         try {
             const res = await fetch(F_API + '?t=' + Date.now());
+            if (!res.ok) throw new Error("API Connection Failed");
+
             const data = await res.json();
             let list = Array.isArray(data) ? data : (data.items || []);
             list.sort((a, b) => a.id - b.id);
             
-            const container = document.getElementById('franchise-container');
-            if (!container) return;
+            if (list.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px;">No Franchise Records Found.</div>';
+                return;
+            }
 
             container.innerHTML = list.map(f => {
                 const s = (val) => val ? '<span style="color:green;">✅</span>' : '<span style="color:red;">❌</span>';
@@ -92,112 +69,55 @@
                         <span style="font-weight:bold; color:#00d1b2; text-transform:uppercase; font-size:0.8rem;">${(f.status || '').replace('_',' ')}</span>
                     </div>
                     <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:15px; font-size:0.85rem;">
-                        <div>
-                            <span style="color:#888; font-weight:bold; font-size:0.7rem;">FRANCHISE BRAND</span><br>
-                            E: ${f.franchise_email || 'N/A'}<br>P: ${f.phone_number || 'N/A'}<br>
-                            FB: ${s(f.social_fb)} IG: ${s(f.social_ig)} TK: ${s(f.social_tiktok)} LI: ${s(f.social_li)}
+                        <div><span style="color:#888; font-weight:bold; font-size:0.7rem;">FRANCHISE BRAND</span><br>E: ${f.franchise_email || 'N/A'}</div>
+                        <div><span style="color:#888; font-weight:bold; font-size:0.7rem;">OWNER 1</span><br>${f.owner_1_name || 'N/A'}</div>
+                        <div><span style="color:#888; font-weight:bold; font-size:0.7rem;">OPERATIONS</span><br>Tax ID: ${f.business_tax_id || 'N/A'}</div>
+                        <div style="text-align:right;">
+                            <button onclick="editFranchise(${f.id})" style="color:blue; border:none; background:none; cursor:pointer;">Edit</button>
+                            <button onclick="deleteFranchise(${f.id})" style="color:red; border:none; background:none; cursor:pointer; margin-left:10px;">Delete</button>
                         </div>
-                        <div>
-                            <span style="color:#888; font-weight:bold; font-size:0.7rem;">OWNER 1</span><br>
-                            ${f.owner_1_name || 'N/A'}<br>${f.owner_1_email || 'N/A'}<br>${f.owner_1_phone || 'N/A'}
-                        </div>
-                        <div>
-                            <span style="color:#888; font-weight:bold; font-size:0.7rem;">OWNER 2</span><br>
-                            ${f.owner_2_name || 'N/A'}<br>${f.owner_2_email || 'N/A'}<br>${f.owner_2_phone || 'N/A'}
-                        </div>
-                        <div>
-                            <span style="color:#888; font-weight:bold; font-size:0.7rem;">OPERATIONS</span><br>
-                            Tax ID: ${f.business_tax_id || 'N/A'}<br>
-                            Royalty: ${f.royalty_rate}%<br>
-                            Opened: ${f.opening_date || 'N/A'}
-                        </div>
-                        <div style="grid-column: span 2;">
-                            <span style="color:#888; font-weight:bold; font-size:0.7rem;">ADDRESS</span><br>
-                            ${f.address || 'N/A'}
-                        </div>
-                        <div style="grid-column: span 2;">
-                            <span style="color:#888; font-weight:bold; font-size:0.7rem;">INTERNAL NOTES</span><br>
-                            ${f.internal_notes || 'None'}
-                        </div>
-                    </div>
-                    <div style="text-align:right; margin-top:15px; border-top:1px solid #f9f9f9; padding-top:10px;">
-                        <button onclick="editFranchise(${f.id})" style="color:blue; border:1px solid blue; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px;">EDIT FULL RECORD</button>
-                        <button onclick="deleteFranchise(${f.id})" style="color:red; border:1px solid red; background:none; padding:5px 12px; cursor:pointer; font-weight:bold; border-radius:4px; margin-left:10px;">DELETE</button>
                     </div>
                 </div>`;
             }).join('');
         } catch(e) { 
-            console.error("Load Error:", e);
-            document.getElementById('franchise-container').innerHTML = "Failed to load data.";
+            console.error("Xano Fetch Error:", e);
+            container.innerHTML = `<div style="text-align:center; color:red; padding:20px;">Error: ${e.message}</div>`;
         }
     }
 
-    // Submit function [cite: 2025-12-29]
-    async function submitFranchise() {
-        const id = document.getElementById('f-id').value;
-        const payload = {};
-        fields.forEach(f => {
-            const el = document.getElementById('f-' + f);
-            if(el) payload[f] = (f === 'royalty_rate') ? (parseFloat(el.value) || 0) : (el.value || "");
-        });
-
-        const url = id ? `${F_API}/${id}` : F_API;
-        const method = id ? 'PUT' : 'POST';
-
-        try {
-            const res = await fetch(url, {
-                method: method,
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                document.getElementById('modal-franchise').style.display = 'none';
-                loadFranchises();
-            } else {
-                const err = await res.json();
-                alert("Xano Error: " + err.message);
-            }
-        } catch(e) { console.error("Submit Error:", e); }
-    }
-
-    // Edit function [cite: 2025-12-29]
-    async function editFranchise(id) {
-        try {
-            const res = await fetch(`${F_API}/${id}`);
-            const f = await res.json();
-            document.getElementById('f-id').value = f.id;
-            fields.forEach(field => {
-                const el = document.getElementById('f-' + field);
-                if(el) el.value = f[field] || "";
-            });
-            document.getElementById('modal-franchise').style.display = 'flex';
-        } catch(e) { console.error("Edit Fetch Error:", e); }
-    }
-
-    // Delete function [cite: 2025-12-29]
-    async function deleteFranchise(id) {
-        if(confirm("Permanent Delete?")) {
-            try {
-                await fetch(`${F_API}/${id}`, { method: 'DELETE' });
-                loadFranchises();
-            } catch(e) { console.error("Delete Error:", e); }
-        }
-    }
-
-    // Modal Reset [cite: 2025-12-29]
+    // Modal and Submit functions [cite: 2025-12-29]
     function openNewFranchiseModal() {
         document.getElementById('f-id').value = "";
         fields.forEach(f => {
             const el = document.getElementById('f-' + f);
             if(el) el.value = "";
         });
-        document.getElementById('f-status').value = "active";
         document.getElementById('modal-franchise').style.display = 'flex';
     }
 
-    // INITIAL TRIGGER: Wait for page to load [cite: 2025-12-29]
-    document.addEventListener('DOMContentLoaded', loadFranchises);
-    // Backup trigger in case DOMContentLoaded already fired in the iframe
-    loadFranchises();
+    async function submitFranchise() {
+        const id = document.getElementById('f-id').value;
+        const payload = {};
+        fields.forEach(f => {
+            const el = document.getElementById('f-' + f);
+            if(el) payload[f] = el.value || "";
+        });
+
+        const url = id ? `${F_API}/${id}` : F_API;
+        const method = id ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            document.getElementById('modal-franchise').style.display = 'none';
+            loadFranchises();
+        }
+    }
+
+    // Trigger initial load [cite: 2025-12-29]
+    window.onload = loadFranchises;
 </script>
