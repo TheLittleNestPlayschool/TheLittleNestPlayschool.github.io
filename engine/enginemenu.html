@@ -1,59 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .menu-container {
+            padding: 20px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+        .menu-header {
+            margin-bottom: 30px;
+        }
+        .home-btn {
+            width: 100%;
+            padding: 12px;
+            background: #00a896;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .current-screen {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        .menu-section h3 {
+            font-size: 11px;
+            color: #555;
+            letter-spacing: 1px;
+            margin: 20px 0 10px 0;
+        }
+        .menu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .menu-list li {
+            padding: 8px 0;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+        .menu-list li:hover {
+            color: #00a896;
+        }
+    </style>
+</head>
+<body>
+
 <div class="menu-container">
     <div class="menu-header">
-        <button onclick="resetDashboard()" class="home-btn">🏠 DASHBOARD HOME</button>
+        <button onclick="window.parent.resetDashboard()" class="home-btn">🏠 DASHBOARD HOME</button>
         <div id="screen-name" class="current-screen">Home</div>
     </div>
 
     <div class="menu-section">
         <h3>SITE & IDENTITY</h3>
         <ul class="menu-list">
-            <li onclick="loadFrame('blog_manager.html', 'Blog Management')">Blog Management</li>
-            <li onclick="loadFrame('franchise_manager.html', 'Franchise Manager')">Franchise Manager</li>
-            <li onclick="loadFrame('parent_manager.html', 'Parent Management')">Parent Management</li>
-            <li onclick="loadFrame('student_manager.html', 'Student Management')">Student Management</li>
-            <li onclick="loadFrame('teacher_manager.html', 'Teacher Management')">Teacher Management</li>
+            <li onclick="window.parent.loadFrame('blog_manager.html', 'Blog Management')">Blog Management</li>
+            <li onclick="window.parent.loadFrame('franchise_manager.html', 'Franchise Manager')">Franchise Manager</li>
+            <li onclick="window.parent.loadFrame('parent_manager.html', 'Parent Management')">Parent Management</li>
+            <li onclick="window.parent.loadFrame('student_manager.html', 'Student Management')">Student Management</li>
+            <li onclick="window.parent.loadFrame('teacher_manager.html', 'Teacher Management')">Teacher Management</li>
+            <li onclick="window.parent.loadFrame('admin_roles.html', 'Admin Roles & Permissions')">Admin Roles & Permissions</li>
+        </ul>
+    </div>
+
+    <div class="menu-section">
+        <h3>ACADEMIC DNA</h3>
+        <ul class="menu-list">
+            <li onclick="window.parent.loadFrame('new_enrollment.html', 'New Enrollment')">New Enrollment</li>
+        </ul>
+    </div>
+
+    <div class="menu-section">
+        <h3>ASSESSMENT DATA</h3>
+        <ul class="menu-list">
+            <li onclick="window.parent.loadFrame('student_assessments.html', 'Student Assessments')">Student Assessments</li>
+            <li onclick="window.parent.loadFrame('assessment_questions.html', 'Assessment Questions')">Assessment Questions</li>
+        </ul>
+    </div>
+
+    <div class="menu-section">
+        <h3>PROGRESS TRACKING</h3>
+        <ul class="menu-list">
+            <li onclick="window.parent.loadFrame('student_progress.html', 'Student Progress')">Student Progress</li>
+            <li onclick="window.parent.loadFrame('progress_questions.html', 'Progress Questions')">Progress Questions</li>
+        </ul>
+    </div>
+
+    <div class="menu-section">
+        <h3>SESSION MANAGEMENT</h3>
+        <ul class="menu-list">
+            <li onclick="window.parent.loadFrame('session_details.html', 'Session Details')">Session Details</li>
+            <li onclick="window.parent.loadFrame('session_master_list.html', 'Session Master List')">Session Master List</li>
+        </ul>
+    </div>
+
+    <div class="menu-section">
+        <h3>OPERATIONS</h3>
+        <ul class="menu-list">
+            <li onclick="window.parent.loadFrame('digital_vault.html', 'Digital File Vault')">Digital File Vault</li>
         </ul>
     </div>
 </div>
 
 <script>
-    // This variable stays alive as long as the menu is loaded
-    let lastAbortController = null;
-
-    function loadFrame(url, name) {
-        // 1. If there's an old request still hanging, kill it now
-        if (lastAbortController) {
-            lastAbortController.abort();
+    /**
+     * Updates the UI text inside the menu when a module is loaded.
+     * The actual connection aborting is handled by loadFrame in the index.html. [cite: 2026-01-13]
+     */
+    function updateMenuUI(name) {
+        const indicator = document.getElementById('screen-name');
+        if (indicator) {
+            indicator.textContent = name;
         }
-
-        // 2. Create a new controller for the NEW click
-        lastAbortController = new AbortController();
-
-        // UI Updates
-        const indicator = document.getElementById('screen-name');
-        if (indicator) indicator.textContent = name;
-        
-        // Reach into the main index.html to find the elements
-        const parentDoc = window.parent.document;
-        const frame = parentDoc.getElementById('main-frame');
-        const contentInner = parentDoc.getElementById('content-inner');
-
-        if (contentInner) contentInner.style.display = 'none';
-
-        // 3. Set the src directly. 
-        // Adding the timestamp ensures the browser doesn't use a 'stuck' pipe.
-        frame.src = url + '?v=' + Date.now();
-    }
-
-    function resetDashboard() {
-        if (lastAbortController) lastAbortController.abort();
-        const parentDoc = window.parent.document;
-        const frame = parentDoc.getElementById('main-frame');
-        const contentInner = parentDoc.getElementById('content-inner');
-        const indicator = document.getElementById('screen-name');
-
-        frame.src = 'about:blank';
-        if (contentInner) contentInner.style.display = 'block';
-        if (indicator) indicator.textContent = 'Home';
     }
 </script>
+
+</body>
+</html>
