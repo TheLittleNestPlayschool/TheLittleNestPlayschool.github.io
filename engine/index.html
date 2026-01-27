@@ -19,13 +19,10 @@
             <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
             <p>Select a module from the menu to begin.</p>
         </div>
-        <div id="frame-anchor" style="width:100%; height:100%;">
-            <iframe id="main-frame" name="main-frame" src="about:blank"></iframe>
-        </div>
+        <iframe id="main-frame" name="main-frame" src="about:blank"></iframe>
     </main>
 
     <script>
-        // 1. Load the menu exactly as it was
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => {
@@ -47,19 +44,17 @@
             const frame = document.getElementById('main-frame');
             document.getElementById('content-inner').style.display = 'none';
 
-            // THE KILL STEP: 
-            // We don't just set src. We stop the window and replace the location.
-            // This is the only way to recycle the 6-connection limit.
-            try {
-                frame.contentWindow.stop(); // Stop Xano polling
-                frame.contentWindow.location.replace('about:blank'); // Release socket
-            } catch(e) {}
+            // 1. Force a stop to kill any active network streams
+            try { frame.contentWindow.stop(); } catch(e) {}
 
-            // Wait for the browser to acknowledge the release
+            // 2. Set src to a non-existent URL on the SAME domain.
+            // This often tricks the browser into clearing the active TCP sockets 
+            // for that domain because the request "completes" with a 404 immediately.
+            frame.src = '/favicon.ico'; 
+
             setTimeout(() => {
-                const freshUrl = url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now();
-                frame.contentWindow.location.replace(freshUrl);
-            }, 150);
+                frame.src = url + '?v=' + Date.now();
+            }, 100);
         }
     </script>
 </body>
