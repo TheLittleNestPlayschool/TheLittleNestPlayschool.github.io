@@ -6,9 +6,10 @@
     <style>
         html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; }
         .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; position: fixed; left: 0; top: 0; padding: 0; z-index: 10000; }
-        .main-content { margin-left: 250px; padding: 0; width: calc(100% - 250px); height: 100vh; background: #fff; box-sizing: border-box; overflow: hidden; }
+        .main-content { margin-left: 250px; padding: 0; width: calc(100% - 250px); height: 100vh; background: #fff; box-sizing: border-box; overflow: hidden; position: relative; }
         .btn { padding: 10px 20px; cursor: pointer; font-weight: 700; border: 1px solid #ccc; border-radius: 4px; }
         .btn-save { background: #00d1b2; color: #1a1a1a; border: none; }
+        iframe { width: 100%; height: 100%; border: none; display: block; }
     </style>
 </head>
 <body>
@@ -16,8 +17,7 @@
     <div class="admin-sidebar" id="nav-placeholder"></div>
 
     <main class="main-content" id="dashboard-content">
-        <iframe id="main-frame" name="main-frame" src="about:blank" style="width: 100%; height: 100%; border: none;"></iframe>
-        <div id="content-inner" style="text-align: center; margin-top: 20vh; position: absolute; width: calc(100% - 250px); top: 0; pointer-events: none;">
+        <div id="content-inner" style="text-align: center; margin-top: 20vh; position: absolute; width: 100%; top: 0; pointer-events: none; z-index: 1;">
             <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
             <p>Select a module from the menu to begin.</p>
         </div>
@@ -31,30 +31,40 @@
                 document.getElementById('nav-placeholder').innerHTML = data;
             });
 
-        // 2. Reset Dashboard to Home screen
         function resetDashboard() {
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = 'Home';
-            const frame = document.getElementById('main-frame');
-            frame.src = 'about:blank';
+            
+            // Remove any existing iframe
+            const oldFrame = document.querySelector('iframe');
+            if(oldFrame) oldFrame.remove();
+            
             document.getElementById('content-inner').style.display = 'block';
         }
 
-        // 3. Load function with 150ms reset to prevent Xano "Syncing" hang-ups
         function loadFrame(url, name) {
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = name;
             
-            const frame = document.getElementById('main-frame');
+            const container = document.getElementById('dashboard-content');
             document.getElementById('content-inner').style.display = 'none';
             
-            // Wipe the frame completely first
-            frame.src = 'about:blank';
+            // 1. Kill the old iframe completely to stop all scripts
+            const oldFrame = document.querySelector('iframe');
+            if(oldFrame) oldFrame.remove();
             
-            // Short delay to allow browser to clear old connections
+            // 2. Create a brand new, clean iframe element
+            const newFrame = document.createElement('iframe');
+            newFrame.style.width = "100%";
+            newFrame.style.height = "100%";
+            newFrame.style.border = "none";
+            
+            // 3. Append and then set the source with a timestamp
+            container.appendChild(newFrame);
+            
             setTimeout(() => {
-                frame.src = url + '?v=' + Date.now();
-            }, 150); 
+                newFrame.src = url + '?v=' + Date.now();
+            }, 50); 
         }
     </script>
 </body>
