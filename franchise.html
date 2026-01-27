@@ -64,7 +64,7 @@
 </div>
 
 <script>
-(function() {
+    // Constants [cite: 2025-12-29]
     const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
     const fields = [
         'name', 'address', 'phone_number', 'royalty_rate', 'owner_1_name', 'owner_1_phone', 'owner_1_email',
@@ -72,17 +72,21 @@
         'business_tax_id', 'internal_notes', 'social_fb', 'social_ig', 'social_li', 'social_tiktok'
     ];
 
-    window.loadFranchises = async () => {
+    // Load function [cite: 2025-12-29]
+    async function loadFranchises() {
         try {
             const res = await fetch(F_API + '?t=' + Date.now());
             const data = await res.json();
             let list = Array.isArray(data) ? data : (data.items || []);
             list.sort((a, b) => a.id - b.id);
             
-            document.getElementById('franchise-container').innerHTML = list.map(f => {
+            const container = document.getElementById('franchise-container');
+            if (!container) return;
+
+            container.innerHTML = list.map(f => {
                 const s = (val) => val ? '<span style="color:green;">✅</span>' : '<span style="color:red;">❌</span>';
                 return `
-                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05); margin-bottom:15px;">
                     <div style="display:flex; justify-content:space-between; border-bottom:2px solid #00d1b2; padding-bottom:10px; margin-bottom:10px;">
                         <h2 style="margin:0;">${f.name || 'N/A'}</h2>
                         <span style="font-weight:bold; color:#00d1b2; text-transform:uppercase; font-size:0.8rem;">${(f.status || '').replace('_',' ')}</span>
@@ -122,10 +126,14 @@
                     </div>
                 </div>`;
             }).join('');
-        } catch(e) { console.error(e); }
-    };
+        } catch(e) { 
+            console.error("Load Error:", e);
+            document.getElementById('franchise-container').innerHTML = "Failed to load data.";
+        }
+    }
 
-    window.submitFranchise = async () => {
+    // Submit function [cite: 2025-12-29]
+    async function submitFranchise() {
         const id = document.getElementById('f-id').value;
         const payload = {};
         fields.forEach(f => {
@@ -133,44 +141,52 @@
             if(el) payload[f] = (f === 'royalty_rate') ? (parseFloat(el.value) || 0) : (el.value || "");
         });
 
-        // Use PUT for updates as per Xano API screenshot
         const url = id ? `${F_API}/${id}` : F_API;
         const method = id ? 'PUT' : 'POST';
 
-        const res = await fetch(url, {
-            method: method,
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
 
-        if (res.ok) {
-            document.getElementById('modal-franchise').style.display = 'none';
-            loadFranchises();
-        } else {
-            const err = await res.json();
-            alert("Xano Error: " + err.message);
-        }
-    };
+            if (res.ok) {
+                document.getElementById('modal-franchise').style.display = 'none';
+                loadFranchises();
+            } else {
+                const err = await res.json();
+                alert("Xano Error: " + err.message);
+            }
+        } catch(e) { console.error("Submit Error:", e); }
+    }
 
-    window.editFranchise = async (id) => {
-        const res = await fetch(`${F_API}/${id}`);
-        const f = await res.json();
-        document.getElementById('f-id').value = f.id;
-        fields.forEach(field => {
-            const el = document.getElementById('f-' + field);
-            if(el) el.value = f[field] || "";
-        });
-        document.getElementById('modal-franchise').style.display = 'flex';
-    };
+    // Edit function [cite: 2025-12-29]
+    async function editFranchise(id) {
+        try {
+            const res = await fetch(`${F_API}/${id}`);
+            const f = await res.json();
+            document.getElementById('f-id').value = f.id;
+            fields.forEach(field => {
+                const el = document.getElementById('f-' + field);
+                if(el) el.value = f[field] || "";
+            });
+            document.getElementById('modal-franchise').style.display = 'flex';
+        } catch(e) { console.error("Edit Fetch Error:", e); }
+    }
 
-    window.deleteFranchise = async (id) => {
+    // Delete function [cite: 2025-12-29]
+    async function deleteFranchise(id) {
         if(confirm("Permanent Delete?")) {
-            await fetch(`${F_API}/${id}`, { method: 'DELETE' });
-            loadFranchises();
+            try {
+                await fetch(`${F_API}/${id}`, { method: 'DELETE' });
+                loadFranchises();
+            } catch(e) { console.error("Delete Error:", e); }
         }
-    };
+    }
 
-    window.openNewFranchiseModal = () => {
+    // Modal Reset [cite: 2025-12-29]
+    function openNewFranchiseModal() {
         document.getElementById('f-id').value = "";
         fields.forEach(f => {
             const el = document.getElementById('f-' + f);
@@ -178,8 +194,10 @@
         });
         document.getElementById('f-status').value = "active";
         document.getElementById('modal-franchise').style.display = 'flex';
-    };
+    }
 
+    // INITIAL TRIGGER: Wait for page to load [cite: 2025-12-29]
+    document.addEventListener('DOMContentLoaded', loadFranchises);
+    // Backup trigger in case DOMContentLoaded already fired in the iframe
     loadFranchises();
-})();
 </script>
