@@ -2,14 +2,55 @@
 <html>
 <head>
     <style>
-        /* Restoring your original sidebar styles */
-        body { margin: 0; padding: 0; background: #1a1a1a; color: white; font-family: 'Inter', sans-serif; }
-        .menu-container { padding: 15px; }
-        .home-btn { width: 100%; padding: 10px; background: #00a896; color: white; border: none; cursor: pointer; font-weight: bold; margin-bottom: 20px; text-transform: uppercase; }
-        .menu-section h3 { font-size: 10px; color: #555; letter-spacing: 1.5px; margin: 15px 0 5px 0; text-transform: uppercase; }
-        .menu-list { list-style: none; padding: 0; margin: 0; }
-        .menu-list li { padding: 6px 0; color: #ccc; cursor: pointer; font-size: 13px; }
-        .menu-list li:hover { color: #00a896; }
+        /* Restoring your exact sidebar look: dark background, white text */
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background: #1a1a1a; 
+            color: white; 
+            font-family: 'Inter', sans-serif; 
+        }
+        .menu-container { 
+            padding: 15px; 
+        }
+        .home-btn { 
+            width: 100%; 
+            padding: 10px; 
+            background: #00a896; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-bottom: 20px; 
+            text-transform: uppercase; 
+        }
+        .menu-section h3 { 
+            font-size: 10px; 
+            color: #555; 
+            letter-spacing: 1.5px; 
+            margin: 15px 0 5px 0; 
+            text-transform: uppercase; 
+        }
+        .menu-list { 
+            list-style: none; 
+            padding: 0; 
+            margin: 0; 
+        }
+        .menu-list li { 
+            padding: 6px 0; 
+            color: #ccc; 
+            cursor: pointer; 
+            font-size: 13px; 
+        }
+        .menu-list li:hover { 
+            color: #00a896; 
+        }
+        #screen-name {
+            color: #00a896;
+            font-size: 11px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
@@ -17,7 +58,7 @@
 <div class="menu-container">
     <button onclick="window.parent.resetDashboard()" class="home-btn">🏠 DASHBOARD HOME</button>
     
-    <div id="screen-name" style="color: #00a896; font-size: 11px; margin-bottom: 20px;">HOME</div>
+    <div id="screen-name">HOME</div>
 
     <div class="menu-section">
         <h3>SITE & IDENTITY</h3>
@@ -27,6 +68,16 @@
             <li onclick="window.parent.loadFrame('parent_manager.html', 'Parent Management'); updateUI('Parent Management')">Parent Management</li>
             <li onclick="window.parent.loadFrame('student_manager.html', 'Student Management'); updateUI('Student Management')">Student Management</li>
             <li onclick="window.parent.loadFrame('teacher_manager.html', 'Teacher Management'); updateUI('Teacher Management')">Teacher Management</li>
+            <li onclick="window.parent.loadFrame('admin_roles.html', 'Admin Roles & Permissions'); updateUI('Admin Roles & Permissions')">Admin Roles & Permissions</li>
+        </ul>
+    </div>
+
+    <div class="menu-section">
+        <h3>CRM & LEADS</h3>
+        <ul class="menu-list">
+            <li onclick="window.parent.loadFrame('message_raw.html', 'Raw Message Log'); updateUI('Raw Message Log')">Raw Message Log</li>
+            <li onclick="window.parent.loadFrame('winning_patterns.html', 'Winning Patterns'); updateUI('Winning Patterns')">Winning Patterns</li>
+            <li onclick="window.parent.loadFrame('lead_profile.html', 'Lead Profiles'); updateUI('Lead Profiles')">Lead Profiles</li>
         </ul>
     </div>
 
@@ -34,28 +85,10 @@
         <h3>ACADEMIC DNA</h3>
         <ul class="menu-list">
             <li onclick="window.parent.loadFrame('new_enrollment.html', 'New Enrollment'); updateUI('New Enrollment')">New Enrollment</li>
-        </ul>
-    </div>
-
-    <div class="menu-section">
-        <h3>ASSESSMENT DATA</h3>
-        <ul class="menu-list">
             <li onclick="window.parent.loadFrame('student_assessments.html', 'Student Assessments'); updateUI('Student Assessments')">Student Assessments</li>
             <li onclick="window.parent.loadFrame('assessment_questions.html', 'Assessment Questions'); updateUI('Assessment Questions')">Assessment Questions</li>
-        </ul>
-    </div>
-
-    <div class="menu-section">
-        <h3>PROGRESS TRACKING</h3>
-        <ul class="menu-list">
             <li onclick="window.parent.loadFrame('student_progress.html', 'Student Progress'); updateUI('Student Progress')">Student Progress</li>
             <li onclick="window.parent.loadFrame('progress_questions.html', 'Progress Questions'); updateUI('Progress Questions')">Progress Questions</li>
-        </ul>
-    </div>
-
-    <div class="menu-section">
-        <h3>SESSION MANAGEMENT</h3>
-        <ul class="menu-list">
             <li onclick="window.parent.loadFrame('session_details.html', 'Session Details'); updateUI('Session Details')">Session Details</li>
             <li onclick="window.parent.loadFrame('session_master_list.html', 'Session Master List'); updateUI('Session Master List')">Session Master List</li>
         </ul>
@@ -64,12 +97,17 @@
     <div class="menu-section">
         <h3>OPERATIONS</h3>
         <ul class="menu-list">
+            <li onclick="window.parent.loadFrame('teacher_work_days.html', 'Teacher Work Days'); updateUI('Teacher Work Days')">Teacher Work Days</li>
             <li onclick="window.parent.loadFrame('digital_vault.html', 'Digital File Vault'); updateUI('Digital File Vault')">Digital File Vault</li>
         </ul>
     </div>
 </div>
 
 <script>
+    /**
+     * Internal UI update for the menu sidebar
+     * The connection management is handled by loadFrame in the index.html
+     */
     function updateUI(name) {
         document.getElementById('screen-name').textContent = name;
     }
