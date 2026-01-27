@@ -5,32 +5,57 @@
     <title>Engine Dashboard</title>
     <style>
         html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; }
-        .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; position: fixed; left: 0; top: 0; padding: 0; z-index: 10000; }
-        .main-content { margin-left: 250px; padding: 0; width: calc(100% - 250px); height: 100vh; background: #fff; box-sizing: border-box; overflow: hidden; position: relative; }
-        iframe { width: 100%; height: 100%; border: none; display: block; background: #fff; }
+        .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; position: fixed; left: 0; top: 0; z-index: 10000; }
+        .main-content { margin-left: 250px; padding: 0; width: calc(100% - 250px); height: 100vh; background: #fff; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; display: block; }
     </style>
 </head>
 <body>
     <div class="admin-sidebar" id="nav-placeholder"></div>
     <main class="main-content">
-        <div id="content-inner" style="text-align: center; margin-top: 20vh; position: absolute; width: 100%; top: 0; z-index: 10; pointer-events: none;">
-            <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
+        <div id="content-inner" style="text-align: center; margin-top: 20vh; position: absolute; width: 100%; pointer-events: none;">
+            <h1 style="color: #1a365d;">The Little Nest Intelligence Hub</h1>
         </div>
         <iframe id="main-frame" name="main-frame" src="about:blank"></iframe>
     </main>
 
     <script>
+        // Use a single, persistent controller to manage the queue
+        let requestController = new AbortController();
+
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => { document.getElementById('nav-placeholder').innerHTML = data; });
 
         function loadFrame(url, name) {
+            // 1. KILL the outgoing signal immediately. This tells the browser: 
+            // "Stop trying to start the previous 5 requests."
+            requestController.abort();
+            
+            // 2. Create a fresh controller for this new click
+            requestController = new AbortController();
+            const { signal } = requestController;
+
             const frame = document.getElementById('main-frame');
             document.getElementById('content-inner').style.display = 'none';
+
+            // 3. Force a hard reset of the iframe to "about:blank". 
+            // This is the only way to make the browser "let go" of a domain connection.
             frame.src = 'about:blank';
+
+            // 4. WAIT for the browser to acknowledge the release (50ms)
+            // If you click 10 times, only the VERY LAST click will survive this timeout.
             setTimeout(() => {
-                frame.src = url + '?v=' + Date.now();
+                if (!signal.aborted) {
+                    frame.src = url + '?v=' + Date.now();
+                }
             }, 50);
+        }
+
+        function resetDashboard() {
+            requestController.abort();
+            document.getElementById('main-frame').src = 'about:blank';
+            document.getElementById('content-inner').style.display = 'block';
         }
     </script>
 </body>
