@@ -4,11 +4,26 @@
     <meta charset="UTF-8">
     <title>Engine Dashboard</title>
     <style>
-        html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; }
-        .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; position: fixed; left: 0; top: 0; padding: 0; z-index: 10000; }
-        .main-content { margin-left: 250px; padding: 25px; width: calc(100% - 250px); min-height: 100vh; background: #fff; box-sizing: border-box; }
-        .btn { padding: 10px 20px; cursor: pointer; font-weight: 700; border: 1px solid #ccc; border-radius: 4px; }
-        .btn-save { background: #00d1b2; color: #1a1a1a; border: none; }
+        html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; overflow: hidden; }
+        /* This is the container that was missing or misconfigured */
+        #nav-placeholder { 
+            width: 250px; 
+            height: 100vh; 
+            background: #1a1a1a; 
+            position: fixed; 
+            left: 0; 
+            top: 0; 
+            z-index: 10000; 
+        }
+        .main-content { 
+            margin-left: 250px; 
+            padding: 25px; 
+            width: calc(100% - 250px); 
+            min-height: 100vh; 
+            background: #fff; 
+            box-sizing: border-box; 
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -23,15 +38,21 @@
     </main>
 
     <script>
-        // 1. This loads your menu into the placeholder
+        let currentAbortController = null;
+
+        // 1. Load the sidebar menu into the fixed container
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => {
                 document.getElementById('nav-placeholder').innerHTML = data;
+            })
+            .catch(err => {
+                console.error("Failed to load menu:", err);
+                document.getElementById('nav-placeholder').innerHTML = '<div style="color:white; padding:20px;">Menu Load Error</div>';
             });
 
-        // 2. These are the functions that make your menu buttons work
         function resetDashboard() {
+            if (currentAbortController) currentAbortController.abort();
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = 'Home';
             document.getElementById('dashboard-content').innerHTML = `
@@ -45,14 +66,26 @@
             const container = document.getElementById('dashboard-content');
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = name;
+
+            if (currentAbortController) currentAbortController.abort();
+            currentAbortController = new AbortController();
+
+            container.innerHTML = '<div style="padding:20px; font-weight:bold; color:#666;">Loading ' + name + '...</div>';
             
-            container.innerHTML = '<div style="padding:20px;">Loading ' + name + '...</div>';
             try {
-                const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999));
+                const response = await fetch(url + '?v=' + Date.now(), {
+                    signal: currentAbortController.signal
+                });
+                if (!response.ok) throw new Error('Network response was not ok');
                 const html = await response.text();
-                container.innerHTML = html;
+                
+                setTimeout(() => {
+                    container.innerHTML = html;
+                }, 10);
             } catch (e) {
-                container.innerHTML = '<h2 style="color:red; padding:20px;">Error loading module.</h2>';
+                if (e.name !== 'AbortError') {
+                    container.innerHTML = '<h2 style="color:red; padding:20px;">Error loading ' + name + '.</h2>';
+                }
             }
         }
     </script>
