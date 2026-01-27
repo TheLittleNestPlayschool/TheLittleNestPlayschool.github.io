@@ -7,62 +7,52 @@
     <div class="menu-section">
         <h3>SITE & IDENTITY</h3>
         <ul class="menu-list">
-            <li onclick="loadModule('blog_manager.html', 'Blog Management')">Blog Management</li>
-            <li onclick="loadModule('franchise_manager.html', 'Franchise Manager')">Franchise Manager</li>
-            <li onclick="loadModule('parent_manager.html', 'Parent Management')">Parent Management</li>
-            <li onclick="loadModule('student_manager.html', 'Student Management')">Student Management</li>
-            <li onclick="loadModule('teacher_manager.html', 'Teacher Management')">Teacher Management</li>
+            <li onclick="loadFrame('blog_manager.html', 'Blog Management')">Blog Management</li>
+            <li onclick="loadFrame('franchise_manager.html', 'Franchise Manager')">Franchise Manager</li>
+            <li onclick="loadFrame('parent_manager.html', 'Parent Management')">Parent Management</li>
+            <li onclick="loadFrame('student_manager.html', 'Student Management')">Student Management</li>
+            <li onclick="loadFrame('teacher_manager.html', 'Teacher Management')">Teacher Management</li>
         </ul>
     </div>
 </div>
 
 <script>
-    // Global controller to kill pending Xano/Hostinger requests
-    let activeController = null;
+    // This variable stays alive as long as the menu is loaded
+    let lastAbortController = null;
 
-    function loadModule(url, name) {
-        // 1. Abort previous click immediately
-        if (activeController) {
-            activeController.abort();
+    function loadFrame(url, name) {
+        // 1. If there's an old request still hanging, kill it now
+        if (lastAbortController) {
+            lastAbortController.abort();
         }
 
-        // 2. Create fresh signal for this specific load
-        activeController = new AbortController();
-        const { signal } = activeController;
+        // 2. Create a new controller for the NEW click
+        lastAbortController = new AbortController();
 
         // UI Updates
         const indicator = document.getElementById('screen-name');
         if (indicator) indicator.textContent = name;
         
-        // Use window.parent to reach the dashboard shell
+        // Reach into the main index.html to find the elements
         const parentDoc = window.parent.document;
+        const frame = parentDoc.getElementById('main-frame');
         const contentInner = parentDoc.getElementById('content-inner');
-        const mainFrame = parentDoc.getElementById('main-frame');
 
         if (contentInner) contentInner.style.display = 'none';
 
-        // 3. Clear the frame so the browser can drop the old connection
-        mainFrame.src = 'about:blank';
-
-        // 4. Load the new module
-        const freshUrl = url + '?v=' + Date.now();
-        
-        // Small delay ensures the 'abort' signals are processed by the network tab
-        setTimeout(() => {
-            if (!signal.aborted) {
-                mainFrame.src = freshUrl;
-            }
-        }, 50);
+        // 3. Set the src directly. 
+        // Adding the timestamp ensures the browser doesn't use a 'stuck' pipe.
+        frame.src = url + '?v=' + Date.now();
     }
 
     function resetDashboard() {
-        if (activeController) activeController.abort();
+        if (lastAbortController) lastAbortController.abort();
         const parentDoc = window.parent.document;
-        const mainFrame = parentDoc.getElementById('main-frame');
+        const frame = parentDoc.getElementById('main-frame');
         const contentInner = parentDoc.getElementById('content-inner');
         const indicator = document.getElementById('screen-name');
 
-        mainFrame.src = 'about:blank';
+        frame.src = 'about:blank';
         if (contentInner) contentInner.style.display = 'block';
         if (indicator) indicator.textContent = 'Home';
     }
