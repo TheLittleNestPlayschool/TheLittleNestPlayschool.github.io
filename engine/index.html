@@ -7,9 +7,7 @@
         html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; }
         .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; position: fixed; left: 0; top: 0; padding: 0; z-index: 10000; }
         .main-content { margin-left: 250px; padding: 0; width: calc(100% - 250px); height: 100vh; background: #fff; box-sizing: border-box; overflow: hidden; position: relative; }
-        .btn { padding: 10px 20px; cursor: pointer; font-weight: 700; border: 1px solid #ccc; border-radius: 4px; }
-        .btn-save { background: #00d1b2; color: #1a1a1a; border: none; }
-        iframe { width: 100%; height: 100%; border: none; display: block; }
+        iframe { width: 100%; height: 100%; border: none; display: block; background: #fff; }
     </style>
 </head>
 <body>
@@ -21,11 +19,13 @@
             <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
             <p>Select a module from the menu to begin.</p>
         </div>
-        <iframe id="main-frame" name="main-frame" src="about:blank"></iframe>
+        <div id="frame-anchor" style="width:100%; height:100%;">
+            <iframe id="main-frame" name="main-frame" src="about:blank"></iframe>
+        </div>
     </main>
 
     <script>
-        // 1. Load the sidebar menu
+        // 1. Load the menu exactly as it was
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => {
@@ -35,7 +35,6 @@
         function resetDashboard() {
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = 'Home';
-            
             const frame = document.getElementById('main-frame');
             frame.src = 'about:blank';
             document.getElementById('content-inner').style.display = 'block';
@@ -48,19 +47,19 @@
             const frame = document.getElementById('main-frame');
             document.getElementById('content-inner').style.display = 'none';
 
-            // Stop any active scripts/syncs in the current frame
+            // THE KILL STEP: 
+            // We don't just set src. We stop the window and replace the location.
+            // This is the only way to recycle the 6-connection limit.
             try {
-                frame.contentWindow.stop();
+                frame.contentWindow.stop(); // Stop Xano polling
+                frame.contentWindow.location.replace('about:blank'); // Release socket
             } catch(e) {}
 
-            // Set to blank first to ensure a clean slate
-            frame.src = 'about:blank';
-
-            // Wait 300ms—this is the sweet spot for the browser to clear 
-            // the 6-connection limit before starting the next module.
+            // Wait for the browser to acknowledge the release
             setTimeout(() => {
-                frame.src = url + '?v=' + Date.now();
-            }, 300);
+                const freshUrl = url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now();
+                frame.contentWindow.location.replace(freshUrl);
+            }, 150);
         }
     </script>
 </body>
