@@ -7,8 +7,7 @@
         html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; }
         .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; position: fixed; left: 0; top: 0; padding: 0; z-index: 10000; }
         .main-content { margin-left: 250px; padding: 0; width: calc(100% - 250px); height: 100vh; background: #fff; box-sizing: border-box; overflow: hidden; position: relative; }
-        #module-host { width: 100%; height: 100%; border: none; }
-        iframe { width: 100%; height: 100%; border: none; display: block; }
+        iframe { width: 100%; height: 100%; border: none; display: block; background: #fff; }
     </style>
 </head>
 <body>
@@ -20,14 +19,13 @@
             <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
             <p>Select a module from the menu to begin.</p>
         </div>
-        <div id="module-host"></div>
+        <iframe id="main-frame" name="main-frame" src="about:blank"></iframe>
     </main>
 
     <script>
-        // Global controller to manage browser connection slots
-        let dashboardController = null;
+        // Track the active controller globally
+        let currentLoadController = null;
 
-        // Load the menu from enginemenu.html
         fetch('enginemenu.html')
             .then(response => response.text())
             .then(data => {
@@ -35,47 +33,43 @@
             });
 
         function resetDashboard() {
-            if (dashboardController) dashboardController.abort();
+            if (currentLoadController) currentLoadController.abort();
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = 'Home';
-            document.getElementById('module-host').innerHTML = '';
+            document.getElementById('main-frame').src = 'about:blank';
             document.getElementById('content-inner').style.display = 'block';
         }
 
-        /**
-         * Loads a module and aborts any existing network connections 
-         * to prevent the "6-click lock" in the browser.
-         */
         function loadFrame(url, name) {
-            // 1. Abort any previous module's in-flight requests
-            if (dashboardController) {
-                dashboardController.abort();
-                console.log("Cleanup: Aborted previous module connections.");
+            // 1. If a previous click is still trying to load, kill it now
+            if (currentLoadController) {
+                currentLoadController.abort();
             }
 
-            // 2. Start a fresh controller for the new module
-            dashboardController = new AbortController();
+            // 2. Create a new controller for THIS click
+            currentLoadController = new AbortController();
+            const { signal } = currentLoadController;
 
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = name;
             
-            const host = document.getElementById('module-host');
+            const frame = document.getElementById('main-frame');
             document.getElementById('content-inner').style.display = 'none';
 
-            // 3. Clear the DOM to force garbage collection
-            host.innerHTML = '';
+            // 3. Clear the frame immediately
+            frame.src = 'about:blank';
 
-            // 4. Create the new module frame
+            // 4. Load the new content
+            // The timestamp helps Xano/Browser see it as a new request
+            const freshUrl = url + '?v=' + Date.now();
+            
+            // We use a slight delay to ensure the abort event is processed 
+            // by the browser's network stack before the new request starts.
             setTimeout(() => {
-                const newFrame = document.createElement('iframe');
-                newFrame.style.width = '100%';
-                newFrame.style.height = '100%';
-                newFrame.style.border = 'none';
-                
-                // Use a timestamp to bypass browser caching
-                newFrame.src = url + '?v=' + Date.now();
-                host.appendChild(newFrame);
-            }, 50);
+                if (!signal.aborted) {
+                    frame.src = freshUrl;
+                }
+            }, 10);
         }
     </script>
 </body>
