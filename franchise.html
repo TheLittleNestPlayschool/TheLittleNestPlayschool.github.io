@@ -65,7 +65,7 @@
  
 <script>
     const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
-    // List matches your table structure
+    // Matches the field names in your Xano table
     const fields = ['name', 'address', 'phone_number', 'royalty_rate', 'owner_1_name', 'owner_1_phone', 'owner_1_email', 'owner_2_name', 'owner_2_phone', 'owner_2_email', 'franchise_email', 'status', 'opening_date', 'business_tax_id', 'internal_notes', 'social_fb', 'social_ig', 'social_li', 'social_tiktok'];
  
     async function loadFranchises() {
@@ -119,33 +119,27 @@
     async function submitFranchise() {
         const id = document.getElementById('f-id').value;
         const innerData = {};
-        
         fields.forEach(f => {
             const el = document.getElementById('f-' + f);
             if(el) {
-                // Handle decimals correctly for Xano
+                // Ensure decimal type for royalty_rate
                 innerData[f] = (f === 'royalty_rate') ? (parseFloat(el.value) || 0) : (el.value || "");
             }
         });
 
-        // Nest data inside 'franchise' to match Xano API setup [cite: 2025-12-29]
+        // Wraps the data to match the Xano input requirement
         const payload = { franchise: innerData };
 
         const url = id ? `${F_API}/${id}` : F_API;
         const method = id ? 'PATCH' : 'POST';
-        
-        try {
-            const res = await fetch(url, {
-                method: method,
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-               document.getElementById('modal-franchise').style.display = 'none';
-               loadFranchises();
-            }
-        } catch (err) {
-            console.error("Save failed:", err);
+        const res = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+           document.getElementById('modal-franchise').style.display = 'none';
+           loadFranchises();
         }
     }
  
@@ -154,7 +148,7 @@
             const res = await fetch(`${F_API}/${id}`);
             const data = await res.json();
             
-            // Extract the specific franchise object from the response [cite: 2025-12-29]
+            // Extracts record from potential 'franchise' or 'item' wrappers [cite: 2025-12-29]
             const f = data.id ? data : (data.franchise || data.item || data);
  
            document.getElementById('f-id').value = f.id;
