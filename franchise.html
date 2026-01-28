@@ -1,9 +1,8 @@
 <!DOCTYPE html>
- 
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-   <title>Franchise Manager</title>
+    <title>Franchise Manager</title>
     <style>
         body { font-family: 'Inter', sans-serif; color: #333; padding: 20px; background: #fff; line-height: 1.5; }
         label { display: block; font-size: 0.75rem; font-weight: bold; color: #666; margin-bottom: 4px; text-transform: uppercase; }
@@ -14,16 +13,16 @@
     </style>
 </head>
 <body>
- 
+
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
     <h1 style="margin:0; font-family: Georgia, serif; color: #1a365d;">Franchise Manager</h1>
     <button onclick="openNewFranchiseModal()" class="btn-new">+ NEW FRANCHISE</button>
 </div>
- 
+
 <div id="franchise-container">
     <div style="text-align:center; padding:50px; border:1px solid #eee; border-radius: 8px;">Syncing Franchise Data...</div>
 </div>
- 
+
 <div id="modal-franchise" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
     <div style="background:white; width:1000px; border-radius:8px; display:flex; flex-direction:column; max-height:95vh;">
         <div style="padding:20px; border-bottom:1px solid #eee; background:#f9f9f9;">
@@ -62,12 +61,11 @@
         </div>
     </div>
 </div>
- 
+
 <script>
     const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
-    // Matches the field names in your Xano table
     const fields = ['name', 'address', 'phone_number', 'royalty_rate', 'owner_1_name', 'owner_1_phone', 'owner_1_email', 'owner_2_name', 'owner_2_phone', 'owner_2_email', 'franchise_email', 'status', 'opening_date', 'business_tax_id', 'internal_notes', 'social_fb', 'social_ig', 'social_li', 'social_tiktok'];
- 
+
     async function loadFranchises() {
         const container = document.getElementById('franchise-container');
         try {
@@ -85,12 +83,12 @@
                 const arrayKey = Object.keys(data).find(key => Array.isArray(data[key]));
                 list = arrayKey ? data[arrayKey] : [];
             }
- 
+
             if (list.length === 0) {
                container.innerHTML = '<div style="text-align:center; padding:50px; border:1px solid #eee;">No Records Found.</div>';
                return;
             }
- 
+
            list.sort((a, b) => a.id - b.id);
            container.innerHTML = list.map(f => {
                 return `
@@ -115,42 +113,57 @@
            container.innerHTML = "Error: " + e.message;
         }
     }
- 
+
     async function submitFranchise() {
-        const id = document.getElementById('f-id').value;
+        const idValue = document.getElementById('f-id').value;
         const innerData = {};
+        
         fields.forEach(f => {
             const el = document.getElementById('f-' + f);
             if(el) {
-                // Ensure decimal type for royalty_rate
                 innerData[f] = (f === 'royalty_rate') ? (parseFloat(el.value) || 0) : (el.value || "");
             }
         });
 
-        // Wraps the data to match the Xano input requirement
-        const payload = { franchise: innerData };
+        // Fixed: Data is wrapped in 'franchise' object to match Xano Inputs
+        const payload = { 
+            franchise: innerData 
+        };
 
-        const url = id ? `${F_API}/${id}` : F_API;
-        const method = id ? 'PATCH' : 'POST';
-        const res = await fetch(url, {
-            method: method,
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-           document.getElementById('modal-franchise').style.display = 'none';
-           loadFranchises();
+        const isEdit = idValue !== "";
+        if (isEdit) {
+            payload.franchise_id = parseInt(idValue); // Required for your PUT input list
+        }
+
+        const url = isEdit ? `${F_API}/${idValue}` : F_API;
+        const method = isEdit ? 'PUT' : 'POST'; // Matches your API screenshots
+
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+               document.getElementById('modal-franchise').style.display = 'none';
+               loadFranchises();
+            } else {
+               const errRes = await res.json();
+               console.error("Save failed:", errRes);
+            }
+        } catch (err) {
+            console.error("Fetch failed:", err);
         }
     }
- 
+
     async function editFranchise(id) {
         try {
             const res = await fetch(`${F_API}/${id}`);
             const data = await res.json();
             
-            // Extracts record from potential 'franchise' or 'item' wrappers [cite: 2025-12-29]
+            // Extract record from potential 'franchise' or 'item' wrappers
             const f = data.id ? data : (data.franchise || data.item || data);
- 
+
            document.getElementById('f-id').value = f.id;
            fields.forEach(field => {
                 const el = document.getElementById('f-' + field);
@@ -163,14 +176,14 @@
            console.error("Edit failed:", e);
         }
     }
- 
+
     async function deleteFranchise(id) {
        if(confirm("Permanent Delete?")) {
             await fetch(`${F_API}/${id}`, { method: 'DELETE' });
             loadFranchises();
         }
     }
- 
+
     function openNewFranchiseModal() {
        document.getElementById('f-id').value = "";
        fields.forEach(f => {
@@ -179,7 +192,7 @@
         });
        document.getElementById('modal-franchise').style.display = 'flex';
     }
- 
+
     loadFranchises();
 </script>
 </body>
