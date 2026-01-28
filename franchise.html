@@ -83,19 +83,21 @@
     </div>
 
     <script>
-        const API_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:XXXX/franchise'; // Replace XXXX with your API group ID
+        // Use your specific API Base URL
+        const API_BASE = 'https://x8ki-letl-twmt.n7.xano.io/api:vG0L_L_W/franchise'; 
 
-        // Load data on start
         window.onload = loadFranchiseData;
 
         async function loadFranchiseData() {
             try {
-                const response = await fetch(API_URL);
+                const response = await fetch(API_BASE);
                 const data = await response.json();
                 const tbody = document.querySelector('#franchiseTable tbody');
                 tbody.innerHTML = '';
 
                 data.forEach(item => {
+                    // We stringify the item so it can be passed safely to the edit function
+                    const itemData = JSON.stringify(item).replace(/'/g, "&apos;");
                     tbody.innerHTML += `
                         <tr>
                             <td>${item.id}</td>
@@ -105,7 +107,7 @@
                             <td>${item.royalty_rate}%</td>
                             <td>${item.status}</td>
                             <td>
-                                <button class="btn btn-edit" onclick='editRecord(${JSON.stringify(item)})'>Edit</button>
+                                <button class="btn btn-edit" onclick='editRecord(${itemData})'>Edit</button>
                             </td>
                         </tr>
                     `;
@@ -123,6 +125,7 @@
             document.getElementById('f-phone_number').value = "";
             document.getElementById('f-royalty_rate').value = "";
             document.getElementById('f-owner_1_name').value = "";
+            document.getElementById('f-status').value = "Active";
             document.getElementById('franchiseModal').style.display = 'block';
         }
 
@@ -146,7 +149,7 @@
             const id = document.getElementById('f-id').value;
             const isEdit = id !== "";
             
-            // Fixed: Data is now nested inside 'franchise' to match Xano's input group
+            // This is the critical fix: nesting data inside 'franchise' to match your Xano Input
             const payload = {
                 franchise: {
                     name: document.getElementById('f-name').value,
@@ -158,7 +161,7 @@
                 }
             };
 
-            const url = isEdit ? `${API_URL}/${id}` : API_URL;
+            const url = isEdit ? `${API_BASE}/${id}` : API_BASE;
             const method = isEdit ? 'PATCH' : 'POST';
 
             try {
@@ -173,11 +176,11 @@
                     loadFranchiseData();
                 } else {
                     const error = await response.json();
-                    alert('Save failed: ' + (error.message || 'Check console for details'));
                     console.error('Xano Error:', error);
+                    alert('Error: ' + (error.message || 'Check console'));
                 }
             } catch (err) {
-                console.error('Network error:', err);
+                console.error('Network Error:', err);
             }
         }
     </script>
