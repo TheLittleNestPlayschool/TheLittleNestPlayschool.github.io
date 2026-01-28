@@ -72,7 +72,6 @@
             const res = await fetch(F_API + '?t=' + Date.now());
             const data = await res.json();
             
-            // THE RECOVERY LOGIC: Hunt for the array regardless of Xano's response wrapper [cite: 2025-12-29]
             let list = [];
             if (Array.isArray(data)) {
                 list = data;
@@ -81,7 +80,6 @@
             } else if (data.franchise && Array.isArray(data.franchise)) {
                 list = data.franchise;
             } else {
-                // Find any key in the object that contains an array [cite: 2025-12-29]
                 const arrayKey = Object.keys(data).find(key => Array.isArray(data[key]));
                 list = arrayKey ? data[arrayKey] : [];
             }
@@ -93,7 +91,6 @@
 
             list.sort((a, b) => a.id - b.id);
             container.innerHTML = list.map(f => {
-                const s = (val) => val ? '<span style="color:green;">✅</span>' : '<span style="color:red;">❌</span>';
                 return `
                 <div class="card">
                     <div class="card-header">
@@ -117,7 +114,6 @@
         }
     }
 
-    // Modal and CRUD logic remains exactly as your working version [cite: 2025-12-29]
     async function submitFranchise() {
         const id = document.getElementById('f-id').value;
         const payload = {};
@@ -139,14 +135,25 @@
     }
 
     async function editFranchise(id) {
-        const res = await fetch(`${F_API}/${id}`);
-        const f = await res.json();
-        document.getElementById('f-id').value = f.id;
-        fields.forEach(field => {
-            const el = document.getElementById('f-' + field);
-            if(el) el.value = f[field] || "";
-        });
-        document.getElementById('modal-franchise').style.display = 'flex';
+        try {
+            const res = await fetch(`${F_API}/${id}`);
+            const data = await res.json();
+            
+            // Fix: Extract record from potential wrapper [cite: 2025-12-29]
+            const f = data.id ? data : (data.franchise || data.item || data);
+
+            document.getElementById('f-id').value = f.id;
+            fields.forEach(field => {
+                const el = document.getElementById('f-' + field);
+                if(el) {
+                    // Fix: Set value or empty string to avoid "undefined" in inputs
+                    el.value = (f[field] !== undefined && f[field] !== null) ? f[field] : "";
+                }
+            });
+            document.getElementById('modal-franchise').style.display = 'flex';
+        } catch (e) {
+            console.error("Edit failed:", e);
+        }
     }
 
     async function deleteFranchise(id) {
