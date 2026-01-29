@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -42,19 +41,31 @@
                        <option value="pending_opening">pending_opening</option>
                    </select>
                </div>
-               <div style="grid-column: span 3;"><label>Full Address</label><input type="text" id="f-address"></div>
+               <div style="grid-column: span 2;"><label>Full Address</label><input type="text" id="f-address"></div>
+               <div><label>Opening Date</label><input type="date" id="f-opening_date"></div>
                <div><label>Main Phone</label><input type="text" id="f-phone_number"></div>
                <div><label>Franchise Email</label><input type="email" id="f-franchise_email"></div>
                <div><label>Royalty Rate (%)</label><input type="number" id="f-royalty_rate" step="0.01"></div>
+               <div><label>Business Tax ID</label><input type="text" id="f-business_tax_id"></div>
             </div>
-            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px;">2. Owners & Socials</h4>
+            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px;">2. Owners & Contact Info</h4>
             <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">
-               <div><label>Owner 1</label><input type="text" id="f-owner_1_name"></div>
-               <div><label>Owner 2</label><input type="text" id="f-owner_2_name"></div>
+               <div><label>Owner 1 Name</label><input type="text" id="f-owner_1_name"></div>
+               <div><label>Owner 1 Phone</label><input type="text" id="f-owner_1_phone"></div>
+               <div><label>Owner 1 Email</label><input type="email" id="f-owner_1_email"></div>
+               <div><label>Owner 2 Name</label><input type="text" id="f-owner_2_name"></div>
+               <div><label>Owner 2 Phone</label><input type="text" id="f-owner_2_phone"></div>
+               <div><label>Owner 2 Email</label><input type="email" id="f-owner_2_email"></div>
+            </div>
+            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px; margin-top:15px;">3. Social Media & Notes</h4>
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:15px;">
                <div><label>FB</label><input type="text" id="f-social_fb"></div>
+               <div><label>IG</label><input type="text" id="f-social_ig"></div>
+               <div><label>LI</label><input type="text" id="f-social_li"></div>
+               <div><label>TikTok</label><input type="text" id="f-social_tiktok"></div>
             </div>
             <label style="margin-top:10px;">Internal Notes</label>
-           <textarea id="f-internal_notes" style="width:100%; height:60px; border:1px solid #ccc; border-radius:4px;"></textarea>
+            <textarea id="f-internal_notes" style="width:100%; height:60px; border:1px solid #ccc; border-radius:4px;"></textarea>
         </div>
         <div style="padding:20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:12px; background:#f9f9f9;">
             <button onclick="document.getElementById('modal-franchise').style.display='none'">CANCEL</button>
@@ -73,26 +84,14 @@
             const res = await fetch(F_API + '?t=' + Date.now());
             const data = await res.json();
             
-            let list = [];
-            if (Array.isArray(data)) {
-                list = data;
-            } else if (data.items && Array.isArray(data.items)) {
-                list = data.items;
-            } else if (data.franchise && Array.isArray(data.franchise)) {
-                list = data.franchise;
-            } else {
-                const arrayKey = Object.keys(data).find(key => Array.isArray(data[key]));
-                list = arrayKey ? data[arrayKey] : [];
-            }
-
+            let list = Array.isArray(data) ? data : (data.items || data.franchise || []);
             if (list.length === 0) {
                container.innerHTML = '<div style="text-align:center; padding:50px; border:1px solid #eee;">No Records Found.</div>';
                return;
             }
 
            list.sort((a, b) => a.id - b.id);
-           container.innerHTML = list.map(f => {
-                return `
+           container.innerHTML = list.map(f => `
                <div class="card">
                    <div class="card-header">
                        <h2 style="margin:0; font-size:1.1rem;">${f.name || 'N/A'}</h2>
@@ -107,12 +106,9 @@
                            <button onclick="deleteFranchise(${f.id})" style="color:red; border:1px solid red; background:none; cursor:pointer; font-weight:bold; border-radius:4px; padding:4px 10px; margin-left:5px;">DEL</button>
                        </div>
                    </div>
-               </div>`;
-           }).join('');
+               </div>`).join('');
             
-        } catch(e) {
-           container.innerHTML = "Error: " + e.message;
-        }
+        } catch(e) { container.innerHTML = "Error: " + e.message; }
     }
 
     async function submitFranchise() {
@@ -126,18 +122,16 @@
             }
         });
 
-        // Fixed: Data is wrapped in 'franchise' object to match Xano Inputs
-        const payload = { 
-            franchise: innerData 
-        };
-
+        // FIXED: Wrap data in 'franchise' AND separate franchise_id for PUT
+        const payload = { franchise: innerData };
         const isEdit = idValue !== "";
+        
         if (isEdit) {
-            payload.franchise_id = parseInt(idValue); // Required for your PUT input list
+            payload.franchise_id = parseInt(idValue);
         }
 
         const url = isEdit ? `${F_API}/${idValue}` : F_API;
-        const method = isEdit ? 'PUT' : 'POST'; // Matches your API screenshots
+        const method = isEdit ? 'PUT' : 'POST';
 
         try {
             const res = await fetch(url, {
@@ -148,34 +142,23 @@
             if (res.ok) {
                document.getElementById('modal-franchise').style.display = 'none';
                loadFranchises();
-            } else {
-               const errRes = await res.json();
-               console.error("Save failed:", errRes);
             }
-        } catch (err) {
-            console.error("Fetch failed:", err);
-        }
+        } catch (err) { console.error("Save failed:", err); }
     }
 
     async function editFranchise(id) {
         try {
             const res = await fetch(`${F_API}/${id}`);
             const data = await res.json();
-            
-            // Extract record from potential 'franchise' or 'item' wrappers
             const f = data.id ? data : (data.franchise || data.item || data);
 
-           document.getElementById('f-id').value = f.id;
-           fields.forEach(field => {
+            document.getElementById('f-id').value = f.id;
+            fields.forEach(field => {
                 const el = document.getElementById('f-' + field);
-                if(el) {
-                   el.value = (f[field] !== undefined && f[field] !== null) ? f[field] : "";
-                }
+                if(el) el.value = (f[field] !== undefined && f[field] !== null) ? f[field] : "";
             });
-           document.getElementById('modal-franchise').style.display = 'flex';
-        } catch (e) {
-           console.error("Edit failed:", e);
-        }
+            document.getElementById('modal-franchise').style.display = 'flex';
+        } catch (e) { console.error("Edit load failed:", e); }
     }
 
     async function deleteFranchise(id) {
@@ -186,12 +169,12 @@
     }
 
     function openNewFranchiseModal() {
-       document.getElementById('f-id').value = "";
-       fields.forEach(f => {
+        document.getElementById('f-id').value = "";
+        fields.forEach(f => {
             const el = document.getElementById('f-' + f);
             if(el) el.value = "";
         });
-       document.getElementById('modal-franchise').style.display = 'flex';
+        document.getElementById('modal-franchise').style.display = 'flex';
     }
 
     loadFranchises();
