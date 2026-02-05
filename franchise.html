@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ffdfddfdfdf Franchise Manager New</title>
+    <title>Franchise Manager</title>
     <style>
         body { font-family: 'Inter', sans-serif; color: #333; padding: 20px; background: #fff; line-height: 1.5; }
         label { display: block; font-size: 0.75rem; font-weight: bold; color: #666; margin-bottom: 4px; text-transform: uppercase; }
@@ -15,7 +15,7 @@
 <body>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-    <h1 style="margin:0; font-family: Georgia, serif; color: #1a365d;">ffdfddfdfdf Franchise Manager New</h1>
+    <h1 style="margin:0; font-family: Georgia, serif; color: #1a365d;">Franchise Manager</h1>
     <button onclick="openNewFranchiseModal()" class="btn-new">+ NEW FRANCHISE</button>
 </div>
 
@@ -83,7 +83,6 @@
         try {
             const res = await fetch(F_API + '?t=' + Date.now());
             const data = await res.json();
-            
             let list = Array.isArray(data) ? data : (data.items || []);
             
             if (list.length === 0) {
@@ -115,16 +114,23 @@
     async function editFranchise(id) {
         try {
             const res = await fetch(`${F_API}/${id}`);
-            const f = await res.json();
+            const data = await res.json();
             
-            // FIXED: Pulling data directly from object as Xano returns it [cite: 2026-02-05]
-            const data = f.id ? f : (f.franchise || f.item || f);
+            // Xano GET by ID usually returns the object directly.
+            // If it's empty, we check nested keys.
+            const f = data.id ? data : (data.franchise || data.item || data);
 
-            document.getElementById('f-id').value = data.id;
+            if (!f.id) {
+                console.error("Data mapping failed. Check Console Network tab for API response.");
+                return;
+            }
+
+            document.getElementById('f-id').value = f.id;
             fields.forEach(field => {
                 const el = document.getElementById('f-' + field);
                 if(el) {
-                    el.value = (data[field] !== undefined && data[field] !== null) ? data[field] : "";
+                    // Handle potential nulls or undefined values from DB
+                    el.value = (f[field] !== undefined && f[field] !== null) ? f[field] : "";
                 }
             });
             document.getElementById('modal-franchise').style.display = 'flex';
@@ -133,7 +139,7 @@
 
     async function submitFranchise() {
         const idValue = document.getElementById('f-id').value;
-        const payload = {}; // FIXED: Payload structure for standard Xano endpoints [cite: 2026-02-05]
+        const payload = {}; 
         
         fields.forEach(f => {
             const el = document.getElementById('f-' + f);
