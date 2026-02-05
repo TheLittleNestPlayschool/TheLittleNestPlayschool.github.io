@@ -1,38 +1,42 @@
 <style>
-    .enrollment-wrapper { width: 100%; margin: 0; padding: 20px; box-sizing: border-box; }
+    .enrollment-wrapper { width: 100%; margin: 0; padding: 20px; box-sizing: border-box; background: #f1f5f9; min-height: 100vh; }
     .nest-header { font-family: 'Georgia', serif; color: #1a365d; }
-    .step-container { background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 25px; margin-bottom: 20px; transition: all 0.3s ease; }
+    
+    /* Profile Card Styling for Saved States */
+    .profile-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; background: #fff; padding: 15px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 10px; }
+    .profile-item { display: flex; flex-direction: column; }
+    .profile-label { font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }
+    .profile-value { font-size: 0.85rem; color: #1e293b; font-weight: 600; }
+
+    .step-container { background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 25px; margin-bottom: 20px; }
     .step-locked { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
     .step-active { border-left: 6px solid #00d1b2; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .step-saved { border-left: 6px solid #1a365d; background: #f8fafc; }
+    .step-saved { border-left: 6px solid #1a365d; background: #f8fafc; padding: 15px 25px; }
     .step-saved .step-content { display: none; }
     
     label { display: block; font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; }
     input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 12px; border-radius: 4px; font-size: 0.9rem; background: #fff; box-sizing: border-box; }
     .btn-teal { background-color: #00d1b2; color: #1a1a1a !important; padding: 14px 28px; border-radius: 4px; font-weight: 900; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; margin-top: 15px; }
-    .toggle-area { margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1; }
-    .toggle-link { font-size: 0.75rem; cursor: pointer; color: #00d1b2; text-decoration: underline; background: none; border: none; padding: 0; font-weight: bold; }
+    .toggle-link { font-size: 0.75rem; cursor: pointer; color: #00d1b2; text-decoration: underline; background: none; border: none; font-weight: bold; padding: 0; margin-top: 15px; display: block; }
     .badge-step { background: #1a365d; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; }
-    .summary-text { font-size: 1.1rem; color: #00d1b2; font-weight: 800; margin-left: 20px; }
-    .success-check { color: #00d1b2; font-weight: bold; font-size: 0.85rem; font-style: italic; }
-    .pickup-card { background: #f1f5f9; border-radius: 4px; padding: 10px; margin-top: 10px; display: flex; justify-content: space-between; border-left: 4px solid #1a365d; }
 </style>
 
 <div class="enrollment-wrapper">
-    <div id="enrollment-progress" style="text-align: right; font-size: 0.7rem; font-weight: 800; color: #94a3b8; margin-bottom: 15px;">PROGRESS: STEP 1 OF 5</div>
-
     <div id="step-parent" class="step-container step-active">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center;">
-                <h2 class="nest-header" style="margin:0;"><span class="badge-step">1</span> Parent Information</h2>
-                <span id="parent-summary-display" class="summary-text"></span>
-            </div>
-            <span id="parent-success" class="success-check" style="display:none;">✓ CONFIRMED</span>
+        <h2 class="nest-header" style="margin:0;"><span class="badge-step">1</span> Parent Profile</h2>
+        
+        <div id="parent-profile-view" style="display:none;" class="profile-display">
+            <div class="profile-item"><div class="profile-label">Full Name</div><div id="disp-p-name" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Email</div><div id="disp-p-email" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Phone</div><div id="disp-p-phone" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Franchise</div><div id="disp-p-fran" class="profile-value"></div></div>
+            <div class="profile-item" style="grid-column: span 4;"><div class="profile-label">Address</div><div id="disp-p-addr" class="profile-value"></div></div>
         </div>
-        <div class="step-content" style="margin-top:25px;">
+
+        <div class="step-content" style="margin-top:20px;">
             <div id="parent-select-mode">
-                <label>Select Existing Parent Record</label>
-                <select id="p_select_id"><option value="">Loading Parents...</option></select>
+                <label>Existing Parent Search</label>
+                <select id="p_select_id"><option value="">Loading collection...</option></select>
             </div>
             <div id="parent-create-mode" style="display:none;">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
@@ -41,73 +45,51 @@
                     <div><label>Assign Franchise</label><select id="p_fran_id"></select></div>
                     <div><label>Email</label><input type="email" id="p_em"></div>
                     <div><label>Phone</label><input type="text" id="p_ph"></div>
-                    <div><label>Address</label><input type="text" id="p_addr"></div>
+                    <div><label>Home Address</label><input type="text" id="p_addr"></div>
                 </div>
             </div>
-            <div class="toggle-area"><button class="toggle-link" id="p-toggle" onclick="toggleParentMode()">OR CREATE NEW PARENT RECORD</button></div>
+            <button class="toggle-link" id="p-toggle" onclick="toggleParentMode()">OR CREATE NEW RECORD</button>
             <button onclick="processParentStep()" class="btn-teal">Confirm Parent Details</button>
         </div>
     </div>
 
     <div id="step-student" class="step-container step-locked">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center;">
-                <h2 class="nest-header" style="margin:0;"><span class="badge-step">2</span> Student Details</h2>
-                <span id="student-summary-display" class="summary-text"></span>
-            </div>
-            <span id="student-success" class="success-check" style="display:none;">✓ CONFIRMED</span>
+        <h2 class="nest-header" style="margin:0;"><span class="badge-step">2</span> Student Profile</h2>
+        
+        <div id="student-profile-view" style="display:none;" class="profile-display">
+            <div class="profile-item"><div class="profile-label">Student Name</div><div id="disp-s-name" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Date of Birth</div><div id="disp-s-dob" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Franchise Assignment</div><div id="disp-s-fran" class="profile-value"></div></div>
         </div>
-        <div class="step-content" style="margin-top:25px;">
+
+        <div class="step-content" style="margin-top:20px;">
             <div id="student-select-mode">
-                <label>Select Attached Student</label>
-                <select id="s_select_id"><option value="">Choose Parent First...</option></select>
+                <label>Attached Students</label>
+                <select id="s_select_id"><option value="">Select parent first...</option></select>
             </div>
             <div id="student-create-mode" style="display:none;">
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
                     <div><label>Full Name</label><input type="text" id="s_name_new"></div>
-                    <div><label>DOB</label><input type="date" id="s_dob_new"></div>
+                    <div><label>Date of Birth</label><input type="date" id="s_dob_new"></div>
                 </div>
             </div>
-            <div class="toggle-area"><button class="toggle-link" id="s-toggle" onclick="toggleStudentMode()">OR ADD NEW STUDENT</button></div>
+            <button class="toggle-link" id="s-toggle" onclick="toggleStudentMode()">OR ENROLL NEW STUDENT</button>
             <button onclick="processStudentStep()" class="btn-teal">Confirm Student Details</button>
         </div>
     </div>
 
     <div id="step-assessment" class="step-container step-locked">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 class="nest-header" style="margin:0;"><span class="badge-step">3</span> Initial Assessment</h2>
-            <span id="assessment-success" class="success-check" style="display:none;">✓ RECORDED</span>
-        </div>
-        <div class="step-content" style="margin-top:25px;">
+        <h2 class="nest-header" style="margin:0;"><span class="badge-step">3</span> Initial Assessment</h2>
+        <div class="step-content" style="margin-top:20px;">
             <form id="assessmentForm">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                    <div><label>Teacher</label><select id="a_teacher_id" required><option value="">Select...</option></select></div>
+                    <div><label>Assigned Teacher</label><select id="a_teacher_id" required></select></div>
                     <div><label>Date</label><input type="date" id="a_assessment_date" required></div>
-                    <div><label>Type</label><input type="text" id="a_assessment_type" value="Initial Assessment" required></div>
+                    <div><label>Category</label><input type="text" id="a_assessment_type" value="Initial Assessment"></div>
                 </div>
                 <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 8px 25px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;"></div>
-                <div style="margin-top: 15px;"><label>Comments</label><textarea id="a_comments" rows="3"></textarea></div>
                 <button type="submit" class="btn-teal">Save Assessment & Continue</button>
             </form>
-        </div>
-    </div>
-
-    <div id="step-pickup" class="step-container step-locked">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 class="nest-header" style="margin:0;"><span class="badge-step">4</span> Authorized Pickup</h2>
-            <span id="pickup-success" class="success-check" style="display:none;">✓ SAVED</span>
-        </div>
-        <div class="step-content" style="margin-top:25px;">
-            <div id="pickup-list" style="margin-bottom: 15px;"></div>
-            <div style="background: #fff; border: 1px solid #e2e8f0; padding: 15px; border-radius: 4px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-                    <div><label>Name</label><input type="text" id="pu_name"></div>
-                    <div><label>Relationship</label><input type="text" id="pu_rel"></div>
-                    <div><label>Phone</label><input type="text" id="pu_phone"></div>
-                </div>
-                <button onclick="addPickupLocal()" class="btn-teal" style="background:#1a365d; color:white!important;">+ Add Pickup Contact</button>
-            </div>
-            <button onclick="finalizePickups()" class="btn-teal">Finalize All Pickups & Continue</button>
         </div>
     </div>
 </div>
@@ -119,11 +101,9 @@
     const FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
     const TEACHER_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
     const QUESTIONS_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions";
-    const SAVE_ASSESSMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_assessment";
-    const PICKUP_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_authorized_pickup";
 
-    let currentParentId = null, currentStudentId = null, currentFranchiseId = null;
-    let parentMode = 'select', studentMode = 'select', allStudents = [], allParents = [], pickupContacts = [];
+    let currentParentId = null, currentStudentId = null, currentFranchiseId = null, currentFranchiseName = "";
+    let parentMode = 'select', studentMode = 'select', allStudents = [], allParents = [], allFranchises = [];
 
     function unwrap(d) { return Array.isArray(d) ? d : (d.result1 || d.items || []); }
 
@@ -131,102 +111,90 @@
         parentMode = (parentMode === 'select') ? 'create' : 'select';
         document.getElementById('parent-select-mode').style.display = (parentMode === 'select') ? 'block' : 'none';
         document.getElementById('parent-create-mode').style.display = (parentMode === 'create') ? 'block' : 'none';
-        document.getElementById('p-toggle').innerText = (parentMode === 'select') ? 'OR CREATE NEW PARENT' : 'OR SELECT EXISTING';
     };
 
     window.toggleStudentMode = () => {
         studentMode = (studentMode === 'select') ? 'create' : 'select';
         document.getElementById('student-select-mode').style.display = (studentMode === 'select') ? 'block' : 'none';
         document.getElementById('student-create-mode').style.display = (studentMode === 'create') ? 'block' : 'none';
-        document.getElementById('s-toggle').innerText = (studentMode === 'select') ? 'OR ADD NEW STUDENT' : 'OR SELECT EXISTING';
     };
 
     window.processParentStep = async () => {
-        let name = "";
+        let parentData = {};
         if (parentMode === 'create') {
-            const fId = document.getElementById('p_fran_id').value;
-            const pFn = document.getElementById('p_fn').value;
-            const pLn = document.getElementById('p_ln').value;
-            if(!pFn || !pLn || !fId) return alert("Required: Name and Franchise");
-            currentFranchiseId = parseInt(fId);
-            const p = { first_name: pFn, last_name: pLn, email: document.getElementById('p_em').value, phone: document.getElementById('p_ph').value, address: document.getElementById('p_addr').value, franchise_id: currentFranchiseId, is_active: true };
-            const res = await fetch(PARENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p) });
+            currentFranchiseId = parseInt(document.getElementById('p_fran_id').value);
+            parentData = { 
+                first_name: document.getElementById('p_fn').value, 
+                last_name: document.getElementById('p_ln').value, 
+                email: document.getElementById('p_em').value, 
+                phone: document.getElementById('p_ph').value, 
+                address: document.getElementById('p_addr').value, 
+                franchise_id: currentFranchiseId, 
+                is_active: true 
+            };
+            const res = await fetch(PARENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(parentData) });
             const data = await res.json();
-            if (data.id) { currentParentId = data.id; name = pFn + " " + pLn; } else return alert("Xano Error");
+            currentParentId = data.id;
         } else {
-            const sel = document.getElementById('p_select_id');
-            currentParentId = sel.value; name = sel.options[sel.selectedIndex].text;
-            const record = allParents.find(p => p.id == currentParentId);
-            currentFranchiseId = record ? record.franchise_id : null;
+            currentParentId = document.getElementById('p_select_id').value;
+            parentData = allParents.find(p => p.id == currentParentId);
+            currentFranchiseId = parentData.franchise_id;
         }
-        if(!currentParentId) return alert("Select/Create Parent first");
-        document.getElementById('parent-summary-display').innerText = `| ${name}`;
+
+        const f = allFranchises.find(fran => fran.id == currentFranchiseId);
+        currentFranchiseName = f ? f.name : "Unknown";
+
+        // Display Profile View [cite: 2026-02-05]
+        document.getElementById('disp-p-name').innerText = `${parentData.first_name} ${parentData.last_name}`;
+        document.getElementById('disp-p-email').innerText = parentData.email;
+        document.getElementById('disp-p-phone').innerText = parentData.phone;
+        document.getElementById('disp-p-addr').innerText = parentData.address;
+        document.getElementById('disp-p-fran').innerText = currentFranchiseName;
+        
+        document.getElementById('parent-profile-view').style.display = 'grid';
         document.getElementById('step-parent').className = 'step-container step-saved';
-        document.getElementById('parent-success').style.display = 'inline';
+        
         const filtered = allStudents.filter(s => s.parent_id == currentParentId);
-        document.getElementById('s_select_id').innerHTML = filtered.length ? filtered.map(s => `<option value="${s.id}">${s.name}</option>`).join('') : '<option value="">No existing students</option>';
+        document.getElementById('s_select_id').innerHTML = filtered.map(s => `<option value="${s.id}">${s.name}</option>`).join('') || '<option value="">No students</option>';
         document.getElementById('step-student').className = 'step-container step-active';
     };
 
     window.processStudentStep = async () => {
-        let name = "";
+        let sData = {};
         if (studentMode === 'create') {
-            const sName = document.getElementById('s_name_new').value;
-            if(!sName) return alert("Student Name Required");
-            const p = { parent_id: currentParentId, name: sName, date_of_birth: document.getElementById('s_dob_new').value, franchise_id: currentFranchiseId, is_active: true };
-            const res = await fetch(STUDENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p) });
+            sData = { parent_id: currentParentId, name: document.getElementById('s_name_new').value, date_of_birth: document.getElementById('s_dob_new').value, franchise_id: currentFranchiseId, is_active: true };
+            const res = await fetch(STUDENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(sData) });
             const data = await res.json();
-            if (data.id) { currentStudentId = data.id; name = sName; } else return alert("Xano Error");
+            currentStudentId = data.id;
         } else {
-            const sel = document.getElementById('s_select_id');
-            currentStudentId = sel.value; name = sel.options[sel.selectedIndex].text;
+            currentStudentId = document.getElementById('s_select_id').value;
+            sData = allStudents.find(s => s.id == currentStudentId);
         }
-        if(!currentStudentId) return alert("Select/Enroll Student first");
-        document.getElementById('student-summary-display').innerText = `| ${name}`;
+
+        document.getElementById('disp-s-name').innerText = sData.name;
+        document.getElementById('disp-s-dob').innerText = sData.date_of_birth;
+        document.getElementById('disp-s-fran').innerText = currentFranchiseName;
+
+        document.getElementById('student-profile-view').style.display = 'grid';
         document.getElementById('step-student').className = 'step-container step-saved';
-        document.getElementById('student-success').style.display = 'inline';
         document.getElementById('step-assessment').className = 'step-container step-active';
     };
 
-    window.handleQuestionChange = async (i) => {
-        const qId = document.getElementById(`q_select_${i}`).value;
-        const aSel = document.getElementById(`a_ans_${i}`);
-        if(!qId) return;
-        const res = await fetch(QUESTIONS_API + "/" + qId);
-        const q = (await res.json()).result1 || {};
-        aSel.disabled = false; aSel.innerHTML = '<option value="">Select Answer...</option>';
-        if(q.possible_answers) q.possible_answers.split(',').forEach(opt => aSel.innerHTML += `<option value="${opt.trim()}">${opt.trim()}</option>`);
-    };
-
-    document.getElementById('assessmentForm').onsubmit = async (e) => {
-        e.preventDefault();
-        let payload = { student_id: parseInt(currentStudentId), teacher_id: parseInt(document.getElementById('a_teacher_id').value), assessment_date: document.getElementById('a_assessment_date').value, assessment_type: document.getElementById('a_assessment_type').value, comments: document.getElementById('a_comments').value };
-        for(let i=1; i<=10; i++) { payload[`question_${i}_id`] = parseInt(document.getElementById(`q_select_${i}`).value); payload[`recorded_answer_${i}`] = document.getElementById(`a_ans_${i}`).value; }
-        const res = await fetch(SAVE_ASSESSMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-        if(res.ok) { document.getElementById('step-assessment').className = 'step-container step-saved'; document.getElementById('assessment-success').style.display = 'inline'; document.getElementById('step-pickup').className = 'step-container step-active'; }
-    };
-
-    window.addPickupLocal = () => {
-        const c = { name: document.getElementById('pu_name').value, relationship: document.getElementById('pu_rel').value, phone: document.getElementById('pu_phone').value };
-        if(!c.name || !c.phone) return alert("Required: Name & Phone");
-        pickupContacts.push(c);
-        document.getElementById('pickup-list').innerHTML += `<div class="pickup-card"><span>${c.name} (${c.relationship})</span></div>`;
-    };
-
-    window.finalizePickups = async () => {
-        for(const c of pickupContacts) { await fetch(PICKUP_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: currentStudentId, name: c.name, relationship: c.relationship, phone: c.phone, is_active: true }) }); }
-        document.getElementById('step-pickup').className = 'step-container step-saved'; document.getElementById('pickup-success').style.display = 'inline';
-    };
-
     async function init() {
-        const fRes = await fetch(FRANCHISE_API), pRes = await fetch(PARENT_API + '?t=' + Date.now()), sRes = await fetch(STUDENT_API + '?t=' + Date.now()), tRes = await fetch(TEACHER_API), qRes = await fetch(QUESTIONS_API);
-        const fr = unwrap(await fRes.json()), pa = unwrap(await pRes.json()), st = unwrap(await sRes.json()), te = unwrap(await tRes.json()), qu = unwrap(await qRes.json());
-        allParents = pa; allStudents = st;
-        document.getElementById('p_fran_id').innerHTML = '<option value="">-- Choose Franchise --</option>' + fr.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-        document.getElementById('p_select_id').innerHTML = '<option value="">-- Search --</option>' + pa.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
-        document.getElementById('a_teacher_id').innerHTML = '<option value="">Select...</option>' + te.map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
+        const [fR, pR, sR, tR, qR] = await Promise.all([fetch(FRANCHISE_API), fetch(PARENT_API + '?t=' + Date.now()), fetch(STUDENT_API + '?t=' + Date.now()), fetch(TEACHER_API), fetch(QUESTIONS_API)]);
+        allFranchises = unwrap(await fR.json());
+        allParents = unwrap(await pR.json());
+        allStudents = unwrap(await sR.json());
+        const te = unwrap(await tR.json()), qu = unwrap(await qR.json());
+
+        document.getElementById('p_fran_id').innerHTML = allFranchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        document.getElementById('p_select_id').innerHTML = allParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
+        document.getElementById('a_teacher_id').innerHTML = te.map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
+        
         const grid = document.getElementById('assessment-qa-grid');
-        for(let i=1; i<=10; i++) grid.innerHTML += `<div><select id="q_select_${i}" onchange="handleQuestionChange(${i})" required><option value="">-- Question ${i} --</option>${qu.map(q => `<option value="${q.id}">${q.question_text}</option>`).join('')}</select></div><div><select id="a_ans_${i}" required disabled><option value="">Select...</option></select></div>`;
+        for(let i=1; i<=10; i++) {
+            grid.innerHTML += `<div><select id="q_select_${i}" required><option value="">-- Question ${i} --</option>${qu.map(q => `<option value="${q.id}">${q.question_text}</option>`).join('')}</select></div><div><select id="a_ans_${i}" required><option value="">Select...</option></select></div>`;
+        }
     }
     init();
 })();
