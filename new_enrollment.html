@@ -8,7 +8,7 @@
     
     label { display: block; font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 1px; margin-top: 2px; }
     input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 4px 6px; border-radius: 2px; font-size: 0.7rem; background: #fff; box-sizing: border-box; }
-    .btn-teal { background-color: #00d1b2; color: white; padding: 5px 12px; border-radius: 2px; font-weight: 900; border: none; cursor: pointer; font-size: 0.65rem; text-transform: uppercase; margin-top: 10px; }
+    .btn-teal { background-color: #00d1b2; color: #1a1a1a; padding: 5px 12px; border-radius: 2px; font-weight: 900; border: none; cursor: pointer; font-size: 0.65rem; text-transform: uppercase; margin-top: 10px; }
     .badge-step { background: #1a365d; color: white; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.6rem; margin-right: 6px; }
     .success-check { color: #00d1b2; font-weight: bold; font-size: 0.65rem; font-style: italic; }
 </style>
@@ -24,7 +24,7 @@
         <div class="step-content">
             <label>Select Existing Parent</label>
             <select id="p_parent_id" onchange="enableStudentStep()">
-                <option value="">Loading Parents...</option>
+                <option value="">-- Select Parent --</option>
             </select>
             <button onclick="saveParentStep()" class="btn-teal">Confirm Parent & Continue</button>
         </div>
@@ -40,7 +40,7 @@
             <select id="s_student_id">
                 <option value="">Select parent first...</option>
             </select>
-            <button onclick="saveStudentStep()" class="btn-teal">Confirm Student & Continue</button>
+            <button id="btn-student-confirm" onclick="saveStudentStep()" class="btn-teal" disabled style="opacity:0.5;">Confirm Student & Continue</button>
         </div>
     </div>
 
@@ -86,28 +86,31 @@
 
     async function initEnrollment() {
         try {
-            // Reset Progress [cite: 2026-02-05]
+            // Force Step 1 Active
             document.getElementById('enrollment-progress').innerText = "STEP 1 OF 5";
+            document.getElementById('step-parent').className = 'step-container step-active';
             
-            // Reset Step 1 [cite: 2026-02-05]
+            // Load Parents
             const pSel = document.getElementById('p_parent_id');
-            const pRes = await fetch(PARENT_API);
+            const pRes = await fetch(PARENT_API + '?t=' + Date.now());
             const parents = await pRes.json();
             pSel.innerHTML = '<option value="">-- Select Parent --</option>';
-            parents.forEach(p => pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
+            parents.forEach(p => {
+                pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
+            });
 
-            // Load Students for Step 2 [cite: 2026-02-05]
-            const sRes = await fetch(STUDENT_API);
+            // Pre-load Students for Step 2 [cite: 2026-02-05]
+            const sRes = await fetch(STUDENT_API + '?t=' + Date.now());
             allStudents = await sRes.json();
 
-            // Load Teachers for Step 3 [cite: 2026-02-05]
+            // Pre-load Teachers for Step 3 [cite: 2026-02-05]
             const tRes = await fetch(TEACHER_API);
             const teachers = await tRes.json();
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">Select Teacher...</option>';
             teachers.forEach(t => tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`);
 
-            // Load Assessment Questions [cite: 2026-02-05]
+            // Pre-load Assessment Questions [cite: 2026-02-05]
             const qRes = await fetch(QUESTIONS_LIST_API);
             allAvailableQuestions = await qRes.json();
             const grid = document.getElementById('assessment-qa-grid');
@@ -120,21 +123,29 @@
                     </select></div>
                     <div><select id="a_ans_${i}" required disabled><option value="">Select answer first...</option></select></div>`;
             }
-        } catch (e) { console.error("Init Failed", e); }
+        } catch (e) { console.error("Initialization error:", e); }
     }
 
+    // Step 1 Logic: Filter students by selected parent [cite: 2026-02-05]
     window.enableStudentStep = () => {
         const parentId = document.getElementById('p_parent_id').value;
         const sSel = document.getElementById('s_student_id');
-        if (!parentId) return;
+        const sConfirmBtn = document.getElementById('btn-student-confirm');
+        
+        if (!parentId) {
+            sSel.innerHTML = '<option value="">Select parent first...</option>';
+            return;
+        }
         
         const filtered = allStudents.filter(s => s.parent_id == parentId);
-        sSel.innerHTML = filtered.length ? '<option value="">-- Select Student --</option>' : '<option value="">No students found for this parent</option>';
+        sSel.innerHTML = filtered.length ? '<option value="">-- Select Student --</option>' : '<option value="">No students found</option>';
         filtered.forEach(s => sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
+        sConfirmBtn.disabled = false;
+        sConfirmBtn.style.opacity = "1";
     };
 
     window.saveParentStep = () => {
-        if (!document.getElementById('p_parent_id').value) return alert("Select a parent");
+        if (!document.getElementById('p_parent_id').value) return alert("Please select a parent.");
         document.getElementById('step-parent').className = 'step-container step-saved';
         document.getElementById('parent-success').style.display = 'inline';
         document.getElementById('step-student').className = 'step-container step-active';
@@ -142,7 +153,7 @@
     };
 
     window.saveStudentStep = () => {
-        if (!document.getElementById('s_student_id').value) return alert("Select a student");
+        if (!document.getElementById('s_student_id').value) return alert("Please select a student.");
         document.getElementById('step-student').className = 'step-container step-saved';
         document.getElementById('student-success').style.display = 'inline';
         document.getElementById('step-assessment').className = 'step-container step-active';
