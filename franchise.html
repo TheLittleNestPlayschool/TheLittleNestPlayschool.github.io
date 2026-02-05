@@ -113,10 +113,7 @@
     async function editFranchise(id) {
         try {
             const res = await fetch(`${F_API}/${id}`);
-            const data = await res.json();
-            
-            // Matches nested 'franchise' object input
-            const f = data.franchise || data.item || data;
+            const f = await res.json();
 
             document.getElementById('f-id').value = f.id;
             document.getElementById('f-name').value = f.name || "";
@@ -145,30 +142,29 @@
 
     async function submitFranchise() {
         const id = document.getElementById('f-id').value;
+        const opDate = document.getElementById('f-opening_date').value;
         
-        // Matches nested 'franchise' object structure
+        // PAYLOAD IS FLAT: No 'franchise' wrapper to match your Xano mapping
         const payload = {
-            franchise: {
-                name: document.getElementById('f-name').value,
-                address: document.getElementById('f-address').value,
-                phone_number: document.getElementById('f-phone_number').value,
-                royalty_rate: parseFloat(document.getElementById('f-royalty_rate').value) || 0,
-                owner_1_name: document.getElementById('f-owner_1_name').value,
-                owner_1_phone: document.getElementById('f-owner_1_phone').value,
-                owner_1_email: document.getElementById('f-owner_1_email').value,
-                owner_2_name: document.getElementById('f-owner_2_name').value,
-                owner_2_phone: document.getElementById('f-owner_2_phone').value,
-                owner_2_email: document.getElementById('f-owner_2_email').value,
-                franchise_email: document.getElementById('f-franchise_email').value,
-                status: document.getElementById('f-status').value,
-                opening_date: document.getElementById('f-opening_date').value || null,
-                business_tax_id: document.getElementById('f-business_tax_id').value,
-                internal_notes: document.getElementById('f-internal_notes').value,
-                social_fb: document.getElementById('f-social_fb').value,
-                social_ig: document.getElementById('f-social_ig').value,
-                social_li: document.getElementById('f-social_li').value,
-                social_tiktok: document.getElementById('f-social_tiktok').value
-            }
+            name: document.getElementById('f-name').value,
+            address: document.getElementById('f-address').value,
+            phone_number: document.getElementById('f-phone_number').value,
+            royalty_rate: parseFloat(document.getElementById('f-royalty_rate').value) || 0,
+            owner_1_name: document.getElementById('f-owner_1_name').value,
+            owner_1_phone: document.getElementById('f-owner_1_phone').value,
+            owner_1_email: document.getElementById('f-owner_1_email').value,
+            owner_2_name: document.getElementById('f-owner_2_name').value,
+            owner_2_phone: document.getElementById('f-owner_2_phone').value,
+            owner_2_email: document.getElementById('f-owner_2_email').value,
+            franchise_email: document.getElementById('f-franchise_email').value,
+            status: document.getElementById('f-status').value,
+            opening_date: opDate === "" ? null : opDate, 
+            business_tax_id: document.getElementById('f-business_tax_id').value,
+            internal_notes: document.getElementById('f-internal_notes').value,
+            social_fb: document.getElementById('f-social_fb').value,
+            social_ig: document.getElementById('f-social_ig').value,
+            social_li: document.getElementById('f-social_li').value,
+            social_tiktok: document.getElementById('f-social_tiktok').value
         };
 
         try {
@@ -183,7 +179,7 @@
                loadFranchises();
             } else {
                 const err = await res.json();
-                alert("Save Failed: " + (err.message || "Unknown error"));
+                alert("Save Failed: " + (err.message || "Check API configuration"));
             }
         } catch (err) { console.error("Save failed:", err); }
     }
