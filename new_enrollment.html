@@ -24,7 +24,7 @@
         <div class="step-content">
             <label>Select Existing Parent</label>
             <select id="p_parent_id" onchange="enableStudentStep()">
-                <option value="">-- Select Parent --</option>
+                <option value="">Loading Parents...</option>
             </select>
             <button onclick="saveParentStep()" class="btn-teal">Confirm Parent & Continue</button>
         </div>
@@ -86,33 +86,38 @@
 
     async function initEnrollment() {
         try {
-            // Force Step 1 Active
             document.getElementById('enrollment-progress').innerText = "STEP 1 OF 5";
             document.getElementById('step-parent').className = 'step-container step-active';
             
-            // Load Parents
+            // 1. Load Parents (with safety unwrap)
             const pSel = document.getElementById('p_parent_id');
             const pRes = await fetch(PARENT_API + '?t=' + Date.now());
-            const parents = await pRes.json();
+            const pData = await pRes.json();
+            const parents = Array.isArray(pData) ? pData : (pData.result1 || pData.items || []);
+
             pSel.innerHTML = '<option value="">-- Select Parent --</option>';
             parents.forEach(p => {
-                pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
+                pSel.innerHTML += `<option value="${p.id}">${p.first_name || ''} ${p.last_name || ''}</option>`;
             });
 
-            // Pre-load Students for Step 2 [cite: 2026-02-05]
+            // 2. Load Students
             const sRes = await fetch(STUDENT_API + '?t=' + Date.now());
-            allStudents = await sRes.json();
+            const sData = await sRes.json();
+            allStudents = Array.isArray(sData) ? sData : (sData.result1 || sData.items || []);
 
-            // Pre-load Teachers for Step 3 [cite: 2026-02-05]
+            // 3. Load Teachers
             const tRes = await fetch(TEACHER_API);
-            const teachers = await tRes.json();
+            const tData = await tRes.json();
+            const teachers = Array.isArray(tData) ? tData : (tData.result1 || tData.items || []);
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">Select Teacher...</option>';
             teachers.forEach(t => tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`);
 
-            // Pre-load Assessment Questions [cite: 2026-02-05]
+            // 4. Load Assessment Grid
             const qRes = await fetch(QUESTIONS_LIST_API);
-            allAvailableQuestions = await qRes.json();
+            const qData = await qRes.json();
+            allAvailableQuestions = Array.isArray(qData) ? qData : (qData.result1 || qData.items || []);
+            
             const grid = document.getElementById('assessment-qa-grid');
             grid.innerHTML = '';
             for (let i = 1; i <= 10; i++) {
@@ -126,16 +131,11 @@
         } catch (e) { console.error("Initialization error:", e); }
     }
 
-    // Step 1 Logic: Filter students by selected parent [cite: 2026-02-05]
     window.enableStudentStep = () => {
         const parentId = document.getElementById('p_parent_id').value;
         const sSel = document.getElementById('s_student_id');
         const sConfirmBtn = document.getElementById('btn-student-confirm');
-        
-        if (!parentId) {
-            sSel.innerHTML = '<option value="">Select parent first...</option>';
-            return;
-        }
+        if (!parentId) return;
         
         const filtered = allStudents.filter(s => s.parent_id == parentId);
         sSel.innerHTML = filtered.length ? '<option value="">-- Select Student --</option>' : '<option value="">No students found</option>';
@@ -145,7 +145,7 @@
     };
 
     window.saveParentStep = () => {
-        if (!document.getElementById('p_parent_id').value) return alert("Please select a parent.");
+        if (!document.getElementById('p_parent_id').value) return alert("Select a parent");
         document.getElementById('step-parent').className = 'step-container step-saved';
         document.getElementById('parent-success').style.display = 'inline';
         document.getElementById('step-student').className = 'step-container step-active';
@@ -153,7 +153,7 @@
     };
 
     window.saveStudentStep = () => {
-        if (!document.getElementById('s_student_id').value) return alert("Please select a student.");
+        if (!document.getElementById('s_student_id').value) return alert("Select a student");
         document.getElementById('step-student').className = 'step-container step-saved';
         document.getElementById('student-success').style.display = 'inline';
         document.getElementById('step-assessment').className = 'step-container step-active';
@@ -165,7 +165,8 @@
         const aSel = document.getElementById(`a_ans_${i}`);
         if (!qId) { aSel.disabled = true; return; }
         const res = await fetch(SINGLE_QUESTION_API + qId);
-        const q = await res.json();
+        const data = await res.json();
+        const q = data.result1 || data;
         aSel.disabled = false;
         aSel.innerHTML = '<option value="">Select Answer...</option>';
         if (q.possible_answers) q.possible_answers.split(',').forEach(opt => aSel.innerHTML += `<option value="${opt.trim()}">${opt.trim()}</option>`);
