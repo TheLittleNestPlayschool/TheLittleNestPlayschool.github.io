@@ -74,8 +74,9 @@
 
 <script>
 (function() {
-    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/parent";
-    const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/student";
+    // CORRECTED ENDPOINTS: Moving Parent/Student to workspace xLIeVP2e
+    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/parent";
+    const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/student";
     const TEACHER_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
     const QUESTIONS_LIST_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions";
     const SINGLE_QUESTION_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions/";
@@ -84,7 +85,7 @@
     let allAvailableQuestions = [];
     let allStudents = [];
 
-    // Helper to unwrap Xano objects
+    // Helper to unwrap result1
     function unwrap(data) {
         if (Array.isArray(data)) return data;
         return data.result1 || data.items || [];
@@ -118,7 +119,7 @@
             tSel.innerHTML = '<option value="">Select Teacher...</option>';
             teachers.forEach(t => tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`);
 
-            // 4. Load Assessment Questions
+            // 4. Load Assessment Grid
             const qRes = await fetch(QUESTIONS_LIST_API);
             const qData = await qRes.json();
             allAvailableQuestions = unwrap(qData);
