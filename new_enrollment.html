@@ -11,7 +11,6 @@
     .btn-teal { background-color: #00d1b2; color: white; padding: 5px 12px; border-radius: 2px; font-weight: 900; border: none; cursor: pointer; font-size: 0.65rem; text-transform: uppercase; }
     .badge-step { background: #1a365d; color: white; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.6rem; margin-right: 6px; }
     .success-check { color: #00d1b2; font-weight: bold; font-size: 0.65rem; font-style: italic; }
-    .pickup-entry { font-size: 0.65rem; color: #444; border-bottom: 1px solid #eee; padding: 2px 0; }
 </style>
 
 <div style="max-width: 950px; margin: 0 auto;">
@@ -23,6 +22,7 @@
             <span class="success-check">✓ Saved</span>
         </div>
     </div>
+
     <div id="step-student" class="step-container step-saved">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2 style="font-size: 0.85rem;" class="nest-header"><span class="badge-step">2</span> Student Details</h2>
@@ -48,7 +48,7 @@
                     <span style="font-size: 0.55rem; color: #94a3b8;">SELECT ANSWER</span>
                 </div>
                 <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 4px 15px; margin-top: 5px;">
-                    </div>
+                </div>
             </div>
 
             <div style="margin-top: 8px;"><label>Comments</label><textarea id="a_comments" rows="2"></textarea></div>
@@ -71,22 +71,33 @@
     const ASSESSMENT_SAVE_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_assessment";
 
     let allAvailableQuestions = [];
-    let curFranchiseId = 1; // Example, usually passed from Step 1
 
     async function initAssessment() {
         try {
-            // 1. Load Teachers filtered by Franchise (Logic from previous step)
+            // 1. CLEAR PREVIOUS STATE [cite: 2026-02-05]
+            const form = document.getElementById('assessmentForm');
+            if (form) form.reset();
+            
+            const grid = document.getElementById('assessment-qa-grid');
+            grid.innerHTML = ''; // Prevent row duplication [cite: 2026-02-05]
+            
+            document.getElementById('assessment-success').style.display = 'none';
+            document.getElementById('step-assessment').className = 'step-container step-active';
+
+            // 2. Load Teachers [cite: 2026-02-05]
             const tRes = await fetch(TEACHER_API);
             const teachers = await tRes.json();
             const tSel = document.getElementById('a_teacher_id');
-            teachers.forEach(t => { tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; });
+            tSel.innerHTML = '<option value="">Select...</option>';
+            teachers.forEach(t => { 
+                tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; 
+            });
 
-            // 2. Load the list of available questions
+            // 3. Load Questions [cite: 2026-02-05]
             const qRes = await fetch(QUESTIONS_LIST_API);
             allAvailableQuestions = await qRes.json();
 
-            // 3. Generate 10 Rows of Dropdowns
-            const grid = document.getElementById('assessment-qa-grid');
+            // 4. Generate Rows [cite: 2026-02-05]
             for (let i = 1; i <= 10; i++) {
                 grid.innerHTML += `
                     <div>
@@ -105,7 +116,6 @@
         } catch (e) { console.error("Assessment Init Failed", e); }
     }
 
-    // Global handler for cascading answer dropdowns
     window.handleQuestionChange = async (rowIndex) => {
         const qId = document.getElementById(`q_select_${rowIndex}`).value;
         const aSelect = document.getElementById(`a_ans_${rowIndex}`);
@@ -128,9 +138,6 @@
                 options.forEach(opt => {
                     aSelect.innerHTML += `<option value="${opt}">${opt}</option>`;
                 });
-            } else {
-                // Fallback for free-text if database allows it, but restricted here
-                aSelect.innerHTML += `<option value="Observation recorded">Manual Input Required</option>`;
             }
         } catch (e) { console.error("Error fetching possible answers", e); }
     };
@@ -138,7 +145,7 @@
     document.getElementById('assessmentForm').onsubmit = async (e) => {
         e.preventDefault();
         let payload = { 
-            student_id: 1, // Inherited student ID
+            student_id: 1, 
             teacher_id: parseInt(document.getElementById('a_teacher_id').value), 
             assessment_date: document.getElementById('a_assessment_date').value, 
             assessment_type: document.getElementById('a_assessment_type').value, 
@@ -155,8 +162,8 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
-        const data = await res.json();
-        if (data.id) {
+        
+        if (res.ok) {
             document.getElementById('assessment-success').style.display = 'inline';
             document.getElementById('step-assessment').classList.replace('step-active', 'step-saved');
             alert("Assessment Saved!");
