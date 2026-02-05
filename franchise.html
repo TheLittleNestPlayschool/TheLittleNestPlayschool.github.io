@@ -76,7 +76,6 @@
 
 <script>
     const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
-    const fields = ['name', 'address', 'phone_number', 'royalty_rate', 'owner_1_name', 'owner_1_phone', 'owner_1_email', 'owner_2_name', 'owner_2_phone', 'owner_2_email', 'franchise_email', 'status', 'opening_date', 'business_tax_id', 'internal_notes', 'social_fb', 'social_ig', 'social_li', 'social_tiktok'];
 
     async function loadFranchises() {
         const container = document.getElementById('franchise-container');
@@ -116,51 +115,75 @@
             const res = await fetch(`${F_API}/${id}`);
             const data = await res.json();
             
-            // Xano GET by ID usually returns the object directly.
-            // If it's empty, we check nested keys.
-            const f = data.id ? data : (data.franchise || data.item || data);
-
-            if (!f.id) {
-                console.error("Data mapping failed. Check Console Network tab for API response.");
-                return;
-            }
+            // Matches nested 'franchise' object input
+            const f = data.franchise || data.item || data;
 
             document.getElementById('f-id').value = f.id;
-            fields.forEach(field => {
-                const el = document.getElementById('f-' + field);
-                if(el) {
-                    // Handle potential nulls or undefined values from DB
-                    el.value = (f[field] !== undefined && f[field] !== null) ? f[field] : "";
-                }
-            });
+            document.getElementById('f-name').value = f.name || "";
+            document.getElementById('f-address').value = f.address || "";
+            document.getElementById('f-phone_number').value = f.phone_number || "";
+            document.getElementById('f-royalty_rate').value = f.royalty_rate || 0;
+            document.getElementById('f-owner_1_name').value = f.owner_1_name || "";
+            document.getElementById('f-owner_1_phone').value = f.owner_1_phone || "";
+            document.getElementById('f-owner_1_email').value = f.owner_1_email || "";
+            document.getElementById('f-owner_2_name').value = f.owner_2_name || "";
+            document.getElementById('f-owner_2_phone').value = f.owner_2_phone || "";
+            document.getElementById('f-owner_2_email').value = f.owner_2_email || "";
+            document.getElementById('f-franchise_email').value = f.franchise_email || "";
+            document.getElementById('f-status').value = f.status || "active";
+            document.getElementById('f-opening_date').value = f.opening_date || "";
+            document.getElementById('f-business_tax_id').value = f.business_tax_id || "";
+            document.getElementById('f-internal_notes').value = f.internal_notes || "";
+            document.getElementById('f-social_fb').value = f.social_fb || "";
+            document.getElementById('f-social_ig').value = f.social_ig || "";
+            document.getElementById('f-social_li').value = f.social_li || "";
+            document.getElementById('f-social_tiktok').value = f.social_tiktok || "";
+
             document.getElementById('modal-franchise').style.display = 'flex';
         } catch (e) { console.error("Edit load failed:", e); }
     }
 
     async function submitFranchise() {
-        const idValue = document.getElementById('f-id').value;
-        const payload = {}; 
+        const id = document.getElementById('f-id').value;
         
-        fields.forEach(f => {
-            const el = document.getElementById('f-' + f);
-            if(el) {
-                payload[f] = (f === 'royalty_rate') ? (parseFloat(el.value) || 0) : (el.value || "");
+        // Matches nested 'franchise' object structure
+        const payload = {
+            franchise: {
+                name: document.getElementById('f-name').value,
+                address: document.getElementById('f-address').value,
+                phone_number: document.getElementById('f-phone_number').value,
+                royalty_rate: parseFloat(document.getElementById('f-royalty_rate').value) || 0,
+                owner_1_name: document.getElementById('f-owner_1_name').value,
+                owner_1_phone: document.getElementById('f-owner_1_phone').value,
+                owner_1_email: document.getElementById('f-owner_1_email').value,
+                owner_2_name: document.getElementById('f-owner_2_name').value,
+                owner_2_phone: document.getElementById('f-owner_2_phone').value,
+                owner_2_email: document.getElementById('f-owner_2_email').value,
+                franchise_email: document.getElementById('f-franchise_email').value,
+                status: document.getElementById('f-status').value,
+                opening_date: document.getElementById('f-opening_date').value || null,
+                business_tax_id: document.getElementById('f-business_tax_id').value,
+                internal_notes: document.getElementById('f-internal_notes').value,
+                social_fb: document.getElementById('f-social_fb').value,
+                social_ig: document.getElementById('f-social_ig').value,
+                social_li: document.getElementById('f-social_li').value,
+                social_tiktok: document.getElementById('f-social_tiktok').value
             }
-        });
-
-        const isEdit = idValue !== "";
-        const url = isEdit ? `${F_API}/${idValue}` : F_API;
-        const method = isEdit ? 'PUT' : 'POST';
+        };
 
         try {
-            const res = await fetch(url, {
-                method: method,
+            const res = await fetch(id ? `${F_API}/${id}` : F_API, {
+                method: id ? 'PUT' : 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
+            
             if (res.ok) {
                document.getElementById('modal-franchise').style.display = 'none';
                loadFranchises();
+            } else {
+                const err = await res.json();
+                alert("Save Failed: " + (err.message || "Unknown error"));
             }
         } catch (err) { console.error("Save failed:", err); }
     }
@@ -174,10 +197,8 @@
 
     function openNewFranchiseModal() {
         document.getElementById('f-id').value = "";
-        fields.forEach(f => {
-            const el = document.getElementById('f-' + f);
-            if(el) el.value = "";
-        });
+        document.querySelectorAll('#modal-franchise input, #modal-franchise select, #modal-franchise textarea').forEach(i => i.value = "");
+        document.getElementById('f-status').value = "active";
         document.getElementById('modal-franchise').style.display = 'flex';
     }
 
