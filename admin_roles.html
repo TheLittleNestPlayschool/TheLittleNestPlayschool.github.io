@@ -1,35 +1,25 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-    <h1 style="margin:0;">Admin Roles & Permissions</h1>
-    <button onclick="openNewRoleModal()" class="btn-save" style="background:#00d1b2; color:white; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px;">+ NEW ROLE</button>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <h1 class="module-title">Admin Roles & Permissions</h1>
+    <button onclick="openNewRoleModal()" class="btn-main" style="background:#00d1b2; color:#1a1a1a; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px;">+ NEW ROLE</button>
 </div>
 
-<table class="admin-table">
-    <thead>
-        <tr>
-            <th style="width: 80px;">ID</th>
-            <th>ADMIN ROLE NAME</th>
-            <th>CREATED ON</th>
-            <th style="width: 150px;">ACTIONS</th>
-        </tr>
-    </thead>
-    <tbody id="role-body">
-        <tr><td colspan="4" style="text-align:center; padding:20px;">Fetching roles from Xano...</td></tr>
-    </tbody>
-</table>
+<div id="role-container">
+    <div style="text-align:center; padding:50px; border:1px solid #eee; border-radius: 8px;">Syncing Admin Roles...</div>
+</div>
 
-<div id="modal-role" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:11000; justify-content:center; align-items:center;">
-    <div style="background:white; width:450px; border-radius:4px; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-        <div style="padding:15px; border-bottom:1px solid #eee;"><h3 id="role-modal-title" style="margin:0;">Role Configuration</h3></div>
-        <div style="padding:20px;">
-            <input type="hidden" id="role-id">
-            <div style="margin-bottom:15px;">
-                <label style="display:block; font-size:0.85rem; font-weight:700; margin-bottom:5px;">Admin Type Name</label>
-                <input type="text" id="role-name" placeholder="e.g. Super Admin" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
-            </div>
+<div id="modal-role" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
+    <div style="background:white; width:450px; border-radius:8px; display:flex; flex-direction:column; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <div style="padding:20px; border-bottom:1px solid #eee; background:#f9f9f9;">
+            <h3 id="role-modal-title" style="margin:0;">Role Configuration</h3>
         </div>
-        <div style="padding:15px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; background:#fcfcfc;">
-            <button onclick="document.getElementById('modal-role').style.display='none'" style="padding:8px 15px; cursor:pointer; font-weight:bold; background:#eee; border:none; border-radius:4px;">CANCEL</button>
-            <button onclick="submitRole()" style="background:#00d1b2; color:white; border:none; padding:8px 15px; cursor:pointer; font-weight:bold; border-radius:4px;">SAVE ROLE</button>
+        <div style="padding:25px;">
+            <input type="hidden" id="role-id">
+            <label style="display:block; font-size:0.75rem; font-weight:bold; color:#666; margin-bottom:4px; text-transform:uppercase;">Admin Type Name</label>
+            <input type="text" id="role-name" placeholder="e.g. Super Admin" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+        </div>
+        <div style="padding:20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:12px; background:#f9f9f9;">
+            <button onclick="document.getElementById('modal-role').style.display='none'" style="padding:10px 20px; cursor:pointer; font-weight:bold; background:#eee; border:none; border-radius:4px;">CANCEL</button>
+            <button onclick="submitRole()" style="background:#00d1b2; color:#1a1a1a; border:none; padding:10px 25px; cursor:pointer; font-weight:bold; border-radius:4px; text-transform:uppercase; font-size:0.75rem;">SAVE ROLE</button>
         </div>
     </div>
 </div>
@@ -39,35 +29,45 @@
     const ROLE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:UpJO_5WB/admin_type';
 
     window.loadRoles = async () => {
+        const container = document.getElementById('role-container');
         try {
-            const res = await fetch(ROLE_URL);
+            const res = await fetch(ROLE_URL + '?t=' + Date.now());
             const data = await res.json();
-            console.log("Xano Data Received:", data);
+            
+            // Handle Xano array or wrapped object
+            let list = Array.isArray(data) ? data : (data.items || []);
 
-            if (!data || data.length === 0) {
-                document.getElementById('role-body').innerHTML = '<tr><td colspan="4" style="text-align:center;">No roles found in database.</td></tr>';
+            if (list.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:50px; border:1px solid #eee; border-radius:8px;">No roles found.</div>';
                 return;
             }
 
-            document.getElementById('role-body').innerHTML = data.map(r => {
-                // Safety: check for 'Admin_Type' or 'admin_type'
+            // Map data to the card style used in Franchise
+            container.innerHTML = list.map(r => {
                 const roleName = r.Admin_Type || r.admin_type || "Unnamed Role";
                 const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString() : 'N/A';
                 
                 return `
-                <tr>
-                    <td>${r.id}</td>
-                    <td><strong>${roleName}</strong></td>
-                    <td>${dateStr}</td>
-                    <td>
-                        <a href="javascript:void(0)" onclick="editRole(${r.id})" style="color:blue; font-weight:bold;">Edit</a> | 
-                        <a href="javascript:void(0)" onclick="deleteRole(${r.id})" style="color:red; font-weight:bold;">Del</a>
-                    </td>
-                </tr>`;
+                <div class="card" style="background:#fff; border:1px solid #eee; border-radius:8px; padding:20px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #00d1b2; padding-bottom: 10px; margin-bottom: 15px;">
+                        <h2 style="margin:0; font-size:1.1rem; font-family: Georgia, serif; color: #1a365d;">${roleName}</h2>
+                        <span style="font-weight:900; color:#00d1b2; text-transform:uppercase; font-size:0.7rem;">ID: ${r.id}</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; font-size:0.85rem;">
+                        <div>
+                            <label style="display:block; font-size:0.65rem; font-weight:800; color:#999; text-transform:uppercase;">Created On</label>
+                            ${dateStr}
+                        </div>
+                        <div style="text-align:right; align-self: center;">
+                            <button onclick="editRole(${r.id})" style="color:blue; border:1px solid blue; background:none; cursor:pointer; font-weight:bold; border-radius:4px; padding:4px 10px; font-size:0.75rem;">EDIT</button>
+                            <button onclick="deleteRole(${r.id})" style="color:red; border:1px solid red; background:none; cursor:pointer; font-weight:bold; border-radius:4px; padding:4px 10px; margin-left:5px; font-size:0.75rem;">DEL</button>
+                        </div>
+                    </div>
+                </div>`;
             }).join('');
         } catch(e) { 
             console.error("Error loading roles:", e); 
-            document.getElementById('role-body').innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Error connecting to Xano.</td></tr>';
+            container.innerHTML = '<div style="color:red; text-align:center; padding:20px;">Error connecting to Xano.</div>';
         }
     };
 
@@ -80,7 +80,11 @@
 
     window.editRole = async (id) => {
         const res = await fetch(`${ROLE_URL}/${id}`);
-        const r = await res.json();
+        const data = await res.json();
+        
+        // Handle result1 wrapper
+        const r = data.result1 || data;
+
         document.getElementById('role-modal-title').innerText = "Edit Role Name";
         document.getElementById('role-id').value = r.id;
         document.getElementById('role-name').value = r.Admin_Type || r.admin_type || "";
