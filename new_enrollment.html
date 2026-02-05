@@ -74,8 +74,8 @@
 
 <script>
 (function() {
-    // CORRECTED ENDPOINTS: Moving Parent/Student to workspace xLIeVP2e
-    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/parent";
+    // Corrected Parent API from User
+    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
     const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/student";
     const TEACHER_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
     const QUESTIONS_LIST_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions";
@@ -85,7 +85,7 @@
     let allAvailableQuestions = [];
     let allStudents = [];
 
-    // Helper to unwrap result1
+    // Safety unwrap to handle result1 wrapper
     function unwrap(data) {
         if (Array.isArray(data)) return data;
         return data.result1 || data.items || [];
@@ -95,7 +95,7 @@
         try {
             document.getElementById('enrollment-progress').innerText = "STEP 1 OF 5";
             
-            // 1. Load Parents
+            // 1. Fetch Parents
             const pSel = document.getElementById('p_parent_id');
             const pRes = await fetch(PARENT_API + '?t=' + Date.now());
             const pData = await pRes.json();
@@ -106,12 +106,12 @@
                 pSel.innerHTML += `<option value="${p.id}">${p.first_name || ''} ${p.last_name || ''}</option>`;
             });
 
-            // 2. Load Students
+            // 2. Fetch Students [cite: 2026-02-05]
             const sRes = await fetch(STUDENT_API + '?t=' + Date.now());
             const sData = await sRes.json();
             allStudents = unwrap(sData);
 
-            // 3. Load Teachers
+            // 3. Load Teachers [cite: 2026-02-05]
             const tRes = await fetch(TEACHER_API);
             const tData = await tRes.json();
             const teachers = unwrap(tData);
@@ -119,11 +119,10 @@
             tSel.innerHTML = '<option value="">Select Teacher...</option>';
             teachers.forEach(t => tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`);
 
-            // 4. Load Assessment Grid
+            // 4. Load Questions [cite: 2026-02-05]
             const qRes = await fetch(QUESTIONS_LIST_API);
             const qData = await qRes.json();
             allAvailableQuestions = unwrap(qData);
-            
             const grid = document.getElementById('assessment-qa-grid');
             grid.innerHTML = '';
             for (let i = 1; i <= 10; i++) {
@@ -140,14 +139,14 @@
     window.enableStudentStep = () => {
         const parentId = document.getElementById('p_parent_id').value;
         const sSel = document.getElementById('s_student_id');
-        const sConfirmBtn = document.getElementById('btn-student-confirm');
+        const btn = document.getElementById('btn-student-confirm');
         if (!parentId) return;
         
         const filtered = allStudents.filter(s => s.parent_id == parentId);
         sSel.innerHTML = filtered.length ? '<option value="">-- Select Student --</option>' : '<option value="">No students found</option>';
         filtered.forEach(s => sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
-        sConfirmBtn.disabled = false;
-        sConfirmBtn.style.opacity = "1";
+        btn.disabled = false;
+        btn.style.opacity = "1";
     };
 
     window.saveParentStep = () => {
