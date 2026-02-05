@@ -23,7 +23,6 @@
 <div class="enrollment-wrapper">
     <div id="step-parent" class="step-container step-active">
         <h2 class="nest-header" style="margin:0;"><span class="badge-step">1</span> Parent Profile</h2>
-        
         <div id="parent-profile-view" style="display:none;" class="profile-display">
             <div class="profile-item"><div class="profile-label">Full Name</div><div id="disp-p-name" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Email</div><div id="disp-p-email" class="profile-value"></div></div>
@@ -31,7 +30,6 @@
             <div class="profile-item"><div class="profile-label">Franchise</div><div id="disp-p-fran" class="profile-value"></div></div>
             <div class="profile-item" style="grid-column: span 4;"><div class="profile-label">Address</div><div id="disp-p-addr" class="profile-value"></div></div>
         </div>
-
         <div class="step-content" style="margin-top:20px;">
             <div id="parent-select-mode">
                 <label>Existing Parent Search</label>
@@ -54,13 +52,11 @@
 
     <div id="step-student" class="step-container step-locked">
         <h2 class="nest-header" style="margin:0;"><span class="badge-step">2</span> Student Profile</h2>
-        
         <div id="student-profile-view" style="display:none;" class="profile-display">
             <div class="profile-item"><div class="profile-label">Student Name</div><div id="disp-s-name" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Date of Birth</div><div id="disp-s-dob" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Franchise Assignment</div><div id="disp-s-fran" class="profile-value"></div></div>
         </div>
-
         <div class="step-content" style="margin-top:20px;">
             <div id="student-select-mode">
                 <label>Attached Students</label>
@@ -79,6 +75,11 @@
 
     <div id="step-assessment" class="step-container step-locked">
         <h2 class="nest-header" style="margin:0;"><span class="badge-step">3</span> Initial Assessment</h2>
+        <div id="assessment-profile-view" style="display:none;" class="profile-display">
+            <div class="profile-item"><div class="profile-label">Assigned Teacher</div><div id="disp-a-teacher" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Assessment Date</div><div id="disp-a-date" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Assessment Type</div><div id="disp-a-type" class="profile-value"></div></div>
+        </div>
         <div class="step-content" style="margin-top:20px;">
             <form id="assessmentForm">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
@@ -87,6 +88,7 @@
                     <div><label>Category</label><input type="text" id="a_assessment_type" value="Initial Assessment"></div>
                 </div>
                 <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 8px 25px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;"></div>
+                <div style="margin-top:15px;"><label>Comments</label><textarea id="a_comments" rows="3"></textarea></div>
                 <button type="submit" class="btn-teal">Save Assessment & Continue</button>
             </form>
         </div>
@@ -103,7 +105,7 @@
     const SAVE_ASSESSMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_assessment";
 
     let currentParentId = null, currentStudentId = null, currentFranchiseId = null, currentFranchiseName = "";
-    let parentMode = 'select', studentMode = 'select', allStudents = [], allParents = [], allFranchises = [];
+    let parentMode = 'select', studentMode = 'select', allStudents = [], allParents = [], allFranchises = [], allTeachers = [];
 
     function unwrap(d) { return Array.isArray(d) ? d : (d.result1 || d.items || []); }
 
@@ -123,15 +125,7 @@
         let parentData = {};
         if (parentMode === 'create') {
             currentFranchiseId = parseInt(document.getElementById('p_fran_id').value);
-            parentData = { 
-                first_name: document.getElementById('p_fn').value, 
-                last_name: document.getElementById('p_ln').value, 
-                email: document.getElementById('p_em').value, 
-                phone: document.getElementById('p_ph').value, 
-                address: document.getElementById('p_addr').value, 
-                franchise_id: currentFranchiseId, 
-                is_active: true 
-            };
+            parentData = { first_name: document.getElementById('p_fn').value, last_name: document.getElementById('p_ln').value, email: document.getElementById('p_em').value, phone: document.getElementById('p_ph').value, address: document.getElementById('p_addr').value, franchise_id: currentFranchiseId, is_active: true };
             const res = await fetch(PARENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(parentData) });
             const data = await res.json();
             currentParentId = data.id;
@@ -141,10 +135,10 @@
             currentFranchiseId = parentData.franchise_id;
         }
 
-        if(!currentParentId) return alert("Select or create a parent.");
         const f = allFranchises.find(fran => fran.id == currentFranchiseId);
         currentFranchiseName = f ? f.name : "Unknown";
 
+        // Display Profile View [cite: 2026-02-05]
         document.getElementById('disp-p-name').innerText = `${parentData.first_name} ${parentData.last_name}`;
         document.getElementById('disp-p-email').innerText = parentData.email;
         document.getElementById('disp-p-phone').innerText = parentData.phone;
@@ -154,9 +148,14 @@
         document.getElementById('parent-profile-view').style.display = 'grid';
         document.getElementById('step-parent').className = 'step-container step-saved';
         
-        const filtered = allStudents.filter(s => s.parent_id == currentParentId);
+        // Filter teachers by Franchise [cite: 2026-02-05]
+        const filteredTeachers = allTeachers.filter(t => t.franchise_id == currentFranchiseId);
+        document.getElementById('a_teacher_id').innerHTML = '<option value="">-- Choose Teacher --</option>' + 
+            filteredTeachers.map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
+
+        const filteredStudents = allStudents.filter(s => s.parent_id == currentParentId);
         document.getElementById('s_select_id').innerHTML = '<option value="">-- Choose Student --</option>' + 
-            filtered.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            filteredStudents.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         document.getElementById('step-student').className = 'step-container step-active';
     };
 
@@ -172,7 +171,6 @@
             sData = allStudents.find(s => s.id == currentStudentId);
         }
 
-        if(!currentStudentId) return alert("Select or enroll a student.");
         document.getElementById('disp-s-name').innerText = sData.name;
         document.getElementById('disp-s-dob').innerText = sData.date_of_birth;
         document.getElementById('disp-s-fran').innerText = currentFranchiseName;
@@ -193,12 +191,11 @@
         allFranchises = unwrap(await fR.json());
         allParents = unwrap(await pR.json());
         allStudents = unwrap(await sR.json());
-        const te = unwrap(await tR.json()), qu = unwrap(await qR.json());
+        allTeachers = unwrap(await tR.json());
+        const qu = unwrap(await qR.json());
 
-        // No pre-fill on dropdowns [cite: 2026-02-05]
         document.getElementById('p_fran_id').innerHTML = '<option value="">-- Select Franchise --</option>' + allFranchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
         document.getElementById('p_select_id').innerHTML = '<option value="">-- Search Parents --</option>' + allParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
-        document.getElementById('a_teacher_id').innerHTML = '<option value="">-- Choose Teacher --</option>' + te.map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
         
         const grid = document.getElementById('assessment-qa-grid');
         for(let i=1; i<=10; i++) {
@@ -208,17 +205,26 @@
 
     document.getElementById('assessmentForm').onsubmit = async (e) => {
         e.preventDefault();
+        const tSel = document.getElementById('a_teacher_id');
         let payload = { 
             student_id: parseInt(currentStudentId),
-            teacher_id: parseInt(document.getElementById('a_teacher_id').value) || null,
+            teacher_id: parseInt(tSel.value) || null,
             assessment_date: document.getElementById('a_assessment_date').value || null,
-            assessment_type: document.getElementById('a_assessment_type').value
+            assessment_type: document.getElementById('a_assessment_type').value,
+            comments: document.getElementById('a_comments').value
         };
         for(let i=1; i<=10; i++) {
             payload[`question_${i}_id`] = parseInt(document.getElementById(`q_select_${i}`).value) || null;
             payload[`recorded_answer_${i}`] = document.getElementById(`a_ans_${i}`).value || "";
         }
         await fetch(SAVE_ASSESSMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+
+        // Consistent UI Format after save [cite: 2026-02-05]
+        document.getElementById('disp-a-teacher').innerText = tSel.options[tSel.selectedIndex].text || "Not Specified";
+        document.getElementById('disp-a-date').innerText = payload.assessment_date || "Not Specified";
+        document.getElementById('disp-a-type').innerText = payload.assessment_type;
+        
+        document.getElementById('assessment-profile-view').style.display = 'grid';
         document.getElementById('step-assessment').className = 'step-container step-saved';
     };
 
