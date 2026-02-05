@@ -14,23 +14,23 @@
 </style>
 
 <div style="max-width: 950px; margin: 0 auto;">
-    <div id="enrollment-progress" style="text-align: right; font-size: 0.55rem; font-weight: 800; color: #94a3b8; margin-bottom: 5px;">STEP 3 OF 5</div>
+    <div id="enrollment-progress" style="text-align: right; font-size: 0.55rem; font-weight: 800; color: #94a3b8; margin-bottom: 5px;">STEP 1 OF 5</div>
 
-    <div id="step-parent" class="step-container step-saved">
+    <div id="step-parent" class="step-container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2 style="font-size: 0.85rem;" class="nest-header"><span class="badge-step">1</span> Parent Information</h2>
-            <span class="success-check">✓ Saved</span>
+            <span id="parent-success" class="success-check" style="display:none;">✓ Saved</span>
         </div>
-    </div>
+        </div>
 
-    <div id="step-student" class="step-container step-saved">
+    <div id="step-student" class="step-container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2 style="font-size: 0.85rem;" class="nest-header"><span class="badge-step">2</span> Student Details</h2>
-            <span class="success-check">✓ Saved</span>
+            <span id="student-success" class="success-check" style="display:none;">✓ Saved</span>
         </div>
-    </div>
+        </div>
 
-    <div id="step-assessment" class="step-container step-active">
+    <div id="step-assessment" class="step-container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2 style="font-size: 0.85rem;" class="nest-header"><span class="badge-step">3</span> Student Assessment</h2>
             <span id="assessment-success" class="success-check" style="display:none;">✓ Saved</span>
@@ -43,10 +43,6 @@
             </div>
 
             <div id="qa-rows-container" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 5px;">
-                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; background: #fdfdfd; padding: 4px; font-weight: bold; border-bottom: 1px solid #eee;">
-                    <span style="font-size: 0.55rem; color: #94a3b8;">SELECT QUESTION</span>
-                    <span style="font-size: 0.55rem; color: #94a3b8;">SELECT ANSWER</span>
-                </div>
                 <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 4px 15px; margin-top: 5px;">
                 </div>
             </div>
@@ -72,19 +68,31 @@
 
     let allAvailableQuestions = [];
 
-    async function initAssessment() {
+    async function initEnrollment() {
         try {
-            // 1. CLEAR PREVIOUS STATE [cite: 2026-02-05]
-            const form = document.getElementById('assessmentForm');
-            if (form) form.reset();
+            // 1. RESET ALL STEPS TO START AT STEP 1 [cite: 2026-02-05]
+            document.getElementById('enrollment-progress').innerText = "STEP 1 OF 5";
+            
+            // Parent Step Reset [cite: 2026-02-05]
+            const s1 = document.getElementById('step-parent');
+            s1.className = 'step-container step-active';
+            document.getElementById('parent-success').style.display = 'none';
+
+            // Student Step Reset [cite: 2026-02-05]
+            const s2 = document.getElementById('step-student');
+            s2.className = 'step-container step-locked';
+            document.getElementById('student-success').style.display = 'none';
+
+            // Assessment Step Reset [cite: 2026-02-05]
+            const s3 = document.getElementById('step-assessment');
+            s3.className = 'step-container step-locked';
+            document.getElementById('assessment-success').style.display = 'none';
+            if (document.getElementById('assessmentForm')) document.getElementById('assessmentForm').reset();
             
             const grid = document.getElementById('assessment-qa-grid');
-            grid.innerHTML = ''; // Prevent row duplication [cite: 2026-02-05]
-            
-            document.getElementById('assessment-success').style.display = 'none';
-            document.getElementById('step-assessment').className = 'step-container step-active';
+            grid.innerHTML = '';
 
-            // 2. Load Teachers [cite: 2026-02-05]
+            // 2. Load Core Data [cite: 2026-02-05]
             const tRes = await fetch(TEACHER_API);
             const teachers = await tRes.json();
             const tSel = document.getElementById('a_teacher_id');
@@ -93,11 +101,10 @@
                 tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; 
             });
 
-            // 3. Load Questions [cite: 2026-02-05]
             const qRes = await fetch(QUESTIONS_LIST_API);
             allAvailableQuestions = await qRes.json();
 
-            // 4. Generate Rows [cite: 2026-02-05]
+            // 3. Build Grid Rows [cite: 2026-02-05]
             for (let i = 1; i <= 10; i++) {
                 grid.innerHTML += `
                     <div>
@@ -113,63 +120,28 @@
                     </div>
                 `;
             }
-        } catch (e) { console.error("Assessment Init Failed", e); }
+        } catch (e) { console.error("Enrollment Init Failed", e); }
     }
 
     window.handleQuestionChange = async (rowIndex) => {
         const qId = document.getElementById(`q_select_${rowIndex}`).value;
         const aSelect = document.getElementById(`a_ans_${rowIndex}`);
-        
-        if (!qId) {
-            aSelect.disabled = true;
-            aSelect.innerHTML = '<option value="">Select answer first...</option>';
-            return;
-        }
+        if (!qId) { aSelect.disabled = true; return; }
 
         try {
             const res = await fetch(SINGLE_QUESTION_API + qId);
-            const questionData = await res.json();
-            
+            const data = await res.json();
             aSelect.disabled = false;
             aSelect.innerHTML = '<option value="">Select Result...</option>';
-            
-            if (questionData.possible_answers) {
-                const options = questionData.possible_answers.split(',').map(opt => opt.trim());
-                options.forEach(opt => {
-                    aSelect.innerHTML += `<option value="${opt}">${opt}</option>`;
+            if (data.possible_answers) {
+                data.possible_answers.split(',').forEach(opt => {
+                    aSelect.innerHTML += `<option value="${opt.trim()}">${opt.trim()}</option>`;
                 });
             }
-        } catch (e) { console.error("Error fetching possible answers", e); }
+        } catch (e) { console.error("Possible answer load failed", e); }
     };
 
-    document.getElementById('assessmentForm').onsubmit = async (e) => {
-        e.preventDefault();
-        let payload = { 
-            student_id: 1, 
-            teacher_id: parseInt(document.getElementById('a_teacher_id').value), 
-            assessment_date: document.getElementById('a_assessment_date').value, 
-            assessment_type: document.getElementById('a_assessment_type').value, 
-            comments: document.getElementById('a_comments').value
-        };
-
-        for (let i = 1; i <= 10; i++) {
-            payload[`question_${i}_id`] = parseInt(document.getElementById(`q_select_${i}`).value);
-            payload[`recorded_answer_${i}`] = document.getElementById(`a_ans_${i}`).value;
-        }
-
-        const res = await fetch(ASSESSMENT_SAVE_API, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
-        
-        if (res.ok) {
-            document.getElementById('assessment-success').style.display = 'inline';
-            document.getElementById('step-assessment').classList.replace('step-active', 'step-saved');
-            alert("Assessment Saved!");
-        }
-    };
-
-    initAssessment();
+    // Initialize on load [cite: 2026-02-05]
+    initEnrollment();
 })();
 </script>
