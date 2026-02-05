@@ -113,15 +113,12 @@
     async function editFranchise(id) {
         try {
             const res = await fetch(`${F_API}/${id}`);
-            const f = await res.json();
+            const data = await res.json();
+            
+            // FIX: Accessing record inside 'result1' wrapper
+            const f = data.result1 || data;
 
-            // Debugging line to see the shape of the data in F12 Console
-            console.log("Record Data:", f);
-
-            // Populate the hidden ID field first
             document.getElementById('f-id').value = f.id;
-
-            // Flat mapping directly from the API response object
             document.getElementById('f-name').value = f.name || "";
             document.getElementById('f-address').value = f.address || "";
             document.getElementById('f-phone_number').value = f.phone_number || "";
@@ -150,7 +147,6 @@
         const id = document.getElementById('f-id').value;
         const opDate = document.getElementById('f-opening_date').value;
         
-        // PAYLOAD IS FLAT: No 'franchise' wrapper to match your Xano mapping
         const payload = {
             name: document.getElementById('f-name').value,
             address: document.getElementById('f-address').value,
