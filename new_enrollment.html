@@ -2,7 +2,6 @@
     .enrollment-wrapper { width: 100%; margin: 0; padding: 20px; box-sizing: border-box; background: #f1f5f9; min-height: 100vh; }
     .nest-header { font-family: 'Georgia', serif; color: #1a365d; }
     
-    /* Profile Card Styling for Saved States */
     .profile-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; background: #fff; padding: 15px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 10px; }
     .profile-item { display: flex; flex-direction: column; }
     .profile-label { font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }
@@ -36,7 +35,7 @@
         <div class="step-content" style="margin-top:20px;">
             <div id="parent-select-mode">
                 <label>Existing Parent Search</label>
-                <select id="p_select_id"><option value="">Loading collection...</option></select>
+                <select id="p_select_id"></select>
             </div>
             <div id="parent-create-mode" style="display:none;">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
@@ -65,7 +64,7 @@
         <div class="step-content" style="margin-top:20px;">
             <div id="student-select-mode">
                 <label>Attached Students</label>
-                <select id="s_select_id"><option value="">Select parent first...</option></select>
+                <select id="s_select_id"></select>
             </div>
             <div id="student-create-mode" style="display:none;">
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
@@ -83,8 +82,8 @@
         <div class="step-content" style="margin-top:20px;">
             <form id="assessmentForm">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                    <div><label>Assigned Teacher</label><select id="a_teacher_id" required></select></div>
-                    <div><label>Date</label><input type="date" id="a_assessment_date" required></div>
+                    <div><label>Assigned Teacher</label><select id="a_teacher_id"></select></div>
+                    <div><label>Date</label><input type="date" id="a_assessment_date"></div>
                     <div><label>Category</label><input type="text" id="a_assessment_type" value="Initial Assessment"></div>
                 </div>
                 <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 8px 25px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;"></div>
@@ -101,6 +100,7 @@
     const FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
     const TEACHER_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
     const QUESTIONS_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions";
+    const SAVE_ASSESSMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_assessment";
 
     let currentParentId = null, currentStudentId = null, currentFranchiseId = null, currentFranchiseName = "";
     let parentMode = 'select', studentMode = 'select', allStudents = [], allParents = [], allFranchises = [];
@@ -141,10 +141,10 @@
             currentFranchiseId = parentData.franchise_id;
         }
 
+        if(!currentParentId) return alert("Select or create a parent.");
         const f = allFranchises.find(fran => fran.id == currentFranchiseId);
         currentFranchiseName = f ? f.name : "Unknown";
 
-        // Display Profile View [cite: 2026-02-05]
         document.getElementById('disp-p-name').innerText = `${parentData.first_name} ${parentData.last_name}`;
         document.getElementById('disp-p-email').innerText = parentData.email;
         document.getElementById('disp-p-phone').innerText = parentData.phone;
@@ -155,7 +155,8 @@
         document.getElementById('step-parent').className = 'step-container step-saved';
         
         const filtered = allStudents.filter(s => s.parent_id == currentParentId);
-        document.getElementById('s_select_id').innerHTML = filtered.map(s => `<option value="${s.id}">${s.name}</option>`).join('') || '<option value="">No students</option>';
+        document.getElementById('s_select_id').innerHTML = '<option value="">-- Choose Student --</option>' + 
+            filtered.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         document.getElementById('step-student').className = 'step-container step-active';
     };
 
@@ -171,6 +172,7 @@
             sData = allStudents.find(s => s.id == currentStudentId);
         }
 
+        if(!currentStudentId) return alert("Select or enroll a student.");
         document.getElementById('disp-s-name').innerText = sData.name;
         document.getElementById('disp-s-dob').innerText = sData.date_of_birth;
         document.getElementById('disp-s-fran').innerText = currentFranchiseName;
@@ -181,21 +183,45 @@
     };
 
     async function init() {
-        const [fR, pR, sR, tR, qR] = await Promise.all([fetch(FRANCHISE_API), fetch(PARENT_API + '?t=' + Date.now()), fetch(STUDENT_API + '?t=' + Date.now()), fetch(TEACHER_API), fetch(QUESTIONS_API)]);
+        const [fR, pR, sR, tR, qR] = await Promise.all([
+            fetch(FRANCHISE_API), 
+            fetch(PARENT_API + '?t=' + Date.now()), 
+            fetch(STUDENT_API + '?t=' + Date.now()), 
+            fetch(TEACHER_API), 
+            fetch(QUESTIONS_API)
+        ]);
         allFranchises = unwrap(await fR.json());
         allParents = unwrap(await pR.json());
         allStudents = unwrap(await sR.json());
         const te = unwrap(await tR.json()), qu = unwrap(await qR.json());
 
-        document.getElementById('p_fran_id').innerHTML = allFranchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-        document.getElementById('p_select_id').innerHTML = allParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
-        document.getElementById('a_teacher_id').innerHTML = te.map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
+        // No pre-fill on dropdowns [cite: 2026-02-05]
+        document.getElementById('p_fran_id').innerHTML = '<option value="">-- Select Franchise --</option>' + allFranchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        document.getElementById('p_select_id').innerHTML = '<option value="">-- Search Parents --</option>' + allParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
+        document.getElementById('a_teacher_id').innerHTML = '<option value="">-- Choose Teacher --</option>' + te.map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
         
         const grid = document.getElementById('assessment-qa-grid');
         for(let i=1; i<=10; i++) {
-            grid.innerHTML += `<div><select id="q_select_${i}" required><option value="">-- Question ${i} --</option>${qu.map(q => `<option value="${q.id}">${q.question_text}</option>`).join('')}</select></div><div><select id="a_ans_${i}" required><option value="">Select...</option></select></div>`;
+            grid.innerHTML += `<div><select id="q_select_${i}"><option value="">-- Question ${i} --</option>${qu.map(q => `<option value="${q.id}">${q.question_text}</option>`).join('')}</select></div><div><select id="a_ans_${i}"><option value="">Select answer...</option></select></div>`;
         }
     }
+
+    document.getElementById('assessmentForm').onsubmit = async (e) => {
+        e.preventDefault();
+        let payload = { 
+            student_id: parseInt(currentStudentId),
+            teacher_id: parseInt(document.getElementById('a_teacher_id').value) || null,
+            assessment_date: document.getElementById('a_assessment_date').value || null,
+            assessment_type: document.getElementById('a_assessment_type').value
+        };
+        for(let i=1; i<=10; i++) {
+            payload[`question_${i}_id`] = parseInt(document.getElementById(`q_select_${i}`).value) || null;
+            payload[`recorded_answer_${i}`] = document.getElementById(`a_ans_${i}`).value || "";
+        }
+        await fetch(SAVE_ASSESSMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+        document.getElementById('step-assessment').className = 'step-container step-saved';
+    };
+
     init();
 })();
 </script>
