@@ -8,7 +8,7 @@
     
     label { display: block; font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 1px; margin-top: 2px; }
     input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 4px 6px; border-radius: 2px; font-size: 0.7rem; background: #fff; box-sizing: border-box; }
-    .btn-teal { background-color: #00d1b2; color: #1a1a1a; padding: 5px 12px; border-radius: 2px; font-weight: 900; border: none; cursor: pointer; font-size: 0.65rem; text-transform: uppercase; margin-top: 10px; }
+    .btn-teal { background-color: #00d1b2; color: #1a1a1a !important; padding: 5px 12px; border-radius: 2px; font-weight: 900; border: none; cursor: pointer; font-size: 0.65rem; text-transform: uppercase; margin-top: 10px; }
     .badge-step { background: #1a365d; color: white; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.6rem; margin-right: 6px; }
     .success-check { color: #00d1b2; font-weight: bold; font-size: 0.65rem; font-style: italic; }
 </style>
@@ -84,16 +84,21 @@
     let allAvailableQuestions = [];
     let allStudents = [];
 
+    // Helper to unwrap Xano objects
+    function unwrap(data) {
+        if (Array.isArray(data)) return data;
+        return data.result1 || data.items || [];
+    }
+
     async function initEnrollment() {
         try {
             document.getElementById('enrollment-progress').innerText = "STEP 1 OF 5";
-            document.getElementById('step-parent').className = 'step-container step-active';
             
-            // 1. Load Parents (with safety unwrap)
+            // 1. Load Parents
             const pSel = document.getElementById('p_parent_id');
             const pRes = await fetch(PARENT_API + '?t=' + Date.now());
             const pData = await pRes.json();
-            const parents = Array.isArray(pData) ? pData : (pData.result1 || pData.items || []);
+            const parents = unwrap(pData);
 
             pSel.innerHTML = '<option value="">-- Select Parent --</option>';
             parents.forEach(p => {
@@ -103,20 +108,20 @@
             // 2. Load Students
             const sRes = await fetch(STUDENT_API + '?t=' + Date.now());
             const sData = await sRes.json();
-            allStudents = Array.isArray(sData) ? sData : (sData.result1 || sData.items || []);
+            allStudents = unwrap(sData);
 
             // 3. Load Teachers
             const tRes = await fetch(TEACHER_API);
             const tData = await tRes.json();
-            const teachers = Array.isArray(tData) ? tData : (tData.result1 || tData.items || []);
+            const teachers = unwrap(tData);
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">Select Teacher...</option>';
             teachers.forEach(t => tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`);
 
-            // 4. Load Assessment Grid
+            // 4. Load Assessment Questions
             const qRes = await fetch(QUESTIONS_LIST_API);
             const qData = await qRes.json();
-            allAvailableQuestions = Array.isArray(qData) ? qData : (qData.result1 || qData.items || []);
+            allAvailableQuestions = unwrap(qData);
             
             const grid = document.getElementById('assessment-qa-grid');
             grid.innerHTML = '';
