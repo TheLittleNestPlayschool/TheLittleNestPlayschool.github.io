@@ -1,30 +1,29 @@
 <style>
-    /* Full screen adjustment to match Teacher/Franchise screens */
-    .enrollment-wrapper { width: 100%; margin: 0; padding: 10px; box-sizing: border-box; }
+    .enrollment-wrapper { width: 100%; margin: 0; padding: 20px; box-sizing: border-box; }
     .nest-header { font-family: 'Georgia', serif; color: #1a365d; }
-    .step-container { background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 15px; margin-bottom: 12px; transition: all 0.3s ease; }
+    .step-container { background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 20px; margin-bottom: 15px; transition: all 0.3s ease; }
     .step-locked { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
-    .step-active { border-left: 4px solid #00d1b2; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .step-saved { border-left: 4px solid #1a365d; background: #f8fafc; }
+    .step-active { border-left: 5px solid #00d1b2; box-shadow: 0 4px 6px rgba(0,0,0,0.07); }
+    .step-saved { border-left: 5px solid #1a365d; background: #f8fafc; }
     .step-saved .step-content { display: none; }
     
-    label { display: block; font-size: 0.6rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 3px; }
-    input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 8px; border-radius: 4px; font-size: 0.8rem; background: #fff; box-sizing: border-box; }
-    .btn-teal { background-color: #00d1b2; color: #1a1a1a !important; padding: 10px 20px; border-radius: 4px; font-weight: 900; border: none; cursor: pointer; font-size: 0.75rem; text-transform: uppercase; margin-top: 15px; }
-    .toggle-area { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0; }
-    .toggle-link { font-size: 0.65rem; cursor: pointer; color: #00d1b2; text-decoration: underline; background: none; border: none; padding: 0; font-weight: bold; }
-    .badge-step { background: #1a365d; color: white; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.7rem; margin-right: 10px; }
-    .summary-text { font-size: 0.9rem; color: #00d1b2; font-weight: 800; margin-left: 15px; letter-spacing: 0.5px; }
-    .success-check { color: #00d1b2; font-weight: bold; font-size: 0.7rem; font-style: italic; }
+    label { display: block; font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
+    input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px; font-size: 0.85rem; background: #fff; box-sizing: border-box; }
+    .btn-teal { background-color: #00d1b2; color: #1a1a1a !important; padding: 12px 25px; border-radius: 4px; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; margin-top: 15px; }
+    .toggle-area { margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1; }
+    .toggle-link { font-size: 0.7rem; cursor: pointer; color: #00d1b2; text-decoration: underline; background: none; border: none; font-weight: bold; padding: 0; }
+    .badge-step { background: #1a365d; color: white; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.75rem; margin-right: 12px; }
+    .summary-text { font-size: 1rem; color: #00d1b2; font-weight: 800; margin-left: 20px; letter-spacing: 0.5px; }
+    .success-check { color: #00d1b2; font-weight: bold; font-size: 0.8rem; font-style: italic; }
 </style>
 
 <div class="enrollment-wrapper">
-    <div id="enrollment-progress" style="text-align: right; font-size: 0.6rem; font-weight: 800; color: #94a3b8; margin-bottom: 10px;">PROGRESS: STEP 1 OF 5</div>
+    <div id="enrollment-progress" style="text-align: right; font-size: 0.65rem; font-weight: 800; color: #94a3b8; margin-bottom: 10px;">PROGRESS: STEP 1 OF 5</div>
 
     <div id="step-parent" class="step-container step-active">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center;">
-                <h2 style="font-size: 1rem; margin:0;" class="nest-header"><span class="badge-step">1</span> Parent Information</h2>
+                <h2 class="nest-header" style="margin:0;"><span class="badge-step">1</span> Parent Information</h2>
                 <span id="parent-summary-display" class="summary-text"></span>
             </div>
             <span id="parent-success" class="success-check" style="display:none;">✓ CONFIRMED</span>
@@ -32,31 +31,32 @@
         
         <div class="step-content" style="margin-top:20px;">
             <div id="parent-select-mode">
-                <label>Select Existing Parent</label>
-                <select id="p_select_id"><option value="">Loading collection...</option></select>
+                <label>Select Existing Parent Record</label>
+                <select id="p_select_id"><option value="">Loading Parents...</option></select>
             </div>
             
             <div id="parent-create-mode" style="display:none;">
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
                     <div><label>First Name</label><input type="text" id="p_fn"></div>
                     <div><label>Last Name</label><input type="text" id="p_ln"></div>
-                    <div><label>Email</label><input type="email" id="p_em"></div>
-                    <div><label>Phone</label><input type="text" id="p_ph"></div>
-                    <div style="grid-column: span 4;"><label>Physical Address</label><input type="text" id="p_addr"></div>
+                    <div><label>Assign to Franchise</label><select id="p_fran_id"><option value="">Select Franchise...</option></select></div>
+                    <div><label>Email Address</label><input type="email" id="p_em"></div>
+                    <div><label>Phone Number</label><input type="text" id="p_ph"></div>
+                    <div><label>Home Address</label><input type="text" id="p_addr"></div>
                 </div>
             </div>
 
             <div class="toggle-area">
                 <button class="toggle-link" id="p-toggle" onclick="toggleParentMode()">OR CREATE NEW PARENT RECORD</button>
             </div>
-            <button onclick="processParentStep()" class="btn-teal">Confirm & Proceed to Student</button>
+            <button onclick="processParentStep()" class="btn-teal">Confirm Parent Details</button>
         </div>
     </div>
 
     <div id="step-student" class="step-container step-locked">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center;">
-                <h2 style="font-size: 1rem; margin:0;" class="nest-header"><span class="badge-step">2</span> Student Details</h2>
+                <h2 class="nest-header" style="margin:0;"><span class="badge-step">2</span> Student Details</h2>
                 <span id="student-summary-display" class="summary-text"></span>
             </div>
             <span id="student-success" class="success-check" style="display:none;">✓ CONFIRMED</span>
@@ -64,48 +64,51 @@
         
         <div class="step-content" style="margin-top:20px;">
             <div id="student-select-mode">
-                <label>Linked Students</label>
-                <select id="s_select_id"><option value="">Awaiting parent selection...</option></select>
+                <label>Select Attached Student</label>
+                <select id="s_select_id"><option value="">Choose Parent First...</option></select>
             </div>
             
             <div id="student-create-mode" style="display:none;">
-                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px;">
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
                     <div><label>Student Full Name</label><input type="text" id="s_name_new"></div>
-                    <div><label>Birthday</label><input type="date" id="s_dob_new"></div>
-                    <div><label>Franchise ID</label><input type="number" id="s_fran_new" value="1"></div>
+                    <div><label>Date of Birth</label><input type="date" id="s_dob_new"></div>
                 </div>
+                <div style="margin-top:10px; font-size: 0.7rem; color: #94a3b8;">* Student will automatically follow the Parent's Franchise assignment.</div>
             </div>
 
             <div class="toggle-area">
-                <button class="toggle-link" id="s-toggle" onclick="toggleStudentMode()">OR ENROLL NEW STUDENT</button>
+                <button class="toggle-link" id="s-toggle" onclick="toggleStudentMode()">OR ADD NEW STUDENT TO THIS PARENT</button>
             </div>
-            <button onclick="processStudentStep()" class="btn-teal">Confirm & Proceed to Assessment</button>
+            <button onclick="processStudentStep()" class="btn-teal">Confirm Student Details</button>
         </div>
     </div>
 
     <div id="step-assessment" class="step-container step-locked">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="font-size: 1rem;" class="nest-header"><span class="badge-step">3</span> Initial Assessment</h2>
+            <h2 class="nest-header" style="margin:0;"><span class="badge-step">3</span> Initial Assessment</h2>
             <span id="assessment-success" class="success-check" style="display:none;">✓ RECORDED</span>
         </div>
-        <div class="step-content">
+        <div class="step-content" style="margin-top:20px;">
             <form id="assessmentForm">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
                     <div><label>Assigned Teacher</label><select id="a_teacher_id" required><option value="">Select...</option></select></div>
                     <div><label>Assessment Date</label><input type="date" id="a_assessment_date" required></div>
                     <div><label>Assessment Category</label><input type="text" id="a_assessment_type" value="Initial Assessment" required></div>
                 </div>
-                <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 8px 20px; margin-top: 15px;"></div>
-                <div style="margin-top: 12px;"><label>Additional Observations</label><textarea id="a_comments" rows="3"></textarea></div>
-                <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
-                    <button type="submit" class="btn-teal">Finalize Assessment & Continue</button>
+                
+                <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 8px 25px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                    </div>
+
+                <div style="margin-top: 15px;"><label>Additional Observations</label><textarea id="a_comments" rows="3"></textarea></div>
+                <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+                    <button type="submit" class="btn-teal">Save Assessment & Continue</button>
                 </div>
             </form>
         </div>
     </div>
 
     <div id="step-pickup" class="step-container step-locked">
-        <h2 style="font-size: 1rem; color: #94a3b8;"><span class="badge-step">4</span> Authorized Pickup</h2>
+        <h2 class="nest-header" style="margin:0; color: #94a3b8;"><span class="badge-step">4</span> Authorized Pickup</h2>
     </div>
 </div>
 
@@ -113,6 +116,7 @@
 (function() {
     const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
     const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
+    const FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
     const TEACHER_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
     const QUESTIONS_LIST_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions";
     const SINGLE_QUESTION_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions/";
@@ -120,9 +124,12 @@
 
     let currentParentId = null;
     let currentStudentId = null;
+    let currentFranchiseId = null;
     let parentMode = 'select'; 
     let studentMode = 'select';
     let allStudents = [];
+    let allParents = [];
+    let allQuestions = [];
 
     function unwrap(data) { return Array.isArray(data) ? data : (data.result1 || data.items || []); }
 
@@ -130,20 +137,21 @@
         parentMode = (parentMode === 'select') ? 'create' : 'select';
         document.getElementById('parent-select-mode').style.display = (parentMode === 'select') ? 'block' : 'none';
         document.getElementById('parent-create-mode').style.display = (parentMode === 'create') ? 'block' : 'none';
-        document.getElementById('p-toggle').innerText = (parentMode === 'select') ? 'OR CREATE NEW PARENT RECORD' : 'OR SELECT FROM EXISTING RECORDS';
+        document.getElementById('p-toggle').innerText = (parentMode === 'select') ? 'OR CREATE NEW PARENT RECORD' : 'OR SELECT EXISTING RECORD';
     };
 
     window.toggleStudentMode = () => {
         studentMode = (studentMode === 'select') ? 'create' : 'select';
         document.getElementById('student-select-mode').style.display = (studentMode === 'select') ? 'block' : 'none';
         document.getElementById('student-create-mode').style.display = (studentMode === 'create') ? 'block' : 'none';
-        document.getElementById('s-toggle').innerText = (studentMode === 'select') ? 'OR ENROLL NEW STUDENT' : 'OR SELECT ATTACHED STUDENT';
+        document.getElementById('s-toggle').innerText = (studentMode === 'select') ? 'OR ADD NEW STUDENT TO THIS PARENT' : 'OR SELECT EXISTING STUDENT';
     };
 
     window.processParentStep = async () => {
         let name = "";
         if (parentMode === 'create') {
-            const p = { first_name: document.getElementById('p_fn').value, last_name: document.getElementById('p_ln').value, email: document.getElementById('p_em').value, phone: document.getElementById('p_ph').value, address: document.getElementById('p_addr').value, is_active: true };
+            currentFranchiseId = parseInt(document.getElementById('p_fran_id').value);
+            const p = { first_name: document.getElementById('p_fn').value, last_name: document.getElementById('p_ln').value, email: document.getElementById('p_em').value, phone: document.getElementById('p_ph').value, address: document.getElementById('p_addr').value, franchise_id: currentFranchiseId, is_active: true };
             const res = await fetch(PARENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p) });
             const data = await res.json();
             currentParentId = data.id;
@@ -152,17 +160,18 @@
             const sel = document.getElementById('p_select_id');
             currentParentId = sel.value;
             name = sel.options[sel.selectedIndex].text;
+            const record = allParents.find(p => p.id == currentParentId);
+            currentFranchiseId = record ? record.franchise_id : null;
         }
 
-        if (!currentParentId) return alert("Please select or create a parent.");
-        document.getElementById('parent-summary-display').innerText = `| ${name}`;
+        if (!currentParentId) return alert("Select or create a parent.");
+        document.getElementById('parent-summary-display').innerText = `| Parent: ${name}`;
         document.getElementById('step-parent').className = 'step-container step-saved';
         document.getElementById('parent-success').style.display = 'inline';
         
         const filtered = allStudents.filter(s => s.parent_id == currentParentId);
         const sSel = document.getElementById('s_select_id');
-        sSel.innerHTML = filtered.length ? filtered.map(s => `<option value="${s.id}">${s.name}</option>`).join('') : '<option value="">No students linked to this parent</option>';
-        
+        sSel.innerHTML = filtered.length ? filtered.map(s => `<option value="${s.id}">${s.name}</option>`).join('') : '<option value="">No existing students</option>';
         document.getElementById('step-student').className = 'step-container step-active';
         document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 2 OF 5";
     };
@@ -170,7 +179,7 @@
     window.processStudentStep = async () => {
         let name = "";
         if (studentMode === 'create') {
-            const p = { parent_id: currentParentId, name: document.getElementById('s_name_new').value, date_of_birth: document.getElementById('s_dob_new').value, franchise_id: parseInt(document.getElementById('s_fran_new').value), is_active: true };
+            const p = { parent_id: currentParentId, name: document.getElementById('s_name_new').value, date_of_birth: document.getElementById('s_dob_new').value, franchise_id: currentFranchiseId, is_active: true };
             const res = await fetch(STUDENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p) });
             const data = await res.json();
             currentStudentId = data.id;
@@ -181,45 +190,13 @@
             name = sel.options[sel.selectedIndex].text;
         }
         
-        if (!currentStudentId) return alert("Please select or enroll a student.");
-        document.getElementById('student-summary-display').innerText = `| ${name}`;
+        if (!currentStudentId) return alert("Select or enroll a student.");
+        document.getElementById('student-summary-display').innerText = `| Student: ${name}`;
         document.getElementById('step-student').className = 'step-container step-saved';
         document.getElementById('student-success').style.display = 'inline';
         document.getElementById('step-assessment').className = 'step-container step-active';
         document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 3 OF 5";
     };
-
-    async function init() {
-        try {
-            const pRes = await fetch(PARENT_API + '?t=' + Date.now());
-            const parents = unwrap(await pRes.json());
-            const pSel = document.getElementById('p_select_id');
-            pSel.innerHTML = '<option value="">-- Search Records --</option>';
-            parents.forEach(p => pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
-
-            const sRes = await fetch(STUDENT_API + '?t=' + Date.now());
-            allStudents = unwrap(await sRes.json());
-
-            const tRes = await fetch(TEACHER_API);
-            const teachers = unwrap(await tRes.json());
-            const tSel = document.getElementById('a_teacher_id');
-            tSel.innerHTML = '<option value="">Select...</option>';
-            teachers.forEach(t => tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`);
-
-            const qRes = await fetch(QUESTIONS_LIST_API);
-            const questions = unwrap(await qRes.json());
-            const grid = document.getElementById('assessment-qa-grid');
-            grid.innerHTML = '';
-            for (let i = 1; i <= 10; i++) {
-                grid.innerHTML += `
-                    <div><select id="q_select_${i}" onchange="handleQuestionChange(${i})" required>
-                        <option value="">-- Question ${i} --</option>
-                        ${questions.map(q => `<option value="${q.id}">${q.question_text}</option>`).join('')}
-                    </select></div>
-                    <div><select id="a_ans_${i}" required disabled><option value="">Await Selection...</option></select></div>`;
-            }
-        } catch (e) { console.error("Init failed", e); }
-    }
 
     window.handleQuestionChange = async (i) => {
         const qId = document.getElementById(`q_select_${i}`).value;
@@ -247,6 +224,42 @@
             document.getElementById('step-pickup').className = 'step-container step-active';
         }
     };
+
+    async function init() {
+        try {
+            const fRes = await fetch(FRANCHISE_API);
+            const franchises = unwrap(await fRes.json());
+            const fSel = document.getElementById('p_fran_id');
+            franchises.forEach(f => fSel.innerHTML += `<option value="${f.id}">${f.name}</option>`);
+
+            const pRes = await fetch(PARENT_API + '?t=' + Date.now());
+            allParents = unwrap(await pRes.json());
+            const pSel = document.getElementById('p_select_id');
+            pSel.innerHTML = '<option value="">-- Search Parents --</option>';
+            allParents.forEach(p => pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
+
+            const sRes = await fetch(STUDENT_API + '?t=' + Date.now());
+            allStudents = unwrap(await sRes.json());
+
+            const tRes = await fetch(TEACHER_API);
+            const teachers = unwrap(await tRes.json());
+            const tSel = document.getElementById('a_teacher_id');
+            tSel.innerHTML = '<option value="">Select Teacher...</option>';
+            teachers.forEach(t => tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`);
+
+            const qRes = await fetch(QUESTIONS_LIST_API);
+            allQuestions = unwrap(await qRes.json());
+            const grid = document.getElementById('assessment-qa-grid');
+            for (let i = 1; i <= 10; i++) {
+                grid.innerHTML += `
+                    <div><select id="q_select_${i}" onchange="handleQuestionChange(${i})" required>
+                        <option value="">-- Question ${i} --</option>
+                        ${allQuestions.map(q => `<option value="${q.id}">${q.question_text}</option>`).join('')}
+                    </select></div>
+                    <div><select id="a_ans_${i}" required disabled><option value="">Await Selection...</option></select></div>`;
+            }
+        } catch (e) { console.error("Init failed", e); }
+    }
 
     init();
 })();
