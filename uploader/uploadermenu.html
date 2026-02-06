@@ -1,6 +1,7 @@
 <div class="card">
     <div id="menuView" class="form-body">
         <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px; margin-top:0; color:#1a1a1a; font-family: sans-serif; font-size: 0.9rem; text-transform: uppercase;">Select Activity</h4>
+        
         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
             <button onclick="showVault()" class="btn-action" style="font-size:0.75rem; padding:15px 20px;">Upload Photos</button>
             <button onclick="showEod()" class="btn-action" style="font-size:0.75rem; padding:15px 20px;">Upload EOD Reports</button>
@@ -88,6 +89,7 @@
         } catch (e) { console.error("Init failed", e); }
     }
 
+    /* VAULT SYNC: Ensure Xano uploader_get_students returns 'parent_name' */
     async function syncVaultData() {
         const fid = document.getElementById('franchiseSelect').value; if (!fid) return;
         const [t, s] = await Promise.all([
@@ -96,8 +98,15 @@
         ]);
         const tSel = document.getElementById('teacherSelect'); tSel.innerHTML = '<option value="">-- Choose Teacher --</option>';
         t.forEach(item => tSel.innerHTML += `<option value="${item.id}">${item.first_name}</option>`); tSel.disabled = false;
+        
         const sSel = document.getElementById('studentSelect'); sSel.innerHTML = '<option value="">-- Identify Student --</option>';
-        s.forEach(item => sSel.innerHTML += `<option value="${item.id}">${item.name}</option>`);
+        s.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.id;
+            opt.text = item.name;
+            opt.dataset.parent = item.parent_name || "Unknown_Parent";
+            sSel.appendChild(opt);
+        });
     }
 
     async function syncEodTeachers() {
@@ -122,32 +131,42 @@
     }
 
     async function processUpload() {
-        let file = files[idx]; const sid = document.getElementById('studentSelect').value;
-        const tid = document.getElementById('teacherSelect').value; const fid = document.getElementById('franchiseSelect').value;
+        let file = files[idx]; 
+        const sSel = document.getElementById('studentSelect');
+        const tSel = document.getElementById('teacherSelect');
+        const sid = sSel.value; const tid = tSel.value; const fid = document.getElementById('franchiseSelect').value;
         if (!sid) return alert("Select student.");
         document.getElementById('nextBtn').disabled = true;
+
         try {
-            document.getElementById('status-bar').innerText = "Uploading to S3...";
-            const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
+            document.getElementById('status-bar').innerText = "Uploading Raw File...";
+            const dateStr = new Date().toISOString().split('T')[0];
+            const timestamp = Date.now();
+            const studentName = sSel.options[sSel.selectedIndex].text.replace(/\s+/g, '_');
+            const parentName = sSel.options[sSel.selectedIndex].dataset.parent.replace(/\s+/g, '_');
+            const teacherName = tSel.options[tSel.selectedIndex].text.replace(/\s+/g, '_');
+
+            const fileName = `${parentName}_${studentName}_${teacherName}_${dateStr}_${timestamp}_${file.name}`;
+            const key = `vault/${parentName}/${fileName}`;
+
             const upResult = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
             
             await fetch(`${X_API}/uploader_register`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ franchise_id: parseInt(fid), student_id: parseInt(sid), teacher_id: parseInt(tid), file_url: upResult.Location, file_type: 'image', file_name: file.name, file_size: file.size })
+                body: JSON.stringify({ franchise_id: parseInt(fid), student_id: parseInt(sid), teacher_id: parseInt(tid), file_url: upResult.Location, file_type: 'image', file_name: fileName, file_size: file.size })
             });
+            
             idx++; 
-            if (idx < files.length) { loadPhoto(); document.getElementById('nextBtn').disabled = false; } 
-            else { 
+            if (idx < files.length) { 
+                loadPhoto(); document.getElementById('nextBtn').disabled = false; 
+            } else { 
                 document.getElementById('previewContainer').innerHTML = `<div style="padding:40px; text-align:center; color:white;"><h3>Upload Successful!</h3><p>Your photos have been securely saved to the Vault.</p></div>`;
                 document.getElementById('taggingControls').style.display = 'none';
                 document.getElementById('status-bar').style.display = 'none';
                 const btn = document.getElementById('nextBtn');
-                btn.innerText = "Finish & Clear";
-                btn.disabled = false;
-                btn.onclick = () => location.reload();
+                btn.innerText = "Finish & Clear"; btn.disabled = false; btn.onclick = () => location.reload();
             }
         } catch (e) { 
-            console.error(e);
-            document.getElementById('nextBtn').disabled = false; 
+            console.error(e); document.getElementById('nextBtn').disabled = false; 
             document.getElementById('status-bar').innerText = "Error: " + e.message;
         }
     }
@@ -164,7 +183,6 @@
         const reader = new FileReader();
         reader.onload = (e) => container.innerHTML = `<div class="counter-badge">REPORT ${idx + 1} OF ${files.length}</div><img src="${e.target.result}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
         reader.readAsDataURL(file);
-        document.getElementById('eod-status-bar').innerText = `Ready to upload ${idx + 1} of ${files.length}`;
     }
 
     async function processEodUpload() {
@@ -177,7 +195,7 @@
 
         document.getElementById('eodUploadBtn').disabled = true;
         try {
-            document.getElementById('eod-status-bar').innerText = "Uploading to S3...";
+            document.getElementById('eod-status-bar').innerText = "Uploading Raw Report...";
             const dateStr = new Date().toISOString().split('T')[0];
             const fileName = `${fName}_${tName}_${dateStr}_${file.name}`;
             const key = `reports/${fName}/${fileName}`;
@@ -187,18 +205,16 @@
                 body: JSON.stringify({ franchise_id: parseInt(fid), teacher_id: parseInt(tid), file_url: upResult.Location, file_type: 'image', file_name: fileName, file_size: file.size })
             });
             idx++; 
-            if (idx < files.length) { loadEodPhoto(); document.getElementById('eodUploadBtn').disabled = false; } 
-            else { 
+            if (idx < files.length) { 
+                loadEodPhoto(); document.getElementById('eodUploadBtn').disabled = false; 
+            } else { 
                 document.getElementById('eodPreviewContainer').innerHTML = `<div style="padding:40px; text-align:center; color:white;"><h3>Report Uploaded!</h3><p>The EOD report has been successfully archived.</p></div>`;
                 document.getElementById('eod-status-bar').style.display = 'none';
                 const btn = document.getElementById('eodUploadBtn');
-                btn.innerText = "Done";
-                btn.disabled = false;
-                btn.onclick = () => location.reload();
+                btn.innerText = "Done"; btn.disabled = false; btn.onclick = () => location.reload();
             }
         } catch (e) { 
-            console.error(e);
-            document.getElementById('eodUploadBtn').disabled = false; 
+            console.error(e); document.getElementById('eodUploadBtn').disabled = false; 
             document.getElementById('eod-status-bar').innerText = "Error: " + e.message;
         }
     }
