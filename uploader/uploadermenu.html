@@ -87,7 +87,6 @@
         } catch (e) { console.error("Init failed", e); }
     }
 
-    /* SHARED SYNC LOGIC */
     async function syncVaultData() {
         const fid = document.getElementById('franchiseSelect').value; if (!fid) return;
         const [t, s] = await Promise.all([
@@ -107,7 +106,6 @@
         t.forEach(item => tSel.innerHTML += `<option value="${item.id}">${item.first_name}</option>`); tSel.disabled = false;
     }
 
-    /* VAULT BATCH LOGIC */
     function startBatch() {
         const fInput = document.getElementById('fileInput').files; if (!document.getElementById('teacherSelect').value || fInput.length === 0) return;
         files = Array.from(fInput).slice(0, 10); idx = 0;
@@ -138,7 +136,6 @@
         } catch (e) { document.getElementById('nextBtn').disabled = false; }
     }
 
-    /* EOD BATCH LOGIC */
     function startEodBatch() {
         const fInput = document.getElementById('eodFileInput').files; if (!document.getElementById('eodTeacherSelect').value || fInput.length === 0) return;
         files = Array.from(fInput).slice(0, 10); idx = 0;
@@ -154,13 +151,18 @@
     }
 
     async function processEodUpload() {
-        let file = files[idx]; const tid = document.getElementById('eodTeacherSelect').value; const fid = document.getElementById('eodFranchiseSelect').value;
+        let file = files[idx]; 
+        const fSel = document.getElementById('eodFranchiseSelect');
+        const tSel = document.getElementById('eodTeacherSelect');
+        const fid = fSel.value; const tid = tSel.value;
+        const fName = fSel.options[fSel.selectedIndex].text.replace(/\s+/g, '_');
+        const tName = tSel.options[tSel.selectedIndex].text.replace(/\s+/g, '_');
         document.getElementById('eodUploadBtn').disabled = true;
         try {
             file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
             const dateStr = new Date().toISOString().split('T')[0];
-            const fileName = `F${fid}_T${tid}_${dateStr}_${file.name}`;
-            const key = `reports/franchise_${fid}/${fileName}`;
+            const fileName = `${fName}_${tName}_${dateStr}_${file.name}`;
+            const key = `reports/${fName}/${fileName}`;
             const up = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
             await fetch(`${X_API}/uploader_register`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ franchise_id: parseInt(fid), teacher_id: parseInt(tid), file_url: up.Location, file_type: 'image', file_name: fileName, file_size: file.size })
