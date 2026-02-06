@@ -148,7 +148,10 @@
                 btn.disabled = false;
                 btn.onclick = () => location.reload();
             }
-        } catch (e) { document.getElementById('nextBtn').disabled = false; }
+        } catch (e) { 
+            document.getElementById('nextBtn').disabled = false; 
+            document.getElementById('status-bar').innerText = "Upload failed. Try again.";
+        }
     }
 
     function startEodBatch() {
@@ -163,6 +166,7 @@
         const reader = new FileReader();
         reader.onload = (e) => container.innerHTML = `<div class="counter-badge">REPORT ${idx + 1} OF ${files.length}</div><img src="${e.target.result}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
         reader.readAsDataURL(file);
+        document.getElementById('eod-status-bar').innerText = `Ready to upload ${idx + 1} of ${files.length}`;
     }
 
     async function processEodUpload() {
@@ -196,7 +200,10 @@
                 btn.disabled = false;
                 btn.onclick = () => location.reload();
             }
-        } catch (e) { document.getElementById('eodUploadBtn').disabled = false; }
+        } catch (e) { 
+            document.getElementById('eodUploadBtn').disabled = false; 
+            document.getElementById('eod-status-bar').innerText = "Upload failed. Try again.";
+        }
     }
     init();
 </script>
