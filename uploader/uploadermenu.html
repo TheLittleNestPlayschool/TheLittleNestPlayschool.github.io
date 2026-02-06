@@ -1,10 +1,10 @@
 <div class="card">
-    <div id="menuView" class="form-body">
+    <div id="menuView" class="form-body" style="display: flex; flex-direction: column; gap: 12px;">
         <label>Select Activity</label>
-        <button class="btn-action" onclick="showVault()" style="margin-bottom:12px;">Upload Photos</button>
-        <button class="btn-action" onclick="showEOD()" style="margin-bottom:12px; background:#64748b;">Upload EOD Reports</button>
-        <button class="btn-action" disabled style="margin-bottom:12px; background:#cbd5e1; color:#94a3b8;">Expansion Module</button>
-        <button class="btn-action" disabled style="margin-bottom:12px; background:#cbd5e1; color:#94a3b8;">Expansion Module</button>
+        <button class="btn-action" onclick="showVault()">Upload Photos</button>
+        <button class="btn-action" onclick="showEOD()" style="background:#64748b;">Upload EOD Reports</button>
+        <button class="btn-action" disabled style="background:#cbd5e1; color:#94a3b8; cursor: not-allowed;">Expansion Module</button>
+        <button class="btn-action" disabled style="background:#cbd5e1; color:#94a3b8; cursor: not-allowed;">Expansion Module</button>
     </div>
 
     <div id="vaultView" style="display:none;">
@@ -40,7 +40,9 @@
 
     <div id="eodView" style="display:none;" class="form-body">
         <label>EOD Report</label>
-        <div style="text-align:center; padding:40px; color:#64748b;">EOD Logic Placeholder</div>
+        <div style="text-align:center; padding:40px; color:#64748b; border: 1px solid #eee; border-radius: 12px; margin-bottom: 20px;">
+            EOD Logic Placeholder
+        </div>
         <button onclick="location.reload()" class="btn-action" style="background:#64748b;">Back to Menu</button>
     </div>
 </div>
@@ -67,7 +69,8 @@
     }
 
     function setStatus(msg) {
-        document.getElementById('status-bar').innerText = msg;
+        const bar = document.getElementById('status-bar');
+        if(bar) bar.innerText = msg;
     }
 
     async function init() {
@@ -169,13 +172,13 @@
                     body: JSON.stringify({ student_id: parseInt(sid), franchise_id: parseInt(fid) })
                 });
 
-                setStatus("Batch successfully saved to The Little Nest Vault.");
+                setStatus("Batch successfully saved.");
                 btn.innerText = "Finish & Clear";
                 btn.disabled = false;
                 btn.onclick = () => location.reload();
             }
         } catch (e) {
-            setStatus("Upload error. Please try again.");
+            setStatus("Upload error.");
             btn.disabled = false;
         }
     }
