@@ -34,6 +34,13 @@
         <button onclick="openModal()" class="btn-teal">+ NEW STUDENT</button>
     </div>
 
+    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #eee;">
+        <span style="font-size: 0.75rem; font-weight: 800; color: #666; text-transform: uppercase;">Filter by Franchise:</span>
+        <select id="student-franchise-filter" onchange="window.loadStudents()" style="padding: 8px 15px; border-radius: 4px; border: 1px solid #ddd; background: white; min-width: 200px; font-weight: bold;">
+            <option value="all">All Branches</option>
+        </select>
+    </div>
+
     <div class="bg-white rounded shadow-sm border border-gray-200">
         <table class="nest-table">
             <thead>
@@ -47,7 +54,9 @@
                     <th style="text-align: center; width: 120px;">Actions</th>
                 </tr>
             </thead>
-            <tbody id="studentTableBody"></tbody>
+            <tbody id="studentTableBody">
+                <tr><td colspan="7" style="text-align:center; padding:30px; color:#999;">Loading Student Records...</td></tr>
+            </tbody>
         </table>
     </div>
 </div>
@@ -98,6 +107,7 @@
             const [pRes, fRes] = await Promise.all([fetch(PARENT_API), fetch(FRANCHISE_API)]);
             const [parents, franchises] = await Promise.all([pRes.json(), fRes.json()]);
             
+            // Populate Parent Data Store and Dropdown
             const pSelect = document.getElementById('parent_id');
             pSelect.innerHTML = '<option value="">Select a Parent...</option>';
             parents.forEach(p => {
@@ -108,16 +118,39 @@
                 pSelect.appendChild(opt);
             });
 
-            franchises.forEach(f => franchiseMap[f.id] = f.name || `Franchise #${f.id}`);
+            // Populate Franchise Filter and Map
+            const fFilter = document.getElementById('student-franchise-filter');
+            franchises.forEach(f => {
+                const fName = f.location_name || f.name || `Franchise #${f.id}`;
+                franchiseMap[f.id] = fName;
+                
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.textContent = fName;
+                fFilter.appendChild(opt);
+            });
+
             loadStudents();
         } catch (e) { console.error("Load Error", e); }
     }
 
     window.loadStudents = async function() {
         try {
-            const res = await fetch(STUDENT_API);
-            const data = await res.json();
+            const fFilterValue = document.getElementById('student-franchise-filter').value;
+            const res = await fetch(STUDENT_API + '?t=' + Date.now());
+            let data = await res.json();
+
+            // Apply Franchise Filter Logic
+            if (fFilterValue !== 'all') {
+                data = data.filter(s => s.franchise_id == fFilterValue);
+            }
+
             const tbody = document.getElementById('studentTableBody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:#999;">No students found for this selection.</td></tr>';
+                return;
+            }
+
             tbody.innerHTML = data.map(s => `
                 <tr>
                     <td style="color: #94a3b8;">${s.id}</td>
@@ -155,6 +188,8 @@
         e.preventDefault();
         const id = document.getElementById('studentId').value;
         const pId = parseInt(document.getElementById('parent_id').value);
+        
+        // Inherit franchise_id from the selected parent
         const payload = {
             name: document.getElementById('name').value,
             date_of_birth: document.getElementById('date_of_birth').value,
@@ -162,19 +197,28 @@
             franchise_id: parentDataStore[pId] ? parentDataStore[pId].franchise_id : 0,
             is_active: document.getElementById('is_active').checked
         };
-        await fetch(id ? `${STUDENT_API}/${id}` : STUDENT_API, {
-            method: id ? 'PATCH' : 'POST',
+
+        const method = id ? 'PATCH' : 'POST';
+        const url = id ? `${STUDENT_API}/${id}` : STUDENT_API;
+
+        await fetch(url, {
+            method: method,
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
+        
         closeModal();
         loadStudents();
     };
 
     window.deleteStudent = async function(id) {
-        if(confirm('Delete?')) { await fetch(`${STUDENT_API}/${id}`, {method: 'DELETE'}); loadStudents(); }
+        if(confirm('Delete student record?')) { 
+            await fetch(`${STUDENT_API}/${id}`, {method: 'DELETE'}); 
+            loadStudents(); 
+        }
     };
 
+    // Initial Load
     loadResources();
 })();
 </script>
