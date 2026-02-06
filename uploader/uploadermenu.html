@@ -1,212 +1,131 @@
-<div class="card">
-    <div id="view-menu" class="form-body">
-        <div style="text-align:center; margin-bottom:20px;">
-            <p style="font-size:14px; color:#666; margin:0;">Welcome, Teacher. Choose an action:</p>
-        </div>
-
-        <div onclick="showSection('vault')" style="background:#fff; border:2px solid #eee; border-radius:12px; padding:20px; margin-bottom:15px; display:flex; align-items:center; gap:15px; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.03);">
-            <span style="font-size:30px;">📸</span>
-            <div>
-                <strong style="display:block; color:#1a365d; font-size:16px;">Upload Photos</strong>
-                <span style="font-size:12px; color:#999;">Save media to Student Vaults</span>
-            </div>
-        </div>
-
-        <div onclick="showSection('eod')" style="background:#fff; border:2px solid #eee; border-radius:12px; padding:20px; margin-bottom:15px; display:flex; align-items:center; gap:15px; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.03);">
-            <span style="font-size:30px;">📝</span>
-            <div>
-                <strong style="display:block; color:#1a365d; font-size:16px;">EOD Reports</strong>
-                <span style="font-size:12px; color:#999;">Submit End of Day status</span>
-            </div>
-        </div>
-    </div>
-
-    <div id="view-vault" style="display:none;">
-        <div id="setupForm" class="form-body">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <label style="margin:0;">1. Location & Teacher</label>
-                <button onclick="showSection('menu')" style="background:none; border:1px solid #ccc; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer;">BACK</button>
-            </div>
-            
-            <select id="franchiseSelect" onchange="syncVaultData()">
-                <option value="">-- Select School --</option>
-            </select>
-            
-            <select id="teacherSelect" disabled>
-                <option value="">-- Choose Teacher --</option>
-            </select>
-
-            <label>2. Select Batch (Max 10)</label>
-            <div style="padding: 40px 20px; border: 2px dashed #00d1b2; border-radius: 12px; text-align: center; background: #f0fff4; position: relative; cursor: pointer;">
-                <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="startBatch()" style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
-                <span style="color: #1a365d; font-weight: 800; font-size:14px;">TAP TO SELECT PHOTOS</span>
-            </div>
-        </div>
-
-        <div id="taggingUI" style="display:none;">
-            <div class="preview-area" id="previewContainer" style="width:100%; height:350px; background:#1a1a1a; display:flex; align-items:center; justify-content:center; position:relative;">
-                </div>
-            <div class="form-body">
-                <label>Who is in this photo?</label>
-                <select id="studentSelect">
-                    <option value="">-- Identify Student --</option>
-                </select>
-                <button id="nextBtn" onclick="processUpload()" class="btn-main">Secure & Next</button>
-                <div id="status-bar">Ready.</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="view-eod" style="display:none;" class="form-body">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <label style="margin:0;">EOD Report System</label>
-            <button onclick="showSection('menu')" style="background:none; border:1px solid #ccc; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer;">BACK</button>
-        </div>
-        <p style="text-align:center; padding:40px; color:#666;">EOD Logic coming soon...</p>
-    </div>
-</div>
-
-<script>
-    const X_API = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL';
-    const W_URL = 's3.ap-southeast-1.wasabisys.com';
-    const BKT = 'the-little-nest-media';
-    const AK = 'P7GI5LQMI4OX2SPAV1YA';
-    const SK = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
-
-    let files = [];
-    let idx = 0;
-    const s3 = new AWS.S3({ endpoint: W_URL, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
-
-    function showSection(section) {
-        document.getElementById('view-menu').style.display = 'none';
-        document.getElementById('view-vault').style.display = 'none';
-        document.getElementById('view-eod').style.display = 'none';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Little Nest Vault</title>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1500.0.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    <style>
+        :root { --primary: #00d1b2; --dark: #1a1a1a; --navy: #1a365d; --bg: #f5f7f9; }
         
-        if(section === 'menu') document.getElementById('view-menu').style.display = 'block';
-        if(section === 'vault') document.getElementById('view-vault').style.display = 'block';
-        if(section === 'eod') document.getElementById('view-eod').style.display = 'block';
-    }
-
-    function setStatus(msg) {
-        const bar = document.getElementById('status-bar');
-        if(bar) bar.innerText = msg;
-    }
-
-    async function init() {
-        try {
-            const r = await fetch(`${X_API}/uploader_get_franchises`);
-            const data = await r.json();
-            const sel = document.getElementById('franchiseSelect');
-            sel.innerHTML = '<option value="">-- Select School --</option>';
-            data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
-        } catch (e) { console.error("Init failed", e); }
-    }
-
-    async function syncVaultData() {
-        const fid = document.getElementById('franchiseSelect').value;
-        if (!fid) return;
-        setStatus("Syncing...");
-        try {
-            const [t, s] = await Promise.all([
-                fetch(`${X_API}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
-                fetch(`${X_API}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
-            ]);
-            const tSel = document.getElementById('teacherSelect');
-            tSel.innerHTML = '<option value="">-- Choose Teacher --</option>';
-            t.forEach(item => tSel.innerHTML += `<option value="${item.id}">${item.first_name}</option>`);
-            tSel.disabled = false;
-            
-            const sSel = document.getElementById('studentSelect');
-            sSel.innerHTML = '<option value="">-- Identify Student --</option>';
-            s.forEach(item => sSel.innerHTML += `<option value="${item.id}">${item.name}</option>`);
-            setStatus("Ready.");
-        } catch (e) { setStatus("Sync error."); }
-    }
-
-    function startBatch() {
-        const fInput = document.getElementById('fileInput').files;
-        if (!document.getElementById('teacherSelect').value) return alert("Select teacher.");
-        if (fInput.length === 0) return;
-        files = Array.from(fInput).slice(0, 10);
-        idx = 0;
-        document.getElementById('setupForm').style.display = 'none';
-        document.getElementById('taggingUI').style.display = 'block';
-        loadPhoto();
-    }
-
-    function loadPhoto() {
-        const file = files[idx];
-        const container = document.getElementById('previewContainer');
-        const badgeText = `ITEM ${idx + 1} OF ${files.length}`;
-        container.innerHTML = `<div style="position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.6); color:white; padding:5px 12px; border-radius:20px; font-size:10px; font-weight:bold;">${badgeText}</div><div style="color:white;">Loading...</div>`;
-        document.getElementById('studentSelect').value = "";
-        
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            if (file.type.startsWith('image/')) {
-                container.innerHTML = `<div style="position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.6); color:white; padding:5px 12px; border-radius:20px; font-size:10px; font-weight:bold;">${badgeText}</div><img src="${e.target.result}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
-            } else {
-                container.innerHTML = `<div style="position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.6); color:white; padding:5px 12px; border-radius:20px; font-size:10px; font-weight:bold;">${badgeText}</div><div style="color:white;">Video Selected: ${file.name}</div>`;
-            }
-        };
-        reader.readAsDataURL(file);
-        setStatus(`Tagging ${idx + 1} of ${files.length}`);
-    }
-
-    async function processUpload() {
-        let file = files[idx];
-        const sid = document.getElementById('studentSelect').value;
-        const tid = document.getElementById('teacherSelect').value;
-        const fid = document.getElementById('franchiseSelect').value;
-
-        if (!sid) return alert("Identify student.");
-        const btn = document.getElementById('nextBtn');
-        btn.disabled = true;
-
-        try {
-            if (file.type.startsWith('image/')) {
-                setStatus("Optimizing...");
-                file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
-            }
-            
-            setStatus(`Uploading ${idx + 1}/${files.length}...`);
-            const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
-            const up = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
-
-            await fetch(`${X_API}/uploader_register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    franchise_id: parseInt(fid), 
-                    student_id: parseInt(sid), 
-                    teacher_id: parseInt(tid),
-                    file_url: up.Location, 
-                    file_type: file.type.includes('image') ? 'image' : 'video',
-                    file_name: file.name,
-                    file_size: file.size
-                })
-            });
-
-            idx++;
-            if (idx < files.length) {
-                loadPhoto();
-                btn.disabled = false;
-            } else {
-                fetch(`${X_API}/uploader_cleanup_batch`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ student_id: parseInt(sid), franchise_id: parseInt(fid) })
-                });
-
-                setStatus("Batch saved to Vault!");
-                btn.innerText = "FINISH & CLEAR";
-                btn.disabled = false;
-                btn.onclick = () => location.reload();
-            }
-        } catch (e) {
-            setStatus("Upload error.");
-            btn.disabled = false;
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: var(--bg); 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh; 
+            color: var(--dark); 
         }
-    }
-    init();
-</script>
+        
+        header { 
+            width: 100%; 
+            padding: 25px 0; 
+            text-align: center; 
+            background: white; 
+            border-bottom: 3px solid var(--primary); 
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+        }
+        
+        .brand-sub { 
+            font-size: 10px; 
+            color: var(--primary); 
+            font-weight: 800; 
+            letter-spacing: 2px; 
+            text-transform: uppercase; 
+            display: block; 
+            margin-top: 4px; 
+        }
+        
+        h1 { color: var(--navy); margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -0.5px; line-height: 1; }
+        
+        #module-container { width: 100%; max-width: 480px; padding: 10px; box-sizing: border-box; }
+        
+        .card { 
+            background: white; 
+            border-radius: 16px; 
+            overflow: hidden; 
+            border: 1px solid #eee; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+        
+        .form-body { padding: 24px; }
+        
+        label { 
+            display: block; 
+            font-size: 10px; 
+            font-weight: 800; 
+            color: #999; 
+            text-transform: uppercase; 
+            margin-bottom: 6px; 
+            letter-spacing: 0.5px; 
+        }
+        
+        select { 
+            width: 100%; 
+            padding: 14px; 
+            border-radius: 10px; 
+            border: 1px solid #eee; 
+            font-size: 16px; 
+            margin-bottom: 15px; 
+            background: #f9f9f9; 
+            -webkit-appearance: none;
+        }
+        
+        .btn-main { 
+            width: 100%; 
+            background: var(--primary); 
+            color: var(--dark); 
+            border: none; 
+            padding: 18px; 
+            border-radius: 10px; 
+            font-weight: 900; 
+            font-size: 16px; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+        }
+
+        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #status-bar { 
+            margin-top: 15px; 
+            font-size: 13px; 
+            text-align: center; 
+            color: var(--navy); 
+            font-weight: 700; 
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>THE LITTLE NEST</h1>
+        <span class="brand-sub">PLAYSCHOOL DIGITAL VAULT</span>
+    </header>
+    <main id="module-container">
+        <div id="uploader-target">
+            <div style="text-align:center; padding:40px; color:#999; font-weight:bold;">INITIALIZING...</div>
+        </div>
+    </main>
+    <script>
+        async function loadUploader() {
+            try {
+                const response = await fetch('uploadermenu.html');
+                const htmlText = await response.text();
+                const target = document.getElementById('uploader-target');
+                target.innerHTML = htmlText;
+                const scripts = target.getElementsByTagName('script');
+                for (let i = 0; i < scripts.length; i++) {
+                    const newScript = document.createElement('script');
+                    newScript.text = scripts[i].innerHTML;
+                    document.body.appendChild(newScript);
+                }
+            } catch (err) { console.error("Loader Error:", err); }
+        }
+        window.onload = loadUploader;
+    </script>
+</body>
+</html>
