@@ -1,131 +1,183 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Little Nest Vault</title>
-    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1500.0.min.js"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
-    <style>
-        :root { --primary: #00d1b2; --dark: #1a1a1a; --navy: #1a365d; --bg: #f5f7f9; }
-        
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: var(--bg); 
-            margin: 0; 
-            padding: 0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            min-height: 100vh; 
-            color: var(--dark); 
-        }
-        
-        header { 
-            width: 100%; 
-            padding: 25px 0; 
-            text-align: center; 
-            background: white; 
-            border-bottom: 3px solid var(--primary); 
-            margin-bottom: 20px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
-        }
-        
-        .brand-sub { 
-            font-size: 10px; 
-            color: var(--primary); 
-            font-weight: 800; 
-            letter-spacing: 2px; 
-            text-transform: uppercase; 
-            display: block; 
-            margin-top: 4px; 
-        }
-        
-        h1 { color: var(--navy); margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -0.5px; line-height: 1; }
-        
-        #module-container { width: 100%; max-width: 480px; padding: 10px; box-sizing: border-box; }
-        
-        .card { 
-            background: white; 
-            border-radius: 16px; 
-            overflow: hidden; 
-            border: 1px solid #eee; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-        }
-        
-        .form-body { padding: 24px; }
-        
-        label { 
-            display: block; 
-            font-size: 10px; 
-            font-weight: 800; 
-            color: #999; 
-            text-transform: uppercase; 
-            margin-bottom: 6px; 
-            letter-spacing: 0.5px; 
-        }
-        
-        select { 
-            width: 100%; 
-            padding: 14px; 
-            border-radius: 10px; 
-            border: 1px solid #eee; 
-            font-size: 16px; 
-            margin-bottom: 15px; 
-            background: #f9f9f9; 
-            -webkit-appearance: none;
-        }
-        
-        .btn-main { 
-            width: 100%; 
-            background: var(--primary); 
-            color: var(--dark); 
-            border: none; 
-            padding: 18px; 
-            border-radius: 10px; 
-            font-weight: 900; 
-            font-size: 16px; 
-            cursor: pointer; 
-            text-transform: uppercase; 
-        }
+<div class="card">
+    <div id="menuView" class="form-body">
+        <label>Select Activity</label>
+        <button class="btn-action" onclick="showVault()" style="margin-bottom:12px;">Upload Photos</button>
+        <button class="btn-action" onclick="showEOD()" style="margin-bottom:12px; background:#64748b;">Upload EOD Reports</button>
+        <button class="btn-action" disabled style="margin-bottom:12px; background:#cbd5e1; color:#94a3b8;">Expansion Module</button>
+        <button class="btn-action" disabled style="margin-bottom:12px; background:#cbd5e1; color:#94a3b8;">Expansion Module</button>
+    </div>
 
-        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        #status-bar { 
-            margin-top: 15px; 
-            font-size: 13px; 
-            text-align: center; 
-            color: var(--navy); 
-            font-weight: 700; 
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>THE LITTLE NEST</h1>
-        <span class="brand-sub">PLAYSCHOOL DIGITAL VAULT</span>
-    </header>
-    <main id="module-container">
-        <div id="uploader-target">
-            <div style="text-align:center; padding:40px; color:#999; font-weight:bold;">INITIALIZING...</div>
+    <div id="vaultView" style="display:none;">
+        <div id="setupForm" class="form-body">
+            <label>1. School Location</label>
+            <select id="franchiseSelect" onchange="syncVaultData()">
+                <option value="">-- Select Location --</option>
+            </select>
+            <label>2. Teacher Name</label>
+            <select id="teacherSelect" disabled>
+                <option value="">-- Choose Teacher --</option>
+            </select>
+            <label>3. Select Photos (Up to 10)</label>
+            <div style="padding: 30px; border: 2px dashed #cbd5e1; border-radius: 12px; text-align: center; background: #f8fafc; position: relative; cursor: pointer;">
+                <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="startBatch()" style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
+                <span style="color: #1e3a8a; font-weight: 600;">Tap to select batch</span>
+            </div>
+            <button onclick="location.reload()" style="margin-top:20px; background:none; border:none; color:#64748b; cursor:pointer; font-size:12px; width:100%;">← Back to Menu</button>
         </div>
-    </main>
-    <script>
-        async function loadUploader() {
-            try {
-                const response = await fetch('uploadermenu.html');
-                const htmlText = await response.text();
-                const target = document.getElementById('uploader-target');
-                target.innerHTML = htmlText;
-                const scripts = target.getElementsByTagName('script');
-                for (let i = 0; i < scripts.length; i++) {
-                    const newScript = document.createElement('script');
-                    newScript.text = scripts[i].innerHTML;
-                    document.body.appendChild(newScript);
-                }
-            } catch (err) { console.error("Loader Error:", err); }
+
+        <div id="taggingUI" style="display:none;">
+            <div class="preview-area" id="previewContainer"></div>
+            <div class="form-body">
+                <label>Who is in this photo?</label>
+                <select id="studentSelect">
+                    <option value="">-- Identify Student --</option>
+                </select>
+                <button id="nextBtn" onclick="processUpload()" class="btn-action">Secure & Next</button>
+                <div id="status-bar">Ready.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="eodView" style="display:none;" class="form-body">
+        <label>EOD Report</label>
+        <div style="text-align:center; padding:40px; color:#64748b;">EOD Logic Placeholder</div>
+        <button onclick="location.reload()" class="btn-action" style="background:#64748b;">Back to Menu</button>
+    </div>
+</div>
+
+<script>
+    const X_API = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL';
+    const W_URL = 's3.ap-southeast-1.wasabisys.com';
+    const BKT = 'the-little-nest-media';
+    const AK = 'P7GI5LQMI4OX2SPAV1YA';
+    const SK = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
+
+    let files = [];
+    let idx = 0;
+    const s3 = new AWS.S3({ endpoint: W_URL, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
+
+    function showVault() {
+        document.getElementById('menuView').style.display = 'none';
+        document.getElementById('vaultView').style.display = 'block';
+    }
+
+    function showEOD() {
+        document.getElementById('menuView').style.display = 'none';
+        document.getElementById('eodView').style.display = 'block';
+    }
+
+    function setStatus(msg) {
+        document.getElementById('status-bar').innerText = msg;
+    }
+
+    async function init() {
+        try {
+            const r = await fetch(`${X_API}/uploader_get_franchises`);
+            const data = await r.json();
+            const sel = document.getElementById('franchiseSelect');
+            data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
+        } catch (e) { console.error("Init failed", e); }
+    }
+
+    async function syncVaultData() {
+        const fid = document.getElementById('franchiseSelect').value;
+        if (!fid) return;
+        setStatus("Syncing...");
+        try {
+            const [t, s] = await Promise.all([
+                fetch(`${X_API}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
+                fetch(`${X_API}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
+            ]);
+            const tSel = document.getElementById('teacherSelect');
+            tSel.innerHTML = '<option value="">-- Choose Teacher --</option>';
+            t.forEach(item => tSel.innerHTML += `<option value="${item.id}">${item.first_name}</option>`);
+            tSel.disabled = false;
+            
+            const sSel = document.getElementById('studentSelect');
+            sSel.innerHTML = '<option value="">-- Identify Student --</option>';
+            s.forEach(item => sSel.innerHTML += `<option value="${item.id}">${item.name}</option>`);
+            setStatus("Ready.");
+        } catch (e) { setStatus("Sync error. Please refresh."); }
+    }
+
+    function startBatch() {
+        const fInput = document.getElementById('fileInput').files;
+        if (!document.getElementById('teacherSelect').value) return alert("Select teacher.");
+        if (fInput.length === 0) return;
+        files = Array.from(fInput).slice(0, 10);
+        idx = 0;
+        document.getElementById('setupForm').style.display = 'none';
+        document.getElementById('taggingUI').style.display = 'block';
+        loadPhoto();
+    }
+
+    function loadPhoto() {
+        const file = files[idx];
+        const container = document.getElementById('previewContainer');
+        const badgeText = `PHOTO ${idx + 1} OF ${files.length}`;
+        container.innerHTML = `<div class="counter-badge">${badgeText}</div><div style="color:white;">Loading...</div>`;
+        document.getElementById('studentSelect').value = "";
+        
+        const reader = new FileReader();
+        reader.onload = (e) => container.innerHTML = `<div class="counter-badge">${badgeText}</div><img src="${e.target.result}">`;
+        reader.readAsDataURL(file);
+        setStatus(`Tagging ${idx + 1} of ${files.length}`);
+    }
+
+    async function processUpload() {
+        let file = files[idx];
+        const sid = document.getElementById('studentSelect').value;
+        const tid = document.getElementById('teacherSelect').value;
+        const fid = document.getElementById('franchiseSelect').value;
+
+        if (!sid) return alert("Select student.");
+        const btn = document.getElementById('nextBtn');
+        btn.disabled = true;
+
+        try {
+            if (file.type.startsWith('image/')) {
+                setStatus("Optimizing...");
+                file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
+            }
+            
+            setStatus(`Uploading ${idx + 1} of ${files.length}...`);
+            const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
+            const up = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
+
+            await fetch(`${X_API}/uploader_register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    franchise_id: parseInt(fid), 
+                    student_id: parseInt(sid), 
+                    teacher_id: parseInt(tid),
+                    file_url: up.Location, 
+                    file_type: file.type.includes('image') ? 'image' : 'video',
+                    file_name: file.name,
+                    file_size: file.size
+                })
+            });
+
+            idx++;
+            if (idx < files.length) {
+                loadPhoto();
+                btn.disabled = false;
+            } else {
+                fetch(`${X_API}/uploader_cleanup_batch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student_id: parseInt(sid), franchise_id: parseInt(fid) })
+                });
+
+                setStatus("Batch successfully saved to The Little Nest Vault.");
+                btn.innerText = "Finish & Clear";
+                btn.disabled = false;
+                btn.onclick = () => location.reload();
+            }
+        } catch (e) {
+            setStatus("Upload error. Please try again.");
+            btn.disabled = false;
         }
-        window.onload = loadUploader;
-    </script>
-</body>
-</html>
+    }
+    init();
+</script>
