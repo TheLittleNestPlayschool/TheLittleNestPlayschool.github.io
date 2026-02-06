@@ -3,55 +3,59 @@
         <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px; margin-top:0; color:#1a1a1a; font-family: sans-serif; font-size: 0.9rem; text-transform: uppercase;">Select Activity</h4>
         
         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-            <button onclick="showVault()" class="btn-main" style="background:#00d1b2; color:#1a1a1a; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px; text-transform:uppercase; font-size:0.75rem; width:100%;">Upload Photos</button>
-            
-            <button onclick="showEOD()" class="btn-main" style="background:#00d1b2; color:#1a1a1a; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px; text-transform:uppercase; font-size:0.75rem; width:100%;">Upload EOD Reports</button>
-            
-            <button disabled style="background:#eee; color:#999; border:none; padding:10px 20px; cursor:not-allowed; font-weight:bold; border-radius:4px; text-transform:uppercase; font-size:0.75rem; width:100%;">Expansion Module</button>
-            
-            <button disabled style="background:#eee; color:#999; border:none; padding:10px 20px; cursor:not-allowed; font-weight:bold; border-radius:4px; text-transform:uppercase; font-size:0.75rem; width:100%;">Expansion Module</button>
+            <button onclick="showVault()" class="btn-action" style="font-size:0.75rem; padding:15px 20px;">Upload Photos</button>
+            <button onclick="showEod()" class="btn-action" style="font-size:0.75rem; padding:15px 20px;">Upload EOD Reports</button>
+            <button disabled style="background:#eee; color:#999; border:none; padding:15px 20px; cursor:not-allowed; font-weight:bold; border-radius:4px; text-transform:uppercase; font-size:0.75rem; width:100%;">Expansion Module</button>
+            <button disabled style="background:#eee; color:#999; border:none; padding:15px 20px; cursor:not-allowed; font-weight:bold; border-radius:4px; text-transform:uppercase; font-size:0.75rem; width:100%;">Expansion Module</button>
         </div>
     </div>
 
     <div id="vaultView" style="display:none;">
         <div id="setupForm" class="form-body">
-            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px; margin-top:0; color:#1a1a1a; font-family: sans-serif; font-size: 0.9rem; text-transform: uppercase;">1. Vault Setup</h4>
-            
-            <label style="margin-top:10px; display:block; font-size:0.75rem; font-weight:bold; color:#666;">School Location</label>
-            <select id="franchiseSelect" onchange="syncVaultData()" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; margin-bottom:15px;">
-                <option value="">-- Select Location --</option>
-            </select>
-            
-            <label style="display:block; font-size:0.75rem; font-weight:bold; color:#666;">Teacher Name</label>
-            <select id="teacherSelect" disabled style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; margin-bottom:15px;">
-                <option value="">-- Choose Teacher --</option>
-            </select>
-            
-            <label style="display:block; font-size:0.75rem; font-weight:bold; color:#666;">3. Select Photos (Up to 10)</label>
+            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px; margin-top:0; color:#1a1a1a; font-size: 0.9rem; text-transform: uppercase;">1. Vault Setup</h4>
+            <label style="margin-top:10px;">School Location</label>
+            <select id="franchiseSelect" onchange="syncVaultData()"><option value="">-- Select Location --</option></select>
+            <label>Teacher Name</label>
+            <select id="teacherSelect" disabled><option value="">-- Choose Teacher --</option></select>
+            <label>3. Select Photos (Up to 10)</label>
             <div style="padding: 30px; border: 2px dashed #00d1b2; border-radius: 4px; text-align: center; background: #f9f9f9; position: relative; cursor: pointer;">
                 <input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="startBatch()" style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
                 <span style="color: #1a1a1a; font-weight: bold; font-size:0.75rem;">Tap to select batch</span>
             </div>
             <button onclick="location.reload()" style="margin-top:20px; background:none; border:none; color:#666; cursor:pointer; font-weight:bold; font-size:0.7rem; width:100%; text-transform:uppercase;">← Back to Menu</button>
         </div>
-
         <div id="taggingUI" style="display:none;">
-            <div class="preview-area" id="previewContainer" style="background:#333;"></div>
+            <div class="preview-area" id="previewContainer"></div>
             <div class="form-body">
-                <label style="display:block; font-size:0.75rem; font-weight:bold; color:#666;">Who is in this photo?</label>
-                <select id="studentSelect" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; margin-bottom:15px;">
-                    <option value="">-- Identify Student --</option>
-                </select>
-                <button id="nextBtn" onclick="processUpload()" style="background:#00d1b2; color:#1a1a1a; border:none; padding:10px 25px; cursor:pointer; font-weight:bold; border-radius:4px; text-transform:uppercase; font-size:0.75rem; width:100%;">Secure & Next</button>
+                <label>Who is in this photo?</label>
+                <select id="studentSelect"><option value="">-- Identify Student --</option></select>
+                <button id="nextBtn" onclick="processUpload()" class="btn-action">Secure & Next</button>
                 <div id="status-bar" style="margin-top:10px; text-align:center; font-size:0.7rem; font-weight:bold; color:#1a1a1a;">Ready.</div>
             </div>
         </div>
     </div>
 
-    <div id="eodView" style="display:none;" class="form-body">
-        <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px; margin-top:0; color:#1a1a1a; font-family: sans-serif; font-size: 0.9rem; text-transform: uppercase;">EOD Report</h4>
-        <div style="text-align:center; padding:40px; color:#666; font-size:0.8rem; border:1px solid #eee; border-radius:4px; margin-bottom:15px;">EOD Logic Placeholder</div>
-        <button onclick="location.reload()" style="background:#00d1b2; color:#1a1a1a; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px; text-transform:uppercase; font-size:0.75rem; width:100%;">Back to Menu</button>
+    <div id="eodView" style="display:none;">
+        <div id="eodSetupForm" class="form-body">
+            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px; margin-top:0; color:#1a1a1a; font-size: 0.9rem; text-transform: uppercase;">EOD Report Setup</h4>
+            <label style="margin-top:10px;">School Location</label>
+            <select id="eodFranchiseSelect" onchange="syncEodTeachers()"><option value="">-- Select Location --</option></select>
+            <label>Teacher Name</label>
+            <select id="eodTeacherSelect" disabled><option value="">-- Choose Teacher --</option></select>
+            <label>Select Report Photos</label>
+            <div style="padding: 30px; border: 2px dashed #00d1b2; border-radius: 4px; text-align: center; background: #f9f9f9; position: relative; cursor: pointer;">
+                <input type="file" id="eodFileInput" accept="image/*" multiple onchange="startEodBatch()" style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
+                <span style="color: #1a1a1a; font-weight: bold; font-size:0.75rem;">Tap to select report photos</span>
+            </div>
+            <button onclick="location.reload()" style="margin-top:20px; background:none; border:none; color:#666; cursor:pointer; font-weight:bold; font-size:0.7rem; width:100%; text-transform:uppercase;">← Back to Menu</button>
+        </div>
+        <div id="eodUploadUI" style="display:none;">
+            <div class="preview-area" id="eodPreviewContainer"></div>
+            <div class="form-body">
+                <button id="eodUploadBtn" onclick="processEodUpload()" class="btn-action">Upload Report</button>
+                <div id="eod-status-bar" style="margin-top:10px; text-align:center; font-size:0.7rem; font-weight:bold; color:#1a1a1a;">Ready.</div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -66,129 +70,103 @@
     let idx = 0;
     const s3 = new AWS.S3({ endpoint: W_URL, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
 
-    function showVault() {
-        document.getElementById('menuView').style.display = 'none';
-        document.getElementById('vaultView').style.display = 'block';
-    }
-
-    function showEOD() {
-        document.getElementById('menuView').style.display = 'none';
-        document.getElementById('eodView').style.display = 'block';
-    }
-
-    function setStatus(msg) {
-        const bar = document.getElementById('status-bar');
-        if(bar) bar.innerText = msg;
-    }
+    function showVault() { document.getElementById('menuView').style.display='none'; document.getElementById('vaultView').style.display='block'; }
+    function showEod() { document.getElementById('menuView').style.display='none'; document.getElementById('eodView').style.display='block'; }
 
     async function init() {
         try {
             const r = await fetch(`${X_API}/uploader_get_franchises`);
             const data = await r.json();
             const sel = document.getElementById('franchiseSelect');
-            data.forEach(f => { sel.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
+            const eodSel = document.getElementById('eodFranchiseSelect');
+            data.forEach(f => { 
+                const opt = `<option value="${f.id}">${f.name}</option>`;
+                sel.innerHTML += opt;
+                eodSel.innerHTML += opt;
+            });
         } catch (e) { console.error("Init failed", e); }
     }
 
+    /* SHARED SYNC LOGIC */
     async function syncVaultData() {
-        const fid = document.getElementById('franchiseSelect').value;
-        if (!fid) return;
-        setStatus("Syncing...");
-        try {
-            const [t, s] = await Promise.all([
-                fetch(`${X_API}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
-                fetch(`${X_API}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
-            ]);
-            const tSel = document.getElementById('teacherSelect');
-            tSel.innerHTML = '<option value="">-- Choose Teacher --</option>';
-            t.forEach(item => tSel.innerHTML += `<option value="${item.id}">${item.first_name}</option>`);
-            tSel.disabled = false;
-            
-            const sSel = document.getElementById('studentSelect');
-            sSel.innerHTML = '<option value="">-- Identify Student --</option>';
-            s.forEach(item => sSel.innerHTML += `<option value="${item.id}">${item.name}</option>`);
-            setStatus("Ready.");
-        } catch (e) { setStatus("Sync error. Please refresh."); }
+        const fid = document.getElementById('franchiseSelect').value; if (!fid) return;
+        const [t, s] = await Promise.all([
+            fetch(`${X_API}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json()),
+            fetch(`${X_API}/uploader_get_students?franchise_id=${fid}`).then(res => res.json())
+        ]);
+        const tSel = document.getElementById('teacherSelect'); tSel.innerHTML = '<option value="">-- Choose Teacher --</option>';
+        t.forEach(item => tSel.innerHTML += `<option value="${item.id}">${item.first_name}</option>`); tSel.disabled = false;
+        const sSel = document.getElementById('studentSelect'); sSel.innerHTML = '<option value="">-- Identify Student --</option>';
+        s.forEach(item => sSel.innerHTML += `<option value="${item.id}">${item.name}</option>`);
     }
 
+    async function syncEodTeachers() {
+        const fid = document.getElementById('eodFranchiseSelect').value; if (!fid) return;
+        const t = await fetch(`${X_API}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json());
+        const tSel = document.getElementById('eodTeacherSelect'); tSel.innerHTML = '<option value="">-- Choose Teacher --</option>';
+        t.forEach(item => tSel.innerHTML += `<option value="${item.id}">${item.first_name}</option>`); tSel.disabled = false;
+    }
+
+    /* VAULT BATCH LOGIC */
     function startBatch() {
-        const fInput = document.getElementById('fileInput').files;
-        if (!document.getElementById('teacherSelect').value) return alert("Select teacher.");
-        if (fInput.length === 0) return;
-        files = Array.from(fInput).slice(0, 10);
-        idx = 0;
-        document.getElementById('setupForm').style.display = 'none';
-        document.getElementById('taggingUI').style.display = 'block';
+        const fInput = document.getElementById('fileInput').files; if (!document.getElementById('teacherSelect').value || fInput.length === 0) return;
+        files = Array.from(fInput).slice(0, 10); idx = 0;
+        document.getElementById('setupForm').style.display = 'none'; document.getElementById('taggingUI').style.display = 'block';
         loadPhoto();
     }
 
     function loadPhoto() {
-        const file = files[idx];
-        const container = document.getElementById('previewContainer');
-        const badgeText = `PHOTO ${idx + 1} OF ${files.length}`;
-        container.innerHTML = `<div class="counter-badge">${badgeText}</div><div style="color:white;">Loading...</div>`;
-        document.getElementById('studentSelect').value = "";
-        
+        const file = files[idx]; const container = document.getElementById('previewContainer');
         const reader = new FileReader();
-        reader.onload = (e) => container.innerHTML = `<div class="counter-badge">${badgeText}</div><img src="${e.target.result}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
-        reader.readAsDataURL(file);
-        setStatus(`Tagging ${idx + 1} of ${files.length}`);
+        reader.onload = (e) => container.innerHTML = `<div class="counter-badge">PHOTO ${idx + 1} OF ${files.length}</div><img src="${e.target.result}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+        reader.readAsDataURL(file); document.getElementById('status-bar').innerText = `Ready.`;
     }
 
     async function processUpload() {
-        let file = files[idx];
-        const sid = document.getElementById('studentSelect').value;
-        const tid = document.getElementById('teacherSelect').value;
-        const fid = document.getElementById('franchiseSelect').value;
-
+        let file = files[idx]; const sid = document.getElementById('studentSelect').value;
+        const tid = document.getElementById('teacherSelect').value; const fid = document.getElementById('franchiseSelect').value;
         if (!sid) return alert("Select student.");
-        const btn = document.getElementById('nextBtn');
-        btn.disabled = true;
-
+        document.getElementById('nextBtn').disabled = true;
         try {
-            if (file.type.startsWith('image/')) {
-                setStatus("Optimizing...");
-                file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
-            }
-            
-            setStatus(`Uploading ${idx + 1} of ${files.length}...`);
+            file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
             const key = `vault/franchise_${fid}/student_${sid}/${Date.now()}_${file.name}`;
             const up = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
-
-            await fetch(`${X_API}/uploader_register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    franchise_id: parseInt(fid), 
-                    student_id: parseInt(sid), 
-                    teacher_id: parseInt(tid),
-                    file_url: up.Location, 
-                    file_type: file.type.includes('image') ? 'image' : 'video',
-                    file_name: file.name,
-                    file_size: file.size
-                })
+            await fetch(`${X_API}/uploader_register`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ franchise_id: parseInt(fid), student_id: parseInt(sid), teacher_id: parseInt(tid), file_url: up.Location, file_type: 'image', file_name: file.name, file_size: file.size })
             });
+            idx++; if (idx < files.length) { loadPhoto(); document.getElementById('nextBtn').disabled = false; } else { location.reload(); }
+        } catch (e) { document.getElementById('nextBtn').disabled = false; }
+    }
 
-            idx++;
-            if (idx < files.length) {
-                loadPhoto();
-                btn.disabled = false;
-            } else {
-                fetch(`${X_API}/uploader_cleanup_batch`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ student_id: parseInt(sid), franchise_id: parseInt(fid) })
-                });
+    /* EOD BATCH LOGIC */
+    function startEodBatch() {
+        const fInput = document.getElementById('eodFileInput').files; if (!document.getElementById('eodTeacherSelect').value || fInput.length === 0) return;
+        files = Array.from(fInput).slice(0, 10); idx = 0;
+        document.getElementById('eodSetupForm').style.display = 'none'; document.getElementById('eodUploadUI').style.display = 'block';
+        loadEodPhoto();
+    }
 
-                setStatus("Batch successfully saved.");
-                btn.innerText = "Finish & Clear";
-                btn.disabled = false;
-                btn.onclick = () => location.reload();
-            }
-        } catch (e) {
-            setStatus("Upload error.");
-            btn.disabled = false;
-        }
+    function loadEodPhoto() {
+        const file = files[idx]; const container = document.getElementById('eodPreviewContainer');
+        const reader = new FileReader();
+        reader.onload = (e) => container.innerHTML = `<div class="counter-badge">REPORT ${idx + 1} OF ${files.length}</div><img src="${e.target.result}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+        reader.readAsDataURL(file);
+    }
+
+    async function processEodUpload() {
+        let file = files[idx]; const tid = document.getElementById('eodTeacherSelect').value; const fid = document.getElementById('eodFranchiseSelect').value;
+        document.getElementById('eodUploadBtn').disabled = true;
+        try {
+            file = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1600 });
+            const dateStr = new Date().toISOString().split('T')[0];
+            const fileName = `F${fid}_T${tid}_${dateStr}_${file.name}`;
+            const key = `reports/franchise_${fid}/${fileName}`;
+            const up = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
+            await fetch(`${X_API}/uploader_register`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ franchise_id: parseInt(fid), teacher_id: parseInt(tid), file_url: up.Location, file_type: 'image', file_name: fileName, file_size: file.size })
+            });
+            idx++; if (idx < files.length) { loadEodPhoto(); document.getElementById('eodUploadBtn').disabled = false; } else { location.reload(); }
+        } catch (e) { document.getElementById('eodUploadBtn').disabled = false; }
     }
     init();
 </script>
