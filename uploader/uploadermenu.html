@@ -220,10 +220,10 @@
         } catch (e) { alert(e.message); document.getElementById('eodUploadBtn').disabled = false; }
     }
 
-    // ENROLLMENT LOGIC (Unique Naming Convention)
+    // ENROLLMENT LOGIC (With Extraction Testing)
     function startEnrBatch() {
         const fInput = document.getElementById('enrFileInput').files; if (!document.getElementById('enrTeacherSelect').value || fInput.length === 0) return;
-        files = [fInput[0]]; idx = 0; // One form at a time
+        files = [fInput[0]]; idx = 0;
         document.getElementById('enrSetupForm').style.display = 'none'; document.getElementById('enrUploadUI').style.display = 'block';
         loadEnrPhoto();
     }
@@ -245,13 +245,13 @@
         try {
             document.getElementById('enr-status-bar').innerText = "Uploading for AI Processing...";
             const ts = Date.now(); 
-            // Unique name: ENR_FranchiseName_TeacherName_Timestamp
             const fileName = `ENR_${fName}_${tName}_${ts}.jpg`;
             const key = `pending_enrollment/${fName}/${fileName}`;
             
             const upResult = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
             
-            await fetch(`${X_API}/uploader_register`, { 
+            // Call Xano and capture the response
+            const response = await fetch(`${X_API}/uploader_register`, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify({ 
@@ -264,7 +264,13 @@
                 }) 
             });
 
-            document.getElementById('enrPreviewContainer').innerHTML = `<div style="padding:40px; text-align:center; color:white;"><h3>Form Uploaded!</h3><p>NestMind is extracting data.</p></div>`;
+            // Parse the AI result coming back from Xano
+            const result = await response.json();
+            
+            // LOG TO CONSOLE FOR TESTING
+            console.log("NestMind Extraction Result:", result);
+
+            document.getElementById('enrPreviewContainer').innerHTML = `<div style="padding:40px; text-align:center; color:white;"><h3>Form Uploaded!</h3><p>Check the browser console for extracted data.</p></div>`;
             const btn = document.getElementById('enrUploadBtn'); btn.innerText = "Finish"; btn.disabled = false; btn.onclick = () => location.reload();
         } catch (e) { alert(e.message); document.getElementById('enrUploadBtn').disabled = false; }
     }
