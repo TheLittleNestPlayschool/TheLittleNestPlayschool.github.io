@@ -215,7 +215,8 @@
         try {
             const dateStr = new Date().toISOString().split('T')[0]; const fileName = `EOD_${fName}_${dateStr}_${file.name}`;
             const upResult = await s3.upload({ Bucket: BKT, Key: `reports/${fName}/${fileName}`, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
-            await fetch(`${X_API}/uploader_register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ franchise_id: parseInt(fid), teacher_id: parseInt(tid), file_url: upResult.Location, file_type: 'image', file_name: fileName, file_size: file.size }) });
+            // file_type changed from 'image' to 'eod'
+            await fetch(`${X_API}/uploader_register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ franchise_id: parseInt(fid), teacher_id: parseInt(tid), file_url: upResult.Location, file_type: 'eod', file_name: fileName, file_size: file.size }) });
             idx++; if (idx < files.length) { loadEodPhoto(); document.getElementById('eodUploadBtn').disabled = false; } else { location.reload(); }
         } catch (e) { alert(e.message); document.getElementById('eodUploadBtn').disabled = false; }
     }
@@ -250,7 +251,7 @@
             
             const upResult = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
             
-            // Call Xano and capture the response
+            // file_type changed from 'enrollment_form' to 'enrollment'
             const response = await fetch(`${X_API}/uploader_register`, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
@@ -258,16 +259,13 @@
                     franchise_id: parseInt(fid), 
                     teacher_id: parseInt(tid), 
                     file_url: upResult.Location, 
-                    file_type: 'enrollment_form', 
+                    file_type: 'enrollment', 
                     file_name: fileName, 
                     file_size: file.size 
                 }) 
             });
 
-            // Parse the AI result coming back from Xano
             const result = await response.json();
-            
-            // LOG TO CONSOLE FOR TESTING
             console.log("NestMind Extraction Result:", result);
 
             document.getElementById('enrPreviewContainer').innerHTML = `<div style="padding:40px; text-align:center; color:white;"><h3>Form Uploaded!</h3><p>Check the browser console for extracted data.</p></div>`;
