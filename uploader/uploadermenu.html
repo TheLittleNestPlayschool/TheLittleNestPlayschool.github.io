@@ -106,6 +106,11 @@
 <script>
     const X_API = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL';
     const PARENT_API = 'https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx';
+    
+    // Google Cloud Config
+    const GCS_BUCKET_NAME = 'littlenestplayschool'; 
+
+    // Wasabi Config
     const W_URL = 's3.ap-southeast-1.wasabisys.com';
     const BKT = 'the-little-nest-media';
     const AK = 'P7GI5LQMI4OX2SPAV1YA';
@@ -131,6 +136,7 @@
         } catch (e) { console.error("Init failed", e); }
     }
 
+    // Common Sync Functions
     async function syncVaultData() {
         const fid = document.getElementById('franchiseSelect').value; if (!fid) return;
         try {
@@ -165,7 +171,7 @@
         t.forEach(item => tSel.innerHTML += `<option value="${item.id}">${item.first_name}</option>`); tSel.disabled = false;
     }
 
-    // VAULT LOGIC
+    // VAULT LOGIC (Wasabi Direct Upload)
     function startBatch() {
         const fInput = document.getElementById('fileInput').files; if (!document.getElementById('teacherSelect').value || fInput.length === 0) return;
         files = Array.from(fInput).slice(0, 10); idx = 0;
@@ -183,7 +189,7 @@
         const pid = sSel.options[sSel.selectedIndex].dataset.pid; if (!sid) return alert("Select student.");
         document.getElementById('nextBtn').disabled = true;
         try {
-            document.getElementById('status-bar').innerText = "Uploading...";
+            document.getElementById('status-bar').innerText = "Uploading to Wasabi...";
             let pName = "Unknown_Parent";
             if (pid) { try { const p = await fetch(`${PARENT_API}/parent/${pid}`).then(r => r.json()); if (p.first_name) pName = `${p.first_name}_${p.last_name}`.replace(/\s+/g, '_'); } catch (err) {} }
             const dateStr = new Date().toISOString().split('T')[0]; const ts = Date.now();
@@ -196,7 +202,7 @@
         } catch (e) { alert(e.message); document.getElementById('nextBtn').disabled = false; }
     }
 
-    // EOD LOGIC
+    // EOD LOGIC (Wasabi Direct Upload)
     function startEodBatch() {
         const fInput = document.getElementById('eodFileInput').files; if (!document.getElementById('eodTeacherSelect').value || fInput.length === 0) return;
         files = Array.from(fInput).slice(0, 10); idx = 0;
@@ -215,13 +221,12 @@
         try {
             const dateStr = new Date().toISOString().split('T')[0]; const fileName = `EOD_${fName}_${dateStr}_${file.name}`;
             const upResult = await s3.upload({ Bucket: BKT, Key: `reports/${fName}/${fileName}`, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
-            // file_type changed from 'image' to 'eod'
             await fetch(`${X_API}/uploader_register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ franchise_id: parseInt(fid), teacher_id: parseInt(tid), file_url: upResult.Location, file_type: 'eod', file_name: fileName, file_size: file.size }) });
             idx++; if (idx < files.length) { loadEodPhoto(); document.getElementById('eodUploadBtn').disabled = false; } else { location.reload(); }
         } catch (e) { alert(e.message); document.getElementById('eodUploadBtn').disabled = false; }
     }
 
-    // ENROLLMENT LOGIC (With Extraction Testing)
+    // ENROLLMENT LOGIC (Updated for Google Cloud Storage Signed URL Flow)
     function startEnrBatch() {
         const fInput = document.getElementById('enrFileInput').files; if (!document.getElementById('enrTeacherSelect').value || fInput.length === 0) return;
         files = [fInput[0]]; idx = 0;
@@ -244,21 +249,39 @@
 
         document.getElementById('enrUploadBtn').disabled = true;
         try {
-            document.getElementById('enr-status-bar').innerText = "Uploading for AI Processing...";
+            document.getElementById('enr-status-bar').innerText = "Requesting Google Ticket...";
             const ts = Date.now(); 
             const fileName = `ENR_${fName}_${tName}_${ts}.jpg`;
-            const key = `pending_enrollment/${fName}/${fileName}`;
+
+            // 1. Get Signed Upload URL (Ticket) from Xano
+            const ticketResponse = await fetch(`${X_API}/get_gcs_upload_url`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file_name: fileName, content_type: file.type })
+            });
             
-            const upResult = await s3.upload({ Bucket: BKT, Key: key, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
-            
-            // file_type changed from 'enrollment_form' to 'enrollment'
+            // Xano should return both the signed URL for uploading (PUT) 
+            // and the standard URL where the file will eventually live
+            const { signed_url } = await ticketResponse.json();
+            const final_file_url = `https://storage.googleapis.com/${GCS_BUCKET_NAME}/${fileName}`;
+
+            // 2. Upload directly to GCS using the ticket
+            document.getElementById('enr-status-bar').innerText = "Writing to Google Cloud...";
+            await fetch(signed_url, {
+                method: 'PUT',
+                body: file,
+                headers: { 'Content-Type': file.type }
+            });
+
+            // 3. Register in Xano for AI Processing
+            document.getElementById('enr-status-bar').innerText = "NestMind Processing Extraction...";
             const response = await fetch(`${X_API}/uploader_register`, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify({ 
                     franchise_id: parseInt(fid), 
                     teacher_id: parseInt(tid), 
-                    file_url: upResult.Location, 
+                    file_url: final_file_url, 
                     file_type: 'enrollment', 
                     file_name: fileName, 
                     file_size: file.size 
@@ -266,9 +289,9 @@
             });
 
             const result = await response.json();
-            console.log("NestMind Extraction Result:", result);
+            console.log("Extraction Result:", result);
 
-            document.getElementById('enrPreviewContainer').innerHTML = `<div style="padding:40px; text-align:center; color:white;"><h3>Form Uploaded!</h3><p>Check the browser console for extracted data.</p></div>`;
+            document.getElementById('enrPreviewContainer').innerHTML = `<div style="padding:40px; text-align:center; color:white;"><h3>Form Processed!</h3><p>Data has been extracted successfully.</p></div>`;
             const btn = document.getElementById('enrUploadBtn'); btn.innerText = "Finish"; btn.disabled = false; btn.onclick = () => location.reload();
         } catch (e) { alert(e.message); document.getElementById('enrUploadBtn').disabled = false; }
     }
