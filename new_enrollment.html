@@ -50,20 +50,13 @@
                     <div><label>Primary Phone</label><input type="text" id="p_phone"></div>
                     <div style="grid-column: span 2;"><label>Home Address</label><input type="text" id="p_address"></div>
                     
-                    <div style="grid-column: span 2; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;"><label style="color:#00d1b2;">Second Parent Information</label></div>
-                    <div style="grid-column: span 2;"><label>Full Name</label><input type="text" id="p_s2_name"></div>
+                    <div style="grid-column: span 2; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;"><label style="color:#00d1b2;">Second Parent & Emergency</label></div>
+                    <div style="grid-column: span 2;"><label>Second Parent Full Name</label><input type="text" id="p_s2_name"></div>
                     <div><label>Relationship</label><input type="text" id="p_s2_rel"></div>
-                    <div><label>Phone Number</label><input type="text" id="p_s2_phone"></div>
-                    <div><label>Email Address</label><input type="email" id="p_s2_email"></div>
-                    <div><label>Home Address (If Different)</label><input type="text" id="p_s2_addr"></div>
-
-                    <div style="grid-column: span 2; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;"><label style="color:#00d1b2;">Emergency Contacts</label></div>
-                    <div><label>Contact 1 Name</label><input type="text" id="p_e1_name"></div>
-                    <div><label>Contact 1 Relationship</label><input type="text" id="p_e1_rel"></div>
-                    <div><label>Contact 1 Phone</label><input type="text" id="p_e1_phone"></div>
-                    <div style="border-left: 1px solid #eee; padding-left: 15px;"><label>Contact 2 Name</label><input type="text" id="p_e2_name"></div>
-                    <div><label>Contact 2 Relationship</label><input type="text" id="p_e2_rel"></div>
-                    <div><label>Contact 2 Phone</label><input type="text" id="p_e2_phone"></div>
+                    <div><label>Phone</label><input type="text" id="p_s2_phone"></div>
+                    <div style="grid-column: span 2;"><label>Emergency Contact 1 Name</label><input type="text" id="p_e1_name"></div>
+                    <div><label>Relationship</label><input type="text" id="p_e1_rel"></div>
+                    <div><label>Phone</label><input type="text" id="p_e1_phone"></div>
 
                     <div style="grid-column: span 2; margin-top: 15px;"><label>Assign Franchise</label><select id="p_fran_id"></select></div>
                 </div>
@@ -216,14 +209,9 @@
                 second_parent_full_name: document.getElementById('p_s2_name').value,
                 second_parent_relationship: document.getElementById('p_s2_rel').value,
                 second_parent_phone_number: document.getElementById('p_s2_phone').value,
-                second_parent_email_address: document.getElementById('p_s2_email').value,
-                second_parent_home_address: document.getElementById('p_s2_addr').value,
                 emergency_contact_1_name: document.getElementById('p_e1_name').value,
                 emergency_contact_1_relationship: document.getElementById('p_e1_rel').value,
                 emergency_contact_1_phone_number: document.getElementById('p_e1_phone').value,
-                emergency_contact_2_name: document.getElementById('p_e2_name').value,
-                emergency_contact_2_relationship: document.getElementById('p_e2_rel').value,
-                emergency_contact_2_phone_number: document.getElementById('p_e2_phone').value,
                 franchise_id: currentFranchiseId, 
                 is_active: true 
             };
@@ -234,8 +222,6 @@
             pData = allParents.find(p => p.id === currentParentId); currentFranchiseId = pData.franchise_id;
         }
         document.getElementById('disp-p-name').innerText = pData.first_name + ' ' + pData.last_name;
-        document.getElementById('disp-p-email').innerText = pData.email || 'N/A';
-        document.getElementById('disp-p-phone').innerText = pData.phone || 'N/A';
         document.getElementById('disp-p-fran').innerText = (allFranchises.find(f => f.id === currentFranchiseId) || {}).name || 'Sariaya';
         document.getElementById('parent-profile-view').style.display = 'grid';
         document.getElementById('step-parent').className = 'step-container step-saved';
@@ -254,9 +240,6 @@
             sData = allStudents.find(s => s.id === currentStudentId);
         }
         document.getElementById('disp-s-name').innerText = sData.name;
-        document.getElementById('disp-s-dob').innerText = sData.date_of_birth;
-        document.getElementById('disp-s-gen').innerText = sData.gender || 'N/A';
-        document.getElementById('disp-s-pref').innerText = sData.preferred_name || 'N/A';
         document.getElementById('student-profile-view').style.display = 'grid';
         document.getElementById('step-student').className = 'step-container step-saved';
         document.getElementById('a_teacher_id').innerHTML = '<option value="">-- Teacher --</option>' + allTeachers.filter(t => t.franchise_id === currentFranchiseId).map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
@@ -301,22 +284,28 @@
 
     window.renderReviewStep = () => {
         const eD = document.getElementById('final_enrolled_date').value, sD = document.getElementById('final_start_date').value;
+        const tSel = document.getElementById('a_teacher_id');
+        const teacherName = tSel.options[tSel.selectedIndex].text;
         if(!eD || !sD) return;
-        document.getElementById('review-content').innerHTML = `
-            <table class="review-table">
-                <tr><td class="rev-label">Student</td><td class="rev-val">${document.getElementById('disp-s-name').innerText}</td></tr>
-                <tr><td class="rev-label">Enrollment Date</td><td class="rev-val">${eD}</td></tr>
-                <tr><td class="rev-label">Start Date</td><td class="rev-val">${sD}</td></tr>
-            </table>
-        `;
+        document.getElementById('review-content').innerHTML = `<table class="review-table"><tr><td class="rev-label">Student</td><td class="rev-val">${document.getElementById('disp-s-name').innerText}</td></tr><tr><td class="rev-label">Teacher</td><td class="rev-val">${teacherName}</td></tr><tr><td class="rev-label">Enrolled</td><td class="rev-val">${eD}</td></tr><tr><td class="rev-label">Start</td><td class="rev-val">${sD}</td></tr></table>`;
         document.getElementById('review-container').style.display = 'block';
     };
 
     window.submitFinalEnrollment = async () => {
         const eD = document.getElementById('final_enrolled_date').value, sD = document.getElementById('final_start_date').value;
+        
+        // Final sanity check for teacher and franchise IDs
+        if (!currentTeacherId || isNaN(currentTeacherId)) return alert("Teacher selection missing.");
+        if (!currentFranchiseId || isNaN(currentFranchiseId)) return alert("Franchise data missing.");
+
+        // 1. Write Student Update & Assessment
         const sUpdate = fetch(STUDENT_UPDATE_API + currentStudentId, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: selectedSessionId, enrolled_date: eD, start_date: sD, is_active: true }) });
-        const eLog = fetch(ENROLLMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: currentStudentId, franchise_id: currentFranchiseId, teacher_id: currentTeacherId, enrolled_date: eD, start_date: sD, status: 'active' }) });
         const aWrite = fetch(ASSESSMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(assessmentPayload) });
+
+        // 2. Enrollment Log
+        const eLog = fetch(ENROLLMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: currentStudentId, franchise_id: currentFranchiseId, teacher_id: currentTeacherId, enrolled_date: eD, start_date: sD, status: 'active' }) });
+
+        // 3. Pickup Contacts
         const pWrites = pickupContacts.map(c => fetch(PICKUP_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: currentStudentId, name: c.name, relationship: c.relationship, phone: c.phone, is_active: true }) }));
 
         try {
@@ -324,8 +313,11 @@
             if(results.every(r => r.ok)) {
                 document.getElementById('enrollment-ui').style.display = 'none'; document.getElementById('completion-screen').style.display = 'block';
                 setTimeout(() => window.location.href = "index.html", 3000);
-            } else { alert("Sync Error. Check Xano API inputs."); }
-        } catch (e) { alert("Save Failed."); }
+            } else { 
+                console.error("Some API calls failed.");
+                alert("Sync Error. One or more tables (Pickup or Enrollment) rejected the data."); 
+            }
+        } catch (e) { alert("Save Failed. Connection error."); }
     };
 
     async function init() {
