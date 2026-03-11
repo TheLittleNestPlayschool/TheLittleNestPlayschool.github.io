@@ -1,24 +1,32 @@
 <style>
     .enrollment-wrapper { width: 100%; margin: 0; padding: 20px; box-sizing: border-box; background: #f8fafc; min-height: 100vh; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
     .nest-header { color: #334155; font-weight: 700; }
+    
     .profile-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; background: #fff; padding: 18px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 10px; width: 100%; }
     .profile-item { display: flex; flex-direction: column; }
     .profile-label { font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
     .profile-value { font-size: 0.85rem; color: #334155; font-weight: 600; }
+
     .step-container { background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 25px; margin-bottom: 20px; transition: all 0.2s ease; }
     .step-locked { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
     .step-active { border-left: 6px solid #00d1b2; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
     .step-saved { border-left: 6px solid #cbd5e1; background: #ffffff; }
     .step-saved .step-content { display: none; }
+    
     label { display: block; font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
     input, select, textarea { width: 100%; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; font-size: 0.9rem; background: #fff; color: #334155; box-sizing: border-box; }
+    
     .btn-teal { background-color: #00d1b2; color: #ffffff !important; padding: 14px 28px; border-radius: 4px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; margin-top: 15px; transition: background 0.2s; }
     .btn-teal:hover { background-color: #00b89c; }
+    
     .badge-step { background: #334155; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; font-weight: bold; }
-    .review-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
-    .review-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
-    .review-table .rev-label { font-weight: 800; color: #64748b; width: 30%; text-transform: uppercase; font-size: 0.65rem; }
+    
+    .review-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+    .review-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
+    .review-table .rev-label { font-weight: 800; color: #64748b; width: 40%; text-transform: uppercase; font-size: 0.6rem; }
     .review-table .rev-val { color: #334155; font-weight: 600; }
+    
+    #completion-screen { display: none; text-align: center; padding: 100px 20px; background: #f8fafc; min-height: 100vh; }
 </style>
 
 <div id="enrollment-ui" class="enrollment-wrapper">
@@ -41,11 +49,11 @@
                     <div><label>Email</label><input type="email" id="p_email"></div>
                     <div><label>Phone</label><input type="text" id="p_phone"></div>
                     <div style="grid-column: span 2;"><label>Address</label><input type="text" id="p_address"></div>
-                    <div style="grid-column: span 2; margin-top: 10px;"><label>Second Parent Name</label><input type="text" id="p_s2_name"></div>
+                    <div style="grid-column: span 2; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;"><label>Second Parent & Emergencies</label></div>
+                    <div><label>Second Parent Name</label><input type="text" id="p_s2_name"></div>
                     <div><label>Relationship</label><input type="text" id="p_s2_rel"></div>
-                    <div><label>Second Parent Phone</label><input type="text" id="p_s2_phone"></div>
                     <div><label>Emergency Contact 1 Name</label><input type="text" id="p_e1_name"></div>
-                    <div><label>Emergency Contact 1 Phone</label><input type="text" id="p_e1_phone"></div>
+                    <div><label>Emergency Phone</label><input type="text" id="p_e1_phone"></div>
                     <div style="grid-column: span 2; margin-top: 10px;"><label>Assign Franchise</label><select id="p_fran_id"></select></div>
                 </div>
             </div>
@@ -59,8 +67,8 @@
         <div id="student-profile-view" style="display:none;" class="profile-display">
             <div class="profile-item"><div class="profile-label">Student Name</div><div id="disp-s-name" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Birthday</div><div id="disp-s-dob" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Preferred Name</div><div id="disp-s-pref" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Gender</div><div id="disp-s-gen" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Preferred Name</div><div id="disp-s-pref" class="profile-value"></div></div>
         </div>
         <div class="step-content" style="margin-top:20px;">
             <div id="student-select-mode"><label>Attached Students</label><select id="s_select_id"></select></div>
@@ -125,8 +133,8 @@
                 <div><label>Enrolled Date</label><input type="date" id="final_enrolled_date" onchange="renderReviewStep()"></div>
                 <div><label>Start Date</label><input type="date" id="final_start_date" onchange="renderReviewStep()"></div>
             </div>
-            <div id="review-container" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 4px; display:none;">
-                <h3 class="nest-header" style="font-size: 0.9rem; margin-top:0;">REVIEW SUMMARY</h3>
+            <div id="review-container" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 25px; border-radius: 4px; display:none;">
+                <h3 class="nest-header" style="font-size: 0.9rem; margin-top:0; color: #00d1b2;">MASTER REVIEW SUMMARY</h3>
                 <div id="review-content"></div>
                 <div style="text-align: center; margin-top: 30px;">
                     <button onclick="submitFinalEnrollment()" class="btn-teal" style="width: 320px; background: #0f766e;">Finalize & Create Records</button>
@@ -137,8 +145,8 @@
 </div>
 
 <div id="completion-screen" style="display:none; text-align: center; padding: 100px 20px;">
-    <h1 class="nest-header">✓ Enrollment Complete</h1>
-    <p>All records successfully created.</p>
+    <h1 class="nest-header" style="font-size: 2.5rem;">✓ Enrollment Complete</h1>
+    <p style="color: #64748b;">All records for Parent, Student, Assessment, and Enrollment Log have been synced.</p>
 </div>
 
 <script>
@@ -192,7 +200,10 @@
             currentParentId = parseInt(document.getElementById('p_select_id').value);
             const p = allParents.find(p => p.id === currentParentId); currentFranchiseId = p.franchise_id;
         }
-        document.getElementById('disp-p-name').innerText = (allParents.find(p => p.id === currentParentId) || {first_name: "Parent"}).first_name;
+        const pInfo = allParents.find(p => p.id === currentParentId) || {first_name: "New", last_name: "Parent"};
+        document.getElementById('disp-p-name').innerText = pInfo.first_name + ' ' + pInfo.last_name;
+        document.getElementById('disp-p-email').innerText = pInfo.email || "---";
+        document.getElementById('disp-p-fran').innerText = (allFranchises.find(f => f.id === currentFranchiseId) || {}).name || "---";
         document.getElementById('parent-profile-view').style.display = 'grid';
         document.getElementById('step-parent').className = 'step-container step-saved';
         document.getElementById('s_select_id').innerHTML = '<option value="">-- Select Child --</option>' + allStudents.filter(s => s.parent_id === currentParentId).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -207,7 +218,9 @@
         } else {
             currentStudentId = parseInt(document.getElementById('s_select_id').value);
         }
-        document.getElementById('disp-s-name').innerText = "Student Profile Set";
+        const sInfo = allStudents.find(s => s.id === currentStudentId) || {name: document.getElementById('s_name_new').value};
+        document.getElementById('disp-s-name').innerText = sInfo.name;
+        document.getElementById('disp-s-dob').innerText = sInfo.date_of_birth || "---";
         document.getElementById('student-profile-view').style.display = 'grid';
         document.getElementById('step-student').className = 'step-container step-saved';
         document.getElementById('a_teacher_id').innerHTML = '<option value="">-- Teacher --</option>' + allTeachers.filter(t => t.franchise_id === currentFranchiseId).map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
@@ -253,32 +266,51 @@
         const eD = document.getElementById('final_enrolled_date').value, sD = document.getElementById('final_start_date').value;
         const tSel = document.getElementById('a_teacher_id');
         const teacherName = tSel.options[tSel.selectedIndex].text;
+        const sSel = document.getElementById('enrollment_session_id');
+        const sessionName = sSel.options[sSel.selectedIndex].text;
+        const studentName = document.getElementById('disp-s-name').innerText;
+        const parentName = document.getElementById('disp-p-name').innerText;
+
         if(!eD || !sD) return;
-        document.getElementById('review-content').innerHTML = `<table class="review-table"><tr><td class="rev-label">Teacher</td><td class="rev-val">${teacherName}</td></tr><tr><td class="rev-label">Enrolled</td><td class="rev-val">${eD}</td></tr><tr><td class="rev-label">Start</td><td class="rev-val">${sD}</td></tr></table>`;
+        document.getElementById('review-content').innerHTML = `
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h4 style="font-size:0.6rem; color:#94a3b8; text-transform:uppercase; margin-bottom:5px;">Profile Review</h4>
+                    <table class="review-table">
+                        <tr><td class="rev-label">Student</td><td class="rev-val">${studentName}</td></tr>
+                        <tr><td class="rev-label">Parent</td><td class="rev-val">${parentName}</td></tr>
+                        <tr><td class="rev-label">Session</td><td class="rev-val">${sessionName}</td></tr>
+                    </table>
+                </div>
+                <div>
+                    <h4 style="font-size:0.6rem; color:#94a3b8; text-transform:uppercase; margin-bottom:5px;">Admin Review</h4>
+                    <table class="review-table">
+                        <tr><td class="rev-label">Teacher</td><td class="rev-val">${teacherName}</td></tr>
+                        <tr><td class="rev-label">Enrolled</td><td class="rev-val">${eD}</td></tr>
+                        <tr><td class="rev-label">Start</td><td class="rev-val">${sD}</td></tr>
+                    </table>
+                </div>
+            </div>
+        `;
         document.getElementById('review-container').style.display = 'block';
     };
 
     window.submitFinalEnrollment = async () => {
         const eD = document.getElementById('final_enrolled_date').value, sD = document.getElementById('final_start_date').value;
-        
-        // SEQUENTIAL SAVE: Wait for Student Updates/Assessment first
         try {
+            // Sequential Saves to ensure IDs exist
             const sUpdate = await fetch(STUDENT_UPDATE_API + currentStudentId, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: selectedSessionId, enrolled_date: eD, start_date: sD, is_active: true }) });
             const aWrite = await fetch(ASSESSMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(assessmentPayload) });
-
-            // Then Enrollment Log (Ensuring Teacher is an Integer)
             const eLog = await fetch(ENROLLMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: parseInt(currentStudentId), franchise_id: parseInt(currentFranchiseId), teacher_id: parseInt(currentTeacherId), enrolled_date: eD, start_date: sD, status: 'active' }) });
-
-            // Then Pickups
             const pPromises = pickupContacts.map(c => fetch(PICKUP_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: parseInt(currentStudentId), name: c.name, relationship: c.relationship, phone: c.phone, is_active: true }) }));
             
             await Promise.all(pPromises);
 
             if(sUpdate.ok && eLog.ok) {
                 document.getElementById('enrollment-ui').style.display = 'none'; document.getElementById('completion-screen').style.display = 'block';
-                setTimeout(() => window.location.href = "index.html", 3000);
-            } else { alert("Sync Error. Enrollment or Pickup rejected."); }
-        } catch (e) { alert("Save Failed."); }
+                setTimeout(() => window.location.href = "index.html", 4000);
+            } else { alert("Sync Error. Enrollment rejected."); }
+        } catch (e) { alert("Save Failed. Connection error."); }
     };
 
     async function init() {
