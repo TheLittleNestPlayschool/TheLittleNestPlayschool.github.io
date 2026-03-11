@@ -20,7 +20,6 @@
     .btn-teal:hover { background-color: #00b89c; }
     
     .badge-step { background: #334155; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; font-weight: bold; }
-    .success-check { color: #00d1b2; font-weight: bold; font-size: 0.85rem; margin-left: 10px; }
 
     .review-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
     .review-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
@@ -34,10 +33,7 @@
     <div id="enrollment-progress" style="text-align: right; font-size: 0.7rem; font-weight: 800; color: #94a3b8; margin-bottom: 15px;">PROGRESS: STEP 1 OF 6</div>
 
     <div id="step-parent" class="step-container step-active">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 class="nest-header" style="margin:0;"><span class="badge-step">1</span> Parent Profile</h2>
-            <span id="parent-success" class="success-check" style="display:none;">✓ CONFIRMED</span>
-        </div>
+        <h2 class="nest-header" style="margin:0;"><span class="badge-step">1</span> Parent Profile</h2>
         <div id="parent-profile-view" style="display:none;" class="profile-display">
             <div class="profile-item"><div class="profile-label">Full Name</div><div id="disp-p-name" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Email</div><div id="disp-p-email" class="profile-value"></div></div>
@@ -64,10 +60,7 @@
     </div>
 
     <div id="step-student" class="step-container step-locked">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 class="nest-header" style="margin:0;"><span class="badge-step">2</span> Student Profile</h2>
-            <span id="student-success" class="success-check" style="display:none;">✓ CONFIRMED</span>
-        </div>
+        <h2 class="nest-header" style="margin:0;"><span class="badge-step">2</span> Student Profile</h2>
         <div id="student-profile-view" style="display:none;" class="profile-display">
             <div class="profile-item"><div class="profile-label">Student Name</div><div id="disp-s-name" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Birthday</div><div id="disp-s-dob" class="profile-value"></div></div>
@@ -102,7 +95,7 @@
                     <div><label>Type</label><input type="text" id="a_assessment_type" value="Initial Assessment"></div>
                 </div>
                 <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px 25px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;"></div>
-                <button type="submit" class="btn-teal">Save Assessment & Continue</button>
+                <button type="submit" class="btn-teal">Capture Assessment & Continue</button>
             </form>
         </div>
     </div>
@@ -112,7 +105,6 @@
         <div class="step-content" style="margin-top:20px;">
             <label>Available Sessions</label>
             <select id="enrollment_session_id"></select>
-            <div id="session-preview" style="margin-top:15px; font-size:0.8rem; color:#64748b;"></div>
             <button onclick="processSessionStep()" class="btn-teal">Confirm Session Selection</button>
         </div>
     </div>
@@ -129,7 +121,7 @@
                 </div>
                 <button onclick="addPickupLocal()" class="btn-teal" style="background:#334155; margin-top:10px;">+ Add Contact</button>
             </div>
-            <button onclick="finalizePickups()" class="btn-teal">Confirm All Pickups & Continue</button>
+            <button onclick="finalizePickups()" class="btn-teal">Confirm Contacts & Continue</button>
         </div>
     </div>
 
@@ -140,7 +132,6 @@
                 <div><label>Enrolled Date (Signed)</label><input type="date" id="final_enrolled_date" onchange="renderReviewStep()"></div>
                 <div><label>Start Date (Billing Cycle)</label><input type="date" id="final_start_date" onchange="renderReviewStep()"></div>
             </div>
-
             <div id="review-container" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 20px; display:none;">
                 <h3 class="nest-header" style="font-size: 0.9rem; margin-top:0;">REVIEW SUMMARY</h3>
                 <div id="review-content"></div>
@@ -154,7 +145,7 @@
 
 <div id="completion-screen" style="display:none; text-align: center; padding: 100px 20px; background: #f8fafc; min-height: 100vh;">
     <h1 class="nest-header" style="font-size: 2rem;">✓ Enrollment Complete</h1>
-    <p style="color: #64748b;">Profiles, Assessment, and Logistics updated successfully.</p>
+    <p style="color: #64748b;">All tables (Parent, Student, Assessment, Pickup, Enrollment) updated successfully.</p>
 </div>
 
 <script>
@@ -166,13 +157,13 @@
     const TEACHER_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
     const QUESTIONS_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions";
     const SINGLE_QUESTION_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions/";
-    const SAVE_ASSESSMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_assessment";
+    const ASSESSMENT_FILLED_API = "https://x8ki-letl-twmt.n7.xano.io/api:e7P6emQg/student_assessment_filled";
     const PICKUP_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_authorized_pickup";
     const ENROLLMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/enrollment";
     const SESSION_API = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session";
 
     let currentParentId = null, currentStudentId = null, currentFranchiseId = null, selectedSessionId = null, currentTeacherId = null;
-    let parentMode = 'select', studentMode = 'select', allStudents = [], allParents = [], allFranchises = [], allTeachers = [], pickupContacts = [], allSessions = [];
+    let parentMode = 'select', studentMode = 'select', allStudents = [], allParents = [], allFranchises = [], allTeachers = [], pickupContacts = [], allSessions = [], assessmentPayload = null;
 
     function unwrap(d) { return Array.isArray(d) ? d : (d.result1 || d.items || []); }
 
@@ -248,16 +239,15 @@
         document.getElementById('step-assessment').className = 'step-container step-active';
     };
 
-    document.getElementById('assessmentForm').onsubmit = async (e) => {
+    document.getElementById('assessmentForm').onsubmit = (e) => {
         e.preventDefault();
         const tSel = document.getElementById('a_teacher_id');
         currentTeacherId = tSel.value;
-        let payload = { student_id: parseInt(currentStudentId), teacher_id: parseInt(currentTeacherId) || null, assessment_date: document.getElementById('a_assessment_date').value || null, assessment_type: document.getElementById('a_assessment_type').value };
+        assessmentPayload = { student_id: parseInt(currentStudentId) };
         for(let i=1; i<=10; i++) {
-            payload[`question_${i}_id`] = parseInt(document.getElementById(`q_select_${i}`).value) || null;
-            payload[`recorded_answer_${i}`] = document.getElementById(`a_ans_${i}`).value || "";
+            assessmentPayload[`question_${i}_id`] = parseInt(document.getElementById(`q_select_${i}`).value) || null;
+            assessmentPayload[`answer_${i}`] = document.getElementById(`a_ans_${i}`).value || "";
         }
-        await fetch(SAVE_ASSESSMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
         document.getElementById('step-assessment').className = 'step-container step-saved';
         const franchiseSessions = allSessions.filter(s => s.franchise_id == currentFranchiseId && s.is_active);
         document.getElementById('enrollment_session_id').innerHTML = '<option value="">-- Choose Session --</option>' + franchiseSessions.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -278,8 +268,7 @@
         document.getElementById('pu_name').value = ''; document.getElementById('pu_rel').value = ''; document.getElementById('pu_phone').value = '';
     };
 
-    window.finalizePickups = async () => {
-        for(const c of pickupContacts) { await fetch(PICKUP_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: parseInt(currentStudentId), name: c.name, relationship: c.relationship, phone: c.phone, is_active: true }) }); }
+    window.finalizePickups = () => {
         document.getElementById('step-pickup').className = 'step-container step-saved';
         document.getElementById('step-final').className = 'step-container step-active';
         const today = new Date().toISOString().split('T')[0];
@@ -289,22 +278,13 @@
     };
 
     window.renderReviewStep = () => {
-        const pN = document.getElementById('disp-p-name').innerText;
         const sN = document.getElementById('disp-s-name').innerText;
-        const tS = document.getElementById('a_teacher_id');
-        const tN = tS.options[tS.selectedIndex].text;
-        const sS = document.getElementById('enrollment_session_id');
-        const sSN = sS.options[sS.selectedIndex].text;
         const eD = document.getElementById('final_enrolled_date').value;
         const sD = document.getElementById('final_start_date').value;
-
         if(!eD || !sD) return;
         document.getElementById('review-content').innerHTML = `
             <table class="review-table">
                 <tr><td class="rev-label">Student</td><td class="rev-val">${sN}</td></tr>
-                <tr><td class="rev-label">Parent</td><td class="rev-val">${pN}</td></tr>
-                <tr><td class="rev-label">Teacher</td><td class="rev-val">${tN}</td></tr>
-                <tr><td class="rev-label">Session</td><td class="rev-val">${sSN}</td></tr>
                 <tr><td class="rev-label">Enrollment Date</td><td class="rev-val">${eD}</td></tr>
                 <tr><td class="rev-label">Start Date</td><td class="rev-val">${sD}</td></tr>
             </table>
@@ -315,38 +295,15 @@
     window.submitFinalEnrollment = async () => {
         const eD = document.getElementById('final_enrolled_date').value;
         const sD = document.getElementById('final_start_date').value;
-
-        const sUpdate = fetch(STUDENT_UPDATE_API + currentStudentId, { 
-            method: 'PATCH', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ session_enrolled: parseInt(selectedSessionId), enrolled_date: eD, start_date: sD, is_active: true }) 
-        });
-
-        const eLog = fetch(ENROLLMENT_API, { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ 
-                student_id: parseInt(currentStudentId), 
-                franchise_id: parseInt(currentFranchiseId), 
-                teacher_id: parseInt(currentTeacherId),
-                enrolled_date: eD,
-                start_date: sD,
-                status: 'active' 
-            }) 
-        });
+        const sUpdate = fetch(STUDENT_UPDATE_API + currentStudentId, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: parseInt(selectedSessionId), enrolled_date: eD, start_date: sD, is_active: true }) });
+        const eLog = fetch(ENROLLMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: parseInt(currentStudentId), franchise_id: parseInt(currentFranchiseId), teacher_id: parseInt(currentTeacherId), enrolled_date: eD, start_date: sD, status: 'active' }) });
+        const aWrite = fetch(ASSESSMENT_FILLED_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(assessmentPayload) });
+        const pWrites = pickupContacts.map(c => fetch(PICKUP_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: parseInt(currentStudentId), name: c.name, relationship: c.relationship, phone: c.phone, is_active: true }) }));
 
         try {
-            const [r1, r2] = await Promise.all([sUpdate, eLog]);
-            if(r1.ok && r2.ok) {
-                document.getElementById('enrollment-ui').style.display = 'none';
-                document.getElementById('completion-screen').style.display = 'block';
-                setTimeout(() => { window.location.href = "index.html"; }, 3000);
-            } else {
-                const errBody = await r2.text();
-                console.error("Enrollment Error:", errBody);
-                alert("Error saving records. Ensure Teacher is selected and fields match Xano.");
-            }
-        } catch (e) { alert("Network error."); }
+            await Promise.all([sUpdate, eLog, aWrite, ...pWrites]);
+            document.getElementById('enrollment-ui').style.display = 'none'; document.getElementById('completion-screen').style.display = 'block'; setTimeout(() => { window.location.href = "index.html"; }, 3000);
+        } catch (e) { alert("Error saving records."); }
     };
 
     async function init() {
