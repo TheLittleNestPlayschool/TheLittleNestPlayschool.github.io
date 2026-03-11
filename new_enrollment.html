@@ -20,7 +20,7 @@
     .btn-teal:hover { background-color: #00b89c; }
     
     .badge-step { background: #334155; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; font-weight: bold; }
-
+    
     .review-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
     .review-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
     .review-table .rev-label { font-weight: 800; color: #64748b; width: 30%; text-transform: uppercase; font-size: 0.65rem; }
@@ -35,7 +35,7 @@
     <div id="step-parent" class="step-container step-active">
         <h2 class="nest-header" style="margin:0;"><span class="badge-step">1</span> Parent Profile</h2>
         <div id="parent-profile-view" style="display:none;" class="profile-display">
-            <div class="profile-item"><div class="profile-label">Full Name</div><div id="disp-p-name" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Primary Parent</div><div id="disp-p-name" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Email</div><div id="disp-p-email" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Phone</div><div id="disp-p-phone" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Franchise</div><div id="disp-p-fran" class="profile-value"></div></div>
@@ -46,12 +46,26 @@
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
                     <div><label>First Name</label><input type="text" id="p_fn"></div>
                     <div><label>Last Name</label><input type="text" id="p_ln"></div>
-                    <div><label>Email</label><input type="email" id="p_email"></div>
-                    <div><label>Phone Number</label><input type="text" id="p_phone"></div>
+                    <div><label>Primary Email</label><input type="email" id="p_email"></div>
+                    <div><label>Primary Phone</label><input type="text" id="p_phone"></div>
                     <div style="grid-column: span 2;"><label>Home Address</label><input type="text" id="p_address"></div>
-                    <div><label>Primary Language</label><input type="text" id="p_lang" value="Tagalog"></div>
-                    <div><label>Nationality</label><input type="text" id="p_nat" value="Filipino"></div>
-                    <div style="grid-column: span 2;"><label>Assign Franchise</label><select id="p_fran_id"></select></div>
+                    
+                    <div style="grid-column: span 2; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;"><label style="color:#00d1b2;">Second Parent Information</label></div>
+                    <div style="grid-column: span 2;"><label>Full Name</label><input type="text" id="p_s2_name"></div>
+                    <div><label>Relationship</label><input type="text" id="p_s2_rel"></div>
+                    <div><label>Phone Number</label><input type="text" id="p_s2_phone"></div>
+                    <div><label>Email Address</label><input type="email" id="p_s2_email"></div>
+                    <div><label>Home Address (If Different)</label><input type="text" id="p_s2_addr"></div>
+
+                    <div style="grid-column: span 2; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;"><label style="color:#00d1b2;">Emergency Contacts</label></div>
+                    <div><label>Contact 1 Name</label><input type="text" id="p_e1_name"></div>
+                    <div><label>Contact 1 Relationship</label><input type="text" id="p_e1_rel"></div>
+                    <div><label>Contact 1 Phone</label><input type="text" id="p_e1_phone"></div>
+                    <div style="border-left: 1px solid #eee; padding-left: 15px;"><label>Contact 2 Name</label><input type="text" id="p_e2_name"></div>
+                    <div><label>Contact 2 Relationship</label><input type="text" id="p_e2_rel"></div>
+                    <div><label>Contact 2 Phone</label><input type="text" id="p_e2_phone"></div>
+
+                    <div style="grid-column: span 2; margin-top: 15px;"><label>Assign Franchise</label><select id="p_fran_id"></select></div>
                 </div>
             </div>
             <button class="btn-teal" style="background:#64748b;" onclick="toggleParentMode()">Toggle New/Existing</button>
@@ -90,12 +104,12 @@
         <div class="step-content" style="margin-top:20px;">
             <form id="assessmentForm">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                    <div><label>Teacher</label><select id="a_teacher_id"></select></div>
+                    <div><label>Teacher</label><select id="a_teacher_id" required></select></div>
                     <div><label>Date</label><input type="date" id="a_assessment_date"></div>
                     <div><label>Type</label><input type="text" id="a_assessment_type" value="Initial Assessment"></div>
                 </div>
                 <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px 25px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;"></div>
-                <button type="submit" class="btn-teal">Capture Assessment & Continue</button>
+                <button type="submit" class="btn-teal">Lock Assessment Data</button>
             </form>
         </div>
     </div>
@@ -129,8 +143,8 @@
         <h2 class="nest-header" style="margin:0;"><span class="badge-step">6</span> Finalize Enrollment</h2>
         <div class="step-content" style="margin-top:20px;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; background: #fff; padding: 15px; border: 1px solid #e2e8f0; border-radius: 4px;">
-                <div><label>Enrolled Date (Signed)</label><input type="date" id="final_enrolled_date" onchange="renderReviewStep()"></div>
-                <div><label>Start Date (Billing Cycle)</label><input type="date" id="final_start_date" onchange="renderReviewStep()"></div>
+                <div><label>Enrolled Date</label><input type="date" id="final_enrolled_date" onchange="renderReviewStep()"></div>
+                <div><label>Start Date</label><input type="date" id="final_start_date" onchange="renderReviewStep()"></div>
             </div>
             <div id="review-container" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 20px; display:none;">
                 <h3 class="nest-header" style="font-size: 0.9rem; margin-top:0;">REVIEW SUMMARY</h3>
@@ -145,7 +159,7 @@
 
 <div id="completion-screen" style="display:none; text-align: center; padding: 100px 20px; background: #f8fafc; min-height: 100vh;">
     <h1 class="nest-header" style="font-size: 2rem;">✓ Enrollment Complete</h1>
-    <p style="color: #64748b;">All tables (Parent, Student, Assessment, Pickup, Enrollment) updated successfully.</p>
+    <p style="color: #64748b;">Profiles, Assessment, Pickups, and Enrollment Log have been synced.</p>
 </div>
 
 <script>
@@ -157,76 +171,87 @@
     const TEACHER_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
     const QUESTIONS_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions";
     const SINGLE_QUESTION_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions/";
-    const ASSESSMENT_FILLED_API = "https://x8ki-letl-twmt.n7.xano.io/api:e7P6emQg/student_assessment_filled";
+    const ASSESSMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:e7P6emQg/student_assessment_filled";
     const PICKUP_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_authorized_pickup";
     const ENROLLMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/enrollment";
     const SESSION_API = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session";
 
-    let currentParentId = null, currentStudentId = null, currentFranchiseId = null, selectedSessionId = null, currentTeacherId = null;
-    let parentMode = 'select', studentMode = 'select', allStudents = [], allParents = [], allFranchises = [], allTeachers = [], pickupContacts = [], allSessions = [], assessmentPayload = null;
+    let currentParentId, currentStudentId, currentFranchiseId, selectedSessionId, currentTeacherId, assessmentPayload, pickupContacts = [], allSessions = [], allTeachers = [], allParents = [], allStudents = [], allFranchises = [];
 
     function unwrap(d) { return Array.isArray(d) ? d : (d.result1 || d.items || []); }
 
     window.toggleParentMode = () => {
-        parentMode = (parentMode === 'select') ? 'create' : 'select';
-        document.getElementById('parent-select-mode').style.display = (parentMode === 'select') ? 'block' : 'none';
-        document.getElementById('parent-create-mode').style.display = (parentMode === 'create') ? 'block' : 'none';
+        const mode = document.getElementById('parent-select-mode').style.display === 'none' ? 'select' : 'create';
+        document.getElementById('parent-select-mode').style.display = mode === 'select' ? 'block' : 'none';
+        document.getElementById('parent-create-mode').style.display = mode === 'create' ? 'block' : 'none';
     };
 
     window.toggleStudentMode = () => {
-        studentMode = (studentMode === 'select') ? 'create' : 'select';
-        document.getElementById('student-select-mode').style.display = (studentMode === 'select') ? 'block' : 'none';
-        document.getElementById('student-create-mode').style.display = (studentMode === 'create') ? 'block' : 'none';
+        const mode = document.getElementById('student-select-mode').style.display === 'none' ? 'select' : 'create';
+        document.getElementById('student-select-mode').style.display = mode === 'select' ? 'block' : 'none';
+        document.getElementById('student-create-mode').style.display = mode === 'create' ? 'block' : 'none';
     };
 
     window.handleQuestionChange = async (index) => {
-        const questionId = document.getElementById(`q_select_${index}`).value;
+        const qId = document.getElementById(`q_select_${index}`).value;
         const ansDropdown = document.getElementById(`a_ans_${index}`);
-        if (!questionId) return;
-        try {
-            const res = await fetch(SINGLE_QUESTION_API + questionId);
-            const data = await res.json();
-            ansDropdown.innerHTML = '<option value="">-- Choose Answer --</option>';
-            const qData = data.result1 || data;
-            for (let i = 1; i <= 6; i++) {
-                const val = qData[`answer_${i}`];
-                if (val && val.trim() !== "") ansDropdown.innerHTML += `<option value="${val.trim()}">${val.trim()}</option>`;
-            }
-        } catch (e) { console.error(e); }
+        if (!qId) return;
+        const res = await fetch(SINGLE_QUESTION_API + qId);
+        const data = await res.json();
+        const q = data.result1 || data;
+        ansDropdown.innerHTML = '<option value="">-- Answer --</option>';
+        for(let i=1; i<=6; i++) { if(q[`answer_${i}`]) ansDropdown.innerHTML += `<option value="${q[`answer_${i}`]}">${q[`answer_${i}`]}</option>`; }
     };
 
     window.processParentStep = async () => {
-        let pData = {};
-        if (parentMode === 'create') {
+        let pData;
+        if(document.getElementById('parent-create-mode').style.display === 'block') {
             currentFranchiseId = parseInt(document.getElementById('p_fran_id').value);
-            pData = { first_name: document.getElementById('p_fn').value, last_name: document.getElementById('p_ln').value, email: document.getElementById('p_email').value, phone: document.getElementById('p_phone').value, address: document.getElementById('p_address').value, primary_language: document.getElementById('p_lang').value, Nationality: document.getElementById('p_nat').value, franchise_id: currentFranchiseId, is_active: true };
-            const res = await fetch(PARENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(pData) });
-            const data = await res.json();
-            currentParentId = data.id;
+            const payload = { 
+                first_name: document.getElementById('p_fn').value, 
+                last_name: document.getElementById('p_ln').value, 
+                email: document.getElementById('p_email').value, 
+                phone: document.getElementById('p_phone').value, 
+                address: document.getElementById('p_address').value,
+                second_parent_full_name: document.getElementById('p_s2_name').value,
+                second_parent_relationship: document.getElementById('p_s2_rel').value,
+                second_parent_phone_number: document.getElementById('p_s2_phone').value,
+                second_parent_email_address: document.getElementById('p_s2_email').value,
+                second_parent_home_address: document.getElementById('p_s2_addr').value,
+                emergency_contact_1_name: document.getElementById('p_e1_name').value,
+                emergency_contact_1_relationship: document.getElementById('p_e1_rel').value,
+                emergency_contact_1_phone_number: document.getElementById('p_e1_phone').value,
+                emergency_contact_2_name: document.getElementById('p_e2_name').value,
+                emergency_contact_2_relationship: document.getElementById('p_e2_rel').value,
+                emergency_contact_2_phone_number: document.getElementById('p_e2_phone').value,
+                franchise_id: currentFranchiseId, 
+                is_active: true 
+            };
+            const res = await fetch(PARENT_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+            pData = await res.json(); currentParentId = pData.id;
         } else {
-            currentParentId = document.getElementById('p_select_id').value;
-            pData = allParents.find(p => p.id == currentParentId);
-            currentFranchiseId = pData.franchise_id;
+            currentParentId = parseInt(document.getElementById('p_select_id').value);
+            pData = allParents.find(p => p.id === currentParentId); currentFranchiseId = pData.franchise_id;
         }
-        document.getElementById('disp-p-name').innerText = `${pData.first_name} ${pData.last_name}`;
-        document.getElementById('disp-p-fran').innerText = (allFranchises.find(f => f.id == currentFranchiseId) || {}).name || 'Sariaya';
+        document.getElementById('disp-p-name').innerText = pData.first_name + ' ' + pData.last_name;
+        document.getElementById('disp-p-email').innerText = pData.email || 'N/A';
+        document.getElementById('disp-p-phone').innerText = pData.phone || 'N/A';
+        document.getElementById('disp-p-fran').innerText = (allFranchises.find(f => f.id === currentFranchiseId) || {}).name || 'Sariaya';
         document.getElementById('parent-profile-view').style.display = 'grid';
         document.getElementById('step-parent').className = 'step-container step-saved';
-        const fs = allStudents.filter(s => s.parent_id == currentParentId);
-        document.getElementById('s_select_id').innerHTML = '<option value="">-- Student --</option>' + fs.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        document.getElementById('s_select_id').innerHTML = '<option value="">-- Select Child --</option>' + allStudents.filter(s => s.parent_id === currentParentId).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         document.getElementById('step-student').className = 'step-container step-active';
     };
 
     window.processStudentStep = async () => {
-        let sData = {};
-        if (studentMode === 'create') {
-            sData = { parent_id: currentParentId, name: document.getElementById('s_name_new').value, preferred_name: document.getElementById('s_pref_new').value, gender: document.getElementById('s_gen_new').value, date_of_birth: document.getElementById('s_dob_new').value, home_address: document.getElementById('s_addr_new').value, nationality: document.getElementById('s_nat_new').value, primary_language: document.getElementById('s_lang_new').value, franchise_id: currentFranchiseId, is_active: true };
-            const res = await fetch(STUDENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(sData) });
-            const data = await res.json();
-            currentStudentId = data.id;
+        let sData;
+        if(document.getElementById('student-create-mode').style.display === 'block') {
+            const payload = { parent_id: currentParentId, name: document.getElementById('s_name_new').value, preferred_name: document.getElementById('s_pref_new').value, gender: document.getElementById('s_gen_new').value, date_of_birth: document.getElementById('s_dob_new').value, home_address: document.getElementById('s_addr_new').value, nationality: document.getElementById('s_nat_new').value, primary_language: document.getElementById('s_lang_new').value, franchise_id: currentFranchiseId, is_active: true };
+            const res = await fetch(STUDENT_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+            sData = await res.json(); currentStudentId = sData.id;
         } else {
-            currentStudentId = document.getElementById('s_select_id').value;
-            sData = allStudents.find(s => s.id == currentStudentId);
+            currentStudentId = parseInt(document.getElementById('s_select_id').value);
+            sData = allStudents.find(s => s.id === currentStudentId);
         }
         document.getElementById('disp-s-name').innerText = sData.name;
         document.getElementById('disp-s-dob').innerText = sData.date_of_birth;
@@ -234,29 +259,26 @@
         document.getElementById('disp-s-pref').innerText = sData.preferred_name || 'N/A';
         document.getElementById('student-profile-view').style.display = 'grid';
         document.getElementById('step-student').className = 'step-container step-saved';
-        const ft = allTeachers.filter(t => t.franchise_id == currentFranchiseId);
-        document.getElementById('a_teacher_id').innerHTML = '<option value="">-- Teacher --</option>' + ft.map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
+        document.getElementById('a_teacher_id').innerHTML = '<option value="">-- Teacher --</option>' + allTeachers.filter(t => t.franchise_id === currentFranchiseId).map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
         document.getElementById('step-assessment').className = 'step-container step-active';
     };
 
     document.getElementById('assessmentForm').onsubmit = (e) => {
         e.preventDefault();
-        const tSel = document.getElementById('a_teacher_id');
-        currentTeacherId = tSel.value;
-        assessmentPayload = { student_id: parseInt(currentStudentId) };
+        currentTeacherId = parseInt(document.getElementById('a_teacher_id').value);
+        assessmentPayload = { student_id: currentStudentId };
         for(let i=1; i<=10; i++) {
             assessmentPayload[`question_${i}_id`] = parseInt(document.getElementById(`q_select_${i}`).value) || null;
             assessmentPayload[`answer_${i}`] = document.getElementById(`a_ans_${i}`).value || "";
         }
         document.getElementById('step-assessment').className = 'step-container step-saved';
-        const franchiseSessions = allSessions.filter(s => s.franchise_id == currentFranchiseId && s.is_active);
-        document.getElementById('enrollment_session_id').innerHTML = '<option value="">-- Choose Session --</option>' + franchiseSessions.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        document.getElementById('enrollment_session_id').innerHTML = '<option value="">-- Session --</option>' + allSessions.filter(s => s.franchise_id === currentFranchiseId && s.is_active).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         document.getElementById('step-session').className = 'step-container step-active';
     };
 
     window.processSessionStep = () => {
-        selectedSessionId = document.getElementById('enrollment_session_id').value;
-        if(!selectedSessionId) { alert("Please select a session."); return; }
+        selectedSessionId = parseInt(document.getElementById('enrollment_session_id').value);
+        if(!selectedSessionId) return alert("Select a session");
         document.getElementById('step-session').className = 'step-container step-saved';
         document.getElementById('step-pickup').className = 'step-container step-active';
     };
@@ -264,7 +286,7 @@
     window.addPickupLocal = () => {
         const c = { name: document.getElementById('pu_name').value, relationship: document.getElementById('pu_rel').value, phone: document.getElementById('pu_phone').value };
         pickupContacts.push(c);
-        document.getElementById('pickup-entry-list').innerHTML += `<div style="padding:6px 12px; background:#f0fdfa; border:1px solid #00d1b2; border-radius:15px; font-size:0.7rem; color:#00b89c;">${c.name}</div>`;
+        document.getElementById('pickup-entry-list').innerHTML += `<div style="padding:6px 12px; background:#f0fdfa; border:1px solid #00d1b2; border-radius:15px; font-size:0.7rem;">${c.name}</div>`;
         document.getElementById('pu_name').value = ''; document.getElementById('pu_rel').value = ''; document.getElementById('pu_phone').value = '';
     };
 
@@ -278,42 +300,41 @@
     };
 
     window.renderReviewStep = () => {
-        const sN = document.getElementById('disp-s-name').innerText;
-        const eD = document.getElementById('final_enrolled_date').value;
-        const sD = document.getElementById('final_start_date').value;
+        const eD = document.getElementById('final_enrolled_date').value, sD = document.getElementById('final_start_date').value;
         if(!eD || !sD) return;
         document.getElementById('review-content').innerHTML = `
             <table class="review-table">
-                <tr><td class="rev-label">Student</td><td class="rev-val">${sN}</td></tr>
+                <tr><td class="rev-label">Student</td><td class="rev-val">${document.getElementById('disp-s-name').innerText}</td></tr>
                 <tr><td class="rev-label">Enrollment Date</td><td class="rev-val">${eD}</td></tr>
                 <tr><td class="rev-label">Start Date</td><td class="rev-val">${sD}</td></tr>
             </table>
         `;
         document.getElementById('review-container').style.display = 'block';
-    }
+    };
 
     window.submitFinalEnrollment = async () => {
-        const eD = document.getElementById('final_enrolled_date').value;
-        const sD = document.getElementById('final_start_date').value;
-        const sUpdate = fetch(STUDENT_UPDATE_API + currentStudentId, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: parseInt(selectedSessionId), enrolled_date: eD, start_date: sD, is_active: true }) });
-        const eLog = fetch(ENROLLMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: parseInt(currentStudentId), franchise_id: parseInt(currentFranchiseId), teacher_id: parseInt(currentTeacherId), enrolled_date: eD, start_date: sD, status: 'active' }) });
-        const aWrite = fetch(ASSESSMENT_FILLED_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(assessmentPayload) });
-        const pWrites = pickupContacts.map(c => fetch(PICKUP_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: parseInt(currentStudentId), name: c.name, relationship: c.relationship, phone: c.phone, is_active: true }) }));
+        const eD = document.getElementById('final_enrolled_date').value, sD = document.getElementById('final_start_date').value;
+        const sUpdate = fetch(STUDENT_UPDATE_API + currentStudentId, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: selectedSessionId, enrolled_date: eD, start_date: sD, is_active: true }) });
+        const eLog = fetch(ENROLLMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: currentStudentId, franchise_id: currentFranchiseId, teacher_id: currentTeacherId, enrolled_date: eD, start_date: sD, status: 'active' }) });
+        const aWrite = fetch(ASSESSMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(assessmentPayload) });
+        const pWrites = pickupContacts.map(c => fetch(PICKUP_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: currentStudentId, name: c.name, relationship: c.relationship, phone: c.phone, is_active: true }) }));
 
         try {
-            await Promise.all([sUpdate, eLog, aWrite, ...pWrites]);
-            document.getElementById('enrollment-ui').style.display = 'none'; document.getElementById('completion-screen').style.display = 'block'; setTimeout(() => { window.location.href = "index.html"; }, 3000);
-        } catch (e) { alert("Error saving records."); }
+            const results = await Promise.all([sUpdate, eLog, aWrite, ...pWrites]);
+            if(results.every(r => r.ok)) {
+                document.getElementById('enrollment-ui').style.display = 'none'; document.getElementById('completion-screen').style.display = 'block';
+                setTimeout(() => window.location.href = "index.html", 3000);
+            } else { alert("Sync Error. Check Xano API inputs."); }
+        } catch (e) { alert("Save Failed."); }
     };
 
     async function init() {
         const [fR, pR, sR, tR, qR, sessR] = await Promise.all([fetch(FRANCHISE_API), fetch(PARENT_API + '?t=' + Date.now()), fetch(STUDENT_API + '?t=' + Date.now()), fetch(TEACHER_API), fetch(QUESTIONS_API), fetch(SESSION_API)]);
         allFranchises = unwrap(await fR.json()); allParents = unwrap(await pR.json()); allStudents = unwrap(await sR.json()); allTeachers = unwrap(await tR.json()); allSessions = unwrap(await sessR.json());
-        const qu = unwrap(await qR.json());
         document.getElementById('p_fran_id').innerHTML = '<option value="">-- Franchise --</option>' + allFranchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-        document.getElementById('p_select_id').innerHTML = '<option value="">-- Parent --</option>' + allParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
-        const grid = document.getElementById('assessment-qa-grid');
-        for(let i=1; i<=10; i++) grid.innerHTML += `<div><select id="q_select_${i}" onchange="handleQuestionChange(${i})"><option value="">-- Q${i} --</option>${qu.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}</select></div><div><select id="a_ans_${i}"><option value="">Select answer...</option></select></div>`;
+        document.getElementById('p_select_id').innerHTML = '<option value="">-- Select Parent --</option>' + allParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
+        const qu = unwrap(await qR.json()), grid = document.getElementById('assessment-qa-grid');
+        for(let i=1; i<=10; i++) grid.innerHTML += `<div><select id="q_select_${i}" onchange="handleQuestionChange(${i})"><option value="">-- Q${i} --</option>${qu.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}</select></div><div><select id="a_ans_${i}"><option value="">-- Answer --</option></select></div>`;
     }
     init();
 })();
