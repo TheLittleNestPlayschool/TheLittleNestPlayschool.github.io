@@ -154,7 +154,7 @@
 
 <div id="completion-screen" style="display:none; text-align: center; padding: 100px 20px; background: #f8fafc; min-height: 100vh;">
     <h1 class="nest-header" style="font-size: 2rem;">✓ Enrollment Complete</h1>
-    <p style="color: #64748b;">All records successfully updated.</p>
+    <p style="color: #64748b;">Profiles, Assessment, and Logistics updated successfully.</p>
 </div>
 
 <script>
@@ -291,10 +291,13 @@
     window.renderReviewStep = () => {
         const pN = document.getElementById('disp-p-name').innerText;
         const sN = document.getElementById('disp-s-name').innerText;
-        const tN = document.getElementById('a_teacher_id').options[document.getElementById('a_teacher_id').selectedIndex].text;
-        const sSN = document.getElementById('enrollment_session_id').options[document.getElementById('enrollment_session_id').selectedIndex].text;
+        const tS = document.getElementById('a_teacher_id');
+        const tN = tS.options[tS.selectedIndex].text;
+        const sS = document.getElementById('enrollment_session_id');
+        const sSN = sS.options[sS.selectedIndex].text;
         const eD = document.getElementById('final_enrolled_date').value;
         const sD = document.getElementById('final_start_date').value;
+
         if(!eD || !sD) return;
         document.getElementById('review-content').innerHTML = `
             <table class="review-table">
@@ -312,11 +315,38 @@
     window.submitFinalEnrollment = async () => {
         const eD = document.getElementById('final_enrolled_date').value;
         const sD = document.getElementById('final_start_date').value;
-        const sUpdate = fetch(STUDENT_UPDATE_API + currentStudentId, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: parseInt(selectedSessionId), enrolled_date: eD, start_date: sD, is_active: true }) });
-        const eLog = fetch(ENROLLMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: parseInt(currentStudentId), franchise_id: parseInt(currentFranchiseId), teacher_id: parseInt(currentTeacherId), enrolled_date: eD, start_date: sD, status: 'active' }) });
-        const [r1, r2] = await Promise.all([sUpdate, eLog]);
-        if(r1.ok && r2.ok) { document.getElementById('enrollment-ui').style.display = 'none'; document.getElementById('completion-screen').style.display = 'block'; setTimeout(() => { window.location.href = "index.html"; }, 3000); }
-        else { alert("Error saving records."); }
+
+        const sUpdate = fetch(STUDENT_UPDATE_API + currentStudentId, { 
+            method: 'PATCH', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({ session_enrolled: parseInt(selectedSessionId), enrolled_date: eD, start_date: sD, is_active: true }) 
+        });
+
+        const eLog = fetch(ENROLLMENT_API, { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({ 
+                student_id: parseInt(currentStudentId), 
+                franchise_id: parseInt(currentFranchiseId), 
+                teacher_id: parseInt(currentTeacherId),
+                enrolled_date: eD,
+                start_date: sD,
+                status: 'active' 
+            }) 
+        });
+
+        try {
+            const [r1, r2] = await Promise.all([sUpdate, eLog]);
+            if(r1.ok && r2.ok) {
+                document.getElementById('enrollment-ui').style.display = 'none';
+                document.getElementById('completion-screen').style.display = 'block';
+                setTimeout(() => { window.location.href = "index.html"; }, 3000);
+            } else {
+                const errBody = await r2.text();
+                console.error("Enrollment Error:", errBody);
+                alert("Error saving records. Ensure Teacher is selected and fields match Xano.");
+            }
+        } catch (e) { alert("Network error."); }
     };
 
     async function init() {
