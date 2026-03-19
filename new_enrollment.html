@@ -168,7 +168,7 @@
     const SINGLE_QUESTION_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions/";
     const ASSESSMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:e7P6emQg/student_assessment_filled";
     const PICKUP_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_authorized_pickup";
-    const ENROLLMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/enrollment";
+    const ENROLLMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/session_enrollment"; // Updated table name
     const SESSION_API = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session";
 
     let currentParentId, currentStudentId, currentFranchiseId, selectedSessionId, currentTeacherId, assessmentPayload, pickupContacts = [], allSessions = [], allTeachers = [], allParents = [], allStudents = [], allFranchises = [];
@@ -236,6 +236,7 @@
         const pInfo = allParents.find(p => p.id === currentParentId);
         document.getElementById('disp-p-name').innerText = pInfo.first_name + ' ' + pInfo.last_name;
         document.getElementById('disp-p-email').innerText = pInfo.email || "---";
+        document.getElementById('disp-p-phone').innerText = pInfo.phone || "---";
         document.getElementById('disp-p-fran').innerText = (allFranchises.find(f => f.id === currentFranchiseId) || {}).name || "---";
         
         document.getElementById('parent-profile-view').style.display = 'grid';
@@ -257,6 +258,8 @@
         const sInfo = allStudents.find(s => s.id === currentStudentId) || {name: document.getElementById('s_name_new').value};
         document.getElementById('disp-s-name').innerText = sInfo.name;
         document.getElementById('disp-s-dob').innerText = sInfo.date_of_birth || "---";
+        document.getElementById('disp-s-gen').innerText = sInfo.gender || "---";
+        document.getElementById('disp-s-pref').innerText = sInfo.preferred_name || "---";
         document.getElementById('student-profile-view').style.display = 'grid';
         document.getElementById('step-student').className = 'step-container step-saved';
         document.getElementById('a_teacher_id').innerHTML = '<option value="">-- Teacher --</option>' + allTeachers.filter(t => t.franchise_id === currentFranchiseId).map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
@@ -305,9 +308,9 @@
     window.renderReviewStep = () => {
         const eD = document.getElementById('final_enrolled_date').value, sD = document.getElementById('final_start_date').value;
         const tSel = document.getElementById('a_teacher_id');
-        const teacherName = tSel.options[tSel.selectedIndex].text;
+        const teacherName = tSel.options[tSel.selectedIndex] ? tSel.options[tSel.selectedIndex].text : "---";
         const sSel = document.getElementById('enrollment_session_id');
-        const sessionName = sSel.options[sSel.selectedIndex].text;
+        const sessionName = sSel.options[sSel.selectedIndex] ? sSel.options[sSel.selectedIndex].text : "---";
         const studentName = document.getElementById('disp-s-name').innerText;
         const parentName = document.getElementById('disp-p-name').innerText;
 
@@ -336,26 +339,74 @@
     };
 
     window.submitFinalEnrollment = async () => {
-        const eD = document.getElementById('final_enrolled_date').value, sD = document.getElementById('final_start_date').value;
+        const eD = document.getElementById('final_enrolled_date').value;
+        const sD = document.getElementById('final_start_date').value;
+        
         try {
-            const sUpdate = await fetch(STUDENT_UPDATE_API + currentStudentId, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: selectedSessionId, enrolled_date: eD, start_date: sD, is_active: true }) });
-            const aWrite = await fetch(ASSESSMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(assessmentPayload) });
-            const eLog = await fetch(ENROLLMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: parseInt(currentStudentId), franchise_id: parseInt(currentFranchiseId), teacher_id: parseInt(currentTeacherId), enrolled_date: eD, start_date: sD, status: 'active' }) });
-            const pPromises = pickupContacts.map(c => fetch(PICKUP_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: parseInt(currentStudentId), name: c.name, relationship: c.relationship, phone: c.phone, is_active: true }) }));
-            await Promise.all(pPromises);
+            // 1. Update Student Table (session_enrolled, dates)
+            const sUpdate = await fetch(STUDENT_UPDATE_API + currentStudentId, { 
+                method: 'PATCH', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ session_enrolled: parseInt(selectedSessionId), enrolled_date: eD, start_date: sD, is_active: true }) 
+            });
+
+            // 2. Write Assessment Record
+            const aWrite = await fetch(ASSESSMENT_API, { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(assessmentPayload) 
+            });
+
+            // 3. Create Session Enrollment Log (Matches #657433 schema)
+            const eLog = await fetch(ENROLLMENT_API, { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ 
+                    student_id: parseInt(currentStudentId), 
+                    session_id: parseInt(selectedSessionId), 
+                    enrollment_date: eD, 
+                    status: 'active' 
+                }) 
+            });
+
+            // 4. Create Pickup Contacts
+            const pPromises = pickupContacts.map(c => fetch(PICKUP_API, { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ student_id: parseInt(currentStudentId), name: c.name, relationship: c.relationship, phone: c.phone, is_active: true }) 
+            }));
+            const pResults = await Promise.all(pPromises);
 
             if(sUpdate.ok && eLog.ok) {
-                document.getElementById('enrollment-ui').style.display = 'none'; document.getElementById('completion-screen').style.display = 'block';
+                document.getElementById('enrollment-ui').style.display = 'none'; 
+                document.getElementById('completion-screen').style.display = 'block';
                 setTimeout(() => window.location.href = "index.html", 4000);
-            } else { alert("Sync Error. Enrollment rejected."); }
-        } catch (e) { alert("Save Failed. Connection error."); }
+            } else { 
+                alert("Sync Error. Enrollment rejected. Check table fields."); 
+            }
+        } catch (e) { 
+            alert("Save Failed. Connection error."); 
+        }
     };
 
     async function init() {
-        const [fR, pR, sR, tR, qR, sessR] = await Promise.all([fetch(FRANCHISE_API), fetch(PARENT_API + '?t=' + Date.now()), fetch(STUDENT_API + '?t=' + Date.now()), fetch(TEACHER_API), fetch(QUESTIONS_API), fetch(SESSION_API)]);
-        allFranchises = unwrap(await fR.json()); allParents = unwrap(await pR.json()); allStudents = unwrap(await sR.json()); allTeachers = unwrap(await tR.json()); allSessions = unwrap(await sessR.json());
+        const [fR, pR, sR, tR, qR, sessR] = await Promise.all([
+            fetch(FRANCHISE_API), 
+            fetch(PARENT_API + '?t=' + Date.now()), 
+            fetch(STUDENT_API + '?t=' + Date.now()), 
+            fetch(TEACHER_API), 
+            fetch(QUESTIONS_API), 
+            fetch(SESSION_API)
+        ]);
+        allFranchises = unwrap(await fR.json()); 
+        allParents = unwrap(await pR.json()); 
+        allStudents = unwrap(await sR.json()); 
+        allTeachers = unwrap(await tR.json()); 
+        allSessions = unwrap(await sessR.json());
+        
         document.getElementById('p_fran_id').innerHTML = '<option value="">-- Franchise --</option>' + allFranchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
         document.getElementById('p_select_id').innerHTML = '<option value="">-- Select Parent --</option>' + allParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
+        
         const qu = unwrap(await qR.json()), grid = document.getElementById('assessment-qa-grid');
         for(let i=1; i<=10; i++) grid.innerHTML += `<div><select id="q_select_${i}" onchange="handleQuestionChange(${i})"><option value="">-- Q${i} --</option>${qu.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}</select></div><div><select id="a_ans_${i}"><option value="">-- Answer --</option></select></div>`;
     }
