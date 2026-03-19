@@ -1,39 +1,42 @@
 <style>
     .enrollment-wrapper { width: 100%; margin: 0; padding: 20px; box-sizing: border-box; background: #f8fafc; min-height: 100vh; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-    .nest-header { color: #334155; font-weight: 700; }
+    .nest-header { color: #334155; font-weight: 700; margin-bottom: 5px; }
     
     .profile-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; background: #fff; padding: 18px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 10px; width: 100%; }
     .profile-item { display: flex; flex-direction: column; }
     .profile-label { font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
     .profile-value { font-size: 0.85rem; color: #334155; font-weight: 600; }
 
-    .step-container { background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 25px; margin-bottom: 20px; transition: all 0.2s ease; }
+    .step-container { background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 25px; margin-bottom: 20px; transition: all 0.2s ease; position: relative; }
     .step-locked { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
     .step-active { border-left: 6px solid #00d1b2; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
     .step-saved { border-left: 6px solid #cbd5e1; background: #ffffff; }
     .step-saved .step-content { display: none; }
     
     label { display: block; font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
-    input, select, textarea { width: 100%; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; font-size: 0.9rem; background: #fff; color: #334155; box-sizing: border-box; }
+    input, select, textarea { width: 100%; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; font-size: 0.9rem; background: #fff; color: #334155; box-sizing: border-box; transition: border-color 0.2s; }
+    input:focus, select:focus { border-color: #00d1b2; outline: none; }
     
-    .btn-teal { background-color: #00d1b2; color: #ffffff !important; padding: 14px 28px; border-radius: 4px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; margin-top: 15px; transition: background 0.2s; }
-    .btn-teal:hover { background-color: #00b89c; }
+    .btn-teal { background-color: #00d1b2; color: #ffffff !important; padding: 14px 28px; border-radius: 4px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; margin-top: 15px; transition: all 0.2s; }
+    .btn-teal:hover { background-color: #00b89c; transform: translateY(-1px); }
+    .btn-teal:disabled { background-color: #cbd5e1; cursor: not-allowed; }
     
     .badge-step { background: #334155; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; font-weight: bold; }
     
     .review-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
-    .review-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
+    .review-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
     .review-table .rev-label { font-weight: 800; color: #64748b; width: 40%; text-transform: uppercase; font-size: 0.6rem; }
     .review-table .rev-val { color: #334155; font-weight: 600; }
     
-    #completion-screen { display: none; text-align: center; padding: 100px 20px; background: #f8fafc; min-height: 100vh; }
+    .loading-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 10; justify-content: center; align-items: center; font-size: 0.7rem; font-weight: 800; color: #00d1b2; }
 </style>
 
 <div id="enrollment-ui" class="enrollment-wrapper">
     <div id="enrollment-progress" style="text-align: right; font-size: 0.7rem; font-weight: 800; color: #94a3b8; margin-bottom: 15px;">PROGRESS: STEP 1 OF 6</div>
 
     <div id="step-parent" class="step-container step-active">
-        <h2 class="nest-header" style="margin:0;"><span class="badge-step">1</span> Parent Profile</h2>
+        <div class="loading-overlay" id="loader-parent">SYNCING DATA...</div>
+        <h2 class="nest-header"><span class="badge-step">1</span> Parent Profile</h2>
         <div id="parent-profile-view" style="display:none;" class="profile-display">
             <div class="profile-item"><div class="profile-label">Primary Parent</div><div id="disp-p-name" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Email</div><div id="disp-p-email" class="profile-value"></div></div>
@@ -41,23 +44,30 @@
             <div class="profile-item"><div class="profile-label">Franchise</div><div id="disp-p-fran" class="profile-value"></div></div>
         </div>
         <div class="step-content" style="margin-top:20px;">
-            <div id="parent-select-mode"><label>Existing Parent Search</label><select id="p_select_id"></select></div>
+            <div id="parent-select-mode">
+                <label>Search Existing Database</label>
+                <select id="p_select_id"></select>
+            </div>
             <div id="parent-create-mode" style="display:none;">
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
                     <div><label>First Name</label><input type="text" id="p_fn"></div>
                     <div><label>Last Name</label><input type="text" id="p_ln"></div>
                     <div><label>Email</label><input type="email" id="p_email"></div>
                     <div><label>Phone</label><input type="text" id="p_phone"></div>
-                    <div style="grid-column: span 2;"><label>Address</label><input type="text" id="p_address"></div>
+                    <div style="grid-column: span 2;"><label>Home Address</label><input type="text" id="p_address"></div>
+                    <div style="grid-column: span 2;"><label>Assign Franchise</label><select id="p_fran_id"></select></div>
                 </div>
             </div>
-            <button class="btn-teal" style="background:#64748b;" onclick="toggleParentMode()">Toggle New/Existing</button>
-            <button onclick="processParentStep()" class="btn-teal">Confirm Parent Details</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-teal" style="background:#64748b;" onclick="toggleParentMode()">New / Existing Toggle</button>
+                <button id="btn-p-confirm" onclick="processParentStep()" class="btn-teal">Confirm Parent Details</button>
+            </div>
         </div>
     </div>
 
     <div id="step-student" class="step-container step-locked">
-        <h2 class="nest-header" style="margin:0;"><span class="badge-step">2</span> Student Profile</h2>
+        <div class="loading-overlay" id="loader-student">CHECKING RECORDS...</div>
+        <h2 class="nest-header"><span class="badge-step">2</span> Student Profile</h2>
         <div id="student-profile-view" style="display:none;" class="profile-display">
             <div class="profile-item"><div class="profile-label">Student Name</div><div id="disp-s-name" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Birthday</div><div id="disp-s-dob" class="profile-value"></div></div>
@@ -65,73 +75,76 @@
             <div class="profile-item"><div class="profile-label">Preferred Name</div><div id="disp-s-pref" class="profile-value"></div></div>
         </div>
         <div class="step-content" style="margin-top:20px;">
-            <div id="student-select-mode"><label>Attached Students</label><select id="s_select_id"></select></div>
+            <div id="student-select-mode"><label>Registered Children</label><select id="s_select_id"></select></div>
             <div id="student-create-mode" style="display:none;">
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
                     <div style="grid-column: span 2;"><label>Full Name</label><input type="text" id="s_name_new"></div>
                     <div><label>Preferred Name</label><input type="text" id="s_pref_new"></div>
                     <div><label>Gender</label><select id="s_gen_new"><option value="Male">Male</option><option value="Female">Female</option></select></div>
                     <div><label>Date of Birth</label><input type="date" id="s_dob_new"></div>
-                    <div style="grid-column: span 2;"><label>Home Address</label><input type="text" id="s_addr_new"></div>
+                    <div style="grid-column: span 2;"><label>Residential Address</label><input type="text" id="s_addr_new"></div>
                 </div>
             </div>
-            <button class="btn-teal" style="background:#64748b;" onclick="toggleStudentMode()">Toggle New/Existing</button>
-            <button onclick="processStudentStep()" class="btn-teal">Confirm Student Details</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-teal" style="background:#64748b;" onclick="toggleStudentMode()">New / Existing Toggle</button>
+                <button onclick="processStudentStep()" class="btn-teal">Confirm Student Profile</button>
+            </div>
         </div>
     </div>
 
     <div id="step-assessment" class="step-container step-locked">
-        <h2 class="nest-header" style="margin:0;"><span class="badge-step">3</span> Initial Assessment</h2>
+        <h2 class="nest-header"><span class="badge-step">3</span> Initial Assessment</h2>
         <div class="step-content" style="margin-top:20px;">
             <form id="assessmentForm">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                    <div><label>Teacher</label><select id="a_teacher_id" required></select></div>
-                    <div><label>Date</label><input type="date" id="a_assessment_date"></div>
-                    <div><label>Type</label><input type="text" id="a_assessment_type" value="Initial Assessment"></div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                    <div><label>Assessing Teacher</label><select id="a_teacher_id" required></select></div>
+                    <div><label>Assessment Date</label><input type="date" id="a_assessment_date" required></div>
+                    <div><label>Assessment Type</label><input type="text" id="a_assessment_type" value="Initial Assessment"></div>
                 </div>
-                <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px 25px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;"></div>
-                <button type="submit" class="btn-teal">Lock Assessment & Continue</button>
+                <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px 25px; border-top: 1px solid #eee; padding-top: 20px;"></div>
+                <button type="submit" class="btn-teal">Save Assessment & Continue</button>
             </form>
         </div>
     </div>
 
     <div id="step-session" class="step-container step-locked">
-        <h2 class="nest-header" style="margin:0;"><span class="badge-step">4</span> Select Session</h2>
+        <h2 class="nest-header"><span class="badge-step">4</span> Select Session</h2>
         <div class="step-content" style="margin-top:20px;">
-            <label>Available Sessions</label>
+            <label>Available Branch Sessions</label>
             <select id="enrollment_session_id"></select>
-            <button onclick="processSessionStep()" class="btn-teal">Confirm Session Selection</button>
+            <button onclick="processSessionStep()" class="btn-teal">Confirm Session</button>
         </div>
     </div>
 
     <div id="step-pickup" class="step-container step-locked">
-        <h2 class="nest-header" style="margin:0;"><span class="badge-step">5</span> Authorized Pickup</h2>
+        <h2 class="nest-header"><span class="badge-step">5</span> Authorized Pickup</h2>
         <div class="step-content" style="margin-top:20px;">
             <div id="pickup-entry-list" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px;"></div>
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 4px;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 4px;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-                    <div><label>Name</label><input type="text" id="pu_name"></div>
+                    <div><label>Contact Name</label><input type="text" id="pu_name"></div>
                     <div><label>Relationship</label><input type="text" id="pu_rel"></div>
-                    <div><label>Phone</label><input type="text" id="pu_phone"></div>
+                    <div><label>Phone Number</label><input type="text" id="pu_phone"></div>
                 </div>
-                <button onclick="addPickupLocal()" class="btn-teal" style="background:#334155; margin-top:10px;">+ Add Contact</button>
+                <button onclick="addPickupLocal()" class="btn-teal" style="background:#334155; margin-top:10px;">+ Add To List</button>
             </div>
-            <button onclick="finalizePickups()" class="btn-teal">Confirm Contacts & Continue</button>
+            <button onclick="finalizePickups()" class="btn-teal">Confirm All Contacts</button>
         </div>
     </div>
 
     <div id="step-final" class="step-container step-locked">
-        <h2 class="nest-header" style="margin:0;"><span class="badge-step">6</span> Finalize Enrollment</h2>
+        <div class="loading-overlay" id="loader-final">FINALIZING ALL RECORDS...</div>
+        <h2 class="nest-header"><span class="badge-step">6</span> Finalize Enrollment</h2>
         <div class="step-content" style="margin-top:20px;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
-                <div><label>Enrolled Date</label><input type="date" id="final_enrolled_date" onchange="renderReviewStep()"></div>
-                <div><label>Start Date</label><input type="date" id="final_start_date" onchange="renderReviewStep()"></div>
+                <div><label>Official Enrollment Date</label><input type="date" id="final_enrolled_date" onchange="renderReviewStep()"></div>
+                <div><label>Target Start Date</label><input type="date" id="final_start_date" onchange="renderReviewStep()"></div>
             </div>
             <div id="review-container" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 25px; border-radius: 4px; display:none;">
-                <h3 class="nest-header" style="font-size: 0.9rem; margin-top:0; color: #00d1b2;">MASTER REVIEW SUMMARY</h3>
+                <h3 class="nest-header" style="font-size: 0.9rem; margin-top:0; color: #00d1b2;">MASTER ENROLLMENT SUMMARY</h3>
                 <div id="review-content"></div>
                 <div style="text-align: center; margin-top: 30px;">
-                    <button onclick="submitFinalEnrollment()" class="btn-teal" style="width: 320px; background: #0f766e;">Finalize & Create Records</button>
+                    <button id="btn-submit-final" onclick="submitFinalEnrollment()" class="btn-teal" style="width: 320px; background: #0f766e;">GENERATE RECORDS & CLOSE</button>
                 </div>
             </div>
         </div>
@@ -139,13 +152,13 @@
 </div>
 
 <div id="completion-screen" style="display:none; text-align: center; padding: 100px 20px;">
-    <h1 class="nest-header" style="font-size: 2.5rem;">✓ Enrollment Complete</h1>
-    <p style="color: #64748b;">All records for Parent, Student, Assessment, and Enrollment Log have been synced.</p>
+    <h1 class="nest-header" style="font-size: 2.5rem;">✓ Enrollment Successful</h1>
+    <p style="color: #64748b; margin-bottom: 30px;">Parent, Student, Assessment, and Session records have been updated.</p>
+    <button class="btn-teal" onclick="window.location.reload()">Process Another Enrollment</button>
 </div>
 
 <script>
 (function() {
-    // API CONFIGURATION
     const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
     const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
     const STUDENT_UPDATE_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student/";
@@ -161,6 +174,7 @@
     let currentParentId, currentStudentId, currentFranchiseId, selectedSessionId, currentTeacherId, assessmentPayload, pickupContacts = [], allSessions = [], allTeachers = [], allParents = [], allStudents = [], allFranchises = [];
 
     function unwrap(d) { return Array.isArray(d) ? d : (d.result1 || d.items || []); }
+    function showLoader(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
 
     window.toggleParentMode = () => {
         const mode = document.getElementById('parent-select-mode').style.display === 'none' ? 'select' : 'create';
@@ -178,79 +192,95 @@
         const qId = document.getElementById(`q_select_${index}`).value;
         const ansDropdown = document.getElementById(`a_ans_${index}`);
         if (!qId) return;
-        const res = await fetch(SINGLE_QUESTION_API + qId);
-        const data = await res.json();
-        const q = data.result1 || data;
-        ansDropdown.innerHTML = '<option value="">-- Answer --</option>';
-        for(let i=1; i<=6; i++) { if(q[`answer_${i}`]) ansDropdown.innerHTML += `<option value="${q[`answer_${i}`]}">${q[`answer_${i}`]}</option>`; }
+        try {
+            const res = await fetch(SINGLE_QUESTION_API + qId);
+            const data = await res.json();
+            const q = data.result1 || data;
+            ansDropdown.innerHTML = '<option value="">-- Answer --</option>';
+            for(let i=1; i<=6; i++) { if(q[`answer_${i}`]) ansDropdown.innerHTML += `<option value="${q[`answer_${i}`]}">${q[`answer_${i}`]}</option>`; }
+        } catch(e) { console.error("Question load error", e); }
     };
 
     window.processParentStep = async () => {
         const isCreateMode = document.getElementById('parent-create-mode').style.display === 'block';
-        if(isCreateMode) {
-            currentFranchiseId = parseInt(document.getElementById('p_fran_id').value);
-            const payload = { 
-                first_name: document.getElementById('p_fn').value, 
-                last_name: document.getElementById('p_ln').value, 
-                email: document.getElementById('p_email').value, 
-                phone: document.getElementById('p_phone').value, 
-                address: document.getElementById('p_address').value, 
-                franchise_id: currentFranchiseId,
-                is_active: true 
-            };
-            try {
+        showLoader('loader-parent', true);
+        
+        try {
+            if(isCreateMode) {
+                currentFranchiseId = parseInt(document.getElementById('p_fran_id').value);
+                const payload = { 
+                    first_name: document.getElementById('p_fn').value, 
+                    last_name: document.getElementById('p_ln').value, 
+                    email: document.getElementById('p_email').value, 
+                    phone: document.getElementById('p_phone').value, 
+                    address: document.getElementById('p_address').value, 
+                    franchise_id: currentFranchiseId,
+                    is_active: true 
+                };
+                if(!payload.first_name || !currentFranchiseId) throw new Error("Missing Name/Franchise");
                 const res = await fetch(PARENT_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
                 const data = await res.json();
                 currentParentId = data.id;
                 allParents.push(data);
-            } catch (err) { alert("Save Failed"); return; }
-        } else {
-            currentParentId = parseInt(document.getElementById('p_select_id').value);
-            const p = allParents.find(p => p.id === currentParentId); 
-            currentFranchiseId = p.franchise_id;
-        }
+            } else {
+                currentParentId = parseInt(document.getElementById('p_select_id').value);
+                if(!currentParentId) throw new Error("Select a parent");
+                const p = allParents.find(p => p.id === currentParentId); 
+                currentFranchiseId = p.franchise_id;
+            }
 
-        const pInfo = allParents.find(p => p.id === currentParentId);
-        document.getElementById('disp-p-name').innerText = pInfo.first_name + ' ' + pInfo.last_name;
-        document.getElementById('disp-p-email').innerText = pInfo.email || "---";
-        document.getElementById('disp-p-phone').innerText = pInfo.phone || "---";
-        document.getElementById('disp-p-fran').innerText = (allFranchises.find(f => f.id === currentFranchiseId) || {}).name || "---";
-        
-        document.getElementById('parent-profile-view').style.display = 'grid';
-        document.getElementById('step-parent').className = 'step-container step-saved';
-        document.getElementById('s_select_id').innerHTML = '<option value="">-- Select Child --</option>' + allStudents.filter(s => s.parent_id === currentParentId).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-        document.getElementById('step-student').className = 'step-container step-active';
-        document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 2 OF 6";
+            const pInfo = allParents.find(p => p.id === currentParentId);
+            document.getElementById('disp-p-name').innerText = pInfo.first_name + ' ' + pInfo.last_name;
+            document.getElementById('disp-p-email').innerText = pInfo.email || "---";
+            document.getElementById('disp-p-phone').innerText = pInfo.phone || "---";
+            document.getElementById('disp-p-fran').innerText = (allFranchises.find(f => f.id === currentFranchiseId) || {}).name || "---";
+            
+            document.getElementById('parent-profile-view').style.display = 'grid';
+            document.getElementById('step-parent').className = 'step-container step-saved';
+            document.getElementById('s_select_id').innerHTML = '<option value="">-- Select Child --</option>' + allStudents.filter(s => s.parent_id === currentParentId).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            document.getElementById('step-student').className = 'step-container step-active';
+            document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 2 OF 6";
+        } catch (err) { alert(err.message); }
+        showLoader('loader-parent', false);
     };
 
     window.processStudentStep = async () => {
-        if(document.getElementById('student-create-mode').style.display === 'block') {
-            const payload = { 
-                parent_id: currentParentId, 
-                name: document.getElementById('s_name_new').value, 
-                preferred_name: document.getElementById('s_pref_new').value, 
-                gender: document.getElementById('s_gen_new').value, 
-                date_of_birth: document.getElementById('s_dob_new').value, 
-                home_address: document.getElementById('s_addr_new').value, 
-                franchise_id: currentFranchiseId, 
-                is_active: true 
-            };
-            const res = await fetch(STUDENT_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-            const data = await res.json(); currentStudentId = data.id;
-            allStudents.push(data);
-        } else {
-            currentStudentId = parseInt(document.getElementById('s_select_id').value);
-        }
-        const sInfo = allStudents.find(s => s.id === currentStudentId);
-        document.getElementById('disp-s-name').innerText = sInfo.name;
-        document.getElementById('disp-s-dob').innerText = sInfo.date_of_birth || "---";
-        document.getElementById('disp-s-gen').innerText = sInfo.gender || "---";
-        document.getElementById('disp-s-pref').innerText = sInfo.preferred_name || "---";
-        document.getElementById('student-profile-view').style.display = 'grid';
-        document.getElementById('step-student').className = 'step-container step-saved';
-        document.getElementById('a_teacher_id').innerHTML = '<option value="">-- Teacher --</option>' + allTeachers.filter(t => t.franchise_id === currentFranchiseId).map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
-        document.getElementById('step-assessment').className = 'step-container step-active';
-        document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 3 OF 6";
+        const isCreateMode = document.getElementById('student-create-mode').style.display === 'block';
+        showLoader('loader-student', true);
+        
+        try {
+            if(isCreateMode) {
+                const payload = { 
+                    parent_id: currentParentId, 
+                    name: document.getElementById('s_name_new').value, 
+                    preferred_name: document.getElementById('s_pref_new').value, 
+                    gender: document.getElementById('s_gen_new').value, 
+                    date_of_birth: document.getElementById('s_dob_new').value, 
+                    home_address: document.getElementById('s_addr_new').value, 
+                    franchise_id: currentFranchiseId, 
+                    is_active: true 
+                };
+                if(!payload.name) throw new Error("Missing Student Name");
+                const res = await fetch(STUDENT_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+                const data = await res.json(); 
+                currentStudentId = data.id;
+                allStudents.push(data);
+            } else {
+                currentStudentId = parseInt(document.getElementById('s_select_id').value);
+                if(!currentStudentId) throw new Error("Select a student");
+            }
+            const sInfo = allStudents.find(s => s.id === currentStudentId);
+            document.getElementById('disp-s-name').innerText = sInfo.name;
+            document.getElementById('disp-s-dob').innerText = sInfo.date_of_birth || "---";
+            document.getElementById('disp-s-gen').innerText = sInfo.gender || "---";
+            document.getElementById('disp-s-pref').innerText = sInfo.preferred_name || "---";
+            document.getElementById('student-profile-view').style.display = 'grid';
+            document.getElementById('step-student').className = 'step-container step-saved';
+            document.getElementById('a_teacher_id').innerHTML = '<option value="">-- Teacher --</option>' + allTeachers.filter(t => t.franchise_id === currentFranchiseId).map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
+            document.getElementById('step-assessment').className = 'step-container step-active';
+            document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 3 OF 6";
+        } catch (err) { alert(err.message); }
+        showLoader('loader-student', false);
     };
 
     document.getElementById('assessmentForm').onsubmit = (e) => {
@@ -267,22 +297,25 @@
             assessmentPayload[`answer_${i}`] = document.getElementById(`a_ans_${i}`).value || "";
         }
         document.getElementById('step-assessment').className = 'step-container step-saved';
-        document.getElementById('enrollment_session_id').innerHTML = '<option value="">-- Session --</option>' + allSessions.filter(s => s.franchise_id === currentFranchiseId && s.is_active).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        document.getElementById('enrollment_session_id').innerHTML = '<option value="">-- Select Available Session --</option>' + allSessions.filter(s => s.franchise_id === currentFranchiseId && s.is_active).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         document.getElementById('step-session').className = 'step-container step-active';
         document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 4 OF 6";
     };
 
     window.processSessionStep = () => {
         selectedSessionId = parseInt(document.getElementById('enrollment_session_id').value);
+        if(!selectedSessionId) { alert("Please select a session"); return; }
         document.getElementById('step-session').className = 'step-container step-saved';
         document.getElementById('step-pickup').className = 'step-container step-active';
         document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 5 OF 6";
     };
 
     window.addPickupLocal = () => {
-        const c = { name: document.getElementById('pu_name').value, relationship: document.getElementById('pu_rel').value, phone: document.getElementById('pu_phone').value };
+        const n = document.getElementById('pu_name').value;
+        if(!n) return;
+        const c = { name: n, relationship: document.getElementById('pu_rel').value, phone: document.getElementById('pu_phone').value };
         pickupContacts.push(c);
-        document.getElementById('pickup-entry-list').innerHTML += `<div style="padding:6px 12px; background:#f0fdfa; border:1px solid #00d1b2; border-radius:15px; font-size:0.7rem;">${c.name}</div>`;
+        document.getElementById('pickup-entry-list').innerHTML += `<div style="padding:6px 12px; background:#f0fdfa; border:1px solid #00d1b2; border-radius:15px; font-size:0.7rem; font-weight:700; color:#0f766e;">${c.name}</div>`;
         document.getElementById('pu_name').value = ''; document.getElementById('pu_rel').value = ''; document.getElementById('pu_phone').value = '';
     };
 
@@ -302,26 +335,23 @@
         const teacherName = tSel.options[tSel.selectedIndex] ? tSel.options[tSel.selectedIndex].text : "---";
         const sSel = document.getElementById('enrollment_session_id');
         const sessionName = sSel.options[sSel.selectedIndex] ? sSel.options[sSel.selectedIndex].text : "---";
-        const studentName = document.getElementById('disp-s-name').innerText;
-        const parentName = document.getElementById('disp-p-name').innerText;
 
-        if(!eD || !sD) return;
         document.getElementById('review-content').innerHTML = `
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
-                    <h4 style="font-size:0.6rem; color:#94a3b8; text-transform:uppercase; margin-bottom:5px;">Profile Review</h4>
+                    <h4 style="font-size:0.6rem; color:#94a3b8; text-transform:uppercase; margin-bottom:5px;">Profile Details</h4>
                     <table class="review-table">
-                        <tr><td class="rev-label">Student</td><td class="rev-val">${studentName}</td></tr>
-                        <tr><td class="rev-label">Parent</td><td class="rev-val">${parentName}</td></tr>
+                        <tr><td class="rev-label">Student</td><td class="rev-val">${document.getElementById('disp-s-name').innerText}</td></tr>
+                        <tr><td class="rev-label">Parent</td><td class="rev-val">${document.getElementById('disp-p-name').innerText}</td></tr>
                         <tr><td class="rev-label">Session</td><td class="rev-val">${sessionName}</td></tr>
                     </table>
                 </div>
                 <div>
-                    <h4 style="font-size:0.6rem; color:#94a3b8; text-transform:uppercase; margin-bottom:5px;">Admin Review</h4>
+                    <h4 style="font-size:0.6rem; color:#94a3b8; text-transform:uppercase; margin-bottom:5px;">Dates & Staff</h4>
                     <table class="review-table">
-                        <tr><td class="rev-label">Teacher</td><td class="rev-val">${teacherName}</td></tr>
-                        <tr><td class="rev-label">Enrolled</td><td class="rev-val">${eD}</td></tr>
-                        <tr><td class="rev-label">Start</td><td class="rev-val">${sD}</td></tr>
+                        <tr><td class="rev-label">Assessor</td><td class="rev-val">${teacherName}</td></tr>
+                        <tr><td class="rev-label">Enroll Date</td><td class="rev-val">${eD}</td></tr>
+                        <tr><td class="rev-label">Start Date</td><td class="rev-val">${sD}</td></tr>
                     </table>
                 </div>
             </div>
@@ -330,76 +360,44 @@
     };
 
     window.submitFinalEnrollment = async () => {
+        showLoader('loader-final', true);
         const eD = document.getElementById('final_enrolled_date').value;
         const sD = document.getElementById('final_start_date').value;
         
         try {
-            // 1. Update Student Profile
-            const sUpdate = await fetch(STUDENT_UPDATE_API + currentStudentId, { 
+            await fetch(STUDENT_UPDATE_API + currentStudentId, { 
                 method: 'PATCH', 
                 headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ 
-                    session_enrolled: parseInt(selectedSessionId), 
-                    enrolled_date: eD, 
-                    start_date: sD, 
-                    is_active: true 
-                }) 
+                body: JSON.stringify({ session_enrolled: parseInt(selectedSessionId), enrolled_date: eD, start_date: sD, is_active: true }) 
             });
 
-            // 2. Write Assessment Record
-            const aWrite = await fetch(ASSESSMENT_API, { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify(assessmentPayload) 
-            });
+            await fetch(ASSESSMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(assessmentPayload) });
 
-            // 3. Create session_enrollment Record (Updated group)
-            const enrollmentPayload = { 
-                student_id: parseInt(currentStudentId), 
-                session_id: parseInt(selectedSessionId), 
-                enrollment_date: eD, 
-                status: "active" 
-            };
             const eLog = await fetch(ENROLLMENT_API, { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify(enrollmentPayload) 
+                body: JSON.stringify({ student_id: parseInt(currentStudentId), session_id: parseInt(selectedSessionId), enrollment_date: eD, status: "active" }) 
             });
 
-            // 4. Create Pickup Contacts
             const pPromises = pickupContacts.map(c => fetch(PICKUP_API, { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ 
-                    student_id: parseInt(currentStudentId), 
-                    name: c.name, 
-                    relationship: c.relationship, 
-                    phone: c.phone, 
-                    is_active: true 
-                }) 
+                body: JSON.stringify({ student_id: parseInt(currentStudentId), name: c.name, relationship: c.relationship, phone: c.phone, is_active: true }) 
             }));
             await Promise.all(pPromises);
 
-            if(eLog.ok && sUpdate.ok && aWrite.ok) {
+            if(eLog.ok) {
                 document.getElementById('enrollment-ui').style.display = 'none'; 
                 document.getElementById('completion-screen').style.display = 'block';
-                setTimeout(() => window.location.href = "index.html", 4000);
-            } else { 
-                const errDetail = await eLog.text();
-                alert("Enrollment Log Failed: " + errDetail); 
-            }
-        } catch (e) { alert("Save Failed. Connection error."); }
+            } else { throw new Error("Log Creation Failed"); }
+        } catch (e) { alert("Sync Error: " + e.message); }
+        showLoader('loader-final', false);
     };
 
     async function init() {
         try {
             const [fR, pR, sR, tR, qR, sessR] = await Promise.all([
-                fetch(FRANCHISE_API), 
-                fetch(PARENT_API + '?t=' + Date.now()), 
-                fetch(STUDENT_API + '?t=' + Date.now()), 
-                fetch(TEACHER_API), 
-                fetch(QUESTIONS_API), 
-                fetch(SESSION_API)
+                fetch(FRANCHISE_API), fetch(PARENT_API), fetch(STUDENT_API), fetch(TEACHER_API), fetch(QUESTIONS_API), fetch(SESSION_API)
             ]);
             allFranchises = unwrap(await fR.json()); 
             allParents = unwrap(await pR.json()); 
@@ -407,14 +405,14 @@
             allTeachers = unwrap(await tR.json()); 
             allSessions = unwrap(await sessR.json());
             
-            document.getElementById('p_fran_id').innerHTML = '<option value="">-- Franchise --</option>' + allFranchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-            document.getElementById('p_select_id').innerHTML = '<option value="">-- Select Parent --</option>' + allParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
+            document.getElementById('p_fran_id').innerHTML = '<option value="">-- Select Franchise --</option>' + allFranchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+            document.getElementById('p_select_id').innerHTML = '<option value="">-- Search Parent Name --</option>' + allParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
             
             const qu = unwrap(await qR.json()), grid = document.getElementById('assessment-qa-grid');
             for(let i=1; i<=10; i++) {
-                grid.innerHTML += `<div><select id="q_select_${i}" onchange="handleQuestionChange(${i})"><option value="">-- Q${i} --</option>${qu.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}</select></div><div><select id="a_ans_${i}"><option value="">-- Answer --</option></select></div>`;
+                grid.innerHTML += `<div><select id="q_select_${i}" onchange="handleQuestionChange(${i})"><option value="">-- Select Question ${i} --</option>${qu.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}</select></div><div><select id="a_ans_${i}"><option value="">-- Answer --</option></select></div>`;
             }
-        } catch (e) { console.error("Initial load failure", e); }
+        } catch (e) { console.error("Initialization failure", e); }
     }
     init();
 })();
