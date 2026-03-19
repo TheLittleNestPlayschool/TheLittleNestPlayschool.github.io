@@ -159,6 +159,7 @@
 
 <script>
 (function() {
+    // API CONFIGURATION
     const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
     const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
     const STUDENT_UPDATE_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student/";
@@ -168,7 +169,7 @@
     const SINGLE_QUESTION_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions/";
     const ASSESSMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:e7P6emQg/student_assessment_filled";
     const PICKUP_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_authorized_pickup";
-    const ENROLLMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/session_enrollment"; // Updated table name
+    const ENROLLMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/session_enrollment";
     const SESSION_API = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session";
 
     let currentParentId, currentStudentId, currentFranchiseId, selectedSessionId, currentTeacherId, assessmentPayload, pickupContacts = [], allSessions = [], allTeachers = [], allParents = [], allStudents = [], allFranchises = [];
@@ -199,9 +200,10 @@
     };
 
     window.processParentStep = async () => {
-        if(document.getElementById('parent-create-mode').style.display === 'block') {
+        const isCreateMode = document.getElementById('parent-create-mode').style.display === 'block';
+
+        if(isCreateMode) {
             currentFranchiseId = parseInt(document.getElementById('p_fran_id').value);
-            
             const payload = { 
                 first_name: document.getElementById('p_fn').value, 
                 last_name: document.getElementById('p_ln').value, 
@@ -228,7 +230,9 @@
                 allParents.push(data);
             } catch (err) { alert("Save Failed. Connection error."); return; }
         } else {
-            currentParentId = parseInt(document.getElementById('p_select_id').value);
+            const selectEl = document.getElementById('p_select_id');
+            if(!selectEl.value) { alert("Please select a parent"); return; }
+            currentParentId = parseInt(selectEl.value);
             const p = allParents.find(p => p.id === currentParentId); 
             currentFranchiseId = p.franchise_id;
         }
@@ -248,14 +252,23 @@
 
     window.processStudentStep = async () => {
         if(document.getElementById('student-create-mode').style.display === 'block') {
-            const payload = { parent_id: currentParentId, name: document.getElementById('s_name_new').value, preferred_name: document.getElementById('s_pref_new').value, gender: document.getElementById('s_gen_new').value, date_of_birth: document.getElementById('s_dob_new').value, home_address: document.getElementById('s_addr_new').value, franchise_id: currentFranchiseId, is_active: true };
+            const payload = { 
+                parent_id: currentParentId, 
+                name: document.getElementById('s_name_new').value, 
+                preferred_name: document.getElementById('s_pref_new').value, 
+                gender: document.getElementById('s_gen_new').value, 
+                date_of_birth: document.getElementById('s_dob_new').value, 
+                home_address: document.getElementById('s_addr_new').value, 
+                franchise_id: currentFranchiseId, 
+                is_active: true 
+            };
             const res = await fetch(STUDENT_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
             const data = await res.json(); currentStudentId = data.id;
             allStudents.push(data);
         } else {
             currentStudentId = parseInt(document.getElementById('s_select_id').value);
         }
-        const sInfo = allStudents.find(s => s.id === currentStudentId) || {name: document.getElementById('s_name_new').value};
+        const sInfo = allStudents.find(s => s.id === currentStudentId);
         document.getElementById('disp-s-name').innerText = sInfo.name;
         document.getElementById('disp-s-dob').innerText = sInfo.date_of_birth || "---";
         document.getElementById('disp-s-gen').innerText = sInfo.gender || "---";
@@ -343,72 +356,91 @@
         const sD = document.getElementById('final_start_date').value;
         
         try {
-            // 1. Update Student Table (session_enrolled, dates)
+            // 1. Update Student Profile
             const sUpdate = await fetch(STUDENT_UPDATE_API + currentStudentId, { 
                 method: 'PATCH', 
                 headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ session_enrolled: parseInt(selectedSessionId), enrolled_date: eD, start_date: sD, is_active: true }) 
+                body: JSON.stringify({ 
+                    session_enrolled: parseInt(selectedSessionId), 
+                    enrolled_date: eD, 
+                    start_date: sD, 
+                    is_active: true 
+                }) 
             });
 
-            // 2. Write Assessment Record
+            // 2. Write Assessment Record (student_assessment_filled)
             const aWrite = await fetch(ASSESSMENT_API, { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
                 body: JSON.stringify(assessmentPayload) 
             });
 
-            // 3. Create Session Enrollment Log (Matches #657433 schema)
+            // 3. Create session_enrollment Record (Status "active")
+            const enrollmentPayload = { 
+                student_id: parseInt(currentStudentId), 
+                session_id: parseInt(selectedSessionId), 
+                enrollment_date: eD, 
+                status: "active" 
+            };
             const eLog = await fetch(ENROLLMENT_API, { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(enrollmentPayload) 
+            });
+
+            // 4. Create Pickup Contacts (student_authorized_pickup)
+            const pPromises = pickupContacts.map(c => fetch(PICKUP_API, { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
                 body: JSON.stringify({ 
                     student_id: parseInt(currentStudentId), 
-                    session_id: parseInt(selectedSessionId), 
-                    enrollment_date: eD, 
-                    status: 'active' 
+                    name: c.name, 
+                    relationship: c.relationship, 
+                    phone: c.phone, 
+                    is_active: true 
                 }) 
-            });
-
-            // 4. Create Pickup Contacts
-            const pPromises = pickupContacts.map(c => fetch(PICKUP_API, { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ student_id: parseInt(currentStudentId), name: c.name, relationship: c.relationship, phone: c.phone, is_active: true }) 
             }));
-            const pResults = await Promise.all(pPromises);
+            await Promise.all(pPromises);
 
-            if(sUpdate.ok && eLog.ok) {
+            if(eLog.ok && sUpdate.ok) {
                 document.getElementById('enrollment-ui').style.display = 'none'; 
                 document.getElementById('completion-screen').style.display = 'block';
                 setTimeout(() => window.location.href = "index.html", 4000);
             } else { 
-                alert("Sync Error. Enrollment rejected. Check table fields."); 
+                const errDetail = await eLog.text();
+                console.error("Xano Reject Details:", errDetail);
+                alert("Enrollment Table Error: " + errDetail); 
             }
         } catch (e) { 
+            console.error("Critical Sync Failure:", e);
             alert("Save Failed. Connection error."); 
         }
     };
 
     async function init() {
-        const [fR, pR, sR, tR, qR, sessR] = await Promise.all([
-            fetch(FRANCHISE_API), 
-            fetch(PARENT_API + '?t=' + Date.now()), 
-            fetch(STUDENT_API + '?t=' + Date.now()), 
-            fetch(TEACHER_API), 
-            fetch(QUESTIONS_API), 
-            fetch(SESSION_API)
-        ]);
-        allFranchises = unwrap(await fR.json()); 
-        allParents = unwrap(await pR.json()); 
-        allStudents = unwrap(await sR.json()); 
-        allTeachers = unwrap(await tR.json()); 
-        allSessions = unwrap(await sessR.json());
-        
-        document.getElementById('p_fran_id').innerHTML = '<option value="">-- Franchise --</option>' + allFranchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-        document.getElementById('p_select_id').innerHTML = '<option value="">-- Select Parent --</option>' + allParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
-        
-        const qu = unwrap(await qR.json()), grid = document.getElementById('assessment-qa-grid');
-        for(let i=1; i<=10; i++) grid.innerHTML += `<div><select id="q_select_${i}" onchange="handleQuestionChange(${i})"><option value="">-- Q${i} --</option>${qu.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}</select></div><div><select id="a_ans_${i}"><option value="">-- Answer --</option></select></div>`;
+        try {
+            const [fR, pR, sR, tR, qR, sessR] = await Promise.all([
+                fetch(FRANCHISE_API), 
+                fetch(PARENT_API + '?t=' + Date.now()), 
+                fetch(STUDENT_API + '?t=' + Date.now()), 
+                fetch(TEACHER_API), 
+                fetch(QUESTIONS_API), 
+                fetch(SESSION_API)
+            ]);
+            allFranchises = unwrap(await fR.json()); 
+            allParents = unwrap(await pR.json()); 
+            allStudents = unwrap(await sR.json()); 
+            allTeachers = unwrap(await tR.json()); 
+            allSessions = unwrap(await sessR.json());
+            
+            document.getElementById('p_fran_id').innerHTML = '<option value="">-- Franchise --</option>' + allFranchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+            document.getElementById('p_select_id').innerHTML = '<option value="">-- Select Parent --</option>' + allParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
+            
+            const qu = unwrap(await qR.json()), grid = document.getElementById('assessment-qa-grid');
+            for(let i=1; i<=10; i++) {
+                grid.innerHTML += `<div><select id="q_select_${i}" onchange="handleQuestionChange(${i})"><option value="">-- Q${i} --</option>${qu.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}</select></div><div><select id="a_ans_${i}"><option value="">-- Answer --</option></select></div>`;
+            }
+        } catch (e) { console.error("Initial load failure", e); }
     }
     init();
 })();
