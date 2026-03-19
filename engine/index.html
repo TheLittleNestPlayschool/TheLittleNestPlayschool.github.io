@@ -2,57 +2,107 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Engine Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Little Nest Intelligence Hub</title>
     <style>
-        html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; }
-        .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; position: fixed; left: 0; top: 0; padding: 0; z-index: 10000; }
-        .main-content { margin-left: 250px; padding: 0; width: calc(100% - 250px); height: 100vh; background: #fff; box-sizing: border-box; overflow: hidden; position: relative; }
-        .hub-frame { width: 100%; height: 100%; border: none; display: block; }
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; display: flex; height: 100vh; background: #f4f7f6; overflow: hidden; }
+        
+        /* Dark Sidebar Shell */
+        #nav-placeholder {
+            width: 260px;
+            background: #1a1a1a;
+            color: #ccc;
+            height: 100vh;
+            overflow-y: auto;
+            flex-shrink: 0;
+            border-right: 1px solid #333;
+        }
+
+        /* Main Content Area */
+        #content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+
+        /* Home Screen Styling */
+        #home-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            background: white;
+            text-align: center;
+        }
+
+        #home-screen h1 {
+            font-family: Georgia, serif;
+            color: #1a365d;
+            font-size: 2.5rem;
+        }
     </style>
 </head>
 <body>
 
-    <div class="admin-sidebar" id="nav-placeholder"></div>
+    <div id="nav-placeholder">
+        <div style="padding: 20px; text-align: center; color: #555;">Loading Menu...</div>
+    </div>
 
-    <main class="main-content" id="dashboard-content">
-        <iframe id="main-frame" class="hub-frame" src="about:blank"></iframe>
-
-        <div id="content-inner" style="text-align: center; margin-top: 20vh; position: absolute; width: 100%; top: 0; z-index: 10; pointer-events: none;">
-            <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
-            <p>Select a module from the menu to begin.</p>
+    <div id="content-area">
+        <div id="home-screen">
+            <h1>The Little Nest Intelligence Hub</h1>
         </div>
-    </main>
+        <iframe id="main-frame" style="display:none;"></iframe>
+    </div>
 
     <script>
-        // 1. Load the sidebar menu
+        // 1. Load the menu from the same folder
         fetch('enginemenu.html')
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('nav-placeholder').innerHTML = data;
-            });
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById('nav-placeholder').innerHTML = html;
+            })
+            .catch(err => console.error("Menu load failed:", err));
 
-        function resetDashboard() {
-            const indicator = document.getElementById('screen-name');
-            if(indicator) indicator.textContent = 'Home';
+        /**
+         * 2. The Engine: loadFrame
+         * This handles the switching between the Home screen and the manager files.
+         */
+        function loadFrame(url, name) {
+            const home = document.getElementById('home-screen');
+            const frame = document.getElementById('main-frame');
+            const screenLabel = document.getElementById('screen-name');
+
+            // Update the menu indicator if it exists
+            if (screenLabel) screenLabel.innerText = name;
+
+            // Hide home, show iframe
+            home.style.display = 'none';
+            frame.style.display = 'block';
             
-            document.getElementById('main-frame').src = 'about:blank';
-            document.getElementById('content-inner').style.display = 'block';
+            // Set source (URL already includes '../' from the menu)
+            frame.src = url;
         }
 
-        function loadFrame(url, name) {
-            const indicator = document.getElementById('screen-name');
-            if(indicator) indicator.textContent = name;
-            
-            document.getElementById('content-inner').style.display = 'none';
-            const frame = document.getElementById('main-frame');
-
-            // Hard reset the frame source
-            frame.src = 'about:blank';
-
-            // CACHE-BUSTER: Force the browser to grab the latest GitHub version [cite: 2026-02-05]
-            setTimeout(() => {
-                frame.src = url + '?v=' + Date.now();
-            }, 10);
+        /**
+         * 3. Reset to Home
+         */
+        function resetDashboard() {
+            document.getElementById('home-screen').style.display = 'flex';
+            document.getElementById('main-frame').style.display = 'none';
+            document.getElementById('main-frame').src = '';
+            if (document.getElementById('screen-name')) {
+                document.getElementById('screen-name').innerText = 'Home';
+            }
         }
     </script>
 </body>
