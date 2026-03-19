@@ -19,18 +19,17 @@
     </main>
 
     <script>
-        // 1. Load the sidebar menu
-        fetch('enginemenu.html')
+        // 1. Load the sidebar menu from the ROOT directory
+        fetch('../enginemenu.html')
             .then(response => response.text())
             .then(data => {
                 document.getElementById('nav-placeholder').innerHTML = data;
                 
-                // 2. AUTO-LOAD the Corporate Dashboard immediately after menu loads
+                // 2. AUTO-LOAD the dashboard file in THIS directory immediately
                 loadFrame('corporate_dashboard.html', 'Corporate Dashboard');
             });
 
         function resetDashboard() {
-            // Pointing Home back to the Corporate Dashboard for this specific portal
             loadFrame('corporate_dashboard.html', 'Corporate Dashboard');
         }
 
@@ -45,7 +44,6 @@
 
             // CACHE-BUSTER: Force the browser to grab the latest version
             setTimeout(() => {
-                // Check if URL already has parameters
                 const separator = url.includes('?') ? '&' : '?';
                 frame.src = url + separator + 'v=' + Date.now();
             }, 10);
