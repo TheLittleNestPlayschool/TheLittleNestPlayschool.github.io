@@ -1,5 +1,5 @@
 <style>
-    /* Scoped styles to match your existing dashboard look without breaking the hub layout */
+    /* Scoped styles to match the Intelligence Hub layout */
     .dashboard-wrapper { padding: 40px; background: #fff; color: #1c1e21; }
     .metric-card { 
         background: white; border-radius: 12px; padding: 25px; width: 280px; 
@@ -11,6 +11,7 @@
     .text-plus { color: #27ae60; }
     .text-minus { color: #e74c3c; }
 
+    /* Overlay and Popup for Franchise Breakdown */
     #dash-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; }
     #dash-popup { 
         display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -51,44 +52,68 @@
 
         async function initDashboard() {
             try {
+                // Fetch both franchise names and snapshot data
                 const [fResponse, sResponse] = await Promise.all([
                     fetch(franchiseUrl), 
                     fetch(snapshotUrl + '?t=' + Date.now())
                 ]);
                 const franchises = await fResponse.json();
-                const snapshots = await sResponse.json();
+                let snapshots = await sResponse.json();
+
+                // Ensure snapshots is an array
+                if (snapshots && !Array.isArray(snapshots)) snapshots = [snapshots];
 
                 if (!snapshots || snapshots.length === 0) {
                     document.getElementById('main-total').innerText = "0";
                     return;
                 }
 
+                // 1. Find the latest date present in the snapshots
                 const latestDate = snapshots.reduce((max, p) => p.snapshot_date > max ? p.snapshot_date : max, snapshots[0].snapshot_date);
                 document.getElementById('date-label').innerText = `Snapshot Date: ${latestDate}`;
+                
+                // 2. Filter data for just that latest date
                 const todaysData = snapshots.filter(s => s.snapshot_date === latestDate);
 
-                const overall = todaysData.find(s => !s.franchise_id || s.franchise_id === 0);
-                if (overall) {
-                    document.getElementById('main-total').innerText = overall.total_enrollment;
-                    const val = overall.todays_change_enrollment;
-                    document.getElementById('main-change').innerHTML = `<span class="${val >= 0 ? 'text-plus' : 'text-minus'}">${val >= 0 ? '+' : ''}${val} Today</span>`;
-                }
+                // 3. AGGREGATION: Loop through all franchise records and sum them up
+                let grandTotal = 0;
+                let grandChange = 0;
 
+                todaysData.forEach(snap => {
+                    if (snap.franchise_id > 0) {
+                        grandTotal += (parseInt(snap.total_enrollment) || 0);
+                        grandChange += (parseInt(snap.todays_change_enrollment) || 0);
+                    }
+                });
+
+                // 4. Update the Main UI Card
+                document.getElementById('main-total').innerText = grandTotal;
+                document.getElementById('main-change').innerHTML = 
+                    `<span class="${grandChange >= 0 ? 'text-plus' : 'text-minus'}">
+                        ${grandChange >= 0 ? '+' : ''}${grandChange} Today
+                    </span>`;
+
+                // 5. Build the Detailed Popup Table
                 const list = document.getElementById('franchise-list');
                 list.innerHTML = todaysData.filter(snap => snap.franchise_id > 0).map(snap => {
                     const fInfo = franchises.find(f => f.id === snap.franchise_id);
-                    const val = snap.todays_change_enrollment;
+                    const dailyVal = snap.todays_change_enrollment || 0;
                     return `<tr>
                         <td><strong>${fInfo ? fInfo.name : 'Unknown'}</strong></td>
-                        <td>${snap.total_enrollment}</td>
-                        <td class="${val >= 0 ? 'text-plus' : 'text-minus'}">${val >= 0 ? '+' : ''}${val}</td>
+                        <td>${snap.total_enrollment || 0}</td>
+                        <td class="${dailyVal >= 0 ? 'text-plus' : 'text-minus'}">
+                            ${dailyVal >= 0 ? '+' : ''}${dailyVal}
+                        </td>
                     </tr>`;
                 }).join('');
+
             } catch (e) { 
                 console.error("Dashboard Load Error:", e); 
+                document.getElementById('main-total').innerText = "ERR";
             }
         }
 
+        // Handle Popup Visibility
         window.toggleDashPopup = function(show) {
             document.getElementById('dash-popup').style.display = show ? 'block' : 'none';
             document.getElementById('dash-overlay').style.display = show ? 'block' : 'none';
