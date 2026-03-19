@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Engine Dashboard</title>
+    <title>Corporate Dashboard | The Little Nest</title>
     <style>
         html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; }
         .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; position: fixed; left: 0; top: 0; padding: 0; z-index: 10000; }
@@ -16,11 +16,6 @@
 
     <main class="main-content" id="dashboard-content">
         <iframe id="main-frame" class="hub-frame" src="about:blank"></iframe>
-
-        <div id="content-inner" style="text-align: center; margin-top: 20vh; position: absolute; width: 100%; top: 0; z-index: 10; pointer-events: none;">
-            <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">The Little Nest Intelligence Hub</h1>
-            <p>Select a module from the menu to begin.</p>
-        </div>
     </main>
 
     <script>
@@ -29,29 +24,30 @@
             .then(response => response.text())
             .then(data => {
                 document.getElementById('nav-placeholder').innerHTML = data;
+                
+                // 2. AUTO-LOAD the Corporate Dashboard immediately after menu loads
+                loadFrame('corporate_dashboard.html', 'Corporate Dashboard');
             });
 
         function resetDashboard() {
-            const indicator = document.getElementById('screen-name');
-            if(indicator) indicator.textContent = 'Home';
-            
-            document.getElementById('main-frame').src = 'about:blank';
-            document.getElementById('content-inner').style.display = 'block';
+            // Pointing Home back to the Corporate Dashboard for this specific portal
+            loadFrame('corporate_dashboard.html', 'Corporate Dashboard');
         }
 
         function loadFrame(url, name) {
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = name;
             
-            document.getElementById('content-inner').style.display = 'none';
             const frame = document.getElementById('main-frame');
 
             // Hard reset the frame source
             frame.src = 'about:blank';
 
-            // CACHE-BUSTER: Force the browser to grab the latest GitHub version [cite: 2026-02-05]
+            // CACHE-BUSTER: Force the browser to grab the latest version
             setTimeout(() => {
-                frame.src = url + '?v=' + Date.now();
+                // Check if URL already has parameters
+                const separator = url.includes('?') ? '&' : '?';
+                frame.src = url + separator + 'v=' + Date.now();
             }, 10);
         }
     </script>
