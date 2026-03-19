@@ -5,33 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Corporate Dashboard</title>
     <style>
-        /* No margin/padding to fit perfectly inside the Hub's iframe */
-        body { font-family: sans-serif; padding: 40px; background: #fff; color: #1c1e21; margin: 0; }
-        
+        body { font-family: 'Inter', sans-serif; padding: 40px; background: #fff; color: #1c1e21; margin: 0; }
         .card { 
             background: white; border-radius: 12px; padding: 25px; width: 280px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer; border: 1px solid #e0e0e0;
-            transition: transform 0.2s ease;
         }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
-        
         .label { color: #65676b; font-size: 14px; font-weight: bold; margin-bottom: 10px; letter-spacing: 0.5px; }
         .total { font-size: 42px; font-weight: bold; margin-bottom: 5px; }
         .change { font-size: 18px; font-weight: 600; }
         .plus { color: #27ae60; }
         .minus { color: #e74c3c; }
 
-        /* Popup Styles */
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9; }
         #popup { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: white; padding: 30px; border-radius: 15px; width: 420px; z-index: 10;
+            background: white; padding: 30px; border-radius: 15px; width: 400px; z-index: 10;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
         }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; color: #65676b; border-bottom: 2px solid #eee; padding: 10px; font-size: 13px; }
-        td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 14px; }
-        .close-btn { background: #1a1a1a; color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; margin-top: 20px; cursor: pointer; font-weight: bold; }
+        th { text-align: left; color: #65676b; border-bottom: 2px solid #eee; padding: 10px; }
+        td { padding: 12px 10px; border-bottom: 1px solid #eee; }
+        .close-btn { background: #333; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; margin-top: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -44,8 +38,8 @@
 
     <div id="overlay" onclick="togglePopup(false)"></div>
     <div id="popup">
-        <h2 style="margin:0; color: #1a365d;">Enrollment by Franchise</h2>
-        <div id="date-label" style="color:#65676b; font-size: 0.85rem; margin-top: 5px;"></div>
+        <h2 style="margin:0;">Enrollment by Franchise</h2>
+        <div id="date-label" style="color:#65676b; font-size: 0.9rem;"></div>
         <table>
             <thead>
                 <tr><th>Franchise</th><th>Total</th><th>Today</th></tr>
@@ -61,11 +55,7 @@
 
     async function initDashboard() {
         try {
-            const [fResponse, sResponse] = await Promise.all([
-                fetch(franchiseUrl),
-                fetch(snapshotUrl)
-            ]);
-            
+            const [fResponse, sResponse] = await Promise.all([fetch(franchiseUrl), fetch(snapshotUrl)]);
             const franchises = await fResponse.json();
             const snapshots = await sResponse.json();
 
@@ -74,47 +64,23 @@
                 return;
             }
 
-            // Get most recent data
             const latestDate = snapshots.reduce((max, p) => p.snapshot_date > max ? p.snapshot_date : max, snapshots[0].snapshot_date);
-            document.getElementById('date-label').innerText = `Snapshot: ${latestDate}`;
-            
+            document.getElementById('date-label').innerText = `Snapshot Date: ${latestDate}`;
             const todaysData = snapshots.filter(s => s.snapshot_date === latestDate);
 
-            // Populate Main Card (Overall)
             const overall = todaysData.find(s => !s.franchise_id || s.franchise_id === 0);
             if (overall) {
                 document.getElementById('main-total').innerText = overall.total_enrollment;
                 const val = overall.todays_change_enrollment;
-                const sign = val >= 0 ? '+' : '';
-                document.getElementById('main-change').innerHTML = 
-                    `<span class="${val >= 0 ? 'plus' : 'minus'}">${sign}${val} Today</span>`;
+                document.getElementById('main-change').innerHTML = `<span class="${val >= 0 ? 'plus' : 'minus'}">${val >= 0 ? '+' : ''}${val} Today</span>`;
             }
 
-            // Populate Franchise Table
             const list = document.getElementById('franchise-list');
-            list.innerHTML = "";
-
-            todaysData.forEach(snap => {
-                if (snap.franchise_id > 0) {
-                    const fInfo = franchises.find(f => f.id === snap.franchise_id);
-                    const name = fInfo ? fInfo.name : `Franchise ${snap.franchise_id}`;
-                    const val = snap.todays_change_enrollment;
-                    
-                    const row = `<tr>
-                        <td><strong>${name}</strong></td>
-                        <td>${snap.total_enrollment}</td>
-                        <td class="${val >= 0 ? 'plus' : 'minus'}">
-                            ${val >= 0 ? '+' : ''}${val}
-                        </td>
-                    </tr>`;
-                    list.innerHTML += row;
-                }
-            });
-
-        } catch (error) {
-            console.error("Fetch error:", error);
-            document.getElementById('main-total').innerText = "Error";
-        }
+            list.innerHTML = todaysData.filter(snap => snap.franchise_id > 0).map(snap => {
+                const fInfo = franchises.find(f => f.id === snap.franchise_id);
+                return `<tr><td><strong>${fInfo ? fInfo.name : 'Unknown'}</strong></td><td>${snap.total_enrollment}</td><td class="${snap.todays_change_enrollment >= 0 ? 'plus' : 'minus'}">${snap.todays_change_enrollment >= 0 ? '+' : ''}${snap.todays_change_enrollment}</td></tr>`;
+            }).join('');
+        } catch (e) { console.error(e); }
     }
 
     function togglePopup(show) {
