@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Corporate Dashboard</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; color: #1c1e21; }
+        body { font-family: sans-serif; padding: 40px; background: #f0f2f5; color: #1c1e21; margin: 0; }
         .card { 
             background: white; border-radius: 12px; padding: 25px; width: 280px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer; border: 1px solid #e0e0e0;
@@ -64,13 +64,18 @@
             const franchises = await fResponse.json();
             const snapshots = await sResponse.json();
 
-            // Logic to get the most recent date available in the table
+            if (!snapshots || snapshots.length === 0) {
+                document.getElementById('main-total').innerText = "0";
+                return;
+            }
+
+            // Get the most recent date available
             const latestDate = snapshots.reduce((max, p) => p.snapshot_date > max ? p.snapshot_date : max, snapshots[0].snapshot_date);
             document.getElementById('date-label').innerText = `Data for: ${latestDate}`;
             
             const todaysData = snapshots.filter(s => s.snapshot_date === latestDate);
 
-            // "OVERALL" record: Look for franchise_id 0 or null
+            // Find the Overall record (franchise_id 0 or null)
             const overall = todaysData.find(s => !s.franchise_id || s.franchise_id === 0);
             
             if (overall) {
@@ -85,7 +90,6 @@
             list.innerHTML = "";
 
             todaysData.forEach(snap => {
-                // Only show rows that have a valid franchise ID
                 if (snap.franchise_id > 0) {
                     const fInfo = franchises.find(f => f.id === snap.franchise_id);
                     const name = fInfo ? fInfo.name : `Franchise ${snap.franchise_id}`;
