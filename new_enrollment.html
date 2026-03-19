@@ -49,20 +49,6 @@
                     <div><label>Email</label><input type="email" id="p_email"></div>
                     <div><label>Phone</label><input type="text" id="p_phone"></div>
                     <div style="grid-column: span 2;"><label>Address</label><input type="text" id="p_address"></div>
-                    
-                    <div style="grid-column: span 2; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;"><label>Second Parent Info</label></div>
-                    <div><label>Second Parent Name</label><input type="text" id="p_s2_name"></div>
-                    <div><label>Relationship</label><input type="text" id="p_s2_rel"></div>
-                    <div><label>Second Parent Phone</label><input type="text" id="p_s2_phone"></div>
-                    <div><label>Second Parent Email</label><input type="email" id="p_s2_email"></div>
-                    <div style="grid-column: span 2;"><label>Second Parent Address</label><input type="text" id="p_s2_addr"></div>
-
-                    <div style="grid-column: span 2; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;"><label>Emergency Contact</label></div>
-                    <div><label>Emergency Contact 1 Name</label><input type="text" id="p_e1_name"></div>
-                    <div><label>Relationship</label><input type="text" id="p_e1_rel"></div>
-                    <div><label>Emergency Phone</label><input type="text" id="p_e1_phone"></div>
-                    
-                    <div style="grid-column: span 2; margin-top: 10px;"><label>Assign Franchise</label><select id="p_fran_id"></select></div>
                 </div>
             </div>
             <button class="btn-teal" style="background:#64748b;" onclick="toggleParentMode()">Toggle New/Existing</button>
@@ -169,7 +155,7 @@
     const SINGLE_QUESTION_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions/";
     const ASSESSMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:e7P6emQg/student_assessment_filled";
     const PICKUP_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_authorized_pickup";
-    const ENROLLMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/session_enrollment";
+    const ENROLLMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:IwtDgUwD/session_enrollment";
     const SESSION_API = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session";
 
     let currentParentId, currentStudentId, currentFranchiseId, selectedSessionId, currentTeacherId, assessmentPayload, pickupContacts = [], allSessions = [], allTeachers = [], allParents = [], allStudents = [], allFranchises = [];
@@ -201,7 +187,6 @@
 
     window.processParentStep = async () => {
         const isCreateMode = document.getElementById('parent-create-mode').style.display === 'block';
-
         if(isCreateMode) {
             currentFranchiseId = parseInt(document.getElementById('p_fran_id').value);
             const payload = { 
@@ -211,28 +196,16 @@
                 phone: document.getElementById('p_phone').value, 
                 address: document.getElementById('p_address').value, 
                 franchise_id: currentFranchiseId,
-                is_active: true,
-                second_parent_full_name: document.getElementById('p_s2_name').value, 
-                second_parent_relationship: document.getElementById('p_s2_rel').value, 
-                second_parent_phone_number: document.getElementById('p_s2_phone').value,
-                second_parent_email_address: document.getElementById('p_s2_email').value,
-                second_parent_home_address: document.getElementById('p_s2_addr').value,
-                emergency_contact_1_name: document.getElementById('p_e1_name').value, 
-                emergency_contact_1_relationship: document.getElementById('p_e1_rel').value,
-                emergency_contact_1_phone_number: document.getElementById('p_e1_phone').value
+                is_active: true 
             };
-
             try {
                 const res = await fetch(PARENT_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
                 const data = await res.json();
-                if (!res.ok) { alert("Xano Error: " + (data.message || "Invalid Data")); return; }
                 currentParentId = data.id;
                 allParents.push(data);
-            } catch (err) { alert("Save Failed. Connection error."); return; }
+            } catch (err) { alert("Save Failed"); return; }
         } else {
-            const selectEl = document.getElementById('p_select_id');
-            if(!selectEl.value) { alert("Please select a parent"); return; }
-            currentParentId = parseInt(selectEl.value);
+            currentParentId = parseInt(document.getElementById('p_select_id').value);
             const p = allParents.find(p => p.id === currentParentId); 
             currentFranchiseId = p.franchise_id;
         }
@@ -283,7 +256,12 @@
     document.getElementById('assessmentForm').onsubmit = (e) => {
         e.preventDefault();
         currentTeacherId = parseInt(document.getElementById('a_teacher_id').value);
-        assessmentPayload = { student_id: currentStudentId };
+        assessmentPayload = { 
+            student_id: currentStudentId,
+            teacher_id: currentTeacherId,
+            assessment_date: document.getElementById('a_assessment_date').value,
+            assessment_type: document.getElementById('a_assessment_type').value
+        };
         for(let i=1; i<=10; i++) {
             assessmentPayload[`question_${i}_id`] = parseInt(document.getElementById(`q_select_${i}`).value) || null;
             assessmentPayload[`answer_${i}`] = document.getElementById(`a_ans_${i}`).value || "";
@@ -368,14 +346,14 @@
                 }) 
             });
 
-            // 2. Write Assessment Record (student_assessment_filled)
+            // 2. Write Assessment Record
             const aWrite = await fetch(ASSESSMENT_API, { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
                 body: JSON.stringify(assessmentPayload) 
             });
 
-            // 3. Create session_enrollment Record (Status "active")
+            // 3. Create session_enrollment Record (Updated group)
             const enrollmentPayload = { 
                 student_id: parseInt(currentStudentId), 
                 session_id: parseInt(selectedSessionId), 
@@ -388,7 +366,7 @@
                 body: JSON.stringify(enrollmentPayload) 
             });
 
-            // 4. Create Pickup Contacts (student_authorized_pickup)
+            // 4. Create Pickup Contacts
             const pPromises = pickupContacts.map(c => fetch(PICKUP_API, { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
@@ -402,19 +380,15 @@
             }));
             await Promise.all(pPromises);
 
-            if(eLog.ok && sUpdate.ok) {
+            if(eLog.ok && sUpdate.ok && aWrite.ok) {
                 document.getElementById('enrollment-ui').style.display = 'none'; 
                 document.getElementById('completion-screen').style.display = 'block';
                 setTimeout(() => window.location.href = "index.html", 4000);
             } else { 
                 const errDetail = await eLog.text();
-                console.error("Xano Reject Details:", errDetail);
-                alert("Enrollment Table Error: " + errDetail); 
+                alert("Enrollment Log Failed: " + errDetail); 
             }
-        } catch (e) { 
-            console.error("Critical Sync Failure:", e);
-            alert("Save Failed. Connection error."); 
-        }
+        } catch (e) { alert("Save Failed. Connection error."); }
     };
 
     async function init() {
