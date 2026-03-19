@@ -66,16 +66,17 @@
 
             if (!snapshots || snapshots.length === 0) {
                 document.getElementById('main-total').innerText = "0";
+                document.getElementById('main-change').innerText = "No data found";
                 return;
             }
 
-            // Get the most recent date available
+            // Logic to get the most recent date available in the table
             const latestDate = snapshots.reduce((max, p) => p.snapshot_date > max ? p.snapshot_date : max, snapshots[0].snapshot_date);
             document.getElementById('date-label').innerText = `Data for: ${latestDate}`;
             
             const todaysData = snapshots.filter(s => s.snapshot_date === latestDate);
 
-            // Find the Overall record (franchise_id 0 or null)
+            // "OVERALL" record: Look for franchise_id 0 or null
             const overall = todaysData.find(s => !s.franchise_id || s.franchise_id === 0);
             
             if (overall) {
