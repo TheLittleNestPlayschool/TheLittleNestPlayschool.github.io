@@ -1,94 +1,99 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Corporate Dashboard</title>
-    <style>
-        body { font-family: 'Inter', sans-serif; padding: 40px; background: #fff; color: #1c1e21; margin: 0; }
-        .card { 
-            background: white; border-radius: 12px; padding: 25px; width: 280px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer; border: 1px solid #e0e0e0;
-        }
-        .label { color: #65676b; font-size: 14px; font-weight: bold; margin-bottom: 10px; letter-spacing: 0.5px; }
-        .total { font-size: 42px; font-weight: bold; margin-bottom: 5px; }
-        .change { font-size: 18px; font-weight: 600; }
-        .plus { color: #27ae60; }
-        .minus { color: #e74c3c; }
+<style>
+    /* Scoped styles to match your existing dashboard look without breaking the hub layout */
+    .dashboard-wrapper { padding: 40px; background: #fff; color: #1c1e21; }
+    .metric-card { 
+        background: white; border-radius: 12px; padding: 25px; width: 280px; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer; border: 1px solid #e0e0e0;
+    }
+    .metric-label { color: #65676b; font-size: 14px; font-weight: bold; margin-bottom: 10px; letter-spacing: 0.5px; }
+    .metric-total { font-size: 42px; font-weight: bold; margin-bottom: 5px; }
+    .metric-change { font-size: 18px; font-weight: 600; }
+    .text-plus { color: #27ae60; }
+    .text-minus { color: #e74c3c; }
 
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9; }
-        #popup { 
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: white; padding: 30px; border-radius: 15px; width: 400px; z-index: 10;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
-        }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; color: #65676b; border-bottom: 2px solid #eee; padding: 10px; }
-        td { padding: 12px 10px; border-bottom: 1px solid #eee; }
-        .close-btn { background: #333; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; margin-top: 20px; cursor: pointer; }
-    </style>
-</head>
-<body>
+    #dash-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; }
+    #dash-popup { 
+        display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: white; padding: 30px; border-radius: 15px; width: 400px; z-index: 10000;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+    }
+    .dash-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .dash-table th { text-align: left; color: #65676b; border-bottom: 2px solid #eee; padding: 10px; }
+    .dash-table td { padding: 12px 10px; border-bottom: 1px solid #eee; }
+    .dash-close-btn { background: #333; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; margin-top: 20px; cursor: pointer; }
+</style>
 
-    <div class="card" onclick="togglePopup(true)">
-        <div class="label">TOTAL ENROLLMENT</div>
-        <div id="main-total" class="total">...</div>
-        <div id="main-change" class="change"></div>
+<div class="dashboard-wrapper">
+    <div class="metric-card" onclick="toggleDashPopup(true)">
+        <div class="metric-label">TOTAL ENROLLMENT</div>
+        <div id="main-total" class="metric-total">...</div>
+        <div id="main-change" class="metric-change"></div>
     </div>
+</div>
 
-    <div id="overlay" onclick="togglePopup(false)"></div>
-    <div id="popup">
-        <h2 style="margin:0;">Enrollment by Franchise</h2>
-        <div id="date-label" style="color:#65676b; font-size: 0.9rem;"></div>
-        <table>
-            <thead>
-                <tr><th>Franchise</th><th>Total</th><th>Today</th></tr>
-            </thead>
-            <tbody id="franchise-list"></tbody>
-        </table>
-        <button class="close-btn" onclick="togglePopup(false)">Close</button>
-    </div>
+<div id="dash-overlay" onclick="toggleDashPopup(false)"></div>
+<div id="dash-popup">
+    <h2 style="margin:0;">Enrollment by Franchise</h2>
+    <div id="date-label" style="color:#65676b; font-size: 0.9rem;"></div>
+    <table class="dash-table">
+        <thead>
+            <tr><th>Franchise</th><th>Total</th><th>Today</th></tr>
+        </thead>
+        <tbody id="franchise-list"></tbody>
+    </table>
+    <button class="dash-close-btn" onclick="toggleDashPopup(false)">Close</button>
+</div>
 
 <script>
-    const snapshotUrl = 'https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots';
-    const franchiseUrl = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
+    (function() {
+        const snapshotUrl = 'https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots';
+        const franchiseUrl = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
 
-    async function initDashboard() {
-        try {
-            const [fResponse, sResponse] = await Promise.all([fetch(franchiseUrl), fetch(snapshotUrl)]);
-            const franchises = await fResponse.json();
-            const snapshots = await sResponse.json();
+        async function initDashboard() {
+            try {
+                const [fResponse, sResponse] = await Promise.all([
+                    fetch(franchiseUrl), 
+                    fetch(snapshotUrl + '?t=' + Date.now())
+                ]);
+                const franchises = await fResponse.json();
+                const snapshots = await sResponse.json();
 
-            if (!snapshots || snapshots.length === 0) {
-                document.getElementById('main-total').innerText = "0";
-                return;
+                if (!snapshots || snapshots.length === 0) {
+                    document.getElementById('main-total').innerText = "0";
+                    return;
+                }
+
+                const latestDate = snapshots.reduce((max, p) => p.snapshot_date > max ? p.snapshot_date : max, snapshots[0].snapshot_date);
+                document.getElementById('date-label').innerText = `Snapshot Date: ${latestDate}`;
+                const todaysData = snapshots.filter(s => s.snapshot_date === latestDate);
+
+                const overall = todaysData.find(s => !s.franchise_id || s.franchise_id === 0);
+                if (overall) {
+                    document.getElementById('main-total').innerText = overall.total_enrollment;
+                    const val = overall.todays_change_enrollment;
+                    document.getElementById('main-change').innerHTML = `<span class="${val >= 0 ? 'text-plus' : 'text-minus'}">${val >= 0 ? '+' : ''}${val} Today</span>`;
+                }
+
+                const list = document.getElementById('franchise-list');
+                list.innerHTML = todaysData.filter(snap => snap.franchise_id > 0).map(snap => {
+                    const fInfo = franchises.find(f => f.id === snap.franchise_id);
+                    const val = snap.todays_change_enrollment;
+                    return `<tr>
+                        <td><strong>${fInfo ? fInfo.name : 'Unknown'}</strong></td>
+                        <td>${snap.total_enrollment}</td>
+                        <td class="${val >= 0 ? 'text-plus' : 'text-minus'}">${val >= 0 ? '+' : ''}${val}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) { 
+                console.error("Dashboard Load Error:", e); 
             }
+        }
 
-            const latestDate = snapshots.reduce((max, p) => p.snapshot_date > max ? p.snapshot_date : max, snapshots[0].snapshot_date);
-            document.getElementById('date-label').innerText = `Snapshot Date: ${latestDate}`;
-            const todaysData = snapshots.filter(s => s.snapshot_date === latestDate);
+        window.toggleDashPopup = function(show) {
+            document.getElementById('dash-popup').style.display = show ? 'block' : 'none';
+            document.getElementById('dash-overlay').style.display = show ? 'block' : 'none';
+        };
 
-            const overall = todaysData.find(s => !s.franchise_id || s.franchise_id === 0);
-            if (overall) {
-                document.getElementById('main-total').innerText = overall.total_enrollment;
-                const val = overall.todays_change_enrollment;
-                document.getElementById('main-change').innerHTML = `<span class="${val >= 0 ? 'plus' : 'minus'}">${val >= 0 ? '+' : ''}${val} Today</span>`;
-            }
-
-            const list = document.getElementById('franchise-list');
-            list.innerHTML = todaysData.filter(snap => snap.franchise_id > 0).map(snap => {
-                const fInfo = franchises.find(f => f.id === snap.franchise_id);
-                return `<tr><td><strong>${fInfo ? fInfo.name : 'Unknown'}</strong></td><td>${snap.total_enrollment}</td><td class="${snap.todays_change_enrollment >= 0 ? 'plus' : 'minus'}">${snap.todays_change_enrollment >= 0 ? '+' : ''}${snap.todays_change_enrollment}</td></tr>`;
-            }).join('');
-        } catch (e) { console.error(e); }
-    }
-
-    function togglePopup(show) {
-        document.getElementById('popup').style.display = show ? 'block' : 'none';
-        document.getElementById('overlay').style.display = show ? 'block' : 'none';
-    }
-
-    initDashboard();
+        initDashboard();
+    })();
 </script>
-</body>
-</html>
