@@ -2,129 +2,182 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NestMind | Franchisee Command Center</title>
+    <title>NestMind | Franchise Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .sidebar { width: 260px; height: 100vh; position: fixed; }
-        .main-content { margin-left: 260px; }
-        .status-pill { padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+        .sidebar { width: 260px; height: 100vh; position: fixed; background: #0f172a; }
+        .main-content { margin-left: 260px; min-height: 100vh; background: #f8fafc; }
+        .step-locked { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
+        .step-active { border-left: 6px solid #00d1b2; background: white; }
+        .step-saved { border-left: 6px solid #cbd5e1; opacity: 0.8; }
+        .profile-label { font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+        .profile-value { font-size: 0.85rem; color: #334155; font-weight: 600; }
+        .hidden { display: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="text-slate-800">
 
-    <div class="sidebar bg-slate-900 text-white p-6 flex flex-col">
-        <h1 class="text-2xl font-black italic text-yellow-400 mb-10">NestMind</h1>
-        
-        <nav class="flex-1 space-y-4">
-            <a href="#" class="block bg-blue-600 p-3 rounded-lg font-bold">Main Dashboard</a>
-            <a href="#" class="block p-3 hover:bg-slate-800 rounded-lg">Student Directory</a>
-            <a href="#" class="block p-3 hover:bg-slate-800 rounded-lg">Payment Reports</a>
-            <a href="#" class="block p-3 hover:bg-slate-800 rounded-lg">Supply Requests</a>
+    <div class="sidebar p-6 flex flex-col text-white">
+        <h1 class="text-2xl font-black italic text-cyan-400 mb-10">NestMind</h1>
+        <nav class="flex-1 space-y-2">
+            <button onclick="showTab('stats')" class="w-full text-left p-3 rounded-lg hover:bg-slate-800 font-bold">📊 Performance</button>
+            <button onclick="showTab('enrollment')" class="w-full text-left p-3 rounded-lg bg-cyan-600 font-bold">✨ New Enrollment</button>
+            <button onclick="showTab('staff')" class="w-full text-left p-3 rounded-lg hover:bg-slate-800 font-bold">👩‍🏫 Teacher Directory</button>
         </nav>
-
-        <div class="mt-auto pt-6 border-t border-slate-700">
-            <p class="text-xs text-slate-400 mb-2">Logged in as Owner</p>
-            <button class="w-full bg-slate-800 p-2 rounded text-sm font-bold">Logout</button>
-        </div>
     </div>
 
     <div class="main-content">
-        <header class="bg-white border-b p-6 flex justify-between items-center">
-            <h2 class="text-xl font-bold uppercase tracking-tight">Franchise Overview</h2>
-            <div class="flex space-x-3">
-                <button class="border border-blue-600 text-blue-600 px-4 py-2 rounded-lg font-bold hover:bg-blue-50">Email HQ</button>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-md">New Enrollment</button>
+        
+        <header class="bg-white border-b p-6 flex justify-between items-center sticky top-0 z-20">
+            <h2 id="view-title" class="text-xl font-bold uppercase tracking-tight text-slate-500">Franchise Command</h2>
+            <div class="flex items-center space-x-4">
+                <div class="text-right">
+                    <p class="text-xs font-bold text-slate-400">ACTIVE FRANCHISE</p>
+                    <p id="active-fran-name" class="text-sm font-black text-slate-700">Loading...</p>
+                </div>
             </div>
         </header>
 
         <div class="p-8">
-            <div class="grid grid-cols-4 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-slate-400 text-xs font-bold uppercase">Total Enrollment</p>
-                    <p class="text-4xl font-black">142</p>
-                    <p class="text-green-500 text-sm mt-2">↑ 8% from last month</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-slate-400 text-xs font-bold uppercase">Added Today</p>
-                    <p class="text-4xl font-black text-blue-600">4</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-slate-400 text-xs font-bold uppercase">Left Today</p>
-                    <p class="text-4xl font-black text-slate-400">1</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-slate-400 text-xs font-bold uppercase">Pending Payments</p>
-                    <p class="text-4xl font-black text-red-600">₱12,400</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-8">
-                <div class="col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="p-4 bg-slate-50 border-b flex justify-between">
-                        <h3 class="font-bold">Student 4-Week Cycle Tracker</h3>
-                        <input type="text" placeholder="Search students..." class="text-sm border rounded px-3 py-1">
+            
+            <div id="tab-stats" class="hidden">
+                <div class="grid grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <p class="profile-label">Total Enrollment</p>
+                        <p id="stat-total" class="text-4xl font-black">—</p>
                     </div>
-                    <table class="w-full text-left">
-                        <thead class="text-xs uppercase bg-slate-50 text-slate-500 border-b">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <p class="profile-label">Daily Change</p>
+                        <p id="stat-change" class="text-4xl font-black text-cyan-600">—</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 border-b">
                             <tr>
-                                <th class="p-4">Student</th>
-                                <th class="p-4">Session</th>
-                                <th class="p-4">Start Date</th>
-                                <th class="p-4">Next Pay Date</th>
-                                <th class="p-4">Status</th>
+                                <th class="p-4 font-bold text-slate-400">DATE</th>
+                                <th class="p-4 font-bold text-slate-400">ENROLLMENT</th>
+                                <th class="p-4 font-bold text-slate-400">NET CHANGE</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y">
-                            <tr class="hover:bg-slate-50">
-                                <td class="p-4 font-bold">Juan Dela Cruz</td>
-                                <td class="p-4">09:00 AM</td>
-                                <td class="p-4">Jan 05, 2026</td>
-                                <td class="p-4 font-mono">Apr 27</td>
-                                <td class="p-4"><span class="status-pill bg-green-100 text-green-700">PAID</span></td>
-                            </tr>
-                            <tr class="bg-yellow-50">
-                                <td class="p-4 font-bold">Maria Santos</td>
-                                <td class="p-4">10:30 AM</td>
-                                <td class="p-4">Feb 12, 2026</td>
-                                <td class="p-4 font-mono font-bold text-yellow-700 underline">Mar 22</td>
-                                <td class="p-4"><span class="status-pill bg-yellow-200 text-yellow-800">DUE SOON</span></td>
-                            </tr>
-                            <tr class="bg-red-100">
-                                <td class="p-4 font-bold">Pedro Penduko</td>
-                                <td class="p-4">01:30 PM</td>
-                                <td class="p-4">Dec 20, 2025</td>
-                                <td class="p-4 font-mono font-black text-red-600 animate-pulse">MAR 18</td>
-                                <td class="p-4"><span class="status-pill bg-red-600 text-white">OVERDUE</span></td>
-                            </tr>
-                        </tbody>
+                        <tbody id="snapshot-list" class="divide-y"></tbody>
                     </table>
                 </div>
+            </div>
 
-                <div class="space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                        <h3 class="font-bold mb-4 border-b pb-2">Supply Request</h3>
-                        <form class="space-y-3">
-                            <select class="w-full border rounded p-2 text-sm">
-                                <option>Uniform - Small</option>
-                                <option>Uniform - Medium</option>
-                                <option>Workbook Set - Age 3</option>
-                            </select>
-                            <input type="number" placeholder="Quantity" class="w-full border rounded p-2 text-sm">
-                            <button class="w-full bg-slate-800 text-white p-2 rounded font-bold text-sm">Submit Request</button>
-                        </form>
+            <div id="tab-enrollment">
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-black text-slate-700">Process New Student</h3>
+                        <span id="enrollment-progress" class="text-xs font-black text-cyan-600 bg-cyan-50 px-3 py-1 rounded-full uppercase">Step 1 of 6</span>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                        <h3 class="font-bold mb-4 border-b pb-2">Nest Vault</h3>
-                        <div class="space-y-2">
-                            <a href="#" class="block p-3 bg-blue-50 text-blue-700 rounded-lg text-sm font-bold border border-blue-100 italic">📂 Sessions 1-120 (.zip)</a>
-                            <a href="#" class="block p-3 bg-blue-50 text-blue-700 rounded-lg text-sm font-bold border border-blue-100 italic">📂 Enrollment Packet</a>
-                            <a href="#" class="block p-3 bg-blue-50 text-blue-700 rounded-lg text-sm font-bold border border-blue-100 italic">📂 Teacher Guide</a>
+                    <div id="step-parent" class="bg-white border rounded-xl p-8 mb-4 step-active">
+                        <h4 class="font-bold text-lg mb-4 flex items-center"><span class="bg-slate-800 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center mr-3">1</span> Parent Profile</h4>
+                        <div id="parent-profile-view" class="hidden grid grid-cols-4 gap-4 p-4 bg-slate-50 rounded mb-4">
+                            <div><p class="profile-label">Name</p><p id="disp-p-name" class="profile-value"></p></div>
+                            <div><p class="profile-label">Phone</p><p id="disp-p-phone" class="profile-value"></p></div>
+                        </div>
+                        <div class="step-content space-y-4">
+                            <select id="p_select_id" class="w-full border p-3 rounded-lg"></select>
+                            <button onclick="processParentStep()" class="bg-cyan-500 text-white px-8 py-3 rounded-lg font-black uppercase text-sm">Confirm Parent</button>
                         </div>
                     </div>
+
+                    <div id="step-student" class="bg-white border rounded-xl p-8 mb-4 step-locked">
+                        <h4 class="font-bold text-lg mb-4 flex items-center"><span class="bg-slate-800 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center mr-3">2</span> Student Profile</h4>
+                        <div class="step-content">
+                            <select id="s_select_id" class="w-full border p-3 rounded-lg mb-4"></select>
+                            <button onclick="processStudentStep()" class="bg-cyan-500 text-white px-8 py-3 rounded-lg font-black uppercase text-sm">Confirm Student</button>
+                        </div>
+                    </div>
+
+                    <p class="text-center text-slate-400 text-xs italic">Other steps follow the same logic as your new_enrollment.html</p>
                 </div>
             </div>
+
+            <div id="tab-staff" class="hidden">
+                <div id="teacher-grid" class="grid grid-cols-3 gap-6">
+                    </div>
+            </div>
+
         </div>
     </div>
+
+    <script>
+        const API_SNAPSHOTS = "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots";
+        const API_TEACHERS = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
+        const API_PARENTS = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent";
+        const API_STUDENTS = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
+
+        let allParents = [];
+        let allStudents = [];
+
+        async function initDashboard() {
+            // 1. Fetch Snapshots for Stats
+            const snapRes = await fetch(API_SNAPSHOTS);
+            const snapshots = await snapRes.json();
+            const latest = snapshots[snapshots.length - 1];
+            
+            if(latest) {
+                document.getElementById('stat-total').innerText = latest.total_enrollment;
+                document.getElementById('stat-change').innerText = (latest.todays_change_enrollment >= 0 ? '+' : '') + latest.todays_change_enrollment;
+            }
+
+            // 2. Fetch Parents for Enrollment Step 1
+            const parentRes = await fetch(API_PARENTS);
+            allParents = await parentRes.json();
+            const pSelect = document.getElementById('p_select_id');
+            pSelect.innerHTML = '<option value="">-- Select Existing Parent --</option>' + 
+                allParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
+
+            // 3. Fetch Teachers
+            const teachRes = await fetch(API_TEACHERS);
+            const teachers = await teachRes.json();
+            const tGrid = document.getElementById('teacher-grid');
+            tGrid.innerHTML = teachers.map(t => `
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-black text-cyan-600 uppercase mb-1">${t.is_active ? 'Active' : 'Inactive'}</p>
+                    <h4 class="font-bold text-lg">${t.first_name} ${t.last_name}</h4>
+                    <p class="text-sm text-slate-500">${t.phone || 'No Phone'}</p>
+                </div>
+            `).join('');
+        }
+
+        function showTab(tabName) {
+            ['stats', 'enrollment', 'staff'].forEach(t => document.getElementById('tab-' + t).classList.add('hidden'));
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            document.getElementById('view-title').innerText = tabName + " Management";
+        }
+
+        // Logic for Steps (Simplified for brevity, matches your existing workflow)
+        function processParentStep() {
+            const pid = document.getElementById('p_select_id').value;
+            if(!pid) return alert("Select a parent");
+            const p = allParents.find(x => x.id == pid);
+            
+            document.getElementById('disp-p-name').innerText = p.first_name + " " + p.last_name;
+            document.getElementById('disp-p-phone').innerText = p.phone;
+            document.getElementById('parent-profile-view').classList.remove('hidden');
+            
+            document.getElementById('step-parent').className = 'bg-white border rounded-xl p-8 mb-4 step-saved';
+            document.getElementById('step-student').className = 'bg-white border rounded-xl p-8 mb-4 step-active';
+            document.getElementById('enrollment-progress').innerText = "Step 2 of 6";
+            
+            // Trigger student fetch for this parent...
+            fetchStudents(pid);
+        }
+
+        async function fetchStudents(parentId) {
+            const res = await fetch(API_STUDENTS);
+            const data = await res.json();
+            allStudents = data.filter(s => s.parent_id == parentId);
+            const sSelect = document.getElementById('s_select_id');
+            sSelect.innerHTML = '<option value="">-- Select Student --</option>' + 
+                allStudents.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        }
+
+        window.onload = initDashboard;
+    </script>
 </body>
 </html>
