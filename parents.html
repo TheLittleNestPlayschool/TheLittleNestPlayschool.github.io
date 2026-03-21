@@ -3,7 +3,7 @@
     <button onclick="window.openNewParentModal()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">+ ADD NEW PARENT</button>
 </div>
 
-<div id="parent-filter-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #eee;">
+<div id="parent-filter-container" style="display: none; background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; align-items: center; gap: 15px; border: 1px solid #eee;">
     <span style="font-size: 0.75rem; font-weight: 800; color: #666; text-transform: uppercase;">Filter by Franchise:</span>
     <select id="parent-franchise-filter" onchange="window.loadParents()" style="padding: 8px 15px; border-radius: 4px; border: 1px solid #ddd; background: white; min-width: 200px; font-weight: bold;">
         <option value="all">All Branches</option>
@@ -36,7 +36,6 @@
         
         <div style="padding:20px; overflow-y:auto;">
             <input type="hidden" id="pa-id">
-            
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                 <div>
                     <label style="display:block; font-size:0.65rem; font-weight:bold; color:#666; margin-bottom:3px;">FIRST NAME</label>
@@ -69,7 +68,6 @@
                 <label style="display:flex; align-items:center; gap:10px; font-size:0.8rem; font-weight:900; color:#333; cursor:pointer; margin-bottom:10px;">
                     <input type="checkbox" id="pa-active" checked onchange="window.toggleInactivationField()"> ACTIVE
                 </label>
-                
                 <div id="pa-inactive-wrap" style="display:none;">
                     <label style="display:block; font-size:0.65rem; font-weight:bold; color:#666; margin-bottom:3px;">COMMENTS</label>
                     <textarea id="pa-inactive-reason" style="width:100%; padding:8px; height:60px; border:1px solid #ddd; border-radius:4px;"></textarea>
@@ -93,27 +91,22 @@ window.initParentModule = async function() {
         const res = await fetch(window.F_API);
         window.pa_franchises = await res.json();
         
-        // Populate Modal Dropdown
         document.getElementById('pa-franchise').innerHTML = window.pa_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
-        
-        // Populate Main Filter Dropdown
         document.getElementById('parent-franchise-filter').innerHTML = '<option value="all">All Branches</option>' + 
             window.pa_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
 
-        // LOGIC FOR CONDITIONAL FILTER VISIBILITY [cite: 2026-03-21]
+        // READ THE URL PARAMETER SENT BY INDEX.HTML [cite: 2026-03-21]
         const urlParams = new URLSearchParams(window.location.search);
         const lockedFranchise = urlParams.get('franchise');
         
         if (lockedFranchise && lockedFranchise !== 'all') {
-            // HIDE filter for individual franchises to prevent switching [cite: 2026-03-21]
-            document.getElementById('parent-filter-container').style.display = 'none';
-            
+            // SCENARIO: Franchisee View - Keep filter hidden [cite: 2026-03-21]
             const matchedFran = window.pa_franchises.find(f => (f.location_name || f.name) === lockedFranchise);
             if (matchedFran) {
                 document.getElementById('parent-franchise-filter').value = matchedFran.id;
             }
         } else {
-            // SHOW filter for Corporate/Admin [cite: 2026-03-21]
+            // SCENARIO: Corporate/All View - Show the filter dropdown [cite: 2026-03-21]
             document.getElementById('parent-filter-container').style.display = 'flex';
         }
 
@@ -140,13 +133,11 @@ window.loadParents = async function() {
                 <div style="width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.address || ''}</div>
                 <div style="width: 110px; font-weight: 600;">${fran ? (fran.location_name || fran.name) : 'ID: '+p.franchise_id}</div>
                 <div style="flex-grow: 1; padding: 0 10px; color: #666; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.inactivation_reason_comments || ''}</div>
-                
                 <div style="width: 80px; text-align: center;">
                     <span style="font-size:0.55rem; background:${p.is_active ? '#e1fcf2' : '#f5f5f5'}; color:${p.is_active ? '#008c6a' : '#999'}; padding:3px 8px; border-radius:4px; font-weight:bold;">
                         ${p.is_active ? 'ACTIVE' : 'INACTIVE'}
                     </span>
                 </div>
-
                 <div style="width: 140px; text-align: right; display:flex; gap:8px; justify-content: flex-end;">
                     <button onclick="window.editParent(${p.id})" style="border:1.5px solid blue; color:blue; background:none; padding:4px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">EDIT</button>
                     <button onclick="window.deleteParent(${p.id})" style="border:1.5px solid red; color:red; background:none; padding:4px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">DELETE</button>
@@ -170,7 +161,7 @@ window.openNewParentModal = function() {
     document.getElementById('pa-active').checked = true;
     document.getElementById('pa-inactive-reason').value = "";
     
-    // Auto-set the franchise dropdown in the modal if we are in a locked view [cite: 2026-03-21]
+    // Auto-lock the new parent to the currently viewed franchise
     const currentFilter = document.getElementById('parent-franchise-filter').value;
     if (currentFilter !== 'all') {
         document.getElementById('pa-franchise').value = currentFilter;
