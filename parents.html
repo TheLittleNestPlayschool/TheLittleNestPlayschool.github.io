@@ -1,10 +1,9 @@
-
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
     <h1 style="margin:0;">Parent Management</h1>
     <button onclick="window.openNewParentModal()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">+ ADD NEW PARENT</button>
 </div>
 
-<div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #eee;">
+<div id="parent-filter-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #eee;">
     <span style="font-size: 0.75rem; font-weight: 800; color: #666; text-transform: uppercase;">Filter by Franchise:</span>
     <select id="parent-franchise-filter" onchange="window.loadParents()" style="padding: 8px 15px; border-radius: 4px; border: 1px solid #ddd; background: white; min-width: 200px; font-weight: bold;">
         <option value="all">All Branches</option>
@@ -93,8 +92,32 @@ window.initParentModule = async function() {
     try {
         const res = await fetch(window.F_API);
         window.pa_franchises = await res.json();
+        
+        // Populate Modal Dropdown
         document.getElementById('pa-franchise').innerHTML = window.pa_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
-        document.getElementById('parent-franchise-filter').innerHTML += window.pa_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
+        
+        // Populate Main Filter Dropdown
+        document.getElementById('parent-franchise-filter').innerHTML = '<option value="all">All Branches</option>' + 
+            window.pa_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
+
+        // GLOBAL FILTER LOGIC [cite: 2026-03-21]
+        const urlParams = new URLSearchParams(window.location.search);
+        const lockedFranchise = urlParams.get('franchise');
+        
+        if (lockedFranchise && lockedFranchise !== 'all') {
+            // FRANCHISEE MODE: Hide the filter bar [cite: 2026-03-21]
+            document.getElementById('parent-filter-container').style.display = 'none';
+            
+            // Auto-set the filter to match the location name from the dashboard [cite: 2026-03-21]
+            const matchedFran = window.pa_franchises.find(f => (f.location_name || f.name) === lockedFranchise);
+            if (matchedFran) {
+                document.getElementById('parent-franchise-filter').value = matchedFran.id;
+            }
+        } else {
+            // ADMIN MODE: Keep the filter bar visible [cite: 2026-03-21]
+            document.getElementById('parent-filter-container').style.display = 'flex';
+        }
+
         window.loadParents();
     } catch (err) { console.error(err); }
 };
@@ -103,6 +126,7 @@ window.loadParents = async function() {
     const fFilter = document.getElementById('parent-franchise-filter').value;
     const res = await fetch(window.PA_API + '?t=' + Date.now());
     let list = await res.json();
+    
     if (fFilter !== 'all') list = list.filter(p => p.franchise_id == fFilter);
 
     document.getElementById('parent-list').innerHTML = list.map(p => {
