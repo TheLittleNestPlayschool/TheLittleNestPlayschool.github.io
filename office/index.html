@@ -74,7 +74,10 @@
 
         async function init() {
             try {
-                // Fetch franchises for the dropdown [cite: 2026-02-05]
+                // Clear any old locks on fresh refresh to force re-selection [cite: 2026-03-21]
+                localStorage.removeItem('locked_franchise_id');
+                localStorage.removeItem('locked_franchise_name');
+
                 const res = await fetch(API_URL);
                 const data = await res.json();
                 const select = document.getElementById('sidebar-franchise-select');
@@ -85,16 +88,8 @@
                     opt.innerText = f.name;
                     select.appendChild(opt);
                 });
-
-                // Check for existing selection [cite: 2026-03-21]
-                const savedId = localStorage.getItem('locked_franchise_id');
-                if (savedId) {
-                    select.value = savedId;
-                    unlockUI();
-                    loadPage('franchise_dashboard.html', 'HOME');
-                }
             } catch (err) { 
-                console.error("Sidebar Initialization Error:", err); 
+                console.error("Sidebar Load Error:", err); 
             }
         }
 
@@ -102,36 +97,26 @@
             const select = document.getElementById('sidebar-franchise-select');
             if (!select.value) return;
 
-            // Save selection and name [cite: 2026-03-21]
             localStorage.setItem('locked_franchise_id', select.value);
             localStorage.setItem('locked_franchise_name', select.options[select.selectedIndex].text);
             
-            unlockUI();
+            // Trigger UI reveal only after selection [cite: 2026-03-21]
+            document.getElementById('sidebar-profile').classList.remove('hidden-until-locked');
+            document.getElementById('sidebar-menu-links').classList.remove('hidden-until-locked');
+            
             loadPage('franchise_dashboard.html', 'HOME');
         }
 
-        function unlockUI() {
-            // Show the restricted sections [cite: 2026-03-21]
-            document.getElementById('sidebar-profile').classList.remove('hidden-until-locked');
-            document.getElementById('sidebar-menu-links').classList.remove('hidden-until-locked');
-        }
-
         function loadPage(url, title) {
-            // Only allow loading if a franchise is selected [cite: 2026-03-21]
-            if (!localStorage.getItem('locked_franchise_id')) {
-                alert("Please select a location first.");
-                return;
-            }
+            const isLocked = localStorage.getItem('locked_franchise_id');
+            if (!isLocked) return; // Prevent any loading without a selected branch [cite: 2026-03-21]
 
             document.getElementById('content-frame').src = url;
             document.getElementById('current-screen-name').innerText = title;
             
-            // Handle active states for sidebar links
             document.querySelectorAll('.sidebar-link').forEach(l => {
                 l.classList.remove('active');
-                if(l.innerText.toUpperCase().includes(title.toUpperCase())) {
-                    l.classList.add('active');
-                }
+                if(l.innerText.toUpperCase().includes(title.toUpperCase())) l.classList.add('active');
             });
         }
 
