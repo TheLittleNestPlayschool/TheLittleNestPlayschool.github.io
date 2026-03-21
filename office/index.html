@@ -13,7 +13,7 @@
         .sidebar-link.active { background: #1e293b; color: #00d1b2; }
         .section-label { font-size: 0.65rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.1em; padding: 20px 16px 10px; }
         .hidden-until-locked { display: none !important; }
-        iframe { border: none; width: 100%; height: 100vh; background: white; }
+        iframe { border: none; width: 100%; height: 100vh; background: #f8fafc; }
     </style>
 </head>
 <body class="flex">
@@ -24,33 +24,34 @@
         </div>
 
         <div class="px-4 mb-6">
-            <button onclick="loadPage('franchise_dashboard.html', 'Home')" class="w-full bg-[#00d1b2] text-[#0f172a] py-3 rounded-lg font-black text-[11px] uppercase tracking-wider flex items-center justify-center">
-                🏠 Dashboard Home
+            <button onclick="loadPage('franchise_dashboard.html', 'HOME')" class="w-full bg-[#00d1b2] text-[#0f172a] py-3 rounded-lg font-black text-[11px] uppercase tracking-wider flex items-center justify-center shadow-lg shadow-teal-500/20">
+                🏠 DASHBOARD HOME
             </button>
         </div>
 
         <div class="px-4 mb-4" id="sidebar-gatekeeper">
-            <div class="bg-slate-800/80 border border-slate-700 p-4 rounded-xl shadow-inner text-center">
-                <p class="text-[9px] font-black text-teal-400 uppercase mb-2 tracking-widest">Active Location</p>
-                <select id="sidebar-franchise-select" onchange="confirmFranchiseSelection()" class="w-full bg-slate-900 text-white font-bold text-xs p-3 rounded-lg border border-slate-600 outline-none focus:border-teal-500 transition-colors cursor-pointer">
+            <div class="bg-[#1e293b] border border-slate-700 p-4 rounded-xl shadow-inner text-center">
+                <p class="text-[9px] font-black text-teal-400 uppercase mb-2 tracking-widest">IDENTITY LOCK</p>
+                <select id="sidebar-franchise-select" onchange="confirmFranchiseSelection()" class="w-full bg-slate-900 text-white font-bold text-xs p-3 rounded-lg border border-slate-600 outline-none focus:border-teal-500 transition-colors cursor-pointer mt-2">
                     <option value="">-- Select Branch --</option>
                 </select>
+                <p class="text-[8px] text-slate-500 mt-2 uppercase tracking-tighter">Select location to unlock menu</p>
             </div>
         </div>
 
         <div id="sidebar-profile" class="px-4 mb-4 hidden-until-locked">
             <div class="bg-slate-800/50 border border-slate-700 p-3 rounded-lg text-center">
-                <p class="text-[9px] font-black text-slate-500 uppercase">Session Profile</p>
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">SESSION PROFILE</p>
                 <p class="text-white font-bold text-sm">Dave</p>
             </div>
-            <div class="mt-2 bg-blue-900/30 border border-blue-800/50 p-3 rounded-lg text-center">
-                <p class="text-[9px] font-black text-blue-400 uppercase">Viewing Screen</p>
-                <p id="current-screen-name" class="text-[#00d1b2] font-black text-xs uppercase">Home</p>
+            <div class="mt-2 bg-[#1e293b] border border-slate-700 p-3 rounded-lg text-center">
+                <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest">VIEWING SCREEN</p>
+                <p id="current-screen-name" class="text-[#00d1b2] font-black text-[10px] uppercase">HOME</p>
             </div>
         </div>
 
         <nav id="sidebar-menu-links" class="flex-1 px-2 hidden-until-locked">
-            <div class="section-label">Management</div>
+            <div class="section-label">MANAGEMENT</div>
             <div onclick="loadPage('performance.html', 'Performance')" class="sidebar-link">📊 Performance</div>
             <div onclick="loadPage('new_enrollment.html', 'New Enrollment')" class="sidebar-link">✨ New Enrollment</div>
             <div onclick="loadPage('parents.html', 'Parents')" class="sidebar-link">👨‍👩‍👧 Parents</div>
@@ -58,7 +59,7 @@
             <div onclick="loadPage('teachers.html', 'Teachers')" class="sidebar-link">👩‍🏫 Teachers</div>
             <div onclick="loadPage('sessions.html', 'Sessions')" class="sidebar-link">🗓️ Sessions</div>
             
-            <div class="section-label">CRM & Leads</div>
+            <div class="section-label">CRM & LEADS</div>
             <div onclick="loadPage('message_raw.html', 'Raw Message Log')" class="sidebar-link">💬 Raw Message Log</div>
             <div onclick="loadPage('lead_profile.html', 'Lead Profiles')" class="sidebar-link">👤 Lead Profiles</div>
         </nav>
@@ -73,44 +74,67 @@
 
         async function init() {
             try {
+                // Fetch franchises for the dropdown [cite: 2026-02-05]
                 const res = await fetch(API_URL);
                 const data = await res.json();
                 const select = document.getElementById('sidebar-franchise-select');
+                
                 data.forEach(f => {
                     let opt = document.createElement('option');
-                    opt.value = f.id; opt.innerText = f.name;
+                    opt.value = f.id; 
+                    opt.innerText = f.name;
                     select.appendChild(opt);
                 });
+
+                // Check for existing selection [cite: 2026-03-21]
                 const savedId = localStorage.getItem('locked_franchise_id');
                 if (savedId) {
                     select.value = savedId;
-                    unlockAndLoad();
+                    unlockUI();
+                    loadPage('franchise_dashboard.html', 'HOME');
                 }
-            } catch (err) { console.error("Sidebar Load Error:", err); }
+            } catch (err) { 
+                console.error("Sidebar Initialization Error:", err); 
+            }
         }
 
         function confirmFranchiseSelection() {
             const select = document.getElementById('sidebar-franchise-select');
             if (!select.value) return;
+
+            // Save selection and name [cite: 2026-03-21]
             localStorage.setItem('locked_franchise_id', select.value);
             localStorage.setItem('locked_franchise_name', select.options[select.selectedIndex].text);
-            unlockAndLoad();
+            
+            unlockUI();
+            loadPage('franchise_dashboard.html', 'HOME');
         }
 
-        function unlockAndLoad() {
+        function unlockUI() {
+            // Show the restricted sections [cite: 2026-03-21]
             document.getElementById('sidebar-profile').classList.remove('hidden-until-locked');
             document.getElementById('sidebar-menu-links').classList.remove('hidden-until-locked');
-            loadPage('franchise_dashboard.html', 'Home');
         }
 
         function loadPage(url, title) {
+            // Only allow loading if a franchise is selected [cite: 2026-03-21]
+            if (!localStorage.getItem('locked_franchise_id')) {
+                alert("Please select a location first.");
+                return;
+            }
+
             document.getElementById('content-frame').src = url;
             document.getElementById('current-screen-name').innerText = title;
+            
+            // Handle active states for sidebar links
             document.querySelectorAll('.sidebar-link').forEach(l => {
                 l.classList.remove('active');
-                if(l.innerText.includes(title)) l.classList.add('active');
+                if(l.innerText.toUpperCase().includes(title.toUpperCase())) {
+                    l.classList.add('active');
+                }
             });
         }
+
         window.onload = init;
     </script>
 </body>
