@@ -1,9 +1,5 @@
 <style>
-    /* Exact 1:1 Visual Match to Parent Directory */
-    .student-mgmt-header { text-align: left; margin-bottom: 2rem; }
-    .student-mgmt-title { font-size: 3rem; font-weight: 900; color: #1e293b; tracking-tighter; }
-    .student-mgmt-subtitle { color: #94a3b8; font-weight: 500; margin-top: 0.25rem; }
-    
+    /* 1:1 Visual Clone of Parent Directory */
     .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
     .active-bg { background-color: #ecfdf5; color: #059669; border: 1px solid #d1fae5; }
     .inactive-bg { background-color: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
@@ -11,11 +7,11 @@
 
 <div class="max-w-7xl mx-auto p-2">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div class="student-mgmt-header">
-            <h1 class="student-mgmt-title">Student Management</h1>
-            <p class="student-mgmt-subtitle">Enrollment, records, and academic status tracking.</p>
+        <div class="text-left">
+            <h1 class="text-5xl font-black text-slate-800 tracking-tighter">Student Management</h1>
+            <p class="text-slate-400 font-medium mt-1">Enrollment, records, and academic status tracking.</p>
         </div>
-        <button onclick="openStudentModal()" class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white px-8 py-4 rounded-2xl font-black transition-all shadow-lg flex items-center gap-3 active:scale-95">
+        <button onclick="openStudentModal()" class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white px-8 py-4 rounded-2xl font-black transition-all shadow-lg flex items-center gap-3">
             <span class="text-xl">+</span> NEW STUDENT
         </button>
     </div>
@@ -24,7 +20,7 @@
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-slate-50/50 border-b border-slate-100">
-                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest w-20">ID</th>
+                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">ID</th>
                     <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Name</th>
                     <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Parent / Guardian</th>
                     <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Date of Birth</th>
@@ -43,7 +39,7 @@
     <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden border border-white/20">
         <div class="p-10 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <div>
-                <h2 id="modal-title" class="text-3xl font-black text-slate-800 tracking-tighter">Register Student</h2>
+                <h2 id="student-modal-title" class="text-3xl font-black text-slate-800 tracking-tighter">Register Student</h2>
                 <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Student Profile Details</p>
             </div>
             <button onclick="closeStudentModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-red-500 font-bold text-2xl transition-all">&times;</button>
@@ -52,16 +48,16 @@
             <input type="hidden" id="edit-student-id">
             <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Student Full Name</label>
-                <input type="text" id="student_name" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-[#00d1b2]/10 outline-none transition-all">
+                <input type="text" id="student_name_input" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#00d1b2]">
             </div>
             <div class="grid grid-cols-2 gap-6">
                 <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Birth Date</label>
-                    <input type="date" id="dob" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none">
+                    <input type="date" id="dob_input" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none">
                 </div>
                 <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Assign Parent</label>
-                    <select id="parent_select" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none cursor-pointer">
+                    <select id="parent_select_input" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none">
                         <option value="">-- Select Parent --</option>
                     </select>
                 </div>
@@ -75,38 +71,38 @@
 </div>
 
 <script>
-    // NAMESPACED LOGIC TO PREVENT NAVIGATION CONFLICTS
-    const StudentModule = {
-        API: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/student",
-        PARENT_API: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent",
-        parentMap: {},
+    // Simplified Logic to prevent conflict with Parents page
+    (function() {
+        const API_STUDENT = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/student";
+        const API_PARENT = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
+        let parentData = {};
 
-        async init() {
+        async function startStudentPage() {
             const fid = localStorage.getItem('locked_franchise_id');
             const tbody = document.getElementById('student-table-body');
             
             try {
-                // 1. Fetch Parents for mapping name [cite: 2026-02-05]
-                const pRes = await fetch(`${this.PARENT_API}?franchise_id=${fid}`);
+                // Fetch Parents for name mapping [cite: 2026-02-05]
+                const pRes = await fetch(`${API_PARENT}?franchise_id=${fid}`);
                 const parents = await pRes.json();
-                const pSelect = document.getElementById('parent_select');
+                const pSelect = document.getElementById('parent_select_input');
                 pSelect.innerHTML = '<option value="">-- Select Parent --</option>';
                 
                 parents.forEach(p => {
-                    this.parentMap[p.id] = `${p.first_name} ${p.last_name}`;
+                    parentData[p.id] = `${p.first_name} ${p.last_name}`;
                     const opt = document.createElement('option');
                     opt.value = p.id;
                     opt.innerText = `${p.first_name} ${p.last_name}`;
                     pSelect.appendChild(opt);
                 });
 
-                // 2. Fetch Students [cite: 2026-02-05]
-                const sRes = await fetch(`${this.API}?franchise_id=${fid}`);
+                // Fetch Students [cite: 2026-02-05]
+                const sRes = await fetch(`${API_STUDENT}?franchise_id=${fid}`);
                 const students = await sRes.json();
                 
                 tbody.innerHTML = '';
                 if(students.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="p-20 text-center text-slate-400 font-bold italic">No students registered in this branch.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-20 text-center text-slate-400 font-bold italic">No records found.</td></tr>';
                     return;
                 }
 
@@ -116,61 +112,55 @@
                         <tr class="hover:bg-slate-50/80 transition-all border-b border-slate-50 group">
                             <td class="p-6 text-sm font-bold text-slate-400">#${s.id}</td>
                             <td class="p-6 text-sm font-black text-slate-800">${s.name}</td>
-                            <td class="p-6 text-sm font-bold text-[#00d1b2]">${this.parentMap[s.parent_id] || 'Unassigned'}</td>
+                            <td class="p-6 text-sm font-bold text-[#00d1b2]">${parentData[s.parent_id] || '---'}</td>
                             <td class="p-6 text-center text-sm font-bold text-slate-500 italic">${bday}</td>
                             <td class="p-6 text-center">
                                 <span class="status-pill ${s.is_active ? 'active-bg' : 'inactive-bg'}">${s.is_active ? 'Active' : 'Inactive'}</span>
                             </td>
                             <td class="p-6 text-right">
-                                <button onclick='openStudentModal(${JSON.stringify(s)})' class="bg-white border border-slate-200 text-slate-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:border-slate-800 hover:text-slate-800 transition-all">Edit Profile</button>
+                                <button onclick='window.openStudentEdit(${JSON.stringify(s)})' class="bg-white border border-slate-200 text-slate-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:border-slate-800 hover:text-slate-800 transition-all">Edit Profile</button>
                             </td>
                         </tr>
                     `);
                 });
             } catch (e) { 
-                console.error("Student Sync Error:", e);
-                tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold">Error: Connection to Xano failed.</td></tr>'; 
+                tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold">Xano Connection Failed.</td></tr>'; 
             }
         }
-    };
 
-    function openStudentModal(s = null) {
-        document.getElementById('student-modal').classList.remove('hidden');
-        const form = document.getElementById('student-form');
-        form.reset();
-        if(s) {
+        window.openStudentEdit = (s) => {
+            document.getElementById('student-modal').classList.remove('hidden');
             document.getElementById('edit-student-id').value = s.id;
-            document.getElementById('student_name').value = s.name;
-            document.getElementById('dob').value = s.date_of_birth ? s.date_of_birth.split('T')[0] : '';
-            document.getElementById('parent_select').value = s.parent_id;
-        }
-    }
-
-    function closeStudentModal() { document.getElementById('student-modal').classList.add('hidden'); }
-
-    document.getElementById('student-form').onsubmit = async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('edit-student-id').value;
-        const payload = {
-            name: document.getElementById('student_name').value,
-            date_of_birth: document.getElementById('dob').value,
-            parent_id: parseInt(document.getElementById('parent_select').value),
-            franchise_id: parseInt(localStorage.getItem('locked_franchise_id')),
-            is_active: true
+            document.getElementById('student_name_input').value = s.name;
+            document.getElementById('dob_input').value = s.date_of_birth ? s.date_of_birth.split('T')[0] : '';
+            document.getElementById('parent_select_input').value = s.parent_id;
         };
-        const method = id ? 'PATCH' : 'POST';
-        const url = id ? `${StudentModule.API}/${id}` : StudentModule.API;
-        
-        try {
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if(res.ok) { closeStudentModal(); StudentModule.init(); }
-        } catch (e) { alert("Save failed."); }
-    };
 
-    // Auto-run on load
-    StudentModule.init();
+        window.openStudentModal = () => {
+            document.getElementById('student-modal').classList.remove('hidden');
+            document.getElementById('student-form').reset();
+            document.getElementById('edit-student-id').value = '';
+        };
+
+        window.closeStudentModal = () => { document.getElementById('student-modal').classList.add('hidden'); };
+
+        document.getElementById('student-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-student-id').value;
+            const payload = {
+                name: document.getElementById('student_name_input').value,
+                date_of_birth: document.getElementById('dob_input').value,
+                parent_id: parseInt(document.getElementById('parent_select_input').value),
+                franchise_id: parseInt(localStorage.getItem('locked_franchise_id')),
+                is_active: true
+            };
+            const method = id ? 'PATCH' : 'POST';
+            const url = id ? `${API_STUDENT}/${id}` : API_STUDENT;
+            await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            window.closeStudentModal();
+            startStudentPage();
+        };
+
+        startStudentPage();
+    })();
 </script>
