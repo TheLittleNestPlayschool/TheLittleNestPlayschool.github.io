@@ -12,8 +12,10 @@
         .sidebar-link:hover { background: #1e293b; color: #00d1b2; }
         .sidebar-link.active { background: #1e293b; color: #00d1b2; }
         .section-label { font-size: 0.65rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.1em; padding: 20px 16px 10px; }
+        
+        /* STRICT HIDDEN STATES [cite: 2026-03-21] */
+        .hidden-until-locked { display: none !important; }
         iframe { border: none; width: 100%; height: 100vh; }
-        .hidden { display: none !important; }
     </style>
 </head>
 <body class="flex">
@@ -24,7 +26,7 @@
         </div>
 
         <div class="px-4 mb-6">
-            <button onclick="loadPage('franchise_dashboard.html', 'Home')" class="w-full bg-[#00d1b2] text-[#0f172a] py-3 rounded-lg font-black text-[11px] uppercase tracking-wider flex items-center justify-center shadow-lg shadow-teal-500/20">
+            <button onclick="loadPage('franchise_dashboard.html', 'Home')" class="w-full bg-[#00d1b2] text-[#0f172a] py-3 rounded-lg font-black text-[11px] uppercase tracking-wider flex items-center justify-center">
                 🏠 Dashboard Home
             </button>
         </div>
@@ -32,14 +34,13 @@
         <div class="px-4 mb-4" id="sidebar-gatekeeper">
             <div class="bg-slate-800/80 border border-slate-700 p-4 rounded-xl shadow-inner">
                 <p class="text-[9px] font-black text-teal-400 uppercase mb-2 tracking-widest text-center">Identity Lock</p>
-                <select id="sidebar-franchise-select" onchange="confirmFranchiseSelection()" class="w-full bg-slate-900 text-white font-bold text-xs p-3 rounded-lg border border-slate-600 outline-none focus:border-teal-500 transition-colors">
+                <select id="sidebar-franchise-select" onchange="confirmFranchiseSelection()" class="w-full bg-slate-900 text-white font-bold text-xs p-3 rounded-lg border border-slate-600 outline-none">
                     <option value="">-- Choose Branch --</option>
                 </select>
-                <p class="text-[8px] text-slate-500 mt-2 text-center italic">Select location to unlock menu</p>
             </div>
         </div>
 
-        <div id="sidebar-profile" class="px-4 mb-4 hidden">
+        <div id="sidebar-profile" class="px-4 mb-4 hidden-until-locked">
             <div class="bg-slate-800/50 border border-slate-700 p-3 rounded-lg text-center">
                 <p class="text-[9px] font-black text-slate-500 uppercase">Session Profile</p>
                 <p class="text-white font-bold text-sm">Dave</p>
@@ -50,7 +51,7 @@
             </div>
         </div>
 
-        <nav id="management-menu" class="flex-1 px-2 hidden">
+        <nav id="management-menu" class="flex-1 px-2 hidden-until-locked">
             <div class="section-label">Management</div>
             <div onclick="loadPage('performance.html', 'Performance')" class="sidebar-link">📊 Performance</div>
             <div onclick="loadPage('new_enrollment.html', 'New Enrollment')" class="sidebar-link">✨ New Enrollment</div>
@@ -58,76 +59,61 @@
             <div onclick="loadPage('students.html', 'Students')" class="sidebar-link">🏫 Students</div>
             <div onclick="loadPage('teachers.html', 'Teachers')" class="sidebar-link">👩‍🏫 Teachers</div>
             <div onclick="loadPage('sessions.html', 'Sessions')" class="sidebar-link">🗓️ Sessions</div>
-
-            <div class="section-label">CRM & Leads</div>
-            <div onclick="loadPage('message_raw.html', 'Raw Message Log')" class="sidebar-link">💬 Raw Message Log</div>
-            <div onclick="loadPage('lead_profile.html', 'Lead Profiles')" class="sidebar-link">👤 Lead Profiles</div>
         </nav>
     </aside>
 
     <main class="flex-1 h-screen relative bg-white overflow-hidden">
-        <iframe id="content-frame" src="franchise_dashboard.html"></iframe>
+        <iframe id="content-frame" src="about:blank"></iframe>
     </main>
 
     <script>
-        const FRAN_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
+        const API_URL = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
 
-        async function initSidebar() {
-            try {
-                const res = await fetch(FRAN_API);
-                const data = await res.json();
-                const select = document.getElementById('sidebar-franchise-select');
-                
-                data.forEach(f => {
-                    let opt = document.createElement('option');
-                    opt.value = f.id;
-                    opt.innerText = f.name;
-                    select.appendChild(opt);
-                });
+        async function init() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            const select = document.getElementById('sidebar-franchise-select');
+            data.forEach(f => {
+                let opt = document.createElement('option');
+                opt.value = f.id; opt.innerText = f.name;
+                select.appendChild(opt);
+            });
 
-                // Auto-load if already saved
-                const savedId = localStorage.getItem('locked_franchise_id');
-                if (savedId) {
-                    select.value = savedId;
-                    unlockMenu();
-                }
-            } catch (err) { console.error("Sidebar Load Error:", err); }
+            const savedId = localStorage.getItem('locked_franchise_id');
+            if (savedId) {
+                select.value = savedId;
+                unlockAndLoad();
+            } else {
+                // If no selection, keep iframe blank or show a splash screen [cite: 2026-03-21]
+                document.getElementById('content-frame').src = "about:blank";
+            }
         }
 
         function confirmFranchiseSelection() {
             const select = document.getElementById('sidebar-franchise-select');
-            const id = select.value;
-            const name = select.options[select.selectedIndex].text;
+            if (!select.value) return;
 
-            if (!id) return;
-
-            localStorage.setItem('locked_franchise_id', id);
-            localStorage.setItem('locked_franchise_name', name);
-            
-            unlockMenu();
-
-            // Refresh the iframe to show content for the selected franchise
-            document.getElementById('content-frame').contentWindow.location.reload();
+            localStorage.setItem('locked_franchise_id', select.value);
+            localStorage.setItem('locked_franchise_name', select.options[select.selectedIndex].text);
+            unlockAndLoad();
         }
 
-        function unlockMenu() {
-            document.getElementById('sidebar-profile').classList.remove('hidden');
-            document.getElementById('management-menu').classList.remove('hidden');
+        function unlockAndLoad() {
+            document.getElementById('sidebar-profile').classList.remove('hidden-until-locked');
+            document.getElementById('management-menu').classList.remove('hidden-until-locked');
+            loadPage('franchise_dashboard.html', 'Home');
         }
 
-        function loadPage(url, title = 'Home') {
-            const frame = document.getElementById('content-frame');
-            frame.src = url;
+        function loadPage(url, title) {
+            document.getElementById('content-frame').src = url;
             document.getElementById('current-screen-name').innerText = title;
-            
-            // UI Visual Feedback
-            document.querySelectorAll('.sidebar-link').forEach(link => {
-                link.classList.remove('active');
-                if(link.innerText.includes(title)) link.classList.add('active');
+            document.querySelectorAll('.sidebar-link').forEach(l => {
+                l.classList.remove('active');
+                if(l.innerText.includes(title)) l.classList.add('active');
             });
         }
 
-        window.onload = initSidebar;
+        window.onload = init;
     </script>
 </body>
 </html>
