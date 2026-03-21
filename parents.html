@@ -1,118 +1,81 @@
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-
-<style>
-    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; padding: 40px; }
-    .btn-teal { background-color: #00d1b2; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 800; cursor: pointer; border: none; transition: transform 0.1s; }
-    .btn-teal:hover { background-color: #00b89c; transform: translateY(-1px); }
-    .table-row { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; align-items: center; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-</style>
-
-<div class="flex justify-between items-end mb-8">
+<div class="mb-8 flex justify-between items-end">
     <div>
         <h1 class="text-4xl font-black text-slate-800 tracking-tight">Parent Directory</h1>
-        <p id="filter-status" class="text-slate-500 font-medium italic mt-1">Showing all records...</p>
+        <p id="parent-subtitle" class="text-slate-500 font-medium italic">Viewing directory...</p>
     </div>
-    <button onclick="openModal()" class="btn-teal shadow-lg shadow-teal-500/20">+ ADD NEW PARENT</button>
+    <button onclick="openAddParentModal()" class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white font-black py-3 px-6 rounded-xl shadow-lg shadow-teal-500/20 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-2">
+        <span class="text-xl">+</span> ADD NEW PARENT
+    </button>
 </div>
 
-<div class="flex px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200 mb-4">
-    <div style="width: 60px;">ID</div>
-    <div style="width: 220px;">Name</div>
-    <div style="width: 220px;">Contact Info</div>
-    <div class="flex-1">Home Address</div>
-    <div style="width: 120px; text-align: right;">Management</div>
-</div>
-
-<div id="parent-list" class="space-y-3">
-    <div class="animate-pulse text-slate-400 font-bold p-10 text-center">Synchronizing with NestMind...</div>
-</div>
-
-<div id="parent-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
-        <div class="bg-slate-800 p-6 flex justify-between items-center">
-            <h2 id="modal-title" class="text-[#00d1b2] font-black uppercase tracking-widest text-sm">Parent Profile</h2>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-white font-bold">ESC TO CLOSE</button>
-        </div>
-        <div class="p-8">
-            <input type="hidden" id="f-id">
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">First Name</label>
-                    <input type="text" id="f-fname" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:border-teal-500">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Last Name</label>
-                    <input type="text" id="f-lname" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:border-teal-500">
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Email</label>
-                    <input type="email" id="f-email" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:border-teal-500">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Phone</label>
-                    <input type="text" id="f-phone" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:border-teal-500">
-                </div>
-            </div>
-            <div class="mb-6">
-                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Home Address</label>
-                <textarea id="f-address" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg h-24 outline-none focus:border-teal-500"></textarea>
-            </div>
-            <button onclick="saveParent()" class="w-full bg-slate-800 text-[#00d1b2] py-4 rounded-xl font-black uppercase tracking-widest hover:bg-slate-700 transition-colors">Save to Database</button>
-        </div>
-    </div>
+<div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="bg-slate-50 border-b border-slate-200">
+                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">ID</th>
+                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</th>
+                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact Info</th>
+                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Home Address</th>
+                <th class="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Management</th>
+            </tr>
+        </thead>
+        <tbody id="parent-table-body">
+            <tr>
+                <td colspan="5" class="px-6 py-12 text-center text-slate-400 font-bold italic">Initializing encrypted parent data...</td>
+            </tr>
+        </tbody>
+    </table>
 </div>
 
 <script>
-    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
-
+    // Module Logic [cite: 2026-02-05]
     async function loadParents() {
-        const lockedId = localStorage.getItem('locked_franchise_id');
-        const lockedName = localStorage.getItem('locked_franchise_name');
+        const fid = localStorage.getItem('locked_franchise_id');
+        const fname = localStorage.getItem('locked_franchise_name');
+        const tbody = document.getElementById('parent-table-body');
         
-        if (lockedName) {
-            document.getElementById('filter-status').innerText = `Viewing directory for: ${lockedName}`;
+        if (fname) {
+            document.getElementById('parent-subtitle').innerText = `Viewing directory for: ${fname}`;
         }
 
         try {
-            const res = await fetch(PARENT_API);
-            let data = await res.json();
-
-            // Automatic identity filtering [cite: 2026-03-21]
-            if (lockedId) {
-                data = data.filter(p => p.franchise_id == lockedId);
+            // Filter API by the locked Franchise ID [cite: 2026-02-05]
+            const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/parent?franchise_id=${fid}`);
+            const data = await res.json();
+            
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400 italic font-medium">No parents found for this branch.</td></tr>`;
+                return;
             }
 
-            const listBody = document.getElementById('parent-list');
-            listBody.innerHTML = data.map(p => `
-                <div class="table-row hover:border-teal-200 transition-colors">
-                    <div style="width: 60px;" class="text-slate-400 font-bold">#${p.id}</div>
-                    <div style="width: 220px;" class="font-bold text-slate-800">${p.first_name} ${p.last_name}</div>
-                    <div style="width: 220px;">
-                        <div class="text-teal-600 font-bold text-xs">${p.email}</div>
-                        <div class="text-slate-400 text-[10px] font-bold uppercase">${p.phone || 'No Phone'}</div>
-                    </div>
-                    <div class="flex-1 text-slate-500 text-sm italic truncate pr-4">${p.address || 'No address on file'}</div>
-                    <div style="width: 120px; text-align: right;">
-                        <button onclick="editParent(${p.id})" class="text-slate-400 hover:text-slate-800 font-black text-[10px] uppercase">Edit Profile</button>
-                    </div>
-                </div>
-            `).join('');
-        } catch (err) {
-            console.error("Fetch error:", err);
-            document.getElementById('parent-list').innerHTML = `<div class="p-10 text-red-400 font-bold text-center">Error connecting to Xano.</div>`;
+            data.forEach(p => {
+                const row = document.createElement('tr');
+                row.className = "border-b border-slate-100 hover:bg-slate-50 transition-colors group";
+                row.innerHTML = `
+                    <td class="px-6 py-4 text-slate-400 font-bold text-sm">#${p.id}</td>
+                    <td class="px-6 py-4">
+                        <div class="text-slate-800 font-extrabold text-base">${p.first_name} ${p.last_name}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-[#00d1b2] font-bold text-xs underline decoration-2 cursor-pointer">${p.email}</div>
+                        <div class="text-slate-400 font-medium text-[10px] mt-1">${p.phone || 'No phone recorded'}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-slate-500 font-medium text-xs leading-relaxed max-w-[200px] italic">${p.address}</div>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button class="text-[10px] font-black text-slate-300 hover:text-slate-600 uppercase tracking-tighter border border-slate-200 px-3 py-1 rounded-md transition-all">Edit Profile</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-400 font-bold">Failed to sync parent records.</td></tr>`;
         }
     }
 
-    // Modal Controls
-    function openModal() { document.getElementById('parent-modal').style.display = 'flex'; }
-    function closeModal() { document.getElementById('parent-modal').style.display = 'none'; }
-
-    // Placeholder for Edit/Save logic
-    function editParent(id) { console.log("Editing ID:", id); openModal(); }
-    async function saveParent() { /* Logic for Xano POST/PUT */ closeModal(); loadParents(); }
-
-    window.onload = loadParents;
+    // Initialize module [cite: 2025-12-29]
+    loadParents();
 </script>
