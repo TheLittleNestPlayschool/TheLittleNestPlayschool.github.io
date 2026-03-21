@@ -11,7 +11,7 @@
             <tr class="bg-slate-50 border-b border-slate-100">
                 <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Name</th>
                 <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Parent / Guardian</th>
-                <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Gender / Lang</th>
+                <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Gender / Age</th>
                 <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Enrollment Details</th>
                 <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Management</th>
             </tr>
@@ -34,7 +34,7 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Legal Name</label>
-                    <input type="text" id="name" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-[#00d1b2] outline-none">
+                    <input type="text" id="name" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#00d1b2]">
                 </div>
                 <div>
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Preferred Name</label>
@@ -107,6 +107,14 @@
     const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
     let parentCache = {};
 
+    function calculateAge(dob) {
+        if (!dob) return '---';
+        const birthDate = new Date(dob);
+        const difference = Date.now() - birthDate.getTime();
+        const ageDate = new Date(difference);
+        return Math.abs(ageDate.getUTCFullYear() - 1970);
+    }
+
     async function fetchStudents() {
         const fid = localStorage.getItem('locked_franchise_id');
         const tbody = document.getElementById('student-table-body');
@@ -129,6 +137,7 @@
             tbody.innerHTML = '';
 
             students.forEach(s => {
+                const age = calculateAge(s.date_of_birth);
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                         <td class="p-5">
@@ -140,7 +149,7 @@
                         </td>
                         <td class="p-5">
                             <div class="text-sm font-bold text-slate-700">${s.gender || '---'}</div>
-                            <div class="text-[11px] text-slate-400 font-medium">${s.primary_language || '---'}</div>
+                            <div class="text-[11px] text-slate-400 font-black uppercase">${age} Years Old</div>
                         </td>
                         <td class="p-5">
                             <div class="text-[11px] text-slate-800 font-black">START: ${s.start_date || '---'}</div>
@@ -170,9 +179,10 @@
 
         if (s) {
             document.getElementById('modal-title').innerText = "Edit Student Profile";
-            // Map all data to inputs
-            ['name', 'preferred_name', 'date_of_birth', 'gender', 'nationality', 'parent_id', 'primary_language', 'enrolled_date', 'start_date', 'session_enrolled', 'home_address'].forEach(field => {
-                if(document.getElementById(field)) document.getElementById(field).value = s[field] || '';
+            const fields = ['name', 'preferred_name', 'date_of_birth', 'gender', 'nationality', 'parent_id', 'primary_language', 'enrolled_date', 'start_date', 'session_enrolled', 'home_address'];
+            fields.forEach(field => {
+                const el = document.getElementById(field);
+                if(el) el.value = s[field] || '';
             });
         } else {
             document.getElementById('modal-title').innerText = "Register New Student";
