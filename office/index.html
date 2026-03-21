@@ -56,7 +56,7 @@
 </div>
 
 <script>
-// Global Variable to store the selected Franchise [cite: 2026-03-21]
+// Global tracking for franchise context [cite: 2026-03-21]
 let globalFranchiseContext = "all";
 let currentLoadController = null;
 let debounceTimer = null;
@@ -65,9 +65,8 @@ let currentActiveName = null;
 
 function updateFranchiseContext(value) {
     globalFranchiseContext = value;
-    console.log("Global context updated to: " + globalFranchiseContext);
     
-    // Auto-refresh the current screen to apply the new filter [cite: 2026-03-21]
+    // Auto-refresh the current screen if one is loaded
     if (currentActiveUrl) {
         loadFrame(currentActiveUrl, currentActiveName);
     }
@@ -115,14 +114,15 @@ async function loadFrame(url, name) {
             container.innerHTML = '<div style="padding:20px; font-size:0.8rem; color:#666;">Loading ' + name + '...</div>';
 
             try {
-                // Pass the global context as a query parameter [cite: 2026-02-05, 2026-03-21]
-                const finalUrl = `${url}?franchise=${globalFranchiseContext}&v=${Math.floor(Math.random() * 999999)}`;
+                // Pass the franchise name to the child page [cite: 2026-03-21]
+                const finalUrl = `${url}?franchise=${encodeURIComponent(globalFranchiseContext)}&v=${Math.floor(Math.random() * 999999)}`;
                 
                 const response = await fetch(finalUrl, { signal });
                 const html = await response.text();
                 
                 container.innerHTML = html;
                 
+                // Re-initialize scripts within the loaded content [cite: 2025-12-29]
                 const scripts = container.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
