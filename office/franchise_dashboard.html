@@ -21,10 +21,6 @@
             <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('parents.html', 'Parents')"><span>👨‍👩‍👧</span> Parents</div>
             <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('students.html', 'Students')"><span>🏫</span> Students</div>
             <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('teacher_dashboard.html', 'Teachers')"><span>🧑‍🏫</span> Teachers</div>
-            
-            <div class="text-[0.65rem] font-800 text-[#475569] uppercase tracking-widest px-4 py-3">Academic DNA</div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('student_assessment.html', 'Assessments')"><span>📝</span> Assessments</div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('session.html', 'Sessions')"><span>🗓️</span> Sessions</div>
         </nav>
     </aside>
 
@@ -38,24 +34,21 @@
 
 <script>
     const GITHUB_ROOT = "https://thelittlenestplayschool.github.io/";
-    // THIS IS THE FIX: The endpoint to get your franchise list [cite: 2026-02-05]
-    const XANO_FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/franchise";
+    // REVERTED: Using the original working API group for Franchises
+    const XANO_FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
 
     async function init() {
         try {
             const res = await fetch(XANO_FRANCHISE_API);
-            if (!res.ok) throw new Error("Could not reach Franchise table.");
             const data = await res.json();
             const select = document.getElementById('branch-select');
             data.forEach(f => {
                 let opt = document.createElement('option');
-                opt.value = f.id; 
-                opt.innerText = f.name;
+                opt.value = f.id; opt.innerText = f.name;
                 select.appendChild(opt);
             });
         } catch (e) { 
-            console.error("Identity Lock failed", e);
-            document.getElementById('status-text').innerText = "Sync Error: API Group 8Je8Zszx not found.";
+            console.error("Franchise sync failed", e);
         }
     }
 
@@ -83,7 +76,6 @@
             const res = await fetch(GITHUB_ROOT + file + '?v=' + Date.now());
             const html = await res.text();
             workspace.innerHTML = `<div class="p-12">${html}</div>`;
-            
             const scripts = workspace.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
@@ -91,7 +83,7 @@
                 else newScript.text = oldScript.text;
                 document.head.appendChild(newScript).parentNode.removeChild(newScript);
             });
-        } catch (e) { workspace.innerHTML = `<div class="p-20 text-red-500 font-bold">Error: ${e.message}</div>`; }
+        } catch (e) { workspace.innerHTML = `<div class="p-20 text-red-500 font-bold">${e.message}</div>`; }
     }
     init();
 </script>
