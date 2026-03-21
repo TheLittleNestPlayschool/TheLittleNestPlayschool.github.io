@@ -4,19 +4,21 @@
     <div class="flex flex-wrap gap-3 w-full md:w-auto">
         <div class="relative flex-1 md:w-64">
             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
             </span>
-            <input type="text" id="search-input" oninput="renderTable()" placeholder="Search anything..." 
-                class="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-[#00d1b2] shadow-sm">
+            <input type="text" id="search-input" oninput="renderTable()" placeholder="Search Name, Phone, or Address..." 
+                class="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-[#00d1b2] transition-all shadow-sm">
         </div>
 
-        <select id="sort-control" onchange="renderTable()" class="bg-white border border-slate-200 px-4 py-3 rounded-xl font-bold text-[10px] text-slate-500 uppercase tracking-widest outline-none shadow-sm">
+        <select id="sort-control" onchange="renderTable()" class="bg-white border border-slate-200 px-4 py-3 rounded-xl font-bold text-[10px] text-slate-500 uppercase tracking-widest outline-none focus:ring-2 focus:ring-[#00d1b2] shadow-sm">
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
             <option value="name_asc">Name: A-Z</option>
             <option value="name_desc">Name: Z-A</option>
-            <option value="id_asc">ID: Low-High</option>
-            <option value="phone">Phone Number</option>
+            <option value="id_asc">ID: Low to High</option>
+            <option value="id_desc">ID: High to Low</option>
         </select>
         
         <button onclick="openParentModal()" class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 text-xs uppercase tracking-widest">
@@ -29,83 +31,118 @@
     <table class="w-full text-left border-collapse">
         <thead>
             <tr class="bg-slate-50 border-b border-slate-100">
-                <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Primary Parent</th>
+                <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Primary Parent & Address</th>
                 <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Secondary Parent</th>
                 <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Emergency Contacts</th>
                 <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Management</th>
             </tr>
         </thead>
         <tbody id="parent-table-body">
-            <tr><td colspan="4" class="p-20 text-center text-slate-400 italic font-bold">Synchronizing...</td></tr>
+            <tr><td colspan="4" class="p-20 text-center text-slate-400 italic font-bold text-sm">Synchronizing database...</td></tr>
         </tbody>
     </table>
 </div>
 
 <div id="parent-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-200">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden border border-slate-200">
         <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-            <h2 id="modal-title" class="text-2xl font-black text-slate-800 tracking-tight">Parent Profile</h2>
-            <button onclick="closeParentModal()" class="text-slate-400 hover:text-slate-600 font-bold text-2xl">&times;</button>
+            <div>
+                <h2 id="modal-title" class="text-2xl font-black text-slate-800 tracking-tight">Parent Profile</h2>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Franchise Internal Record</p>
+            </div>
+            <button onclick="closeParentModal()" class="text-slate-400 hover:text-slate-600 font-bold text-2xl p-2">&times;</button>
         </div>
         
-        <form id="parent-form" class="p-8 space-y-6 max-h-[80vh] overflow-y-auto">
+        <form id="parent-form" class="p-8 space-y-8 max-h-[85vh] overflow-y-auto">
             <input type="hidden" id="edit-id">
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
                 <div class="space-y-4">
-                    <h3 class="text-xs font-black text-[#00d1b2] uppercase tracking-widest">Primary Contact</h3>
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="text" id="first_name" placeholder="First Name" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
-                        <input type="text" id="last_name" placeholder="Last Name" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
+                    <h3 class="text-xs font-black text-[#00d1b2] uppercase tracking-[0.2em] mb-4">Primary Guardian Info</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-black text-slate-400 uppercase ml-1">First Name</label>
+                            <input type="text" id="first_name" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#00d1b2]">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Last Name</label>
+                            <input type="text" id="last_name" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#00d1b2]">
+                        </div>
                     </div>
-                    <input type="email" id="email" placeholder="Email Address" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
-                    <input type="text" id="phone" placeholder="Phone Number" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
-                    <textarea id="address" placeholder="Home Address" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none"></textarea>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Email Address</label>
+                            <input type="email" id="email" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Phone Number</label>
+                            <input type="text" id="phone" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Home Address</label>
+                        <textarea id="address" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none"></textarea>
+                    </div>
                 </div>
 
                 <div class="space-y-4">
-                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest">Secondary Contact</h3>
-                    <input type="text" id="second_parent_full_name" placeholder="Full Name" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="text" id="second_parent_relationship" placeholder="Relationship" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
-                        <input type="text" id="second_parent_phone_number" placeholder="Phone" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Secondary Guardian Info</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Full Name</label>
+                            <input type="text" id="second_parent_full_name" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Relationship</label>
+                            <input type="text" id="second_parent_relationship" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
+                        </div>
                     </div>
-                    <input type="email" id="second_parent_email_address" placeholder="Secondary Email" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
-                    <textarea id="second_parent_home_address" placeholder="Secondary Address (if different)" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none"></textarea>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Phone Number</label>
+                            <input type="text" id="second_parent_phone_number" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Email Address</label>
+                            <input type="email" id="second_parent_email_address" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Secondary Address (If Different)</label>
+                        <textarea id="second_parent_home_address" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none"></textarea>
+                    </div>
                 </div>
             </div>
 
             <hr class="border-slate-100">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="space-y-3">
-                    <h3 class="text-[10px] font-black text-orange-400 uppercase tracking-widest">Emergency Contact 1</h3>
-                    <input type="text" id="emergency_contact_1_name" placeholder="Full Name" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div class="space-y-4 bg-orange-50/30 p-4 rounded-2xl border border-orange-100">
+                    <h3 class="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-2">Emergency Contact #1</h3>
+                    <input type="text" id="emergency_contact_1_name" placeholder="Full Name" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold">
                     <div class="grid grid-cols-2 gap-3">
-                        <input type="text" id="emergency_contact_1_relationship" placeholder="Relationship" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
-                        <input type="text" id="emergency_contact_1_phone_number" placeholder="Phone" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+                        <input type="text" id="emergency_contact_1_relationship" placeholder="Relationship" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold">
+                        <input type="text" id="emergency_contact_1_phone_number" placeholder="Phone Number" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold">
                     </div>
                 </div>
-                <div class="space-y-3">
-                    <h3 class="text-[10px] font-black text-orange-400 uppercase tracking-widest">Emergency Contact 2</h3>
-                    <input type="text" id="emergency_contact_2_name" placeholder="Full Name" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+                <div class="space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Emergency Contact #2</h3>
+                    <input type="text" id="emergency_contact_2_name" placeholder="Full Name" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold">
                     <div class="grid grid-cols-2 gap-3">
-                        <input type="text" id="emergency_contact_2_relationship" placeholder="Relationship" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
-                        <input type="text" id="emergency_contact_2_phone_number" placeholder="Phone" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+                        <input type="text" id="emergency_contact_2_relationship" placeholder="Relationship" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold">
+                        <input type="text" id="emergency_contact_2_phone_number" placeholder="Phone Number" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold">
                     </div>
                 </div>
             </div>
 
-            <hr class="border-slate-100">
-
-            <div class="space-y-3">
-                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Inactivation & Notes</h3>
-                <textarea id="inactivation_reason_comments" placeholder="Reason for inactivation or internal notes..." rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none"></textarea>
+            <div class="space-y-2">
+                <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Internal Notes / Inactivation Reason</label>
+                <textarea id="inactivation_reason_comments" rows="2" class="w-full p-4 bg-slate-900 text-slate-200 rounded-2xl text-sm font-medium outline-none"></textarea>
             </div>
 
-            <div class="pt-6 flex gap-3">
-                <button type="button" onclick="closeParentModal()" class="flex-1 p-4 bg-slate-100 text-slate-500 rounded-xl font-bold uppercase text-xs tracking-widest">Cancel</button>
-                <button type="submit" class="flex-1 p-4 bg-[#00d1b2] text-white rounded-xl font-black uppercase text-xs tracking-widest shadow-lg">Save Record</button>
+            <div class="pt-6 flex gap-4">
+                <button type="button" onclick="closeParentModal()" class="flex-1 p-4 bg-slate-100 text-slate-500 rounded-2xl font-bold uppercase text-xs tracking-widest hover:bg-slate-200 transition-all">Discard Changes</button>
+                <button type="submit" class="flex-1 p-4 bg-[#00d1b2] text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:shadow-[#00d1b2]/20 hover:scale-[1.01] transition-all">Save Parent Record</button>
             </div>
         </form>
     </div>
@@ -115,24 +152,32 @@
     const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
     let allParents = [];
 
-    const fields = [
+    // Comprehensive list of all 21 fields in the schema
+    const parentFields = [
         'first_name', 'last_name', 'email', 'phone', 'address',
         'second_parent_full_name', 'second_parent_relationship', 'second_parent_phone_number', 
         'second_parent_email_address', 'second_parent_home_address',
         'emergency_contact_1_name', 'emergency_contact_1_relationship', 'emergency_contact_1_phone_number',
         'emergency_contact_2_name', 'emergency_contact_2_relationship', 'emergency_contact_2_phone_number',
-        'inactivation_reason_comments'
+        'inactivation_reason_comments', 'is_active'
     ];
 
     async function fetchParents() {
         const fid = localStorage.getItem('locked_franchise_id');
         const tbody = document.getElementById('parent-table-body');
-        if(!fid) return;
+        if(!fid) {
+            tbody.innerHTML = '<tr><td colspan="4" class="p-20 text-center text-orange-500 font-bold uppercase">No Franchise Locked</td></tr>';
+            return;
+        }
+
         try {
             const res = await fetch(`${PARENT_API}?franchise_id=${fid}`);
+            if (!res.ok) throw new Error("API Connection Error");
             allParents = await res.json();
             renderTable();
-        } catch (e) { tbody.innerHTML = '<tr><td colspan="4" class="p-20 text-center text-red-500">Sync Error</td></tr>'; }
+        } catch (e) { 
+            tbody.innerHTML = '<tr><td colspan="4" class="p-20 text-center text-red-500 font-black uppercase tracking-widest italic">Sync failed. Check Xano API connectivity.</td></tr>'; 
+        }
     }
 
     function renderTable() {
@@ -140,48 +185,84 @@
         const searchTerm = document.getElementById('search-input').value.toLowerCase();
         const sortType = document.getElementById('sort-control').value;
 
+        // Search across all identifying fields
         let filtered = allParents.filter(p => {
-            return `${p.first_name} ${p.last_name} ${p.second_parent_full_name} ${p.phone} ${p.email}`.toLowerCase().includes(searchTerm);
+            return `${p.first_name} ${p.last_name} ${p.second_parent_full_name} ${p.phone} ${p.email} ${p.address}`.toLowerCase().includes(searchTerm);
         });
 
-        // SORT LOGIC
+        // Sorting Logic
         if (sortType === 'newest') filtered.sort((a, b) => b.created_at - a.created_at);
         if (sortType === 'oldest') filtered.sort((a, b) => a.created_at - b.created_at);
         if (sortType === 'name_asc') filtered.sort((a, b) => `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`));
         if (sortType === 'name_desc') filtered.sort((a, b) => `${b.first_name} ${b.last_name}`.localeCompare(`${a.first_name} ${a.last_name}`));
         if (sortType === 'id_asc') filtered.sort((a, b) => a.id - b.id);
-        if (sortType === 'phone') filtered.sort((a, b) => a.phone.localeCompare(b.phone));
+        if (sortType === 'id_desc') filtered.sort((a, b) => b.id - a.id);
 
         tbody.innerHTML = '';
+        
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="p-20 text-center text-slate-400 font-bold">No matching records found in this franchise.</td></tr>';
+            return;
+        }
+
         filtered.forEach(p => {
             tbody.insertAdjacentHTML('beforeend', `
-                <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                <tr class="border-b border-slate-50 hover:bg-slate-50/80 transition-all align-top">
                     <td class="p-5">
-                        <div class="text-[10px] font-bold text-slate-300 mb-1">#${p.id}</div>
+                        <div class="text-[9px] font-black text-slate-300 mb-1 tracking-tighter uppercase">Record ID: #${p.id}</div>
                         <div class="text-sm font-black text-slate-800">${p.first_name} ${p.last_name}</div>
-                        <div class="text-[11px] text-[#00d1b2] font-bold">${p.email}</div>
-                        <div class="text-[11px] text-slate-400 font-medium">${p.phone}</div>
+                        <div class="text-[11px] text-[#00d1b2] font-bold mt-1">${p.email}</div>
+                        <div class="text-[11px] text-slate-600 font-bold">${p.phone}</div>
+                        <div class="mt-3 pt-2 border-t border-slate-100">
+                            <span class="text-[8px] font-black text-slate-400 uppercase block tracking-widest">Home Address</span>
+                            <div class="text-[10px] text-slate-500 font-medium italic mt-0.5">${p.address || 'Not listed'}</div>
+                        </div>
                     </td>
+
                     <td class="p-5">
-                        <div class="text-sm font-bold text-slate-700">${p.second_parent_full_name || '---'}</div>
-                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">${p.second_parent_relationship || ''}</div>
-                        <div class="text-[11px] text-slate-500">${p.second_parent_phone_number || ''}</div>
-                    </td>
-                    <td class="p-5">
-                        <div class="flex flex-col gap-2">
-                            <div>
-                                <div class="text-[10px] font-black text-slate-800 uppercase">1. ${p.emergency_contact_1_name || 'None'}</div>
-                                <div class="text-[10px] text-orange-500 font-bold">${p.emergency_contact_1_phone_number || ''}</div>
+                        <div class="text-sm font-bold text-slate-700">${p.second_parent_full_name || '<span class="text-slate-200">N/A</span>'}</div>
+                        <div class="mt-1">
+                            <span class="text-[8px] font-black bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded uppercase tracking-tighter">${p.second_parent_relationship || 'Relation N/A'}</span>
+                        </div>
+                        <div class="mt-3 space-y-0.5">
+                            <div class="text-[10px] text-slate-500 font-medium">Phone: ${p.second_parent_phone_number || '---'}</div>
+                            <div class="text-[10px] text-slate-500 font-medium">Email: ${p.second_parent_email_address || '---'}</div>
+                        </div>
+                        ${p.second_parent_home_address ? `
+                            <div class="mt-2 text-[9px] text-slate-400 border-l-2 border-slate-100 pl-2">
+                                <span class="font-bold uppercase text-[7px]">Alt Address:</span><br>${p.second_parent_home_address}
                             </div>
-                            <div>
-                                <div class="text-[10px] font-black text-slate-800 uppercase">2. ${p.emergency_contact_2_name || 'None'}</div>
-                                <div class="text-[10px] text-orange-500 font-bold">${p.emergency_contact_2_phone_number || ''}</div>
+                        ` : ''}
+                    </td>
+
+                    <td class="p-5">
+                        <div class="grid grid-cols-1 gap-3">
+                            <div class="p-2.5 bg-orange-50/50 rounded-xl border border-orange-100/40">
+                                <div class="text-[8px] font-black text-orange-400 uppercase tracking-widest mb-1">Contact 1</div>
+                                <div class="text-[11px] font-black text-slate-800">${p.emergency_contact_1_name || 'NONE'}</div>
+                                <div class="text-[10px] font-bold text-orange-600">${p.emergency_contact_1_phone_number || ''}</div>
+                                <div class="text-[8px] text-slate-400 font-bold uppercase italic tracking-tighter">${p.emergency_contact_1_relationship || ''}</div>
+                            </div>
+                            <div class="p-2.5 bg-slate-50/80 rounded-xl border border-slate-200/50">
+                                <div class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Contact 2</div>
+                                <div class="text-[11px] font-black text-slate-800">${p.emergency_contact_2_name || 'NONE'}</div>
+                                <div class="text-[10px] font-bold text-slate-500">${p.emergency_contact_2_phone_number || ''}</div>
+                                <div class="text-[8px] text-slate-400 font-bold uppercase italic tracking-tighter">${p.emergency_contact_2_relationship || ''}</div>
                             </div>
                         </div>
                     </td>
-                    <td class="p-5 text-right space-x-2">
-                        <button onclick="editParent(${p.id})" class="text-[10px] font-black text-slate-400 hover:text-slate-800 border border-slate-200 px-3 py-2 rounded-lg transition-all uppercase">Edit</button>
-                        <button onclick="deleteParent(${p.id})" class="text-[10px] font-black text-red-400 hover:text-red-600 border border-red-500/10 px-3 py-2 rounded-lg transition-all uppercase">Del</button>
+
+                    <td class="p-5 text-right">
+                        <div class="flex flex-col gap-2 items-end">
+                            <button onclick="editParent(${p.id})" class="w-24 text-[10px] font-black text-slate-500 hover:text-white hover:bg-slate-800 border border-slate-200 px-3 py-2.5 rounded-xl transition-all uppercase tracking-widest">Edit Profile</button>
+                            <button onclick="deleteParent(${p.id})" class="w-24 text-[10px] font-black text-red-400 hover:text-white hover:bg-red-500 border border-red-50 px-3 py-2.5 rounded-xl transition-all uppercase tracking-widest">Delete</button>
+                            ${p.inactivation_reason_comments ? `
+                                <div class="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-100 text-left w-36">
+                                    <span class="text-[7px] font-black text-amber-600 uppercase block tracking-widest mb-1 italic underline">Internal Memo</span>
+                                    <div class="text-[9px] text-amber-800 font-bold leading-tight line-clamp-2">${p.inactivation_reason_comments}</div>
+                                </div>
+                            ` : ''}
+                        </div>
                     </td>
                 </tr>
             `);
@@ -197,11 +278,15 @@
         document.getElementById('parent-modal').classList.remove('hidden');
         document.getElementById('parent-form').reset();
         document.getElementById('edit-id').value = p ? p.id : '';
-        document.getElementById('modal-title').innerText = p ? "Edit Parent Record" : "Add New Parent";
+        document.getElementById('modal-title').innerText = p ? "Edit Parent Record" : "Add New Parent Profile";
+        
         if (p) {
-            fields.forEach(f => {
+            parentFields.forEach(f => {
                 const el = document.getElementById(f);
-                if(el) el.value = p[f] || '';
+                if(el) {
+                    if (el.type === 'checkbox') el.checked = p[f];
+                    else el.value = p[f] || '';
+                }
             });
         }
     }
@@ -212,8 +297,12 @@
         e.preventDefault();
         const id = document.getElementById('edit-id').value;
         const fid = localStorage.getItem('locked_franchise_id');
+        
         const payload = { franchise_id: parseInt(fid), is_active: true };
-        fields.forEach(f => payload[f] = document.getElementById(f).value);
+        parentFields.forEach(f => {
+            const el = document.getElementById(f);
+            if(el) payload[f] = el.type === 'checkbox' ? el.checked : el.value;
+        });
 
         const method = id ? 'PATCH' : 'POST';
         const url = id ? `${PARENT_API}/${id}` : PARENT_API;
@@ -225,15 +314,19 @@
                 body: JSON.stringify(payload)
             });
             if(res.ok) { closeParentModal(); fetchParents(); }
-        } catch (e) { alert("Save Failed"); }
+            else { alert("Error saving record. Check Xano schema."); }
+        } catch (e) { alert("Save failed. Connectivity error."); }
     };
 
     async function deleteParent(id) {
-        if(confirm("Delete this parent?")) {
-            await fetch(`${PARENT_API}/${id}`, { method: 'DELETE' });
-            fetchParents();
+        if(confirm("Permanently delete this parent and all associated data? This cannot be undone.")) {
+            try {
+                await fetch(`${PARENT_API}/${id}`, { method: 'DELETE' });
+                fetchParents();
+            } catch (e) { alert("Delete failed."); }
         }
     }
 
+    // Initial Database Sync
     fetchParents();
 </script>
