@@ -6,12 +6,12 @@
     <title>Office Admin Dashboard</title>
     
     <style>
-        /* Shared Dashboard Styles */
+        /* Shared Dashboard Styles [cite: 2026-02-05] */
         html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; overflow-x: hidden; }
         .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; color: #fff; position: fixed; left: 0; top: 0; z-index: 10000; overflow-y: auto; border-right: 1px solid #333; }
         .main-content { margin-left: 250px; padding: 30px; width: calc(100% - 250px); min-height: 100vh; background: #fff; box-sizing: border-box; }
         
-        /* Table and UI Styles */
+        /* Table and UI Styles [cite: 2026-02-05] */
         .admin-table { width: 100%; border-collapse: collapse; background: white; font-size: 0.9rem; border: 1px solid #ddd; margin-top: 20px; }
         .admin-table th { background: #eee; padding: 10px; text-align: left; border-bottom: 2px solid #ccc; }
         .admin-table td { padding: 8px 10px; border-bottom: 1px solid #eee; }
@@ -31,11 +31,12 @@
     </main>
 
     <script>
-        // 1. LOAD THE OFFICE MENU
+        // 1. LOAD THE FRANCHISE DASHBOARD AS THE MENU [cite: 2026-02-05]
         window.onload = function() {
-            fetch('officemenu.html') 
+            // Updated to reference the new naming convention [cite: 2026-02-05]
+            fetch('franchise_dashboard.html') 
                 .then(response => {
-                    if (!response.ok) throw new Error('Menu file not found');
+                    if (!response.ok) throw new Error('Franchise Dashboard file not found');
                     return response.text();
                 })
                 .then(data => {
@@ -44,7 +45,7 @@
                 .catch(err => console.error('Error loading menu:', err));
         };
 
-        // 2. RESET FUNCTION
+        // 2. RESET FUNCTION [cite: 2026-02-05]
         function resetDashboard() {
             const indicator = document.getElementById('screen-name');
             if(indicator) indicator.textContent = 'Home';
@@ -57,7 +58,7 @@
             `;
         }
 
-        // 3. LOAD MODULE FUNCTION
+        // 3. LOAD MODULE FUNCTION [cite: 2026-02-05]
         async function loadFrame(url, name) {
             const container = document.getElementById('dashboard-content');
             const indicator = document.getElementById('screen-name');
@@ -66,10 +67,12 @@
             container.innerHTML = '<div style="padding:40px; text-align:center; color:#666;">Loading ' + name + '...</div>';
             
             try {
+                // Cache busting added to ensure fresh data [cite: 2026-02-05]
                 const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999));
                 const html = await response.text();
                 container.innerHTML = html;
                 
+                // Re-initialize scripts in the loaded frame [cite: 2026-02-05]
                 const scripts = container.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
