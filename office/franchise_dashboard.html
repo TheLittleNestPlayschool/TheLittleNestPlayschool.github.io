@@ -13,17 +13,18 @@
     <div class="p-6"><h1 class="text-[#00d1b2] text-xl font-black">NestMind</h1></div>
     
     <div class="px-4 mb-4">
-        <div class="bg-[#1e293b] p-4 rounded-xl border border-slate-700">
-            <p class="text-[9px] font-black text-[#2dd4bf] uppercase mb-2 text-center">Identity Lock</p>
+        <div class="bg-[#1e293b] p-4 rounded-xl border border-slate-700 text-center">
+            <p class="text-[9px] font-black text-[#2dd4bf] uppercase mb-2">Identity Lock</p>
+            
             <select id="branch-select" onchange="unlockDashboard()" class="w-full bg-[#0f172a] text-white p-2 rounded border border-slate-600 text-xs">
                 <option value="">-- Select Branch --</option>
             </select>
+
+            <div id="active-branch-name" class="hidden text-white font-bold text-sm tracking-wide"></div>
         </div>
     </div>
 
     <nav id="nav-menu" class="hidden px-2 overflow-y-auto">
-        <div class="sidebar-link" onclick="location.reload()">🏠 Dashboard Home</div>
-        
         <div class="section-label">MANAGEMENT</div>
         <div class="sidebar-link" onclick="loadModule('parents.html', 'Parents')">👨‍👩‍👧 Parents</div>
         <div class="sidebar-link" onclick="loadModule('students.html', 'Students')">🏫 Students</div>
@@ -32,17 +33,16 @@
         <div class="section-label">ACADEMIC DNA</div>
         <div class="sidebar-link" onclick="loadModule('student_assessment.html', 'Assessments')">📝 Assessments</div>
         <div class="sidebar-link" onclick="loadModule('session.html', 'Sessions')">🗓️ Sessions</div>
-        
-        </nav>
+    </nav>
 </aside>
 
 <main id="main-workspace" class="flex-grow overflow-y-auto p-10 bg-[#f8fafc]">
     <div id="dashboard-home-view">
         <div class="mb-10">
             <h1 class="text-3xl font-black text-slate-800 tracking-tight">NestMind</h1>
-            <p id="branch-display" class="text-slate-500 font-medium italic">Locked. Please select a branch to begin.</p>
+            <p id="branch-display" class="text-slate-500 font-medium italic">Please select a branch to access the directory.</p>
         </div>
-        </div>
+    </div>
 </main>
 
 <script>
@@ -65,19 +65,29 @@
 
     function unlockDashboard() {
         const select = document.getElementById('branch-select');
+        const branchDisplay = document.getElementById('active-branch-name');
         const fid = select.value;
+        const fname = select.options[select.selectedIndex].text;
+        
         if(!fid) return;
         
+        // 1. Save data
         localStorage.setItem('locked_franchise_id', fid);
-        localStorage.setItem('locked_franchise_name', select.options[select.selectedIndex].text);
+        localStorage.setItem('locked_franchise_name', fname);
         
+        // 2. UI Swap: Hide Select, Show Name
+        select.classList.add('hidden');
+        branchDisplay.innerText = fname;
+        branchDisplay.classList.remove('hidden');
+        
+        // 3. Unlock Menu
         document.getElementById('nav-menu').classList.remove('hidden');
-        document.getElementById('branch-display').innerText = "Management Portal: " + select.options[select.selectedIndex].text;
+        document.getElementById('branch-display').innerText = "Management Portal: " + fname;
     }
 
     async function loadModule(file, title) {
         const workspace = document.getElementById('main-workspace');
-        workspace.innerHTML = `<div class="p-10 text-slate-400 font-bold italic text-center">Synchronizing ${title} Module...</div>`;
+        workspace.innerHTML = `<div class="p-10 text-slate-400 font-bold italic text-center">Loading ${title}...</div>`;
 
         try {
             const res = await fetch(GITHUB_ROOT + file + '?v=' + Date.now());
