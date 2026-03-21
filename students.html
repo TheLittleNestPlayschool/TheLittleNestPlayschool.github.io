@@ -1,8 +1,28 @@
-<div class="flex justify-between items-center mb-8">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <h1 class="text-4xl font-black text-slate-800 tracking-tight">Student Management</h1>
-    <button onclick="openStudentModal()" class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2">
-        <span>+</span> NEW STUDENT
-    </button>
+    
+    <div class="flex flex-wrap gap-3 w-full md:w-auto">
+        <div class="relative flex-1 md:w-64">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </span>
+            <input type="text" id="search-input" oninput="renderTable()" placeholder="Search Name or Parent..." 
+                class="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-[#00d1b2] transition-all">
+        </div>
+
+        <select id="sort-control" onchange="renderTable()" class="bg-white border border-slate-200 px-4 py-3 rounded-xl font-bold text-[10px] text-slate-500 uppercase tracking-widest outline-none focus:ring-2 focus:ring-[#00d1b2]">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="student_asc">Student A-Z</option>
+            <option value="parent_asc">Parent A-Z</option>
+        </select>
+        
+        <button onclick="openStudentModal()" class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 text-xs uppercase tracking-widest">
+            <span>+</span> NEW STUDENT
+        </button>
+    </div>
 </div>
 
 <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
@@ -11,13 +31,13 @@
             <tr class="bg-slate-50 border-b border-slate-100">
                 <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Student & Bio</th>
                 <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Parent & Address</th>
-                <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Dates (Birth/Enrolled)</th>
-                <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Status & Session</th>
-                <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Management</th>
+                <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Age & DOB</th>
+                <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Session & Start</th>
+                <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
             </tr>
         </thead>
         <tbody id="student-table-body">
-            <tr><td colspan="5" class="p-20 text-center text-slate-400 italic font-bold">Synchronizing with Xano...</td></tr>
+            <tr><td colspan="5" class="p-20 text-center text-slate-400 italic font-bold">Synchronizing with NestMind...</td></tr>
         </tbody>
     </table>
 </div>
@@ -105,13 +125,13 @@
 </div>
 
 <script>
-    // Workspace Endpoints
     const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
     const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
     const SESSION_API = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session";
     
     let parentCache = {};
     let sessionCache = {};
+    let currentStudents = [];
 
     function calculateAge(dob) {
         if (!dob) return '---';
@@ -122,12 +142,15 @@
 
     async function fetchStudents() {
         const fid = localStorage.getItem('locked_franchise_id');
-        const tbody = document.getElementById('student-table-body');
         if(!fid) return;
 
         try {
-            // Load Parents (Workspace 8Je8Zszx)
-            const pRes = await fetch(`${PARENT_API}?franchise_id=${fid}`);
+            const [pRes, sessRes, sRes] = await Promise.all([
+                fetch(`${PARENT_API}?franchise_id=${fid}`),
+                fetch(`${SESSION_API}?franchise_id=${fid}`),
+                fetch(`${STUDENT_API}?franchise_id=${fid}`)
+            ]);
+
             if (pRes.ok) {
                 const parents = await pRes.json();
                 const pSelect = document.getElementById('parent_id');
@@ -138,8 +161,6 @@
                 });
             }
 
-            // Load Sessions (Workspace mUsV7Zqx)
-            const sessRes = await fetch(`${SESSION_API}?franchise_id=${fid}`);
             if (sessRes.ok) {
                 const sessions = await sessRes.json();
                 const sSelect = document.getElementById('session_enrolled');
@@ -150,51 +171,86 @@
                 });
             }
 
-            // Load Students (Workspace iEHfqd-N)
-            const sRes = await fetch(`${STUDENT_API}?franchise_id=${fid}`);
-            const students = await sRes.json();
-            tbody.innerHTML = '';
+            if (sRes.ok) {
+                currentStudents = await sRes.json();
+                renderTable();
+            }
+        } catch (e) { 
+            console.error("Xano Sync Error", e);
+            document.getElementById('student-table-body').innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Failed to sync with Xano database.</td></tr>';
+        }
+    }
 
-            students.forEach(s => {
-                const age = calculateAge(s.date_of_birth);
-                const sessionName = sessionCache[s.session_enrolled] || 'Unassigned';
-                
-                tbody.insertAdjacentHTML('beforeend', `
-                    <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                        <td class="p-4">
-                            <div class="text-sm font-black text-slate-800">${s.name}</div>
-                            <div class="text-[10px] text-slate-400 font-bold uppercase italic">"${s.preferred_name || 'N/A'}" • ${s.gender || '---'}</div>
-                            <div class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tighter">${s.nationality || ''}</div>
-                        </td>
-                        <td class="p-4">
-                            <div class="text-sm font-bold text-slate-700">${parentCache[s.parent_id] || '---'}</div>
-                            <div class="text-[10px] text-slate-400 font-medium truncate max-w-[150px]">${s.home_address || 'No Address'}</div>
-                            <div class="text-[9px] text-slate-400 font-bold uppercase">${s.primary_language || ''}</div>
-                        </td>
-                        <td class="p-4 text-center">
-                            <div class="text-[11px] text-slate-800 font-black uppercase">${age} yrs old</div>
-                            <div class="text-[9px] text-slate-400 font-medium">DOB: ${s.date_of_birth || '---'}</div>
-                            <div class="text-[9px] text-slate-400 font-medium italic">ENR: ${s.enrolled_date || '---'}</div>
-                        </td>
-                        <td class="p-4 text-center">
-                            <div class="inline-block px-2 py-0.5 rounded-md text-[9px] font-black uppercase ${s.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}">
-                                ${s.is_active ? 'Active' : 'Inactive'}
-                            </div>
-                            <div class="text-[10px] text-slate-800 font-black mt-1 uppercase tracking-tight">${sessionName}</div>
-                            <div class="text-[9px] text-slate-400 font-medium italic">Start: ${s.start_date || '---'}</div>
-                        </td>
-                        <td class="p-4 text-right space-x-1">
-                            <button onclick='editStudent(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-[9px] font-black text-slate-400 hover:text-slate-800 border border-slate-200 px-2 py-1.5 rounded-lg transition-all uppercase tracking-widest">Edit</button>
-                            <button onclick="deleteStudent(${s.id})" class="text-[9px] font-black text-red-400 hover:text-red-600 border border-red-500/10 px-2 py-1.5 rounded-lg transition-all uppercase tracking-widest">Del</button>
-                        </td>
-                    </tr>
-                `);
+    function renderTable() {
+        const tbody = document.getElementById('student-table-body');
+        const sortType = document.getElementById('sort-control').value;
+        const searchTerm = document.getElementById('search-input').value.toLowerCase();
+        
+        // Filter Logic
+        let filtered = currentStudents.filter(s => {
+            const parentName = (parentCache[s.parent_id] || '').toLowerCase();
+            return s.name.toLowerCase().includes(searchTerm) || 
+                   (s.preferred_name || '').toLowerCase().includes(searchTerm) ||
+                   parentName.includes(searchTerm);
+        });
+
+        // Sort Logic
+        if (sortType === 'newest') filtered.sort((a, b) => b.created_at - a.created_at);
+        if (sortType === 'oldest') filtered.sort((a, b) => a.created_at - b.created_at);
+        if (sortType === 'student_asc') filtered.sort((a, b) => a.name.localeCompare(b.name));
+        if (sortType === 'parent_asc') {
+            filtered.sort((a, b) => {
+                const pA = parentCache[a.parent_id] || '';
+                const pB = parentCache[b.parent_id] || '';
+                return pA.localeCompare(pB);
             });
-        } catch (e) { tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Workspace Connection Error.</td></tr>'; }
+        }
+
+        tbody.innerHTML = '';
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-slate-300 font-bold">No students found.</td></tr>';
+            return;
+        }
+
+        filtered.forEach(s => {
+            const age = calculateAge(s.date_of_birth);
+            const sessionName = sessionCache[s.session_enrolled] || 'Unassigned';
+            
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                    <td class="p-4">
+                        <div class="text-sm font-black text-slate-800">${s.name}</div>
+                        <div class="text-[10px] text-slate-400 font-bold uppercase italic">"${s.preferred_name || 'N/A'}" • ${s.gender || '---'}</div>
+                        <div class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tighter">${s.nationality || ''}</div>
+                    </td>
+                    <td class="p-4">
+                        <div class="text-sm font-bold text-slate-700">${parentCache[s.parent_id] || '---'}</div>
+                        <div class="text-[10px] text-slate-400 font-medium truncate max-w-[150px]">${s.home_address || 'No Address'}</div>
+                        <div class="text-[9px] text-slate-400 font-bold uppercase">${s.primary_language || ''}</div>
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="text-[11px] text-slate-800 font-black uppercase">${age} yrs old</div>
+                        <div class="text-[9px] text-slate-400 font-medium italic">DOB: ${s.date_of_birth || '---'}</div>
+                        <div class="text-[9px] text-slate-400 font-medium">ENR: ${s.enrolled_date || '---'}</div>
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="inline-block px-2 py-0.5 rounded-md text-[9px] font-black uppercase ${s.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}">
+                            ${s.is_active ? 'Active' : 'Inactive'}
+                        </div>
+                        <div class="text-[10px] text-slate-800 font-black mt-1 uppercase tracking-tight">${sessionName}</div>
+                        <div class="text-[9px] text-slate-400 font-medium">START: ${s.start_date || '---'}</div>
+                    </td>
+                    <td class="p-4 text-right space-x-1">
+                        <button onclick='editStudent(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-[9px] font-black text-slate-400 hover:text-slate-800 border border-slate-200 px-2 py-1.5 rounded-lg transition-all uppercase tracking-widest">Edit</button>
+                        <button onclick="deleteStudent(${s.id})" class="text-[9px] font-black text-red-400 hover:text-red-600 border border-red-500/10 px-2 py-1.5 rounded-lg transition-all uppercase tracking-widest">Del</button>
+                    </td>
+                </tr>
+            `);
+        });
     }
 
     async function deleteStudent(id) {
-        if (!confirm("Permanently delete this record?")) return;
+        if (!confirm("Permanently delete this student record?")) return;
         await fetch(`${STUDENT_API}/${id}`, { method: 'DELETE' });
         fetchStudents();
     }
@@ -207,7 +263,8 @@
 
         if (s) {
             document.getElementById('modal-title').innerText = "Edit Student Profile";
-            ['name', 'preferred_name', 'date_of_birth', 'gender', 'nationality', 'parent_id', 'primary_language', 'enrolled_date', 'start_date', 'session_enrolled', 'home_address'].forEach(field => {
+            const fields = ['name', 'preferred_name', 'date_of_birth', 'gender', 'nationality', 'parent_id', 'primary_language', 'enrolled_date', 'start_date', 'session_enrolled', 'home_address'];
+            fields.forEach(field => {
                 const el = document.getElementById(field);
                 if(el) el.value = s[field] || (field === 'session_enrolled' ? '0' : '');
             });
@@ -221,8 +278,10 @@
     document.getElementById('student-form').onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('edit-student-id').value;
+        const fid = localStorage.getItem('locked_franchise_id');
+        
         const payload = {
-            franchise_id: parseInt(localStorage.getItem('locked_franchise_id')),
+            franchise_id: parseInt(fid),
             is_active: true,
             name: document.getElementById('name').value,
             preferred_name: document.getElementById('preferred_name').value,
@@ -239,11 +298,13 @@
 
         const method = id ? 'PATCH' : 'POST';
         const url = id ? `${STUDENT_API}/${id}` : STUDENT_API;
+        
         const res = await fetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
+        
         if (res.ok) { closeStudentModal(); fetchStudents(); }
     };
 
