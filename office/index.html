@@ -33,10 +33,10 @@
                 <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('franchise_dashboard.html', 'Performance')" style="color: #00d1b2; font-weight:bold; text-decoration: none; font-size: 0.8rem;">📊 Performance</a></li>
                 <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="remoteSwitchTab('enrollment')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">✨ New Enrollment</a></li>
                 
-                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('../parents/index.html', 'Parents')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">👪 Parents</a></li>
-                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('../student/index.html', 'Students')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">🏠 Students</a></li>
-                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('../teacher/index.html', 'Teachers')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">🏫 Teachers</a></li>
-                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('../session/index.html', 'Sessions')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">🗓️ Sessions</a></li>
+                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('../parents.html', 'Parents')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">👪 Parents</a></li>
+                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('../students.html', 'Students')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">🏠 Students</a></li>
+                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('../teacher_v2.html', 'Teachers')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">🏫 Teachers</a></li>
+                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('../session.html', 'Sessions')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">🗓️ Sessions</a></li>
             </ul>
         </div>
     </nav>
@@ -68,7 +68,8 @@ function remoteSwitchTab(tabId) {
     if (typeof switchTab === 'function') {
         switchTab(tabId);
     } else {
-        loadFrame('franchise_dashboard.html', 'New Enrollment').then(() => {
+        // Updated path to new_enrollment.html which is in root [cite: 2026-02-05]
+        loadFrame('../new_enrollment.html', 'New Enrollment').then(() => {
             setTimeout(() => { if(typeof switchTab === 'function') switchTab(tabId); }, 600);
         });
     }
@@ -91,11 +92,13 @@ async function loadFrame(url, name) {
             container.innerHTML = '<div style="padding:20px; font-size:0.8rem; color:#666;">Loading ' + name + '...</div>';
 
             try {
-                // Fetching from corrected path [cite: 2026-02-05]
                 const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999), { signal });
                 const html = await response.text();
+                
+                // Inject the content
                 container.innerHTML = html;
                 
+                // Execute scripts in the injected content [cite: 2025-12-29]
                 const scripts = container.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
