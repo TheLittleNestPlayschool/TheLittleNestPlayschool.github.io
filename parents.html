@@ -100,21 +100,20 @@ window.initParentModule = async function() {
         document.getElementById('parent-franchise-filter').innerHTML = '<option value="all">All Branches</option>' + 
             window.pa_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
 
-        // GLOBAL FILTER LOGIC [cite: 2026-03-21]
+        // LOGIC FOR CONDITIONAL FILTER VISIBILITY [cite: 2026-03-21]
         const urlParams = new URLSearchParams(window.location.search);
         const lockedFranchise = urlParams.get('franchise');
         
         if (lockedFranchise && lockedFranchise !== 'all') {
-            // FRANCHISEE MODE: Hide the filter bar [cite: 2026-03-21]
+            // HIDE filter for individual franchises to prevent switching [cite: 2026-03-21]
             document.getElementById('parent-filter-container').style.display = 'none';
             
-            // Auto-set the filter to match the location name from the dashboard [cite: 2026-03-21]
             const matchedFran = window.pa_franchises.find(f => (f.location_name || f.name) === lockedFranchise);
             if (matchedFran) {
                 document.getElementById('parent-franchise-filter').value = matchedFran.id;
             }
         } else {
-            // ADMIN MODE: Keep the filter bar visible [cite: 2026-03-21]
+            // SHOW filter for Corporate/Admin [cite: 2026-03-21]
             document.getElementById('parent-filter-container').style.display = 'flex';
         }
 
@@ -170,6 +169,13 @@ window.openNewParentModal = function() {
     document.getElementById('pa-address').value = "";
     document.getElementById('pa-active').checked = true;
     document.getElementById('pa-inactive-reason').value = "";
+    
+    // Auto-set the franchise dropdown in the modal if we are in a locked view [cite: 2026-03-21]
+    const currentFilter = document.getElementById('parent-franchise-filter').value;
+    if (currentFilter !== 'all') {
+        document.getElementById('pa-franchise').value = currentFilter;
+    }
+    
     window.toggleInactivationField();
     document.getElementById('modal-parent').style.display = 'flex';
 };
