@@ -134,7 +134,7 @@
         const tbody = document.getElementById('student-table-body');
         
         try {
-            // LOAD PARENTS FIRST FOR MAPPING
+            // Fetch Parents for Mapping
             const pUrl = selectedFid === 'all' ? PARENT_API : `${PARENT_API}?franchise_id=${selectedFid}`;
             const pRes = await fetch(pUrl);
             const parents = await pRes.json();
@@ -150,13 +150,16 @@
                 pSelect.appendChild(opt);
             });
 
-            // LOAD STUDENTS
+            // Fetch Students
             const sUrl = selectedFid === 'all' ? STUDENT_API : `${STUDENT_API}?franchise_id=${selectedFid}`;
             const sRes = await fetch(sUrl);
             studentCache = await sRes.json();
             renderTable(studentCache);
 
-        } catch (e) { tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Failed to synchronize with Xano.</td></tr>'; }
+        } catch (e) { 
+            console.error("Xano Fetch Error:", e);
+            tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Failed to synchronize with Xano.</td></tr>'; 
+        }
     }
 
     function renderTable(data) {
