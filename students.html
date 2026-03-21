@@ -55,7 +55,6 @@
 </div>
 
 <script>
-    // Corrected APIs for different workspaces
     const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
     const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
     let parentCache = {};
@@ -66,13 +65,11 @@
         if(!fid) return;
 
         try {
-            // 1. Load Parents for the dropdown and name mapping [cite: 2026-02-05]
             const pRes = await fetch(`${PARENT_API}?franchise_id=${fid}`);
             if (pRes.ok) {
                 const parents = await pRes.json();
                 const pSelect = document.getElementById('parent_id');
                 pSelect.innerHTML = '<option value="">-- Choose Parent --</option>';
-                
                 parents.forEach(p => {
                     parentCache[p.id] = `${p.first_name} ${p.last_name}`;
                     const opt = document.createElement('option');
@@ -82,7 +79,6 @@
                 });
             }
 
-            // 2. Load Students [cite: 2026-02-05]
             const sRes = await fetch(`${STUDENT_API}?franchise_id=${fid}`);
             if (!sRes.ok) throw new Error("Student API error");
             
@@ -90,7 +86,7 @@
             tbody.innerHTML = '';
 
             if(students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-slate-400 italic font-bold">No student records found for this branch.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-slate-400 italic font-bold">No student records found.</td></tr>';
                 return;
             }
 
@@ -103,16 +99,25 @@
                             <div class="text-sm font-bold text-[#00d1b2]">${parentCache[s.parent_id] || 'Unassigned'}</div>
                         </td>
                         <td class="p-5 text-sm text-slate-500 font-medium italic">${s.date_of_birth || '---'}</td>
-                        <td class="p-5 text-right">
+                        <td class="p-5 text-right space-x-2">
                             <button onclick="editStudent(${JSON.stringify(s).replace(/"/g, '&quot;')})" class="text-[10px] font-black text-slate-400 hover:text-slate-800 border border-slate-200 px-3 py-1.5 rounded-lg transition-all uppercase">Edit Profile</button>
+                            <button onclick="deleteStudent(${s.id})" class="text-[10px] font-black text-red-400 hover:text-red-600 border border-red-500/10 px-3 py-1.5 rounded-lg transition-all uppercase">Delete</button>
                         </td>
                     </tr>
                 `);
             });
         } catch (e) { 
-            console.error(e);
-            tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Xano Connection Failed. Check workspace API settings.</td></tr>'; 
+            tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Xano Connection Failed.</td></tr>'; 
         }
+    }
+
+    // DELETE LOGIC
+    async function deleteStudent(id) {
+        if (!confirm("Permanently delete this student record?")) return;
+        try {
+            const res = await fetch(`${STUDENT_API}/${id}`, { method: 'DELETE' });
+            if (res.ok) fetchStudents();
+        } catch (e) { alert("Delete failed."); }
     }
 
     function openStudentModal(student = null) {
