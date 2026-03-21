@@ -1,224 +1,267 @@
 <style>
-    /* Consistent Branding & Typography */
-    .nest-header { font-family: 'Georgia', serif; color: #1a365d; }
-    .nest-table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #e2e8f0; }
-    .nest-table th { background: #f8fafc; padding: 12px; font-size: 0.75rem; color: #475569; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; text-align: left; }
-    
-    /* FIX: Standardized weight to match Manner Topic columns */
-    .nest-table td { 
-        padding: 12px; 
-        border-bottom: 1px solid #f1f5f9; 
-        font-size: 0.85rem; 
-        color: #333; 
-        vertical-align: middle; 
-        font-weight: 400 !important; 
-    }
-    
-    .status-badge { padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; }
-    .btn-teal { background-color: #00d1b2; color: white; padding: 8px 16px; border-radius: 4px; font-weight: 900; border: none; cursor: pointer; font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase; }
-    .btn-gray { background-color: #94a3b8; color: white; padding: 8px 16px; border-radius: 4px; font-weight: bold; border: none; cursor: pointer; }
-    
-    .action-edit { color: blue; font-weight: 700; cursor: pointer; font-size: 0.8rem; text-decoration: none; }
-    .action-del { color: red; font-weight: 700; cursor: pointer; font-size: 0.8rem; text-decoration: none; }
-    
-    .nest-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); overflow-y: auto; }
-    .nest-modal-content { background: white; margin: 5% auto; padding: 30px; border-radius: 4px; width: 90%; max-width: 600px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-    
-    label { display: block; font-size: 0.7rem; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 4px; margin-top: 15px; }
-    input, select { width: 100%; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px; font-size: 0.9rem; box-sizing: border-box; }
+    .student-card { transition: all 0.3s ease; }
+    .student-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+    .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    .active-bg { background-color: #ecfdf5; color: #059669; border: 1px solid #d1fae5; }
+    .inactive-bg { background-color: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
+    input::placeholder { color: #cbd5e1; font-style: italic; }
 </style>
 
-<div class="max-w-7xl mx-auto p-6">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h1 class="text-5xl nest-header">Student Management</h1>
-        <button onclick="openModal()" class="btn-teal">+ NEW STUDENT</button>
+<div class="max-w-7xl mx-auto p-2">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-5xl font-black text-slate-800 tracking-tighter">Student Management</h1>
+            <p class="text-slate-400 font-medium mt-1">Enrollment, records, and academic status tracking.</p>
+        </div>
+        <button onclick="openStudentModal()" class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white px-8 py-4 rounded-2xl font-black transition-all shadow-lg shadow-[#00d1b2]/20 flex items-center gap-3 active:scale-95">
+            <span class="text-xl">+</span> NEW STUDENT
+        </button>
     </div>
 
-    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #eee;">
-        <span style="font-size: 0.75rem; font-weight: 800; color: #666; text-transform: uppercase;">Filter by Franchise:</span>
-        <select id="student-franchise-filter" onchange="window.loadStudents()" style="padding: 8px 15px; border-radius: 4px; border: 1px solid #ddd; background: white; min-width: 200px; font-weight: bold;">
-            <option value="all">All Branches</option>
-        </select>
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 mb-8 flex flex-wrap items-center gap-6 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500">🏢</div>
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Branch View</label>
+                <select id="admin-franchise-filter" onchange="syncAdminFilter()" class="bg-transparent text-slate-700 text-sm font-bold outline-none cursor-pointer hover:text-[#00d1b2] transition-colors">
+                    <option value="all">All Corporate Branches</option>
+                </select>
+            </div>
+        </div>
+        <div class="h-10 w-[1px] bg-slate-100 hidden md:block"></div>
+        <div class="flex-grow relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+            <input type="text" id="student-search" placeholder="Search by name..." onkeyup="filterTable()" class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-[#00d1b2] outline-none transition-all">
+        </div>
     </div>
 
-    <div class="bg-white rounded shadow-sm border border-gray-200">
-        <table class="nest-table">
+    <div class="bg-white rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
+        <table class="w-full text-left border-collapse">
             <thead>
-                <tr>
-                    <th style="width: 60px;">ID</th>
-                    <th>Name</th>
-                    <th>Parent / Guardian</th>
-                    <th>Date of Birth</th>
-                    <th style="width: 100px;">Status</th>
-                    <th>Franchise</th>
-                    <th style="text-align: center; width: 120px;">Actions</th>
+                <tr class="bg-slate-50/50 border-b border-slate-100">
+                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Info</th>
+                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Parent / Guardian</th>
+                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Date of Birth</th>
+                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
+                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody id="studentTableBody">
-                <tr><td colspan="7" style="text-align:center; padding:30px; color:#999;">Loading Student Records...</td></tr>
+            <tbody id="student-table-body" class="divide-y divide-slate-50">
+                <tr><td colspan="5" class="p-24 text-center"><div class="animate-pulse text-slate-300 font-black text-xl italic tracking-tighter text-center">SYNCHRONIZING RECORDS...</div></td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
-<div id="studentModal" class="nest-modal">
-    <div class="nest-modal-content">
-        <h2 id="modalTitle" class="text-3xl nest-header" style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Manage Student</h2>
-        <form id="studentForm">
-            <input type="hidden" id="studentId">
-            <label>Student Name</label>
-            <input type="text" id="name" required>
-            <label>Date of Birth</label>
-            <input type="date" id="date_of_birth">
-            <label>Parent / Guardian</label>
-            <select id="parent_id" required>
-                <option value="">Select a Parent...</option>
-            </select>
-            <div style="margin-top: 20px; display: flex; align-items: center; gap: 10px;">
-                <input type="checkbox" id="is_active" style="width: auto;" checked>
-                <label style="margin: 0; font-size: 0.8rem; font-weight: bold; color: #4a5568;">ACTIVE STUDENT</label>
+<div id="student-modal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+    <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden border border-white/20 transform transition-all">
+        <div class="p-10 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div>
+                <h2 id="modal-title" class="text-3xl font-black text-slate-800 tracking-tighter">Register Student</h2>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Student Profile Details</p>
             </div>
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                <button type="button" onclick="closeModal()" class="btn-gray">CANCEL</button>
-                <button type="submit" class="btn-teal">SAVE STUDENT</button>
+            <button onclick="closeStudentModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-100 transition-all shadow-sm font-bold text-2xl">&times;</button>
+        </div>
+        <form id="student-form" class="p-10 space-y-6">
+            <input type="hidden" id="edit-student-id">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Full Name</label>
+                    <input type="text" id="student_name" required placeholder="Enter student name" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-[#00d1b2]/10 focus:border-[#00d1b2] outline-none transition-all">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Birth Date</label>
+                    <input type="date" id="dob" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-[#00d1b2]/10 focus:border-[#00d1b2] outline-none transition-all">
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Assign Parent / Guardian</label>
+                <select id="parent_select" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-[#00d1b2]/10 focus:border-[#00d1b2] outline-none transition-all appearance-none cursor-pointer">
+                    <option value="">-- Search and Select Parent --</option>
+                </select>
+            </div>
+
+            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-black text-slate-800">Enrollment Status</p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Is the student currently attending?</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="student_active" checked class="sr-only peer">
+                    <div class="w-14 h-8 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[#00d1b2]"></div>
+                </label>
+            </div>
+
+            <div class="pt-6 flex gap-4">
+                <button type="button" onclick="closeStudentModal()" class="flex-1 p-5 bg-slate-100 text-slate-500 rounded-2xl font-black hover:bg-slate-200 transition-all uppercase text-xs tracking-[0.2em]">Discard</button>
+                <button type="submit" class="flex-1 p-5 bg-[#0b0f1a] text-white rounded-2xl font-black hover:bg-[#00d1b2] transition-all uppercase text-xs tracking-[0.2em] shadow-xl">Commit Changes</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-(function() {
-    const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
-    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent";
+    const API_BASE = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx";
+    const STUDENT_API = `${API_BASE}/student`;
+    const PARENT_API = `${API_BASE}/parent`;
     const FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
 
-    let parentDataStore = {}; 
-    let franchiseMap = {};
+    let parentStore = {};
+    let studentCache = [];
 
-    window.openModal = function() { document.getElementById('studentModal').style.display = 'block'; }
-    window.closeModal = function() { 
-        document.getElementById('studentModal').style.display = 'none'; 
-        document.getElementById('studentForm').reset();
-        document.getElementById('studentId').value = '';
+    async function initStudents() {
+        const lockedFid = localStorage.getItem('locked_franchise_id');
+        try {
+            const fRes = await fetch(FRANCHISE_API);
+            const franchises = await fRes.json();
+            const fFilter = document.getElementById('admin-franchise-filter');
+            
+            franchises.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.innerText = f.name;
+                if(f.id == lockedFid) opt.selected = true;
+                fFilter.appendChild(opt);
+            });
+            loadData();
+        } catch (e) { console.error("API Init Failed", e); }
     }
 
-    async function loadResources() {
+    async function loadData() {
+        const selectedFid = document.getElementById('admin-franchise-filter').value;
+        const tbody = document.getElementById('student-table-body');
+        
         try {
-            const [pRes, fRes] = await Promise.all([fetch(PARENT_API), fetch(FRANCHISE_API)]);
-            const [parents, franchises] = await Promise.all([pRes.json(), fRes.json()]);
+            // LOAD PARENTS FIRST FOR MAPPING
+            const pUrl = selectedFid === 'all' ? PARENT_API : `${PARENT_API}?franchise_id=${selectedFid}`;
+            const pRes = await fetch(pUrl);
+            const parents = await pRes.json();
             
-            // Populate Parent Data Store and Dropdown
-            const pSelect = document.getElementById('parent_id');
-            pSelect.innerHTML = '<option value="">Select a Parent...</option>';
+            const pSelect = document.getElementById('parent_select');
+            pSelect.innerHTML = '<option value="">-- Select Parent --</option>';
+            parentStore = {};
             parents.forEach(p => {
-                parentDataStore[p.id] = p;
+                parentStore[p.id] = `${p.first_name} ${p.last_name}`;
                 const opt = document.createElement('option');
                 opt.value = p.id;
-                opt.textContent = `${p.first_name} ${p.last_name}`;
+                opt.innerText = `${p.first_name} ${p.last_name} (${p.email})`;
                 pSelect.appendChild(opt);
             });
 
-            // Populate Franchise Filter and Map
-            const fFilter = document.getElementById('student-franchise-filter');
-            franchises.forEach(f => {
-                const fName = f.location_name || f.name || `Franchise #${f.id}`;
-                franchiseMap[f.id] = fName;
-                
-                const opt = document.createElement('option');
-                opt.value = f.id;
-                opt.textContent = fName;
-                fFilter.appendChild(opt);
-            });
+            // LOAD STUDENTS
+            const sUrl = selectedFid === 'all' ? STUDENT_API : `${STUDENT_API}?franchise_id=${selectedFid}`;
+            const sRes = await fetch(sUrl);
+            studentCache = await sRes.json();
+            renderTable(studentCache);
 
-            loadStudents();
-        } catch (e) { console.error("Load Error", e); }
+        } catch (e) { tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Failed to synchronize with Xano.</td></tr>'; }
     }
 
-    window.loadStudents = async function() {
-        try {
-            const fFilterValue = document.getElementById('student-franchise-filter').value;
-            const res = await fetch(STUDENT_API + '?t=' + Date.now());
-            let data = await res.json();
+    function renderTable(data) {
+        const tbody = document.getElementById('student-table-body');
+        tbody.innerHTML = '';
+        if(data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-slate-400 font-bold italic">No student records found.</td></tr>';
+            return;
+        }
 
-            // Apply Franchise Filter Logic
-            if (fFilterValue !== 'all') {
-                data = data.filter(s => s.franchise_id == fFilterValue);
-            }
-
-            const tbody = document.getElementById('studentTableBody');
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:#999;">No students found for this selection.</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = data.map(s => `
-                <tr>
-                    <td style="color: #94a3b8;">${s.id}</td>
-                    <td>${s.name}</td>
-                    <td>${parentDataStore[s.parent_id] ? parentDataStore[s.parent_id].first_name + ' ' + parentDataStore[s.parent_id].last_name : '---'}</td>
-                    <td>${s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString() : 'N/A'}</td>
-                    <td>
-                        <span class="status-badge" style="background: ${s.is_active ? '#e6fffa' : '#fff5f5'}; color: ${s.is_active ? '#2c7a7b' : '#c53030'};">
-                            ${s.is_active ? 'ACTIVE' : 'INACTIVE'}
-                        </span>
+        data.forEach(s => {
+            const pName = parentStore[s.parent_id] || "No Parent Assigned";
+            const dob = s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '---';
+            
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="group hover:bg-slate-50/80 transition-all border-b border-slate-50">
+                    <td class="p-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center font-black text-slate-400 text-xs">#${s.id}</div>
+                            <div>
+                                <p class="text-sm font-black text-slate-800">${s.name}</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Enrolled Student</p>
+                            </div>
+                        </div>
                     </td>
-                    <td>${franchiseMap[s.franchise_id] || s.franchise_id}</td>
-                    <td style="text-align: center;">
-                        <span onclick="editStudent(${s.id})" class="action-edit">Edit</span> 
-                        <span style="color: #ddd; margin: 0 4px;">|</span> 
-                        <span onclick="deleteStudent(${s.id})" class="action-del">Del</span>
+                    <td class="p-6">
+                        <p class="text-sm font-bold text-[#00d1b2]">${pName}</p>
+                        <p class="text-[10px] text-slate-400 font-medium">Primary Guardian</p>
+                    </td>
+                    <td class="p-6 text-center text-sm font-bold text-slate-500 italic">${dob}</td>
+                    <td class="p-6 text-center">
+                        <span class="status-pill ${s.is_active ? 'active-bg' : 'inactive-bg'}">${s.is_active ? 'Active' : 'Withdrawn'}</span>
+                    </td>
+                    <td class="p-6 text-right">
+                        <div class="flex justify-end gap-2">
+                            <button onclick='openStudentModal(${JSON.stringify(s)})' class="bg-white border border-slate-200 text-slate-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:border-slate-800 hover:text-slate-800 transition-all">Edit</button>
+                            <button onclick="deleteStudent(${s.id})" class="bg-white border border-slate-200 text-red-300 px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all">Del</button>
+                        </div>
                     </td>
                 </tr>
-            `).join('');
-        } catch (e) { console.error("Fetch Error", e); }
+            `);
+        });
     }
 
-    window.editStudent = async function(id) {
-        const res = await fetch(`${STUDENT_API}/${id}`);
-        const s = await res.json();
-        document.getElementById('studentId').value = s.id;
-        document.getElementById('name').value = s.name;
-        document.getElementById('date_of_birth').value = s.date_of_birth ? new Date(s.date_of_birth).toISOString().split('T')[0] : '';
-        document.getElementById('parent_id').value = s.parent_id;
-        document.getElementById('is_active').checked = s.is_active;
-        openModal();
+    function syncAdminFilter() { loadData(); }
+
+    function filterTable() {
+        const val = document.getElementById('student-search').value.toLowerCase();
+        const filtered = studentCache.filter(s => s.name.toLowerCase().includes(val));
+        renderTable(filtered);
     }
 
-    document.getElementById('studentForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('studentId').value;
-        const pId = parseInt(document.getElementById('parent_id').value);
+    function openStudentModal(s = null) {
+        document.getElementById('student-modal').classList.remove('hidden');
+        const form = document.getElementById('student-form');
+        form.reset();
         
-        // Inherit franchise_id from the selected parent
+        if(s) {
+            document.getElementById('modal-title').innerText = "Update Record";
+            document.getElementById('edit-student-id').value = s.id;
+            document.getElementById('student_name').value = s.name;
+            document.getElementById('dob').value = s.date_of_birth ? s.date_of_birth.split('T')[0] : '';
+            document.getElementById('parent_select').value = s.parent_id;
+            document.getElementById('student_active').checked = s.is_active;
+        } else {
+            document.getElementById('modal-title').innerText = "Register Student";
+            document.getElementById('edit-student-id').value = '';
+        }
+    }
+
+    function closeStudentModal() { document.getElementById('student-modal').classList.add('hidden'); }
+
+    document.getElementById('student-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('edit-student-id').value;
+        const currentFid = document.getElementById('admin-franchise-filter').value;
+        
         const payload = {
-            name: document.getElementById('name').value,
-            date_of_birth: document.getElementById('date_of_birth').value,
-            parent_id: pId,
-            franchise_id: parentDataStore[pId] ? parentDataStore[pId].franchise_id : 0,
-            is_active: document.getElementById('is_active').checked
+            name: document.getElementById('student_name').value,
+            date_of_birth: document.getElementById('dob').value,
+            parent_id: parseInt(document.getElementById('parent_select').value),
+            franchise_id: currentFid === 'all' ? parseInt(localStorage.getItem('locked_franchise_id')) : parseInt(currentFid),
+            is_active: document.getElementById('student_active').checked
         };
 
         const method = id ? 'PATCH' : 'POST';
         const url = id ? `${STUDENT_API}/${id}` : STUDENT_API;
 
-        await fetch(url, {
-            method: method,
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
-        
-        closeModal();
-        loadStudents();
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if(res.ok) { closeStudentModal(); loadData(); }
+        } catch (e) { alert("Xano Sync Error"); }
     };
 
-    window.deleteStudent = async function(id) {
-        if(confirm('Delete student record?')) { 
-            await fetch(`${STUDENT_API}/${id}`, {method: 'DELETE'}); 
-            loadStudents(); 
-        }
-    };
+    async function deleteStudent(id) {
+        if(!confirm("Are you sure? This will permanently remove the student record.")) return;
+        try {
+            const res = await fetch(`${STUDENT_API}/${id}`, { method: 'DELETE' });
+            if(res.ok) loadData();
+        } catch (e) { alert("Delete Failed"); }
+    }
 
-    // Initial Load
-    loadResources();
-})();
+    initStudents();
 </script>
