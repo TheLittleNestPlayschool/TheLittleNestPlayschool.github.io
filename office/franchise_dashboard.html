@@ -7,7 +7,6 @@
     .sidebar-link:hover { background: #1e293b; color: #00d1b2; }
     .section-label { font-size: 0.65rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.1em; padding: 20px 16px 10px; }
     .hidden { display: none; }
-    .step-active { border-left: 6px solid #00d1b2 !important; background: white; }
     .profile-label { font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
     .btn-teal { background-color: #00d1b2; color: white; padding: 10px 20px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; }
 </style>
@@ -28,16 +27,16 @@
         <div class="sidebar-link" onclick="location.reload()">🏠 Dashboard Home</div>
         
         <div class="section-label">MANAGEMENT</div>
-        <div class="sidebar-link" onclick="loadModule('parents.html')">👨‍👩‍👧 Parents</div>
-        <div class="sidebar-link" onclick="loadModule('students.html')">🏫 Students</div>
-        <div class="sidebar-link" onclick="loadModule('teacher_dashboard.html')">🧑‍🏫 Teachers</div>
+        <div class="sidebar-link" onclick="loadModule('parents.html', 'Parents')">👨‍👩‍👧 Parents</div>
+        <div class="sidebar-link" onclick="loadModule('students.html', 'Students')">🏫 Students</div>
+        <div class="sidebar-link" onclick="loadModule('teacher_dashboard.html', 'Teachers')">🧑‍🏫 Teachers</div>
         
         <div class="section-label">ACADEMIC DNA</div>
-        <div class="sidebar-link" onclick="loadModule('student_assessment.html')">📝 Assessments</div>
-        <div class="sidebar-link" onclick="loadModule('session.html')">🗓️ Sessions</div>
+        <div class="sidebar-link" onclick="loadModule('student_assessment.html', 'Assessments')">📝 Assessments</div>
+        <div class="sidebar-link" onclick="loadModule('session.html', 'Sessions')">🗓️ Sessions</div>
         
         <div class="section-label">MARKETING</div>
-        <div class="sidebar-link" onclick="loadModule('lead_profile.html')">🎯 Lead Profiles</div>
+        <div class="sidebar-link" onclick="loadModule('lead_profile.html', 'Leads')">🎯 Lead Profiles</div>
     </nav>
 </aside>
 
@@ -45,7 +44,7 @@
     <div id="dashboard-home-view">
         <div class="mb-10">
             <h1 class="text-3xl font-black text-slate-800 tracking-tight">The Little Nest Intelligence Hub</h1>
-            <p id="branch-display" class="text-slate-500 font-medium">Locked. Please select a branch to begin.</p>
+            <p id="branch-display" class="text-slate-500 font-medium italic">Locked. Please select a branch to begin.</p>
         </div>
 
         <div id="enrollment-container" class="hidden">
@@ -54,19 +53,17 @@
                     <p class="profile-label">Current Enrollment</p>
                     <p id="stat-total" class="text-4xl font-black text-slate-800">0</p>
                 </div>
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <p class="profile-label">24h Change</p>
-                    <p id="stat-change" class="text-4xl font-black text-emerald-500">+0</p>
-                </div>
             </div>
 
             <div class="max-w-4xl">
-                <div id="step-parent" class="bg-white border rounded-xl p-8 mb-4 shadow-sm step-active">
+                <div class="bg-white border rounded-xl p-8 mb-4 shadow-sm" style="border-left: 6px solid #00d1b2;">
                     <h2 class="text-lg font-black mb-4 flex items-center text-slate-700">
                         <span class="bg-slate-800 text-white w-6 h-6 rounded-full text-[10px] flex items-center justify-center mr-3">1</span> Enrollment Wizard
                     </h2>
-                    <p class="text-slate-500 text-sm mb-4">Select a parent from the branch directory to start a new enrollment record.</p>
-                    <select id="p_select_id" class="w-full border p-3 rounded-lg bg-white font-bold text-slate-700 mb-4"></select>
+                    <p class="text-slate-500 text-sm mb-4">Select a parent to start a new enrollment for this branch.</p>
+                    <select id="p_select_id" class="w-full border p-3 rounded-lg bg-white font-bold text-slate-700 mb-4">
+                        <option value="">-- Select Parent --</option>
+                    </select>
                     <button class="btn-teal">Start Enrollment</button>
                 </div>
             </div>
@@ -75,11 +72,12 @@
 </main>
 
 <script>
-    const API_URL = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
     const GITHUB_ROOT = "https://thelittlenestplayschool.github.io/";
+    const XANO_FRAN = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
+    const XANO_PARENT = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent";
 
     async function init() {
-        const res = await fetch(API_URL);
+        const res = await fetch(XANO_FRAN);
         const data = await res.json();
         const select = document.getElementById('branch-select');
         data.forEach(f => {
@@ -90,29 +88,42 @@
         });
     }
 
-    function unlockDashboard() {
+    async function unlockDashboard() {
         const select = document.getElementById('branch-select');
-        if(!select.value) return;
+        const fid = select.value;
+        if(!fid) return;
         
-        localStorage.setItem('locked_franchise_id', select.value);
+        localStorage.setItem('locked_franchise_id', fid);
         localStorage.setItem('locked_franchise_name', select.options[select.selectedIndex].text);
         
         document.getElementById('nav-menu').classList.remove('hidden');
         document.getElementById('enrollment-container').classList.remove('hidden');
         document.getElementById('branch-display').innerText = "Management Portal: " + select.options[select.selectedIndex].text;
+
+        // Fetch Parents filtered by Franchise ID [cite: 2026-02-05]
+        try {
+            const pRes = await fetch(XANO_PARENT);
+            const allParents = await pRes.json();
+            const branchParents = allParents.filter(p => p.franchise_id == fid);
+            const pSelect = document.getElementById('p_select_id');
+            pSelect.innerHTML = '<option value="">-- Select Parent --</option>' + 
+                branchParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
+        } catch (e) { console.error("Parent load failed", e); }
     }
 
-    // THE ENGINE: Loads your GitHub files into the workspace [cite: 2025-12-29]
-    async function loadModule(file) {
+    async function loadModule(file, title) {
         const workspace = document.getElementById('main-workspace');
-        workspace.innerHTML = `<div class="p-10 text-slate-400 font-bold">Synchronizing ${file}...</div>`;
+        workspace.innerHTML = `<div class="p-10 text-slate-400 font-bold italic text-center">Synchronizing ${title} Module...</div>`;
 
         try {
+            // Points to root because parents.html is in root
             const res = await fetch(GITHUB_ROOT + file + '?v=' + Date.now());
+            if (!res.ok) throw new Error(`Could not find ${file}`);
+            
             const html = await res.text();
             workspace.innerHTML = html;
 
-            // Execute scripts in the fetched file [cite: 2025-12-29]
+            // Execute scripts inside the module [cite: 2025-12-29]
             const scripts = workspace.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
@@ -121,11 +132,11 @@
                 document.head.appendChild(newScript).parentNode.removeChild(newScript);
             });
             
-            // Trigger local file logic
+            // Re-trigger internal functions [cite: 2026-03-21]
             if(window.loadParents) window.loadParents();
             if(window.init) window.init();
         } catch (e) {
-            workspace.innerHTML = `<div class="p-10 text-red-500">Error loading ${file}</div>`;
+            workspace.innerHTML = `<div class="p-10 text-red-500 font-bold text-center">Error: ${e.message}</div>`;
         }
     }
 
