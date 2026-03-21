@@ -2,219 +2,117 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
 <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; padding: 20px; }
-    .btn-teal { background-color: #00d1b2; color: white; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; border: none; }
-    .table-header { display: flex; padding: 10px 15px; background: #eee; border-radius: 4px; margin-bottom: 10px; font-size: 0.7rem; font-weight: 900; color: #666; text-transform: uppercase; letter-spacing: 1px; align-items: center; }
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; padding: 40px; }
+    .btn-teal { background-color: #00d1b2; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 800; cursor: pointer; border: none; transition: transform 0.1s; }
+    .btn-teal:hover { background-color: #00b89c; transform: translateY(-1px); }
+    .table-row { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; align-items: center; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 </style>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-    <h1 style="margin:0; font-size: 1.875rem; font-weight: 800; color: #1e293b;">Parent Management</h1>
-    <button onclick="window.openNewParentModal()" class="btn-teal">+ ADD NEW PARENT</button>
+<div class="flex justify-between items-end mb-8">
+    <div>
+        <h1 class="text-4xl font-black text-slate-800 tracking-tight">Parent Directory</h1>
+        <p id="filter-status" class="text-slate-500 font-medium italic mt-1">Showing all records...</p>
+    </div>
+    <button onclick="openModal()" class="btn-teal shadow-lg shadow-teal-500/20">+ ADD NEW PARENT</button>
 </div>
 
-<div id="parent-filter-container" style="display: none; background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; align-items: center; gap: 15px; border: 1px solid #eee;">
-    <span style="font-size: 0.75rem; font-weight: 800; color: #666; text-transform: uppercase;">Filter by Franchise:</span>
-    <select id="parent-franchise-filter" onchange="window.loadParents()" style="padding: 8px 15px; border-radius: 4px; border: 1px solid #ddd; background: white; min-width: 200px; font-weight: bold;">
-        <option value="all">All Branches</option>
-    </select>
+<div class="flex px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200 mb-4">
+    <div style="width: 60px;">ID</div>
+    <div style="width: 220px;">Name</div>
+    <div style="width: 220px;">Contact Info</div>
+    <div class="flex-1">Home Address</div>
+    <div style="width: 120px; text-align: right;">Management</div>
 </div>
 
-<div class="table-header">
-    <div style="width: 40px;">ID</div>
-    <div style="width: 130px;">First Name</div>
-    <div style="width: 130px;">Last Name</div>
-    <div style="width: 160px;">Email</div>
-    <div style="width: 100px;">Phone</div>
-    <div style="width: 150px;">Address</div>
-    <div style="width: 110px;">Franchise</div>
-    <div style="flex-grow: 1; padding: 0 10px;">Comments</div>
-    <div style="width: 80px; text-align: center;">Status</div>
-    <div style="width: 140px; text-align: right;">Actions</div>
+<div id="parent-list" class="space-y-3">
+    <div class="animate-pulse text-slate-400 font-bold p-10 text-center">Synchronizing with NestMind...</div>
 </div>
 
-<div id="parent-list" style="display: flex; flex-direction: column; gap: 8px;">
-    <div style="text-align:center; padding:30px; background:white; border:1px solid #eee; border-radius:8px;">Loading Parent Directory...</div>
-</div>
-
-<div id="modal-parent" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
-    <div style="background:white; width:700px; border-radius:8px; display:flex; flex-direction:column; max-height:90vh; overflow: hidden;">
-        <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#1a1a1a; display:flex; justify-content:space-between; align-items:center;">
-            <h2 id="parent-modal-title" style="margin:0; font-size:1.1rem; color: #00d1b2;">Parent Record</h2>
-            <button onclick="document.getElementById('modal-parent').style.display='none'" style="cursor:pointer; border:none; background:#333; color: white; padding:5px 10px; border-radius:4px;">CLOSE</button>
+<div id="parent-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
+        <div class="bg-slate-800 p-6 flex justify-between items-center">
+            <h2 id="modal-title" class="text-[#00d1b2] font-black uppercase tracking-widest text-sm">Parent Profile</h2>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-white font-bold">ESC TO CLOSE</button>
         </div>
-        
-        <div style="padding:20px; overflow-y:auto;">
-            <input type="hidden" id="pa-id">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+        <div class="p-8">
+            <input type="hidden" id="f-id">
+            <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label style="display:block; font-size:0.65rem; font-weight:bold; color:#666; margin-bottom:3px;">FIRST NAME</label>
-                    <input type="text" id="pa-fname" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">First Name</label>
+                    <input type="text" id="f-fname" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:border-teal-500">
                 </div>
                 <div>
-                    <label style="display:block; font-size:0.65rem; font-weight:bold; color:#666; margin-bottom:3px;">LAST NAME</label>
-                    <input type="text" id="pa-lname" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Last Name</label>
+                    <input type="text" id="f-lname" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:border-teal-500">
                 </div>
             </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label style="display:block; font-size:0.65rem; font-weight:bold; color:#666; margin-bottom:3px;">EMAIL ADDRESS</label>
-                    <input type="email" id="pa-email" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Email</label>
+                    <input type="email" id="f-email" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:border-teal-500">
                 </div>
                 <div>
-                    <label style="display:block; font-size:0.65rem; font-weight:bold; color:#666; margin-bottom:3px;">PHONE NUMBER</label>
-                    <input type="text" id="pa-phone" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Phone</label>
+                    <input type="text" id="f-phone" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg outline-none focus:border-teal-500">
                 </div>
             </div>
-
-            <label style="display:block; font-size:0.65rem; font-weight:bold; color:#666; margin-bottom:3px;">HOME ADDRESS</label>
-            <textarea id="pa-address" style="width:100%; padding:8px; height:50px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;"></textarea>
-
-            <label style="display:block; font-size:0.65rem; font-weight:bold; color:#666; margin-bottom:3px;">FRANCHISE ASSIGNMENT</label>
-            <select id="pa-franchise" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px;"></select>
-
-            <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #eee;">
-                <label style="display:flex; align-items:center; gap:10px; font-size:0.8rem; font-weight:900; color:#333; cursor:pointer; margin-bottom:10px;">
-                    <input type="checkbox" id="pa-active" checked onchange="window.toggleInactivationField()"> ACTIVE
-                </label>
-                <div id="pa-inactive-wrap" style="display:none;">
-                    <label style="display:block; font-size:0.65rem; font-weight:bold; color:#666; margin-bottom:3px;">COMMENTS</label>
-                    <textarea id="pa-inactive-reason" style="width:100%; padding:8px; height:60px; border:1px solid #ddd; border-radius:4px;"></textarea>
-                </div>
+            <div class="mb-6">
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">Home Address</label>
+                <textarea id="f-address" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg h-24 outline-none focus:border-teal-500"></textarea>
             </div>
-        </div>
-
-        <div style="padding:15px 20px; border-top:1px solid #eee; background:#f9f9f9;">
-            <button onclick="window.saveParent()" style="background:#00d1b2; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:4px; width: 100%;">SAVE PARENT PROFILE</button>
+            <button onclick="saveParent()" class="w-full bg-slate-800 text-[#00d1b2] py-4 rounded-xl font-black uppercase tracking-widest hover:bg-slate-700 transition-colors">Save to Database</button>
         </div>
     </div>
 </div>
 
 <script>
-window.PA_API = 'https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent';
-window.F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
-window.pa_franchises = [];
+    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
 
-window.initParentModule = async function() {
-    try {
-        const res = await fetch(window.F_API);
-        window.pa_franchises = await res.json();
+    async function loadParents() {
+        const lockedId = localStorage.getItem('locked_franchise_id');
+        const lockedName = localStorage.getItem('locked_franchise_name');
         
-        document.getElementById('pa-franchise').innerHTML = window.pa_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
-        document.getElementById('parent-franchise-filter').innerHTML = '<option value="all">All Branches</option>' + 
-            window.pa_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
-
-        const activeFranId = localStorage.getItem('locked_franchise_id');
-        
-        if (activeFranId && activeFranId !== 'null') {
-            document.getElementById('parent-franchise-filter').value = activeFranId;
-            document.getElementById('parent-filter-container').style.display = 'none';
-        } else {
-            document.getElementById('parent-filter-container').style.display = 'flex';
+        if (lockedName) {
+            document.getElementById('filter-status').innerText = `Viewing directory for: ${lockedName}`;
         }
 
-        window.loadParents();
-    } catch (err) { console.error(err); }
-};
+        try {
+            const res = await fetch(PARENT_API);
+            let data = await res.json();
 
-window.loadParents = async function() {
-    const fFilter = document.getElementById('parent-franchise-filter').value;
-    const res = await fetch(window.PA_API + '?t=' + Date.now());
-    let list = await res.json();
-    
-    if (fFilter !== 'all') list = list.filter(p => p.franchise_id == fFilter);
+            // Automatic identity filtering [cite: 2026-03-21]
+            if (lockedId) {
+                data = data.filter(p => p.franchise_id == lockedId);
+            }
 
-    document.getElementById('parent-list').innerHTML = list.map(p => {
-        const fran = window.pa_franchises.find(f => f.id == p.franchise_id);
-        return `
-            <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:10px 15px; display:flex; align-items:center; font-size: 0.75rem; color: #333; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div style="width: 40px; color: #999;">${p.id}</div>
-                <div style="width: 130px; font-weight:700;">${p.first_name}</div>
-                <div style="width: 130px; font-weight:700;">${p.last_name}</div>
-                <div style="width: 160px; color: #00d1b2;">${p.email}</div>
-                <div style="width: 100px;">${p.phone || '-'}</div>
-                <div style="width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.address || ''}</div>
-                <div style="width: 110px; font-weight: 600;">${fran ? (fran.location_name || fran.name) : 'ID: '+p.franchise_id}</div>
-                <div style="flex-grow: 1; padding: 0 10px; color: #666; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.inactivation_reason_comments || ''}</div>
-                <div style="width: 80px; text-align: center;">
-                    <span style="font-size:0.55rem; background:${p.is_active ? '#e1fcf2' : '#f5f5f5'}; color:${p.is_active ? '#008c6a' : '#999'}; padding:3px 8px; border-radius:4px; font-weight:bold;">
-                        ${p.is_active ? 'ACTIVE' : 'INACTIVE'}
-                    </span>
+            const listBody = document.getElementById('parent-list');
+            listBody.innerHTML = data.map(p => `
+                <div class="table-row hover:border-teal-200 transition-colors">
+                    <div style="width: 60px;" class="text-slate-400 font-bold">#${p.id}</div>
+                    <div style="width: 220px;" class="font-bold text-slate-800">${p.first_name} ${p.last_name}</div>
+                    <div style="width: 220px;">
+                        <div class="text-teal-600 font-bold text-xs">${p.email}</div>
+                        <div class="text-slate-400 text-[10px] font-bold uppercase">${p.phone || 'No Phone'}</div>
+                    </div>
+                    <div class="flex-1 text-slate-500 text-sm italic truncate pr-4">${p.address || 'No address on file'}</div>
+                    <div style="width: 120px; text-align: right;">
+                        <button onclick="editParent(${p.id})" class="text-slate-400 hover:text-slate-800 font-black text-[10px] uppercase">Edit Profile</button>
+                    </div>
                 </div>
-                <div style="width: 140px; text-align: right; display:flex; gap:8px; justify-content: flex-end;">
-                    <button onclick="window.editParent(${p.id})" style="border:1.5px solid blue; color:blue; background:none; padding:4px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">EDIT</button>
-                    <button onclick="window.deleteParent(${p.id})" style="border:1.5px solid red; color:red; background:none; padding:4px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.7rem;">DELETE</button>
-                </div>
-            </div>`;
-    }).join('') || '<div style="text-align:center; padding:20px; color:#999;">No records found.</div>';
-};
-
-window.toggleInactivationField = function() {
-    const isA = document.getElementById('pa-active').checked;
-    document.getElementById('pa-inactive-wrap').style.display = isA ? 'none' : 'block';
-};
-
-window.openNewParentModal = function() {
-    document.getElementById('pa-id').value = "";
-    document.getElementById('pa-fname').value = "";
-    document.getElementById('pa-lname').value = "";
-    document.getElementById('pa-email').value = "";
-    document.getElementById('pa-phone').value = "";
-    document.getElementById('pa-address').value = "";
-    document.getElementById('pa-active').checked = true;
-    document.getElementById('pa-inactive-reason').value = "";
-    const currentFilter = document.getElementById('parent-franchise-filter').value;
-    if (currentFilter !== 'all') { document.getElementById('pa-franchise').value = currentFilter; }
-    window.toggleInactivationField();
-    document.getElementById('modal-parent').style.display = 'flex';
-};
-
-window.editParent = async function(id) {
-    const res = await fetch(window.PA_API + '/' + id);
-    const p = await res.json();
-    document.getElementById('pa-id').value = p.id;
-    document.getElementById('pa-fname').value = p.first_name;
-    document.getElementById('pa-lname').value = p.last_name;
-    document.getElementById('pa-email').value = p.email;
-    document.getElementById('pa-phone').value = p.phone;
-    document.getElementById('pa-address').value = p.address;
-    document.getElementById('pa-franchise').value = p.franchise_id;
-    document.getElementById('pa-active').checked = p.is_active;
-    document.getElementById('pa-inactive-reason').value = p.inactivation_reason_comments || "";
-    window.toggleInactivationField();
-    document.getElementById('modal-parent').style.display = 'flex';
-};
-
-window.saveParent = async function() {
-    const id = document.getElementById('pa-id').value;
-    const payload = {
-        first_name: document.getElementById('pa-fname').value,
-        last_name: document.getElementById('pa-lname').value,
-        email: document.getElementById('pa-email').value,
-        phone: document.getElementById('pa-phone').value,
-        address: document.getElementById('pa-address').value,
-        franchise_id: parseInt(document.getElementById('pa-franchise').value),
-        is_active: document.getElementById('pa-active').checked,
-        inactivation_reason_comments: document.getElementById('pa-inactive-reason').value
-    };
-    const method = id ? 'PUT' : 'POST';
-    const url = id ? window.PA_API + '/' + id : window.PA_API;
-    const res = await fetch(url, {
-        method, headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-    });
-    if(res.ok) {
-        document.getElementById('modal-parent').style.display = 'none';
-        window.loadParents();
-    } else { alert("Error saving."); }
-};
-
-window.deleteParent = async function(id) {
-    if(confirm("Delete record?")) {
-        await fetch(window.PA_API + '/' + id, { method: 'DELETE' });
-        window.loadParents();
+            `).join('');
+        } catch (err) {
+            console.error("Fetch error:", err);
+            document.getElementById('parent-list').innerHTML = `<div class="p-10 text-red-400 font-bold text-center">Error connecting to Xano.</div>`;
+        }
     }
-};
 
-window.initParentModule();
+    // Modal Controls
+    function openModal() { document.getElementById('parent-modal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('parent-modal').style.display = 'none'; }
+
+    // Placeholder for Edit/Save logic
+    function editParent(id) { console.log("Editing ID:", id); openModal(); }
+    async function saveParent() { /* Logic for Xano POST/PUT */ closeModal(); loadParents(); }
+
+    window.onload = loadParents;
 </script>
