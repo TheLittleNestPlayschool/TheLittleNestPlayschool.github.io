@@ -91,22 +91,20 @@ window.initParentModule = async function() {
         const res = await fetch(window.F_API);
         window.pa_franchises = await res.json();
         
+        // Populate franchise dropdowns
         document.getElementById('pa-franchise').innerHTML = window.pa_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
         document.getElementById('parent-franchise-filter').innerHTML = '<option value="all">All Branches</option>' + 
             window.pa_franchises.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
 
-        // READ THE URL PARAMETER SENT BY INDEX.HTML [cite: 2026-03-21]
-        const urlParams = new URLSearchParams(window.location.search);
-        const lockedFranchise = urlParams.get('franchise');
+        // READ GLOBAL FRANCHISE ID FROM LOCALSTORAGE [cite: 2026-03-21]
+        const activeFranId = localStorage.getItem('locked_franchise_id');
         
-        if (lockedFranchise && lockedFranchise !== 'all') {
-            // SCENARIO: Franchisee View - Keep filter hidden [cite: 2026-03-21]
-            const matchedFran = window.pa_franchises.find(f => (f.location_name || f.name) === lockedFranchise);
-            if (matchedFran) {
-                document.getElementById('parent-franchise-filter').value = matchedFran.id;
-            }
+        if (activeFranId && activeFranId !== 'null') {
+            // SCENARIO: Branch specific view [cite: 2026-03-21]
+            document.getElementById('parent-franchise-filter').value = activeFranId;
+            document.getElementById('parent-filter-container').style.display = 'none'; // Keep filter hidden
         } else {
-            // SCENARIO: Corporate/All View - Show the filter dropdown [cite: 2026-03-21]
+            // SCENARIO: Corporate view [cite: 2026-03-21]
             document.getElementById('parent-filter-container').style.display = 'flex';
         }
 
@@ -119,6 +117,7 @@ window.loadParents = async function() {
     const res = await fetch(window.PA_API + '?t=' + Date.now());
     let list = await res.json();
     
+    // Filter logic based on the dropdown selection [cite: 2026-03-21]
     if (fFilter !== 'all') list = list.filter(p => p.franchise_id == fFilter);
 
     document.getElementById('parent-list').innerHTML = list.map(p => {
@@ -161,7 +160,7 @@ window.openNewParentModal = function() {
     document.getElementById('pa-active').checked = true;
     document.getElementById('pa-inactive-reason').value = "";
     
-    // Auto-lock the new parent to the currently viewed franchise
+    // Auto-lock to current franchise ID [cite: 2026-03-21]
     const currentFilter = document.getElementById('parent-franchise-filter').value;
     if (currentFilter !== 'all') {
         document.getElementById('pa-franchise').value = currentFilter;
