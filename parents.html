@@ -1,82 +1,165 @@
-
-<div class="mb-8 flex justify-between items-end">
-    <div>
-        <h1 class="text-4xl font-black text-slate-800 tracking-tight">Parent Directory</h1>
-        <p id="parent-subtitle" class="text-slate-500 font-medium italic">Syncing with NestMind...</p>
-    </div>
-    <button class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white font-black py-3 px-6 rounded-xl shadow-lg flex items-center gap-2 transition-all active:scale-95">
-        <span class="text-xl">+</span> ADD NEW PARENT
+<div class="flex justify-between items-center mb-8">
+    <h1 class="text-4xl font-black text-slate-800 tracking-tight">Parent Directory</h1>
+    <button onclick="openParentModal()" class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2">
+        <span>+</span> ADD NEW PARENT
     </button>
 </div>
 
 <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
     <table class="w-full text-left border-collapse">
         <thead>
-            <tr class="bg-slate-50 border-b border-slate-200">
-                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">ID</th>
-                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</th>
-                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact Info</th>
-                <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Home Address</th>
-                <th class="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Management</th>
+            <tr class="bg-slate-50 border-b border-slate-100">
+                <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">ID</th>
+                <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</th>
+                <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact Info</th>
+                <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Home Address</th>
+                <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Management</th>
             </tr>
         </thead>
         <tbody id="parent-table-body">
-            <tr><td colspan="5" class="px-6 py-12 text-center text-slate-400 font-bold italic">Initializing Xano handshake...</td></tr>
+            <tr><td colspan="5" class="p-20 text-center text-slate-400 italic font-bold">Initializing Directory...</td></tr>
         </tbody>
     </table>
 </div>
 
-<script>
-    (async function loadParents() {
-        const rawFid = localStorage.getItem('locked_franchise_id');
-        const fname = localStorage.getItem('locked_franchise_name');
-        const tbody = document.getElementById('parent-table-body');
-        
-        if (fname) document.getElementById('parent-subtitle').innerText = `Viewing directory for: ${fname}`;
+<div id="parent-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
+        <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <h2 id="modal-title" class="text-2xl font-black text-slate-800 tracking-tight">Add New Parent</h2>
+            <button onclick="closeParentModal()" class="text-slate-400 hover:text-slate-600 font-bold text-2xl">&times;</button>
+        </div>
+        <form id="parent-form" class="p-8 space-y-4">
+            <input type="hidden" id="edit-id">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">First Name</label>
+                    <input type="text" id="first_name" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#00d1b2]">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Last Name</label>
+                    <input type="text" id="last_name" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#00d1b2]">
+                </div>
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                <input type="email" id="email" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#00d1b2]">
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
+                <input type="text" id="phone" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#00d1b2]">
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Home Address</label>
+                <textarea id="address" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#00d1b2]"></textarea>
+            </div>
+            <div class="pt-4 flex gap-3">
+                <button type="button" onclick="closeParentModal()" class="flex-1 p-4 bg-slate-100 text-slate-500 rounded-xl font-bold hover:bg-slate-200 transition-all uppercase text-xs tracking-widest">Cancel</button>
+                <button type="submit" class="flex-1 p-4 bg-[#00d1b2] text-white rounded-xl font-black hover:bg-[#00bfa5] transition-all uppercase text-xs tracking-widest shadow-lg shadow-[#00d1b2]/20">Save Record</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-        if (!rawFid) {
-            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-amber-500 font-bold">Please select a branch in the sidebar.</td></tr>`;
-            return;
-        }
+<script>
+    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent"; // Group 8Je8Zszx [cite: 2026-02-05]
+
+    // 1. FETCH ALL PARENTS
+    async function fetchParents() {
+        const fid = localStorage.getItem('locked_franchise_id');
+        const tbody = document.getElementById('parent-table-body');
+        if(!fid) return;
 
         try {
-            const cleanFid = parseInt(rawFid);
-            // UPDATED: Using your verified API group 8Je8Zszx
-            const apiUrl = `https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${cleanFid}`;
-            
-            const res = await fetch(apiUrl);
-            
-            if (!res.ok) {
-                throw new Error(`Status ${res.status}: Check API group settings.`);
-            }
-
-            const data = await res.json();
+            const res = await fetch(`${PARENT_API}?franchise_id=${fid}`);
+            const parents = await res.json();
             tbody.innerHTML = '';
-            
-            if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400 italic">No parent records found for ${fname}.</td></tr>`;
-                return;
-            }
 
-            data.forEach(p => {
-                const row = document.createElement('tr');
-                row.className = "border-b border-slate-100 hover:bg-slate-50 transition-colors";
-                row.innerHTML = `
-                    <td class="px-6 py-4 text-slate-400 font-bold text-sm">#${p.id}</td>
-                    <td class="px-6 py-4 text-slate-800 font-extrabold text-base">${p.first_name} ${p.last_name}</td>
-                    <td class="px-6 py-4">
-                        <div class="text-[#00d1b2] font-bold text-xs underline decoration-2">${p.email}</div>
-                        <div class="text-slate-400 font-medium text-[10px] mt-1">${p.phone || 'No Phone'}</div>
-                    </td>
-                    <td class="px-6 py-4 text-slate-500 font-medium text-xs italic max-w-[240px] truncate">${p.address || 'No Address'}</td>
-                    <td class="px-6 py-4 text-right">
-                        <button class="text-[10px] font-black text-slate-300 hover:text-slate-600 uppercase border border-slate-200 px-3 py-1 rounded-md">Edit Profile</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
+            parents.forEach(p => {
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                        <td class="p-5 text-sm font-bold text-slate-400">#${p.id}</td>
+                        <td class="p-5 text-sm font-black text-slate-800">${p.first_name} ${p.last_name}</td>
+                        <td class="p-5">
+                            <div class="text-sm font-bold text-[#00d1b2]">${p.email}</div>
+                            <div class="text-[11px] text-slate-400 font-medium">${p.phone}</div>
+                        </td>
+                        <td class="p-5 text-sm text-slate-500 font-medium italic">${p.address || '---'}</td>
+                        <td class="p-5 text-right space-x-2">
+                            <button onclick="editParent(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="text-[10px] font-black text-slate-400 hover:text-slate-800 border border-slate-200 px-3 py-1.5 rounded-lg transition-all uppercase">Edit Profile</button>
+                            <button onclick="deleteParent(${p.id})" class="text-[10px] font-black text-red-400 hover:text-red-600 border border-red-500/10 px-3 py-1.5 rounded-lg transition-all uppercase">Delete</button>
+                        </td>
+                    </tr>
+                `);
             });
-        } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-400 font-bold">Xano Sync Failed: ${e.message}</td></tr>`;
+        } catch (e) { tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500">Sync Error</td></tr>'; }
+    }
+
+    // 2. OPEN MODAL (ADD or EDIT)
+    function openParentModal(parent = null) {
+        const modal = document.getElementById('parent-modal');
+        const form = document.getElementById('parent-form');
+        const title = document.getElementById('modal-title');
+        form.reset();
+        document.getElementById('edit-id').value = '';
+
+        if (parent) {
+            title.innerText = "Edit Profile";
+            document.getElementById('edit-id').value = parent.id;
+            document.getElementById('first_name').value = parent.first_name;
+            document.getElementById('last_name').value = parent.last_name;
+            document.getElementById('email').value = parent.email;
+            document.getElementById('phone').value = parent.phone;
+            document.getElementById('address').value = parent.address;
+        } else {
+            title.innerText = "Add New Parent";
         }
-    })();
+        modal.classList.remove('hidden');
+    }
+
+    function closeParentModal() { document.getElementById('parent-modal').classList.add('hidden'); }
+
+    // 3. CREATE / UPDATE LOGIC
+    document.getElementById('parent-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('edit-id').value;
+        const fid = localStorage.getItem('locked_franchise_id'); // Ensure it's tied to current branch
+        
+        const payload = {
+            first_name: document.getElementById('first_name').value,
+            last_name: document.getElementById('last_name').value,
+            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value,
+            address: document.getElementById('address').value,
+            franchise_id: parseInt(fid),
+            is_active: true
+        };
+
+        const url = id ? `${PARENT_API}/${id}` : PARENT_API;
+        const method = id ? 'PATCH' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                closeParentModal();
+                fetchParents();
+            }
+        } catch (e) { alert("Save failed."); }
+    };
+
+    // 4. DELETE LOGIC
+    async function deleteParent(id) {
+        if (!confirm("Permanently delete this parent?")) return;
+        try {
+            const res = await fetch(`${PARENT_API}/${id}`, { method: 'DELETE' });
+            if (res.ok) fetchParents();
+        } catch (e) { alert("Delete failed."); }
+    }
+
+    function editParent(p) { openParentModal(p); }
+
+    fetchParents();
 </script>
