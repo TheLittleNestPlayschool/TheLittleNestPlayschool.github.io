@@ -1,4 +1,7 @@
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; padding: 32px; }
     .active-tab { background: #0891b2 !important; color: white !important; }
     .hidden { display: none; }
     .step-locked { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
@@ -7,59 +10,34 @@
     .step-saved .step-content { display: none; }
     .profile-label { font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
     .profile-value { font-size: 0.85rem; color: #334155; font-weight: 600; }
-    .table-head { font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; background: #f1f5f9; }
     .btn-teal { background-color: #00d1b2; color: white; padding: 10px 20px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; transition: all 0.2s; }
     .btn-teal:hover { background-color: #00b89c; transform: translateY(-1px); }
-
-    /* GATEKEEPER OVERLAY [cite: 2026-03-21] */
-    #selector-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: #f8fafc; z-index: 9999; display: flex; 
-        justify-content: center; align-items: center;
-    }
-    .selector-card {
-        background: white; padding: 50px; border-radius: 16px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.05); text-align: center; width: 100%; max-width: 400px;
-        border: 1px solid #e2e8f0;
-    }
 </style>
 
-<div id="selector-overlay">
-    <div class="selector-card">
-        <div style="font-size: 3rem; margin-bottom: 15px;">🛡️</div>
-        <h2 style="font-weight: 800; color: #1e293b; font-size: 1.5rem; margin-bottom: 8px;">Franchise Access</h2>
-        <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 25px; font-weight: 500;">Select a branch to unlock management modules.</p>
-        
-        <select id="initial-franchise-select" style="width: 100%; padding: 14px; border-radius: 10px; border: 2px solid #f1f5f9; background: #f8fafc; font-weight: 700; color: #334155; margin-bottom: 20px; outline: none; cursor: pointer;"></select>
-        
-        <button onclick="confirmFranchiseSelection()" class="btn-teal" style="width: 100%; padding: 16px; border-radius: 10px; font-size: 0.85rem; letter-spacing: 0.05em;">Enter Dashboard</button>
-    </div>
-</div>
-
-<div id="dashboard-main-container" class="p-8 hidden">
-    <div class="flex items-center space-x-4 bg-slate-50 p-2 px-4 rounded-lg border border-slate-200 mb-8 w-fit">
-        <label class="text-[10px] font-black text-slate-400 uppercase">Viewing Franchise:</label>
-        <select id="global-franchise-select" onchange="loadFranchiseData()" class="bg-transparent font-bold text-sm text-slate-700 outline-none cursor-pointer"></select>
+<div id="dashboard-main-container">
+    <div class="mb-10">
+        <h1 class="text-3xl font-black text-slate-800 tracking-tight">The Little Nest Intelligence Hub</h1>
+        <p id="branch-display" class="text-slate-500 font-medium">Loading branch data...</p>
     </div>
 
-    <div id="tab-stats" class="tab-content">
-        <div class="grid grid-cols-4 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <p class="profile-label">Current Enrollment</p>
-                <p id="stat-total" class="text-4xl font-black text-slate-800">0</p>
-            </div>
-            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                <p class="profile-label">24h Change</p>
-                <p id="stat-change" class="text-4xl font-black text-emerald-500">0</p>
-            </div>
+    <div class="grid grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <p class="profile-label">Current Enrollment</p>
+            <p id="stat-total" class="text-4xl font-black text-slate-800">0</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <p class="profile-label">24h Change</p>
+            <p id="stat-change" class="text-4xl font-black text-emerald-500">+0</p>
         </div>
     </div>
 
-    <div id="tab-enrollment" class="tab-content hidden max-w-4xl mx-auto">
-        <div id="enrollment-progress" class="text-right text-[10px] font-black text-slate-400 mb-4 uppercase">Step 1 of 6</div>
+    <div class="max-w-4xl">
+        <div id="enrollment-progress" class="text-right text-[10px] font-black text-slate-400 mb-4 uppercase tracking-widest">Step 1 of 3</div>
 
         <div id="step-parent" class="bg-white border rounded-xl p-8 mb-4 shadow-sm step-active">
-            <h2 class="text-lg font-black mb-4 flex items-center text-slate-700"><span class="bg-slate-800 text-white w-6 h-6 rounded-full text-[10px] flex items-center justify-center mr-3">1</span> Parent Profile</h2>
+            <h2 class="text-lg font-black mb-4 flex items-center text-slate-700">
+                <span class="bg-slate-800 text-white w-6 h-6 rounded-full text-[10px] flex items-center justify-center mr-3">1</span> Parent Profile
+            </h2>
             <div id="parent-profile-view" class="hidden grid grid-cols-3 gap-4 p-4 bg-slate-50 rounded-lg mb-4 border border-slate-100">
                 <div><p class="profile-label">Name</p><p id="disp-p-name" class="profile-value"></p></div>
                 <div><p class="profile-label">Email</p><p id="disp-p-email" class="profile-value"></p></div>
@@ -67,52 +45,44 @@
             </div>
             <div class="step-content space-y-4">
                 <label class="profile-label block">Select Branch Parent</label>
-                <select id="p_select_id" class="w-full border p-3 rounded-lg bg-white"></select>
+                <select id="p_select_id" class="w-full border p-3 rounded-lg bg-white font-bold text-slate-700"></select>
                 <button onclick="processParentStep()" class="btn-teal">Confirm Parent Details</button>
             </div>
         </div>
 
         <div id="step-student" class="bg-white border rounded-xl p-8 mb-4 shadow-sm step-locked">
-            <h2 class="text-lg font-black mb-4 flex items-center text-slate-700"><span class="bg-slate-800 text-white w-6 h-6 rounded-full text-[10px] flex items-center justify-center mr-3">2</span> Student Profile</h2>
+            <h2 class="text-lg font-black mb-4 flex items-center text-slate-700">
+                <span class="bg-slate-800 text-white w-6 h-6 rounded-full text-[10px] flex items-center justify-center mr-3">2</span> Student Profile
+            </h2>
             <div id="student-profile-view" class="hidden grid grid-cols-3 gap-4 p-4 bg-slate-50 rounded-lg mb-4 border border-slate-100">
                 <div><p class="profile-label">Student Name</p><p id="disp-s-name" class="profile-value"></p></div>
                 <div><p class="profile-label">DOB</p><p id="disp-s-dob" class="profile-value"></p></div>
             </div>
             <div class="step-content space-y-4">
-                <select id="s_select_id" class="w-full border p-3 rounded-lg bg-white"></select>
+                <select id="s_select_id" class="w-full border p-3 rounded-lg bg-white font-bold text-slate-700"></select>
                 <button onclick="processStudentStep()" class="btn-teal">Confirm Student Profile</button>
             </div>
         </div>
 
         <div id="step-session" class="bg-white border rounded-xl p-8 mb-4 shadow-sm step-locked">
-            <h2 class="text-lg font-black mb-4 flex items-center text-slate-700"><span class="bg-slate-800 text-white w-6 h-6 rounded-full text-[10px] flex items-center justify-center mr-3">4</span> Select Session</h2>
+            <h2 class="text-lg font-black mb-4 flex items-center text-slate-700">
+                <span class="bg-slate-800 text-white w-6 h-6 rounded-full text-[10px] flex items-center justify-center mr-3">3</span> Select Session
+            </h2>
             <div class="step-content space-y-4">
-                <select id="enrollment_session_id" class="w-full border p-3 rounded-lg bg-white"></select>
+                <select id="enrollment_session_id" class="w-full border p-3 rounded-lg bg-white font-bold text-slate-700"></select>
                 <button onclick="processSessionStep()" class="btn-teal">Confirm Session</button>
             </div>
         </div>
 
         <div id="step-final" class="bg-white border rounded-xl p-8 mb-4 shadow-sm step-locked text-center">
-            <h2 class="text-2xl font-black mb-4">Finalize Enrollment</h2>
-            <button onclick="submitFinalEnrollment()" class="btn-teal bg-emerald-600 px-12 py-4 text-sm">Generate Records & Close</button>
-        </div>
-    </div>
-
-    <div id="tab-parents" class="tab-content hidden">
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <table class="w-full text-left text-sm">
-                <thead class="table-head">
-                    <tr><th class="p-4">Name</th><th class="p-4">Phone</th><th class="p-4">Status</th></tr>
-                </thead>
-                <tbody id="parent-list" class="divide-y"></tbody>
-            </table>
+            <h2 class="text-2xl font-black mb-4 text-slate-800">Finalize Enrollment</h2>
+            <button onclick="location.reload()" class="btn-teal bg-emerald-600 px-12 py-4">Generate Records & Close</button>
         </div>
     </div>
 </div>
 
 <script>
     const API = {
-        FRAN: "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise",
         SNAP: "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots",
         PARENT: "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent",
         STUDENT: "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student",
@@ -121,69 +91,28 @@
 
     let activeFranId, allParents = [], allStudents = [];
 
-    // 1. GATEKEEPER LOGIC [cite: 2026-03-21]
     async function init() {
-        try {
-            const res = await fetch(API.FRAN);
-            const data = await res.json();
-            
-            const optionsHtml = data.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-            document.getElementById('initial-franchise-select').innerHTML = '<option value="">-- Choose Branch --</option>' + optionsHtml;
-            document.getElementById('global-franchise-select').innerHTML = optionsHtml;
-
-            const savedId = localStorage.getItem('locked_franchise_id');
-            const savedName = localStorage.getItem('locked_franchise_name');
-
-            if (savedId && savedName) {
-                document.getElementById('global-franchise-select').value = savedId;
-                revealDashboard(savedName);
-            }
-        } catch (err) { console.error("Init Error:", err); }
-    }
-
-    function confirmFranchiseSelection() {
-        const sel = document.getElementById('initial-franchise-select');
-        const id = sel.value;
-        const name = sel.options[sel.selectedIndex].text;
-
-        if (!id) return alert("Please select your branch location.");
-
-        localStorage.setItem('locked_franchise_id', id);
-        localStorage.setItem('locked_franchise_name', name);
-        document.getElementById('global-franchise-select').value = id;
-        
-        revealDashboard(name);
-    }
-
-    function revealDashboard(name) {
-        document.getElementById('selector-overlay').style.display = 'none';
-        document.getElementById('dashboard-main-container').classList.remove('hidden');
-        
-        // Signal the index.html sidebar to show up [cite: 2026-03-21]
-        if (window.parent && typeof window.parent.revealFullSidebar === 'function') {
-            window.parent.revealFullSidebar(name);
-        }
-
+        activeFranId = localStorage.getItem('locked_franchise_id');
+        const savedName = localStorage.getItem('locked_franchise_name');
+        if (!activeFranId) return;
+        document.getElementById('branch-display').innerText = "Management Portal: " + savedName;
         loadFranchiseData();
-        switchTab('stats');
     }
 
-    // 2. ORIGINAL DASHBOARD LOGIC [cite: 2026-02-05]
     async function loadFranchiseData() {
-        activeFranId = document.getElementById('global-franchise-select').value;
         const snapRes = await fetch(API.SNAP);
         const snaps = await snapRes.json();
         const mySnap = snaps.filter(s => s.franchise_id == activeFranId).pop();
-        
-        document.getElementById('stat-total').innerText = mySnap ? mySnap.total_enrollment : '0';
-        document.getElementById('stat-change').innerText = mySnap ? (mySnap.todays_change_enrollment >= 0 ? '+' : '') + mySnap.todays_change_enrollment : '0';
+        if(mySnap) {
+            document.getElementById('stat-total').innerText = mySnap.total_enrollment;
+            document.getElementById('stat-change').innerText = (mySnap.todays_change_enrollment >= 0 ? '+' : '') + mySnap.todays_change_enrollment;
+        }
 
         const pRes = await fetch(API.PARENT);
         allParents = await pRes.json();
         const branchParents = allParents.filter(p => p.franchise_id == activeFranId);
-        
-        document.getElementById('parent-list').innerHTML = branchParents.map(p => `<tr><td class="p-4 font-bold">${p.first_name} ${p.last_name}</td><td class="p-4">${p.phone || ''}</td><td class="p-4 uppercase text-[10px] font-black">${p.is_active ? 'Active' : 'Inactive'}</td></tr>`).join('');
-        document.getElementById('p_select_id').innerHTML = '<option value="">-- Select Parent --</option>' + branchParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
+        document.getElementById('p_select_id').innerHTML = '<option value="">-- Select Parent --</option>' + 
+            branchParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
 
         const sRes = await fetch(API.STUDENT);
         allStudents = await sRes.json();
@@ -194,24 +123,22 @@
             sessions.filter(s => s.franchise_id == activeFranId && s.is_active).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
     }
 
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-        const content = document.getElementById('tab-' + tabId);
-        if(content) content.classList.remove('hidden');
-    }
-
     function processParentStep() {
         const pid = document.getElementById('p_select_id').value;
         if(!pid) return;
         const p = allParents.find(x => x.id == pid);
         document.getElementById('disp-p-name').innerText = p.first_name + " " + p.last_name;
+        document.getElementById('disp-p-email').innerText = p.email || "---";
         document.getElementById('disp-p-phone').innerText = p.phone || "---";
         document.getElementById('parent-profile-view').classList.remove('hidden');
         document.getElementById('step-parent').className = 'bg-white border rounded-xl p-8 mb-4 shadow-sm step-saved';
+        
         const myKids = allStudents.filter(s => s.parent_id == pid);
-        document.getElementById('s_select_id').innerHTML = '<option value="">-- Select Child --</option>' + myKids.map(k => `<option value="${k.id}">${k.name}</option>`).join('');
+        document.getElementById('s_select_id').innerHTML = '<option value="">-- Select Child --</option>' + 
+            myKids.map(k => `<option value="${k.id}">${k.name}</option>`).join('');
+        
         document.getElementById('step-student').className = 'bg-white border rounded-xl p-8 mb-4 shadow-sm step-active';
-        document.getElementById('enrollment-progress').innerText = "Step 2 of 6";
+        document.getElementById('enrollment-progress').innerText = "Step 2 of 3";
     }
 
     function processStudentStep() {
@@ -219,11 +146,18 @@
         if(!sid) return;
         const s = allStudents.find(x => x.id == sid);
         document.getElementById('disp-s-name').innerText = s.name;
+        document.getElementById('disp-s-dob').innerText = s.date_of_birth || "---";
         document.getElementById('student-profile-view').classList.remove('hidden');
         document.getElementById('step-student').className = 'bg-white border rounded-xl p-8 mb-4 shadow-sm step-saved';
         document.getElementById('step-session').className = 'bg-white border rounded-xl p-8 mb-4 shadow-sm step-active';
-        document.getElementById('enrollment-progress').innerText = "Step 4 of 6";
+        document.getElementById('enrollment-progress').innerText = "Step 3 of 3";
     }
 
-    init();
+    function processSessionStep() {
+        document.getElementById('step-session').className = 'bg-white border rounded-xl p-8 mb-4 shadow-sm step-saved';
+        document.getElementById('step-final').className = 'bg-white border rounded-xl p-8 mb-4 shadow-sm step-active';
+        document.getElementById('enrollment-progress').innerText = "Complete";
+    }
+
+    window.onload = init;
 </script>
