@@ -55,7 +55,8 @@
 </div>
 
 <script>
-    const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/student";
+    // Corrected APIs for different workspaces
+    const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
     const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
     let parentCache = {};
 
@@ -65,24 +66,33 @@
         if(!fid) return;
 
         try {
-            // Fetch parents first for the name mapping
+            // 1. Load Parents for the dropdown and name mapping [cite: 2026-02-05]
             const pRes = await fetch(`${PARENT_API}?franchise_id=${fid}`);
-            const parents = await pRes.json();
-            const pSelect = document.getElementById('parent_id');
-            pSelect.innerHTML = '<option value="">-- Choose Parent --</option>';
-            
-            parents.forEach(p => {
-                parentCache[p.id] = `${p.first_name} ${p.last_name}`;
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.innerText = `${p.first_name} ${p.last_name}`;
-                pSelect.appendChild(opt);
-            });
+            if (pRes.ok) {
+                const parents = await pRes.json();
+                const pSelect = document.getElementById('parent_id');
+                pSelect.innerHTML = '<option value="">-- Choose Parent --</option>';
+                
+                parents.forEach(p => {
+                    parentCache[p.id] = `${p.first_name} ${p.last_name}`;
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.innerText = `${p.first_name} ${p.last_name}`;
+                    pSelect.appendChild(opt);
+                });
+            }
 
-            // Fetch students [cite: 2026-02-05]
+            // 2. Load Students [cite: 2026-02-05]
             const sRes = await fetch(`${STUDENT_API}?franchise_id=${fid}`);
+            if (!sRes.ok) throw new Error("Student API error");
+            
             const students = await sRes.json();
             tbody.innerHTML = '';
+
+            if(students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-slate-400 italic font-bold">No student records found for this branch.</td></tr>';
+                return;
+            }
 
             students.forEach(s => {
                 tbody.insertAdjacentHTML('beforeend', `
@@ -99,7 +109,10 @@
                     </tr>
                 `);
             });
-        } catch (e) { tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Xano Connection Failed.</td></tr>'; }
+        } catch (e) { 
+            console.error(e);
+            tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Xano Connection Failed. Check workspace API settings.</td></tr>'; 
+        }
     }
 
     function openStudentModal(student = null) {
