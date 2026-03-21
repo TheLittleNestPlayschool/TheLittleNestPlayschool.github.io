@@ -17,8 +17,6 @@
             <option value="oldest">Oldest First</option>
             <option value="name_asc">Name: A-Z</option>
             <option value="name_desc">Name: Z-A</option>
-            <option value="id_asc">ID: Low to High</option>
-            <option value="id_desc">ID: High to Low</option>
         </select>
         
         <button onclick="openParentModal()" class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 text-xs uppercase tracking-widest">
@@ -152,7 +150,6 @@
     const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
     let allParents = [];
 
-    // Comprehensive list of all 21 fields in the schema
     const parentFields = [
         'first_name', 'last_name', 'email', 'phone', 'address',
         'second_parent_full_name', 'second_parent_relationship', 'second_parent_phone_number', 
@@ -176,7 +173,7 @@
             allParents = await res.json();
             renderTable();
         } catch (e) { 
-            tbody.innerHTML = '<tr><td colspan="4" class="p-20 text-center text-red-500 font-black uppercase tracking-widest italic">Sync failed. Check Xano API connectivity.</td></tr>'; 
+            tbody.innerHTML = '<tr><td colspan="4" class="p-20 text-center text-red-500 font-black uppercase tracking-widest italic">Sync failed.</td></tr>'; 
         }
     }
 
@@ -185,23 +182,19 @@
         const searchTerm = document.getElementById('search-input').value.toLowerCase();
         const sortType = document.getElementById('sort-control').value;
 
-        // Search across all identifying fields
         let filtered = allParents.filter(p => {
             return `${p.first_name} ${p.last_name} ${p.second_parent_full_name} ${p.phone} ${p.email} ${p.address}`.toLowerCase().includes(searchTerm);
         });
 
-        // Sorting Logic
         if (sortType === 'newest') filtered.sort((a, b) => b.created_at - a.created_at);
         if (sortType === 'oldest') filtered.sort((a, b) => a.created_at - b.created_at);
         if (sortType === 'name_asc') filtered.sort((a, b) => `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`));
         if (sortType === 'name_desc') filtered.sort((a, b) => `${b.first_name} ${b.last_name}`.localeCompare(`${a.first_name} ${a.last_name}`));
-        if (sortType === 'id_asc') filtered.sort((a, b) => a.id - b.id);
-        if (sortType === 'id_desc') filtered.sort((a, b) => b.id - a.id);
 
         tbody.innerHTML = '';
         
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-20 text-center text-slate-400 font-bold">No matching records found in this franchise.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-20 text-center text-slate-400 font-bold">No matching records found.</td></tr>';
             return;
         }
 
@@ -218,7 +211,6 @@
                             <div class="text-[10px] text-slate-500 font-medium italic mt-0.5">${p.address || 'Not listed'}</div>
                         </div>
                     </td>
-
                     <td class="p-5">
                         <div class="text-sm font-bold text-slate-700">${p.second_parent_full_name || '<span class="text-slate-200">N/A</span>'}</div>
                         <div class="mt-1">
@@ -228,13 +220,7 @@
                             <div class="text-[10px] text-slate-500 font-medium">Phone: ${p.second_parent_phone_number || '---'}</div>
                             <div class="text-[10px] text-slate-500 font-medium">Email: ${p.second_parent_email_address || '---'}</div>
                         </div>
-                        ${p.second_parent_home_address ? `
-                            <div class="mt-2 text-[9px] text-slate-400 border-l-2 border-slate-100 pl-2">
-                                <span class="font-bold uppercase text-[7px]">Alt Address:</span><br>${p.second_parent_home_address}
-                            </div>
-                        ` : ''}
                     </td>
-
                     <td class="p-5">
                         <div class="grid grid-cols-1 gap-3">
                             <div class="p-2.5 bg-orange-50/50 rounded-xl border border-orange-100/40">
@@ -251,10 +237,9 @@
                             </div>
                         </div>
                     </td>
-
                     <td class="p-5 text-right">
                         <div class="flex flex-col gap-2 items-end">
-                            <button onclick="editParent(${p.id})" class="w-24 text-[10px] font-black text-slate-500 hover:text-white hover:bg-slate-800 border border-slate-200 px-3 py-2.5 rounded-xl transition-all uppercase tracking-widest">Edit Profile</button>
+                            <button onclick="editParent(${p.id})" class="w-24 text-[10px] font-black text-slate-500 hover:text-white hover:bg-slate-800 border border-slate-200 px-3 py-2.5 rounded-xl transition-all uppercase tracking-widest">Edit</button>
                             <button onclick="deleteParent(${p.id})" class="w-24 text-[10px] font-black text-red-400 hover:text-white hover:bg-red-500 border border-red-50 px-3 py-2.5 rounded-xl transition-all uppercase tracking-widest">Delete</button>
                             ${p.inactivation_reason_comments ? `
                                 <div class="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-100 text-left w-36">
@@ -314,12 +299,12 @@
                 body: JSON.stringify(payload)
             });
             if(res.ok) { closeParentModal(); fetchParents(); }
-            else { alert("Error saving record. Check Xano schema."); }
-        } catch (e) { alert("Save failed. Connectivity error."); }
+            else { alert("Error saving record."); }
+        } catch (e) { alert("Connectivity error."); }
     };
 
     async function deleteParent(id) {
-        if(confirm("Permanently delete this parent and all associated data? This cannot be undone.")) {
+        if(confirm("Delete this parent record?")) {
             try {
                 await fetch(`${PARENT_API}/${id}`, { method: 'DELETE' });
                 fetchParents();
@@ -327,6 +312,5 @@
         }
     }
 
-    // Initial Database Sync
     fetchParents();
 </script>
