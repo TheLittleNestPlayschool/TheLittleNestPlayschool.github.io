@@ -3,7 +3,7 @@
         <h1 class="text-4xl font-black text-slate-800 tracking-tight">Parent Directory</h1>
         <p id="parent-subtitle" class="text-slate-500 font-medium italic">Syncing with NestMind...</p>
     </div>
-    <button class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white font-black py-3 px-6 rounded-xl shadow-lg shadow-teal-500/20 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-2">
+    <button class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white font-black py-3 px-6 rounded-xl shadow-lg flex items-center gap-2 transition-all active:scale-95">
         <span class="text-xl">+</span> ADD NEW PARENT
     </button>
 </div>
@@ -33,27 +33,27 @@
         
         if (fname) document.getElementById('parent-subtitle').innerText = `Viewing directory for: ${fname}`;
 
-        // VALIDATION: Stop if ID is missing or invalid
-        if (!rawFid || rawFid === "undefined") {
-            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-amber-500 font-bold">Error: No Branch Selected. Please re-select in sidebar.</td></tr>`;
+        if (!rawFid) {
+            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-amber-500 font-bold">Please select a branch in the sidebar.</td></tr>`;
             return;
         }
 
         try {
-            const cleanFid = parseInt(rawFid); // Ensure it's an integer for Xano [cite: 2026-02-05]
-            const apiUrl = `https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/parent?franchise_id=${cleanFid}`;
+            const cleanFid = parseInt(rawFid);
+            // UPDATED: Using your verified API group 8Je8Zszx
+            const apiUrl = `https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${cleanFid}`;
             
             const res = await fetch(apiUrl);
             
             if (!res.ok) {
-                throw new Error(`Xano responded with ${res.status}`);
+                throw new Error(`Status ${res.status}: Check API group settings.`);
             }
 
             const data = await res.json();
-            
             tbody.innerHTML = '';
+            
             if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400 italic">No records found for ${fname}.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400 italic">No parent records found for ${fname}.</td></tr>`;
                 return;
             }
 
@@ -65,9 +65,9 @@
                     <td class="px-6 py-4 text-slate-800 font-extrabold text-base">${p.first_name} ${p.last_name}</td>
                     <td class="px-6 py-4">
                         <div class="text-[#00d1b2] font-bold text-xs underline decoration-2">${p.email}</div>
-                        <div class="text-slate-400 font-medium text-[10px] mt-1">${p.phone || ''}</div>
+                        <div class="text-slate-400 font-medium text-[10px] mt-1">${p.phone || 'No Phone'}</div>
                     </td>
-                    <td class="px-6 py-4 text-slate-500 font-medium text-xs italic max-w-[240px] truncate">${p.address || ''}</td>
+                    <td class="px-6 py-4 text-slate-500 font-medium text-xs italic max-w-[240px] truncate">${p.address || 'No Address'}</td>
                     <td class="px-6 py-4 text-right">
                         <button class="text-[10px] font-black text-slate-300 hover:text-slate-600 uppercase border border-slate-200 px-3 py-1 rounded-md">Edit Profile</button>
                     </td>
@@ -75,7 +75,6 @@
                 tbody.appendChild(row);
             });
         } catch (e) {
-            console.error("Fetch error details:", e);
             tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-400 font-bold">Xano Sync Failed: ${e.message}</td></tr>`;
         }
     })();
