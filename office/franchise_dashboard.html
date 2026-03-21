@@ -10,9 +10,29 @@
     .table-head { font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; background: #f1f5f9; }
     .btn-teal { background-color: #00d1b2; color: white; padding: 10px 20px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; transition: all 0.2s; }
     .btn-teal:hover { background-color: #00b89c; transform: translateY(-1px); }
+
+    /* GATEKEEPER OVERLAY [cite: 2026-03-21] */
+    #selector-overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: #f4f7f6; z-index: 9999; display: flex; 
+        justify-content: center; align-items: center;
+    }
+    .selector-card {
+        background: white; padding: 40px; border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 400px;
+    }
 </style>
 
-<div class="p-8">
+<div id="selector-overlay">
+    <div class="selector-card">
+        <h2 style="font-weight: 800; color: #1a1a1a; margin-bottom: 10px;">Franchise Access</h2>
+        <p style="color: #666; font-size: 0.9rem; margin-bottom: 25px;">Please select your branch location to unlock the dashboard.</p>
+        <select id="initial-franchise-select" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #eee; font-weight: bold; margin-bottom: 20px; outline: none;"></select>
+        <button onclick="confirmFranchiseSelection()" class="btn-teal" style="width: 100%; padding: 15px;">Access Dashboard</button>
+    </div>
+</div>
+
+<div id="dashboard-main-container" class="p-8 hidden">
     <div class="flex items-center space-x-4 bg-slate-50 p-2 px-4 rounded-lg border border-slate-200 mb-8 w-fit">
         <label class="text-[10px] font-black text-slate-400 uppercase">Viewing Franchise:</label>
         <select id="global-franchise-select" onchange="loadFranchiseData()" class="bg-transparent font-bold text-sm text-slate-700 outline-none cursor-pointer"></select>
@@ -67,11 +87,6 @@
                 <button onclick="processSessionStep()" class="btn-teal">Confirm Session</button>
             </div>
         </div>
-
-        <div id="step-final" class="bg-white border rounded-xl p-8 mb-4 shadow-sm step-locked text-center">
-            <h2 class="text-2xl font-black mb-4">Finalize Enrollment</h2>
-            <button onclick="submitFinalEnrollment()" class="btn-teal bg-emerald-600 px-12 py-4 text-sm">Generate Records & Close</button>
-        </div>
     </div>
 
     <div id="tab-parents" class="tab-content hidden">
@@ -87,11 +102,9 @@
 </div>
 
 <script>
-    // Exact Logic Preserved [cite: 2026-02-05]
     const API = {
         FRAN: "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise",
         SNAP: "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots",
-        TEACH: "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher",
         PARENT: "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent",
         STUDENT: "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student",
         SESS: "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session"
@@ -99,25 +112,65 @@
 
     let activeFranId, allParents = [], allStudents = [];
 
+    // GATEKEEPER LOGIC [cite: 2026-03-21]
     async function init() {
         const res = await fetch(API.FRAN);
         const data = await res.json();
-        document.getElementById('global-franchise-select').innerHTML = data.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        
+        // Populate BOTH selects
+        const optionsHtml = data.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        document.getElementById('initial-franchise-select').innerHTML = '<option value="">-- Choose Branch --</option>' + optionsHtml;
+        document.getElementById('global-franchise-select').innerHTML = optionsHtml;
+
+        // Auto-check for existing lock
+        const savedId = localStorage.getItem('locked_franchise_id');
+        if (savedId) {
+            document.getElementById('global-franchise-select').value = savedId;
+            revealDashboard(localStorage.getItem('locked_franchise_name'));
+        }
+    }
+
+    function confirmFranchiseSelection() {
+        const sel = document.getElementById('initial-franchise-select');
+        const id = sel.value;
+        const name = sel.options[sel.selectedIndex].text;
+
+        if (!id) return alert("Select a branch");
+
+        localStorage.setItem('locked_franchise_id', id);
+        localStorage.setItem('locked_franchise_name', name);
+        document.getElementById('global-franchise-select').value = id;
+        
+        revealDashboard(name);
+    }
+
+    function revealDashboard(name) {
+        document.getElementById('selector-overlay').style.display = 'none';
+        document.getElementById('dashboard-main-container').classList.remove('hidden');
+        
+        // Notify Sidebar
+        if (window.parent && typeof window.parent.revealFullSidebar === 'function') {
+            window.parent.revealFullSidebar(name);
+        }
+
         loadFranchiseData();
         switchTab('stats');
     }
 
+    // ORIGINAL DASHBOARD LOGIC RESTORED
     async function loadFranchiseData() {
         activeFranId = document.getElementById('global-franchise-select').value;
         const snapRes = await fetch(API.SNAP);
         const snaps = await snapRes.json();
         const mySnap = snaps.filter(s => s.franchise_id == activeFranId).pop();
+        
         document.getElementById('stat-total').innerText = mySnap ? mySnap.total_enrollment : '0';
         document.getElementById('stat-change').innerText = mySnap ? (mySnap.todays_change_enrollment >= 0 ? '+' : '') + mySnap.todays_change_enrollment : '0';
 
         const pRes = await fetch(API.PARENT);
         allParents = await pRes.json();
         const branchParents = allParents.filter(p => p.franchise_id == activeFranId);
+        
         document.getElementById('parent-list').innerHTML = branchParents.map(p => `<tr><td class="p-4 font-bold">${p.first_name} ${p.last_name}</td><td class="p-4">${p.phone || ''}</td><td class="p-4 uppercase text-[10px] font-black">${p.is_active ? 'Active' : 'Inactive'}</td></tr>`).join('');
         document.getElementById('p_select_id').innerHTML = '<option value="">-- Select Parent --</option>' + branchParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
 
@@ -132,12 +185,8 @@
 
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-        // Updated to target potential menu buttons in the parent shell [cite: 2026-02-05]
-        document.querySelectorAll('nav button').forEach(el => el.classList.remove('active-tab'));
         const content = document.getElementById('tab-' + tabId);
         if(content) content.classList.remove('hidden');
-        const btn = document.getElementById('btn-' + tabId);
-        if(btn) btn.classList.add('active-tab');
     }
 
     function processParentStep() {
@@ -165,6 +214,5 @@
         document.getElementById('enrollment-progress').innerText = "Step 4 of 6";
     }
 
-    // Trigger init immediately on load within frame [cite: 2026-02-05]
     init();
 </script>
