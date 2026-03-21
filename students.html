@@ -17,7 +17,7 @@
             </tr>
         </thead>
         <tbody id="student-table-body">
-            <tr><td colspan="5" class="p-20 text-center text-slate-400 italic font-bold">Initializing Directory...</td></tr>
+            <tr><td colspan="5" class="p-20 text-center text-slate-400 italic font-bold">Synchronizing with Xano...</td></tr>
         </tbody>
     </table>
 </div>
@@ -84,8 +84,10 @@
                     <input type="date" id="start_date" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
                 </div>
                 <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Session ID</label>
-                    <input type="number" id="session_enrolled" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Assigned Session</label>
+                    <select id="session_enrolled" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none">
+                        <option value="0">No Session Assigned</option>
+                    </select>
                 </div>
             </div>
 
@@ -103,9 +105,13 @@
 </div>
 
 <script>
+    // Workspace Endpoints
     const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
     const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
+    const SESSION_API = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session";
+    
     let parentCache = {};
+    let sessionCache = {};
 
     function calculateAge(dob) {
         if (!dob) return '---';
@@ -120,6 +126,7 @@
         if(!fid) return;
 
         try {
+            // Load Parents (Workspace 8Je8Zszx)
             const pRes = await fetch(`${PARENT_API}?franchise_id=${fid}`);
             if (pRes.ok) {
                 const parents = await pRes.json();
@@ -131,44 +138,59 @@
                 });
             }
 
+            // Load Sessions (Workspace mUsV7Zqx)
+            const sessRes = await fetch(`${SESSION_API}?franchise_id=${fid}`);
+            if (sessRes.ok) {
+                const sessions = await sessRes.json();
+                const sSelect = document.getElementById('session_enrolled');
+                sSelect.innerHTML = '<option value="0">No Session Assigned</option>';
+                sessions.forEach(s => {
+                    sessionCache[s.id] = s.name;
+                    sSelect.insertAdjacentHTML('beforeend', `<option value="${s.id}">${s.name}</option>`);
+                });
+            }
+
+            // Load Students (Workspace iEHfqd-N)
             const sRes = await fetch(`${STUDENT_API}?franchise_id=${fid}`);
             const students = await sRes.json();
             tbody.innerHTML = '';
 
             students.forEach(s => {
                 const age = calculateAge(s.date_of_birth);
+                const sessionName = sessionCache[s.session_enrolled] || 'Unassigned';
+                
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                         <td class="p-4">
                             <div class="text-sm font-black text-slate-800">${s.name}</div>
                             <div class="text-[10px] text-slate-400 font-bold uppercase italic">"${s.preferred_name || 'N/A'}" • ${s.gender || '---'}</div>
-                            <div class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tighter">${s.nationality || 'Nationality N/A'}</div>
+                            <div class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tighter">${s.nationality || ''}</div>
                         </td>
                         <td class="p-4">
-                            <div class="text-sm font-bold text-slate-700">${parentCache[s.parent_id] || 'Unassigned'}</div>
+                            <div class="text-sm font-bold text-slate-700">${parentCache[s.parent_id] || '---'}</div>
                             <div class="text-[10px] text-slate-400 font-medium truncate max-w-[150px]">${s.home_address || 'No Address'}</div>
-                            <div class="text-[9px] text-slate-400 font-bold uppercase">${s.primary_language || 'Lang N/A'}</div>
+                            <div class="text-[9px] text-slate-400 font-bold uppercase">${s.primary_language || ''}</div>
                         </td>
                         <td class="p-4 text-center">
                             <div class="text-[11px] text-slate-800 font-black uppercase">${age} yrs old</div>
                             <div class="text-[9px] text-slate-400 font-medium">DOB: ${s.date_of_birth || '---'}</div>
-                            <div class="text-[9px] text-slate-400 font-medium">ENR: ${s.enrolled_date || '---'}</div>
+                            <div class="text-[9px] text-slate-400 font-medium italic">ENR: ${s.enrolled_date || '---'}</div>
                         </td>
                         <td class="p-4 text-center">
                             <div class="inline-block px-2 py-0.5 rounded-md text-[9px] font-black uppercase ${s.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}">
                                 ${s.is_active ? 'Active' : 'Inactive'}
                             </div>
-                            <div class="text-[10px] text-slate-800 font-black mt-1">SESS: ${s.session_enrolled || '0'}</div>
-                            <div class="text-[9px] text-slate-400 font-medium">START: ${s.start_date || '---'}</div>
+                            <div class="text-[10px] text-slate-800 font-black mt-1 uppercase tracking-tight">${sessionName}</div>
+                            <div class="text-[9px] text-slate-400 font-medium italic">Start: ${s.start_date || '---'}</div>
                         </td>
                         <td class="p-4 text-right space-x-1">
-                            <button onclick='editStudent(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-[9px] font-black text-slate-400 hover:text-slate-800 border border-slate-200 px-2 py-1.5 rounded-lg transition-all uppercase">Edit</button>
-                            <button onclick="deleteStudent(${s.id})" class="text-[9px] font-black text-red-400 hover:text-red-600 border border-red-500/10 px-2 py-1.5 rounded-lg transition-all uppercase">Del</button>
+                            <button onclick='editStudent(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-[9px] font-black text-slate-400 hover:text-slate-800 border border-slate-200 px-2 py-1.5 rounded-lg transition-all uppercase tracking-widest">Edit</button>
+                            <button onclick="deleteStudent(${s.id})" class="text-[9px] font-black text-red-400 hover:text-red-600 border border-red-500/10 px-2 py-1.5 rounded-lg transition-all uppercase tracking-widest">Del</button>
                         </td>
                     </tr>
                 `);
             });
-        } catch (e) { tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Xano Connection Failed.</td></tr>'; }
+        } catch (e) { tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Workspace Connection Error.</td></tr>'; }
     }
 
     async function deleteStudent(id) {
@@ -187,7 +209,7 @@
             document.getElementById('modal-title').innerText = "Edit Student Profile";
             ['name', 'preferred_name', 'date_of_birth', 'gender', 'nationality', 'parent_id', 'primary_language', 'enrolled_date', 'start_date', 'session_enrolled', 'home_address'].forEach(field => {
                 const el = document.getElementById(field);
-                if(el) el.value = s[field] || '';
+                if(el) el.value = s[field] || (field === 'session_enrolled' ? '0' : '');
             });
         } else {
             document.getElementById('modal-title').innerText = "Register New Student";
