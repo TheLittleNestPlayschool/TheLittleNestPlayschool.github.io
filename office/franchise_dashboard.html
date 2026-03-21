@@ -1,4 +1,3 @@
-
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
@@ -9,25 +8,37 @@
         </div>
         
         <div class="px-4 mb-6">
-            <div class="bg-[#1e293b] p-5 rounded-2xl border border-slate-700 text-center shadow-2xl">
+            <div class="bg-[#1e293b] p-5 rounded-2xl border border-slate-700 text-center shadow-xl">
                 <p class="text-[10px] font-black text-[#2dd4bf] uppercase mb-3 tracking-widest">Identity Lock</p>
-                <select id="branch-select" onchange="unlockDashboard()" class="w-full bg-[#0f172a] text-white p-2.5 rounded-lg border border-slate-600 text-xs focus:ring-2 focus:ring-[#00d1b2] outline-none transition-all">
+                <select id="branch-select" onchange="unlockDashboard()" class="w-full bg-[#0f172a] text-white p-2.5 rounded-lg border border-slate-600 text-xs focus:ring-2 focus:ring-[#00d1b2] outline-none cursor-pointer">
                     <option value="">-- Select Branch --</option>
                 </select>
                 <div id="active-branch-name" class="hidden text-white font-extrabold text-base tracking-tight py-1"></div>
             </div>
         </div>
 
-        <nav id="nav-menu" class="hidden px-3 overflow-y-auto">
+        <nav id="nav-menu" class="hidden px-3 overflow-y-auto space-y-1">
             <div class="text-[0.65rem] font-800 text-[#475569] uppercase tracking-widest px-4 py-3">Management</div>
-            <div class="cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg mb-1 flex items-center gap-3" onclick="loadModule('performance.html', 'Performance')">📈 Performance</div>
-            <div class="cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg mb-1 flex items-center gap-3" onclick="loadModule('parents.html', 'Parents')">👨‍👩‍👧 Parents</div>
-            <div class="cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg mb-1 flex items-center gap-3" onclick="loadModule('students.html', 'Students')">🏫 Students</div>
-            <div class="cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg mb-1 flex items-center gap-3" onclick="loadModule('teacher_dashboard.html', 'Teachers')">🧑‍🏫 Teachers</div>
+            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('performance.html', 'Performance')">
+                <span>📈</span> Performance
+            </div>
+            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('parents.html', 'Parents')">
+                <span>👨‍👩‍👧</span> Parents
+            </div>
+            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('students.html', 'Students')">
+                <span>🏫</span> Students
+            </div>
+            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('teacher_dashboard.html', 'Teachers')">
+                <span>🧑‍🏫</span> Teachers
+            </div>
             
             <div class="text-[0.65rem] font-800 text-[#475569] uppercase tracking-widest px-4 py-3">Academic DNA</div>
-            <div class="cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg mb-1 flex items-center gap-3" onclick="loadModule('student_assessment.html', 'Assessments')">📝 Assessments</div>
-            <div class="cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg mb-1 flex items-center gap-3" onclick="loadModule('session.html', 'Sessions')">🗓️ Sessions</div>
+            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('student_assessment.html', 'Assessments')">
+                <span>📝</span> Assessments
+            </div>
+            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('session.html', 'Sessions')">
+                <span>🗓️</span> Sessions
+            </div>
         </nav>
     </aside>
 
@@ -41,13 +52,13 @@
 
 <script>
     const GITHUB_ROOT = "https://thelittlenestplayschool.github.io/";
-    // FIXED API GROUP [cite: 2026-02-05]
+    // Updated to the group that actually contains your data [cite: 2026-02-05]
     const XANO_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/franchise";
 
     async function init() {
         try {
             const res = await fetch(XANO_API);
-            if (!res.ok) throw new Error("API group unreachable.");
+            if (!res.ok) throw new Error(`Xano Error: ${res.status}`);
             const data = await res.json();
             const select = document.getElementById('branch-select');
             data.forEach(f => {
@@ -56,8 +67,8 @@
                 select.appendChild(opt);
             });
         } catch (e) { 
-            console.error("Identity Lock failed", e);
-            document.getElementById('status-text').innerText = "Sync Error: Check Xano API Settings.";
+            console.error("Initialization Failed", e); 
+            document.getElementById('status-text').innerText = "Sync Error: API Group 8Je8Zszx Not Responding.";
         }
     }
 
@@ -85,6 +96,8 @@
             const res = await fetch(GITHUB_ROOT + file + '?v=' + Date.now());
             const html = await res.text();
             workspace.innerHTML = `<div class="p-12">${html}</div>`;
+            
+            // Script Re-Injection logic for Xano Syncing inside modules
             const scripts = workspace.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
@@ -92,7 +105,7 @@
                 else newScript.text = oldScript.text;
                 document.head.appendChild(newScript).parentNode.removeChild(newScript);
             });
-        } catch (e) { workspace.innerHTML = `<div class="p-20 text-red-500 font-bold">${e.message}</div>`; }
+        } catch (e) { workspace.innerHTML = `<div class="p-20 text-red-500 font-bold">Failed to load ${file}: ${e.message}</div>`; }
     }
     init();
 </script>
