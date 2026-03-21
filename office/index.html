@@ -24,7 +24,7 @@
         </div>
 
         <div class="px-4 mb-6">
-            <button onclick="loadPage('franchise_dashboard.html', 'Home')" class="w-full bg-[#00d1b2] text-[#0f172a] py-3 rounded-lg font-black text-[11px] uppercase tracking-wider flex items-center justify-center shadow-lg shadow-teal-500/20">
+            <button onclick="loadPage('franchise_dashboard.html', 'Home')" class="w-full bg-[#00d1b2] text-[#0f172a] py-3 rounded-lg font-black text-[11px] uppercase tracking-wider flex items-center justify-center">
                 🏠 Dashboard Home
             </button>
         </div>
@@ -57,6 +57,10 @@
             <div onclick="loadPage('students.html', 'Students')" class="sidebar-link">🏫 Students</div>
             <div onclick="loadPage('teachers.html', 'Teachers')" class="sidebar-link">👩‍🏫 Teachers</div>
             <div onclick="loadPage('sessions.html', 'Sessions')" class="sidebar-link">🗓️ Sessions</div>
+            
+            <div class="section-label">CRM & Leads</div>
+            <div onclick="loadPage('message_raw.html', 'Raw Message Log')" class="sidebar-link">💬 Raw Message Log</div>
+            <div onclick="loadPage('lead_profile.html', 'Lead Profiles')" class="sidebar-link">👤 Lead Profiles</div>
         </nav>
     </aside>
 
@@ -72,13 +76,11 @@
                 const res = await fetch(API_URL);
                 const data = await res.json();
                 const select = document.getElementById('sidebar-franchise-select');
-                
                 data.forEach(f => {
                     let opt = document.createElement('option');
                     opt.value = f.id; opt.innerText = f.name;
                     select.appendChild(opt);
                 });
-
                 const savedId = localStorage.getItem('locked_franchise_id');
                 if (savedId) {
                     select.value = savedId;
@@ -90,7 +92,6 @@
         function confirmFranchiseSelection() {
             const select = document.getElementById('sidebar-franchise-select');
             if (!select.value) return;
-
             localStorage.setItem('locked_franchise_id', select.value);
             localStorage.setItem('locked_franchise_name', select.options[select.selectedIndex].text);
             unlockAndLoad();
@@ -110,7 +111,6 @@
                 if(l.innerText.includes(title)) l.classList.add('active');
             });
         }
-
         window.onload = init;
     </script>
 </body>
