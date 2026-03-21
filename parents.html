@@ -1,10 +1,10 @@
 <div class="mb-8 flex justify-between items-end">
     <div>
         <h1 class="text-4xl font-black text-slate-800 tracking-tight">Parent Directory</h1>
-        <p id="parent-subtitle" class="text-slate-500 font-medium italic">Viewing directory...</p>
+        <p id="parent-subtitle" class="text-slate-500 font-medium italic">Syncing with NestMind...</p>
     </div>
-    <button onclick="openAddParentModal()" class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white font-black py-3 px-6 rounded-xl shadow-lg shadow-teal-500/20 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-2">
-        <span class="text-xl">+</span> ADD NEW PARENT
+    <button class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white font-black py-3 px-6 rounded-xl shadow-lg transition-all transform hover:-translate-y-1 active:scale-95">
+        + ADD NEW PARENT
     </button>
 </div>
 
@@ -21,28 +21,38 @@
         </thead>
         <tbody id="parent-table-body">
             <tr>
-                <td colspan="5" class="px-6 py-12 text-center text-slate-400 font-bold italic">Initializing encrypted parent data...</td>
+                <td colspan="5" class="px-6 py-12 text-center text-slate-400 font-bold italic">Initializing encrypted sync...</td>
             </tr>
         </tbody>
     </table>
 </div>
 
 <script>
-    // Module Logic [cite: 2026-02-05]
-    async function loadParents() {
+    (async function loadParents() {
         const fid = localStorage.getItem('locked_franchise_id');
         const fname = localStorage.getItem('locked_franchise_name');
         const tbody = document.getElementById('parent-table-body');
         
+        // Fix 1: Update UI subtitle immediately
         if (fname) {
             document.getElementById('parent-subtitle').innerText = `Viewing directory for: ${fname}`;
         }
 
+        // Fix 2: Prevent sync if ID is missing
+        if (!fid) {
+            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-amber-500 font-bold italic">Identity Lock Active: Please select a branch in the sidebar.</td></tr>`;
+            return;
+        }
+
         try {
-            // Filter API by the locked Franchise ID [cite: 2026-02-05]
-            const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/parent?franchise_id=${fid}`);
-            const data = await res.json();
+            // Fix 3: Force ID to Integer for Xano Database compatibility [cite: 2026-02-05]
+            const cleanFid = parseInt(fid);
             
+            const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/parent?franchise_id=${cleanFid}`);
+            
+            if (!res.ok) throw new Error(`Xano Error: ${res.status}`);
+            
+            const data = await res.json();
             tbody.innerHTML = '';
             
             if (data.length === 0) {
@@ -55,27 +65,21 @@
                 row.className = "border-b border-slate-100 hover:bg-slate-50 transition-colors group";
                 row.innerHTML = `
                     <td class="px-6 py-4 text-slate-400 font-bold text-sm">#${p.id}</td>
+                    <td class="px-6 py-4 text-slate-800 font-extrabold text-base">${p.first_name} ${p.last_name}</td>
                     <td class="px-6 py-4">
-                        <div class="text-slate-800 font-extrabold text-base">${p.first_name} ${p.last_name}</div>
+                        <div class="text-[#00d1b2] font-bold text-xs underline">${p.email}</div>
+                        <div class="text-slate-400 font-medium text-[10px]">${p.phone || 'No phone'}</div>
                     </td>
-                    <td class="px-6 py-4">
-                        <div class="text-[#00d1b2] font-bold text-xs underline decoration-2 cursor-pointer">${p.email}</div>
-                        <div class="text-slate-400 font-medium text-[10px] mt-1">${p.phone || 'No phone recorded'}</div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="text-slate-500 font-medium text-xs leading-relaxed max-w-[200px] italic">${p.address}</div>
-                    </td>
+                    <td class="px-6 py-4 text-slate-500 font-medium text-xs italic">${p.address}</td>
                     <td class="px-6 py-4 text-right">
-                        <button class="text-[10px] font-black text-slate-300 hover:text-slate-600 uppercase tracking-tighter border border-slate-200 px-3 py-1 rounded-md transition-all">Edit Profile</button>
+                        <button class="text-[10px] font-black text-slate-300 hover:text-slate-600 uppercase border px-3 py-1 rounded">Edit</button>
                     </td>
                 `;
                 tbody.appendChild(row);
             });
         } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-400 font-bold">Failed to sync parent records.</td></tr>`;
+            console.error("Sync Failure Details:", e);
+            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-400 font-bold">Xano Sync Failed: Check API Permissions</td></tr>`;
         }
-    }
-
-    // Initialize module [cite: 2025-12-29]
-    loadParents();
+    })();
 </script>
