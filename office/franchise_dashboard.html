@@ -2,7 +2,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
 <style>
-    /* Prevent the menu from moving or the page from scrolling */
+    /* Absolute Layout: Prevents any horizontal shifting */
     body { 
         font-family: 'Inter', sans-serif; 
         background-color: #f8fafc; 
@@ -14,7 +14,7 @@
         overflow: hidden; 
     }
 
-    /* Fixed Sidebar: flex-shrink-0 ensures it stays exactly 260px */
+    /* Fixed Sidebar: Rigid width ensures it never moves */
     aside { 
         width: 260px; 
         background: #0f172a; 
@@ -23,14 +23,16 @@
         flex-direction: column; 
         border-right: 1px solid #1e293b;
         height: 100vh;
+        z-index: 50;
     }
 
-    /* Main Workspace: Independent scroll area */
+    /* Main Workspace: Independent container */
     main { 
         flex-grow: 1; 
         height: 100vh;
         overflow-y: auto; 
         background-color: #f8fafc;
+        position: relative;
     }
 
     .sidebar-link { cursor: pointer; padding: 10px 16px; color: #94a3b8; font-size: 0.85rem; font-weight: 600; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
@@ -48,11 +50,9 @@
     <div class="px-4 mb-4">
         <div class="bg-[#1e293b] p-4 rounded-xl border border-slate-700 text-center">
             <p class="text-[9px] font-black text-[#2dd4bf] uppercase mb-2">Identity Lock</p>
-            
             <select id="branch-select" onchange="unlockDashboard()" class="w-full bg-[#0f172a] text-white p-2 rounded border border-slate-600 text-xs">
                 <option value="">-- Select Branch --</option>
             </select>
-
             <div id="active-branch-name" class="hidden text-white font-bold text-sm tracking-wide py-1"></div>
         </div>
     </div>
@@ -69,20 +69,17 @@
     </nav>
 </aside>
 
-<main id="main-workspace" class="p-10">
-    <div id="dashboard-home-view">
-        <div class="mb-10">
-            <h1 class="text-3xl font-black text-slate-800 tracking-tight">NestMind</h1>
-            <p id="branch-display" class="text-slate-500 font-medium italic">Please select a branch to access the directory.</p>
-        </div>
-        </div>
+<main id="main-workspace">
+    <div id="dashboard-home-view" class="flex flex-col items-center justify-start pt-24 h-full">
+        <h1 class="text-6xl font-black text-slate-800 tracking-tighter mb-2">NestMind</h1>
+        <p id="branch-display" class="text-slate-400 font-medium">Please select a branch to access the directory.</p>
+    </div>
 </main>
 
 <script>
     const GITHUB_ROOT = "https://thelittlenestplayschool.github.io/";
     const XANO_FRAN = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
 
-    // Initial load of branches into the dropdown [cite: 2026-02-05]
     async function init() {
         try {
             const res = await fetch(XANO_FRAN);
@@ -94,12 +91,9 @@
                 opt.innerText = f.name;
                 select.appendChild(opt);
             });
-        } catch (e) { 
-            console.error("Franchise load failed", e); 
-        }
+        } catch (e) { console.error("Load failed", e); }
     }
 
-    // Handles the Identity Lock logic
     function unlockDashboard() {
         const select = document.getElementById('branch-select');
         const branchDisplay = document.getElementById('active-branch-name');
@@ -108,34 +102,32 @@
         
         if(!fid) return;
         
-        // Save session data
         localStorage.setItem('locked_franchise_id', fid);
         localStorage.setItem('locked_franchise_name', fname);
         
-        // UI Swap: Hide dropdown, show static name
         select.classList.add('hidden');
         branchDisplay.innerText = fname;
         branchDisplay.classList.remove('hidden');
         
-        // Show the menu and update workspace header
         document.getElementById('nav-menu').classList.remove('hidden');
-        document.getElementById('branch-display').innerText = "Management Portal: " + fname;
+        
+        // Remove "Management Portal: Sariaya" text and update status
+        document.getElementById('branch-display').innerText = "Identity Verified: Session Active";
     }
 
-    // Loads external modules into the main workspace
     async function loadModule(file, title) {
         const workspace = document.getElementById('main-workspace');
-        workspace.innerHTML = `<div class="p-10 text-slate-400 font-bold italic text-center">Loading ${title}...</div>`;
+        // Setting padding here ensures loaded content doesn't touch the fixed sidebar
+        workspace.className = "p-10"; 
+        workspace.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic">Synchronizing ${title}...</div>`;
 
         try {
-            // Force fetch fresh copy [cite: 2026-03-21]
             const res = await fetch(GITHUB_ROOT + file + '?v=' + Date.now());
             if (!res.ok) throw new Error(`Could not find ${file}`);
             
             const html = await res.text();
             workspace.innerHTML = html;
 
-            // Execute scripts within the loaded module [cite: 2025-12-29]
             const scripts = workspace.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
@@ -144,7 +136,6 @@
                 document.head.appendChild(newScript).parentNode.removeChild(newScript);
             });
             
-            // Wake up module-specific functions
             if(window.loadParents) window.loadParents();
             if(window.init) window.init();
         } catch (e) {
