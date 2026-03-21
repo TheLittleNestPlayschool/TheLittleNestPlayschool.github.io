@@ -74,7 +74,6 @@
 
         async function init() {
             try {
-                // Clear any old locks on fresh refresh to force re-selection [cite: 2026-03-21]
                 localStorage.removeItem('locked_franchise_id');
                 localStorage.removeItem('locked_franchise_name');
 
@@ -88,28 +87,27 @@
                     opt.innerText = f.name;
                     select.appendChild(opt);
                 });
-            } catch (err) { 
-                console.error("Sidebar Load Error:", err); 
-            }
+            } catch (err) { console.error("Sidebar Load Error:", err); }
         }
 
         function confirmFranchiseSelection() {
             const select = document.getElementById('sidebar-franchise-select');
             if (!select.value) return;
 
+            const branchName = select.options[select.selectedIndex].text;
             localStorage.setItem('locked_franchise_id', select.value);
-            localStorage.setItem('locked_franchise_name', select.options[select.selectedIndex].text);
+            localStorage.setItem('locked_franchise_name', branchName);
             
-            // Trigger UI reveal only after selection [cite: 2026-03-21]
             document.getElementById('sidebar-profile').classList.remove('hidden-until-locked');
             document.getElementById('sidebar-menu-links').classList.remove('hidden-until-locked');
             
-            loadPage('franchise_dashboard.html', 'HOME');
+            // REMOVED loadPage CALL: This keeps the right side BLANK [cite: 2026-03-21]
+            document.getElementById('current-screen-name').innerText = "SELECT MODULE";
         }
 
         function loadPage(url, title) {
             const isLocked = localStorage.getItem('locked_franchise_id');
-            if (!isLocked) return; // Prevent any loading without a selected branch [cite: 2026-03-21]
+            if (!isLocked) return; 
 
             document.getElementById('content-frame').src = url;
             document.getElementById('current-screen-name').innerText = title;
