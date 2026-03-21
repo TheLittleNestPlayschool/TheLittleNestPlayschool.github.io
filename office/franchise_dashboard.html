@@ -14,7 +14,7 @@
     .btn-teal:hover { background-color: #00b89c; transform: translateY(-1px); }
 </style>
 
-<div id="dashboard-main-container">
+<div id="dashboard-main-container" class="hidden">
     <div class="mb-10">
         <h1 class="text-3xl font-black text-slate-800 tracking-tight">The Little Nest Intelligence Hub</h1>
         <p id="branch-display" class="text-slate-500 font-medium">Loading branch data...</p>
@@ -94,7 +94,15 @@
     async function init() {
         activeFranId = localStorage.getItem('locked_franchise_id');
         const savedName = localStorage.getItem('locked_franchise_name');
-        if (!activeFranId) return;
+        
+        // EXIT if no franchise selected [cite: 2026-03-21]
+        if (!activeFranId) {
+            console.log("Waiting for Identity Lock selection...");
+            return; 
+        }
+
+        // SHOW container once ID is confirmed
+        document.getElementById('dashboard-main-container').classList.remove('hidden');
         document.getElementById('branch-display').innerText = "Management Portal: " + savedName;
         loadFranchiseData();
     }
