@@ -3,140 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Franchisee Dashboard</title>
+    <title>NestMind | Management Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .sidebar-link { display: flex; align-items: center; padding: 10px 16px; color: #94a3b8; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; border-radius: 8px; margin-bottom: 4px; }
+        .sidebar-link:hover { background: #1e293b; color: #00d1b2; }
+        .sidebar-link.active { background: #1e293b; color: #00d1b2; }
+        .section-label { font-size: 0.65rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.1em; padding: 20px 16px 10px; }
+        
+        /* Sidebar Hidden by Default [cite: 2026-03-21] */
+        #main-sidebar { display: none; }
+        
+        iframe { border: none; width: 100%; height: 100vh; }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; background: #f4f4f4; overflow-x: hidden;">
+<body class="flex">
 
-<div style="display: flex; min-height: 100vh; width: 100vw; overflow: hidden; font-family: sans-serif;">
-    <nav style="width: 250px; min-width: 250px; height: 100vh; background: #1a1a1a; position: fixed; left: 0; top: 0; z-index: 1000; overflow-y: auto; border-right: 1px solid #333;">
-        <div style="padding: 10px 0;">
-            <div style="padding: 0 15px 15px 15px; border-bottom: 1px solid #333; margin-bottom: 10px;">
-                <div style="padding: 10px 5px; margin-bottom: 10px;">
-                    <span style="color: #00d1b2; font-size: 1.4rem; font-weight: 900; italic; letter-spacing: -0.5px;">NestMind</span>
-                </div>
+    <aside id="main-sidebar" class="w-64 bg-[#0f172a] h-screen flex flex-col shrink-0 overflow-y-auto">
+        <div class="p-6">
+            <h1 class="text-[#00d1b2] text-2xl font-black tracking-tight">NestMind</h1>
+        </div>
 
-                <div style="margin-bottom: 15px;">
-                    <label style="color: #666; font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Active Location</label>
-                    <select id="franchise-selector" onchange="updateFranchiseContext(this.value)" style="width: 100%; background: #222; color: #00d1b2; border: 1px solid #444; padding: 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; outline: none; cursor: pointer;">
-                        <option value="all">All Locations</option>
-                        <option value="Sariaya">Sariaya</option>
-                        <option value="Lucena">Lucena</option>
-                        <option value="Batangas">Batangas</option>
-                        <option value="Gumaca">Gumaca</option>
-                    </select>
-                </div>
-                
-                <button onclick="resetDashboard()" style="width: 100%; background: #00d1b2; color: #1a1a1a; border: none; padding: 8px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.7rem; letter-spacing: 1px; margin-bottom: 10px;">
-                    🏠 DASHBOARD HOME
-                </button>
-                <div id="active-screen-indicator" style="padding: 8px; background: #1a365d; border: 1px solid #2a4a7d; border-radius: 4px; text-align: center;">
-                    <span style="color: #94a3b8; font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Viewing Screen</span>
-                    <span id="screen-name" style="color: #00d1b2; font-size: 0.75rem; font-weight: 900; text-transform: uppercase;">Home</span>
-                </div>
+        <div class="px-4 mb-6">
+            <button onclick="loadPage('franchise_dashboard.html')" class="w-full bg-[#00d1b2] text-[#0f172a] py-3 rounded-lg font-black text-[11px] uppercase tracking-wider flex items-center justify-center shadow-lg shadow-teal-500/20">
+                🏠 Dashboard Home
+            </button>
+        </div>
+
+        <div class="px-4 mb-4">
+            <div class="bg-slate-800/50 border border-slate-700 p-3 rounded-lg text-center">
+                <p class="text-[9px] font-black text-slate-500 uppercase">Session Profile</p>
+                <p class="text-white font-bold text-sm">Dave</p>
             </div>
-
-            <span style="color: #555; font-size: 0.6rem; font-weight: 800; padding: 0 15px; letter-spacing: 1px;">MANAGEMENT</span>
-            <ul style="list-style: none; padding: 0; margin: 4px 0 12px 0;">
-                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('franchise_dashboard.html', 'Performance')" style="color: #00d1b2; font-weight:bold; text-decoration: none; font-size: 0.8rem;">📊 Performance</a></li>
-                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="remoteSwitchTab('enrollment')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">✨ New Enrollment</a></li>
-                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('../parents.html', 'Parents')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">👪 Parents</a></li>
-                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('../students.html', 'Students')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">🏠 Students</a></li>
-                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('../teacher_v2.html', 'Teachers')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">🏫 Teachers</a></li>
-                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('../session.html', 'Sessions')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">🗓️ Sessions</a></li>
-            </ul>
+            <div class="mt-2 bg-blue-900/30 border border-blue-800/50 p-3 rounded-lg text-center">
+                <p class="text-[9px] font-black text-blue-400 uppercase">Viewing Screen</p>
+                <p id="current-screen-name" class="text-[#00d1b2] font-black text-xs uppercase">Home</p>
+            </div>
         </div>
-    </nav>
 
-    <main id="dashboard-content" style="margin-left: 250px; flex-grow: 1; padding: 30px; background: #fff; min-height: 100vh; width: calc(100vw - 250px); box-sizing: border-box; overflow-y: auto;">
-        <div id="content-inner" style="text-align: center; margin-top: 20vh;">
-            <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">Franchisee Dashboard</h1>
-            <p style="color: #666;">Select a management module from the sidebar to begin.</p>
-        </div>
+        <nav class="flex-1 px-2">
+            <div class="section-label">Management</div>
+            <a href="#" onclick="loadPage('performance.html', 'Performance')" class="sidebar-link">📊 Performance</a>
+            <a href="#" onclick="loadPage('new_enrollment.html', 'New Enrollment')" class="sidebar-link">✨ New Enrollment</a>
+            <a href="#" onclick="loadPage('parents.html', 'Parents')" class="sidebar-link">👨‍👩‍👧 Parents</a>
+            <a href="#" onclick="loadPage('students.html', 'Students')" class="sidebar-link">🏫 Students</a>
+            <a href="#" onclick="loadPage('teachers.html', 'Teachers')" class="sidebar-link">👩‍🏫 Teachers</a>
+            <a href="#" onclick="loadPage('sessions.html', 'Sessions')" class="sidebar-link">🗓️ Sessions</a>
+
+            <div class="section-label">CRM & Leads</div>
+            <a href="#" onclick="loadPage('message_raw.html', 'Raw Message Log')" class="sidebar-link">💬 Raw Message Log</a>
+            <a href="#" onclick="loadPage('lead_profile.html', 'Lead Profiles')" class="sidebar-link">👤 Lead Profiles</a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 h-screen relative bg-white overflow-hidden">
+        <iframe id="content-frame" src="franchise_dashboard.html"></iframe>
     </main>
-</div>
 
-<script>
-// Global tracking for franchise context [cite: 2026-03-21]
-let globalFranchiseContext = "all";
-let currentLoadController = null;
-let debounceTimer = null;
-let currentActiveUrl = null;
-let currentActiveName = null;
-
-function updateFranchiseContext(value) {
-    globalFranchiseContext = value;
-    
-    // Auto-refresh the current screen if one is loaded
-    if (currentActiveUrl) {
-        loadFrame(currentActiveUrl, currentActiveName);
-    }
-}
-
-function resetDashboard() {
-    clearTimeout(debounceTimer);
-    if (currentLoadController) currentLoadController.abort();
-    currentActiveUrl = null;
-    currentActiveName = "Home";
-    document.getElementById('screen-name').textContent = 'Home';
-    document.getElementById('dashboard-content').innerHTML = `
-        <div id="content-inner" style="text-align: center; margin-top: 20vh;">
-            <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">Franchisee Dashboard</h1>
-        </div>
-    `;
-}
-
-function remoteSwitchTab(tabId) {
-    if (typeof switchTab === 'function') {
-        switchTab(tabId);
-    } else {
-        loadFrame('../new_enrollment.html', 'New Enrollment').then(() => {
-            setTimeout(() => { if(typeof switchTab === 'function') switchTab(tabId); }, 600);
-        });
-    }
-}
-
-async function loadFrame(url, name) {
-    clearTimeout(debounceTimer);
-    currentActiveUrl = url;
-    currentActiveName = name;
-    const indicator = document.getElementById('screen-name');
-    indicator.textContent = "Syncing..."; 
-
-    return new Promise((resolve) => {
-        debounceTimer = setTimeout(async () => {
-            const container = document.getElementById('dashboard-content');
-            if (currentLoadController) currentLoadController.abort();
+    <script>
+        // Page Loader Logic
+        function loadPage(url, title = 'Home') {
+            document.getElementById('content-frame').src = url;
+            document.getElementById('current-screen-name').innerText = title;
             
-            currentLoadController = new AbortController();
-            const { signal } = currentLoadController;
+            // Update active state in sidebar
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('active');
+                if(link.innerText.includes(title)) link.classList.add('active');
+            });
+        }
 
-            indicator.textContent = name;
-            container.innerHTML = '<div style="padding:20px; font-size:0.8rem; color:#666;">Loading ' + name + '...</div>';
-
-            try {
-                // Pass the franchise name to the child page [cite: 2026-03-21]
-                const finalUrl = `${url}?franchise=${encodeURIComponent(globalFranchiseContext)}&v=${Math.floor(Math.random() * 999999)}`;
-                
-                const response = await fetch(finalUrl, { signal });
-                const html = await response.text();
-                
-                container.innerHTML = html;
-                
-                // Re-initialize scripts within the loaded content [cite: 2025-12-29]
-                const scripts = container.querySelectorAll('script');
-                scripts.forEach(oldScript => {
-                    const newScript = document.createElement('script');
-                    newScript.text = oldScript.text;
-                    document.head.appendChild(newScript).parentNode.removeChild(newScript);
-                });
-                resolve();
-            } catch (e) {
-                if (e.name === 'AbortError') return; 
-                container.innerHTML = '<h2 style="color:red; padding:20px;">Error loading module.</h2>';
+        // ACCESS CONTROL SYSTEM [cite: 2026-03-21]
+        function checkGlobalAccess() {
+            const lockedName = localStorage.getItem('locked_franchise_name');
+            const sidebar = document.getElementById('main-sidebar');
+            
+            if (lockedName) {
+                sidebar.style.display = 'flex';
+                console.log("Access Verified: " + lockedName);
+            } else {
+                sidebar.style.display = 'none';
+                console.log("Waiting for Franchise Selection...");
             }
-        }, 250);
-    });
-}
-</script>
+        }
+
+        // External trigger called by franchise_dashboard.html [cite: 2026-03-21]
+        window.revealFullSidebar = function(name) {
+            document.getElementById('main-sidebar').style.display = 'flex';
+            checkGlobalAccess();
+        };
+
+        // Run on load
+        window.onload = checkGlobalAccess;
+    </script>
 </body>
 </html>
