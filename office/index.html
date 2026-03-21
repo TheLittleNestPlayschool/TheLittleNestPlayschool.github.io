@@ -3,86 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Office Admin Dashboard</title>
-    
-    <style>
-        /* Shared Dashboard Styles [cite: 2026-02-05] */
-        html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; overflow-x: hidden; }
-        .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; color: #fff; position: fixed; left: 0; top: 0; z-index: 10000; overflow-y: auto; border-right: 1px solid #333; }
-        .main-content { margin-left: 250px; padding: 30px; width: calc(100% - 250px); min-height: 100vh; background: #fff; box-sizing: border-box; }
-        
-        /* Table and UI Styles [cite: 2026-02-05] */
-        .admin-table { width: 100%; border-collapse: collapse; background: white; font-size: 0.9rem; border: 1px solid #ddd; margin-top: 20px; }
-        .admin-table th { background: #eee; padding: 10px; text-align: left; border-bottom: 2px solid #ccc; }
-        .admin-table td { padding: 8px 10px; border-bottom: 1px solid #eee; }
-        .btn { padding: 8px 16px; cursor: pointer; font-weight: 700; border-radius: 4px; border: 1px solid #ccc; font-size: 0.8rem; }
-        .btn-save { background: #00d1b2; color: #1a1a1a; border: none; }
-    </style>
+    <title>Franchisee Dashboard</title>
 </head>
-<body>
+<body style="margin: 0; padding: 0; background: #f4f4f4; overflow-x: hidden;">
 
-    <div id="nav-placeholder"></div>
+<div style="display: flex; min-height: 100vh; width: 100vw; overflow: hidden; font-family: sans-serif;">
+    <nav style="width: 250px; min-width: 250px; height: 100vh; background: #1a1a1a; position: fixed; left: 0; top: 0; z-index: 1000; overflow-y: auto; border-right: 1px solid #333;">
+        <div style="padding: 10px 0;">
+            <div style="padding: 0 15px 15px 15px; border-bottom: 1px solid #333; margin-bottom: 10px;">
+                <div style="padding: 10px 5px; margin-bottom: 10px;">
+                    <span style="color: #00d1b2; font-size: 1.4rem; font-weight: 900; italic; letter-spacing: -0.5px;">NestMind</span>
+                </div>
+                
+                <button onclick="resetDashboard()" style="width: 100%; background: #00d1b2; color: #1a1a1a; border: none; padding: 8px; border-radius: 4px; font-weight: 900; cursor: pointer; font-size: 0.7rem; letter-spacing: 1px; margin-bottom: 10px;">
+                    🏠 DASHBOARD HOME
+                </button>
+                <div style="padding: 6px; background: #222; border: 1px dashed #444; border-radius: 4px; text-align: center; margin-bottom: 6px;">
+                    <span style="color: #666; font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 2px;">Session Profile</span>
+                    <span style="color: #fff; font-size: 0.75rem; font-weight: bold;">Dave</span>
+                </div>
+                <div id="active-screen-indicator" style="padding: 8px; background: #1a365d; border: 1px solid #2a4a7d; border-radius: 4px; text-align: center;">
+                    <span style="color: #94a3b8; font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Viewing Screen</span>
+                    <span id="screen-name" style="color: #00d1b2; font-size: 0.75rem; font-weight: 900; text-transform: uppercase;">Home</span>
+                </div>
+            </div>
 
-    <main class="main-content" id="dashboard-content">
+            <span style="color: #555; font-size: 0.6rem; font-weight: 800; padding: 0 15px; letter-spacing: 1px;">MANAGEMENT</span>
+            <ul style="list-style: none; padding: 0; margin: 4px 0 12px 0;">
+                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('franchise_dashboard.html', 'Performance')" style="color: #00d1b2; font-weight:bold; text-decoration: none; font-size: 0.8rem;">📊 Performance</a></li>
+                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="remoteSwitchTab('enrollment')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">✨ New Enrollment</a></li>
+                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('parents.html', 'Parents')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">👪 Parents</a></li>
+                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('student.html', 'Students')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">🏠 Students</a></li>
+                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('teacher_v2.html', 'Teachers')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">🏫 Teachers</a></li>
+                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('session.html', 'Sessions')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">🗓️ Sessions</a></li>
+            </ul>
+
+            <span style="color: #555; font-size: 0.6rem; font-weight: 800; padding: 0 15px; letter-spacing: 1px;">CRM & LEADS</span>
+            <ul style="list-style: none; padding: 0; margin: 4px 0 12px 0;">
+                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('message_raw.html', 'Raw Messages')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">Raw Message Log</a></li>
+                <li style="padding: 3px 20px;"><a href="javascript:void(0)" onclick="loadFrame('lead_profile.html', 'Lead Profiles')" style="color: #ccc; text-decoration: none; font-size: 0.8rem;">Lead Profiles</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main id="dashboard-content" style="margin-left: 250px; flex-grow: 1; padding: 30px; background: #fff; min-height: 100vh; width: calc(100vw - 250px); box-sizing: border-box; overflow-y: auto;">
         <div id="content-inner" style="text-align: center; margin-top: 20vh;">
-            <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">Office & Franchise Administration</h1>
-            <p style="color: #666;">Manage partners, roles, and administrative records. Select a module to begin.</p>
+            <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">Franchisee Dashboard</h1>
+            <p style="color: #666;">Select a management module from the sidebar to begin.</p>
         </div>
     </main>
+</div>
 
-    <script>
-        // 1. LOAD THE FRANCHISE DASHBOARD AS THE MENU [cite: 2026-02-05]
-        window.onload = function() {
-            // Updated to reference the new naming convention [cite: 2026-02-05]
-            fetch('franchise_dashboard.html') 
-                .then(response => {
-                    if (!response.ok) throw new Error('Franchise Dashboard file not found');
-                    return response.text();
-                })
-                .then(data => {
-                    document.getElementById('nav-placeholder').innerHTML = data;
-                })
-                .catch(err => console.error('Error loading menu:', err));
-        };
+<script>
+let currentLoadController = null;
+let debounceTimer = null;
 
-        // 2. RESET FUNCTION [cite: 2026-02-05]
-        function resetDashboard() {
-            const indicator = document.getElementById('screen-name');
-            if(indicator) indicator.textContent = 'Home';
-            
-            document.getElementById('dashboard-content').innerHTML = `
-                <div id="content-inner" style="text-align: center; margin-top: 20vh;">
-                    <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">Office & Franchise Administration</h1>
-                    <p style="color: #666;">Home View Restored.</p>
-                </div>
-            `;
-        }
+function resetDashboard() {
+    clearTimeout(debounceTimer);
+    if (currentLoadController) currentLoadController.abort();
+    document.getElementById('screen-name').textContent = 'Home';
+    document.getElementById('dashboard-content').innerHTML = `
+        <div id="content-inner" style="text-align: center; margin-top: 20vh;">
+            <h1 style="font-family: Georgia, serif; color: #1a365d; font-size: 2.2rem;">Franchisee Dashboard</h1>
+        </div>
+    `;
+}
 
-        // 3. LOAD MODULE FUNCTION [cite: 2026-02-05]
-        async function loadFrame(url, name) {
+function remoteSwitchTab(tabId) {
+    if (typeof switchTab === 'function') {
+        switchTab(tabId);
+    } else {
+        loadFrame('franchise_dashboard.html', 'New Enrollment').then(() => {
+            setTimeout(() => { if(typeof switchTab === 'function') switchTab(tabId); }, 600);
+        });
+    }
+}
+
+async function loadFrame(url, name) {
+    clearTimeout(debounceTimer);
+    const indicator = document.getElementById('screen-name');
+    indicator.textContent = "Syncing..."; 
+
+    return new Promise((resolve) => {
+        debounceTimer = setTimeout(async () => {
             const container = document.getElementById('dashboard-content');
-            const indicator = document.getElementById('screen-name');
-            if(indicator) indicator.textContent = name;
+            if (currentLoadController) currentLoadController.abort();
             
-            container.innerHTML = '<div style="padding:40px; text-align:center; color:#666;">Loading ' + name + '...</div>';
-            
+            currentLoadController = new AbortController();
+            const { signal } = currentLoadController;
+
+            indicator.textContent = name;
+            container.innerHTML = '<div style="padding:20px; font-size:0.8rem; color:#666;">Loading ' + name + '...</div>';
+
             try {
-                // Cache busting added to ensure fresh data [cite: 2026-02-05]
-                const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999));
+                const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999), { signal });
                 const html = await response.text();
                 container.innerHTML = html;
                 
-                // Re-initialize scripts in the loaded frame [cite: 2026-02-05]
                 const scripts = container.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
                     newScript.text = oldScript.text;
                     document.head.appendChild(newScript).parentNode.removeChild(newScript);
                 });
+                resolve();
             } catch (e) {
-                container.innerHTML = '<h2 style="color:red; padding:40px; text-align:center;">Error loading: ' + name + '</h2>';
+                if (e.name === 'AbortError') return; 
+                container.innerHTML = '<h2 style="color:red; padding:20px;">Error loading module.</h2>';
             }
-        }
-    </script>
+        }, 250);
+    });
+}
+</script>
 </body>
 </html>
