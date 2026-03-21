@@ -1,19 +1,21 @@
 <style>
-    /* Direct visual match to Parent Directory styles */
-    .student-card { transition: all 0.3s ease; }
-    .student-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
-    .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    /* Exact 1:1 Visual Match to Parent Directory */
+    .student-mgmt-header { text-align: left; margin-bottom: 2rem; }
+    .student-mgmt-title { font-size: 3rem; font-weight: 900; color: #1e293b; tracking-tighter; }
+    .student-mgmt-subtitle { color: #94a3b8; font-weight: 500; margin-top: 0.25rem; }
+    
+    .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
     .active-bg { background-color: #ecfdf5; color: #059669; border: 1px solid #d1fae5; }
     .inactive-bg { background-color: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
 </style>
 
 <div class="max-w-7xl mx-auto p-2">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div class="text-left">
-            <h1 class="text-5xl font-black text-slate-800 tracking-tighter">Student Management</h1>
-            <p class="text-slate-400 font-medium mt-1">Enrollment, records, and academic status tracking.</p>
+        <div class="student-mgmt-header">
+            <h1 class="student-mgmt-title">Student Management</h1>
+            <p class="student-mgmt-subtitle">Enrollment, records, and academic status tracking.</p>
         </div>
-        <button onclick="openStudentModal()" class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white px-8 py-4 rounded-2xl font-black transition-all shadow-lg flex items-center gap-3">
+        <button onclick="openStudentModal()" class="bg-[#00d1b2] hover:bg-[#00bfa5] text-white px-8 py-4 rounded-2xl font-black transition-all shadow-lg flex items-center gap-3 active:scale-95">
             <span class="text-xl">+</span> NEW STUDENT
         </button>
     </div>
@@ -22,7 +24,7 @@
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-slate-50/50 border-b border-slate-100">
-                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">ID</th>
+                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest w-20">ID</th>
                     <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Name</th>
                     <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Parent / Guardian</th>
                     <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Date of Birth</th>
@@ -38,95 +40,104 @@
 </div>
 
 <div id="student-modal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-    <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden border border-white/20 transform transition-all">
+    <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden border border-white/20">
         <div class="p-10 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <div>
                 <h2 id="modal-title" class="text-3xl font-black text-slate-800 tracking-tighter">Register Student</h2>
                 <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Student Profile Details</p>
             </div>
-            <button onclick="closeStudentModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-red-500 transition-all font-bold text-2xl">&times;</button>
+            <button onclick="closeStudentModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-red-500 font-bold text-2xl transition-all">&times;</button>
         </div>
         <form id="student-form" class="p-10 space-y-6">
             <input type="hidden" id="edit-student-id">
             <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Student Full Name</label>
-                <input type="text" id="student_name" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#00d1b2]">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Student Full Name</label>
+                <input type="text" id="student_name" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-[#00d1b2]/10 outline-none transition-all">
             </div>
             <div class="grid grid-cols-2 gap-6">
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Birth Date</label>
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Birth Date</label>
                     <input type="date" id="dob" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none">
                 </div>
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Assign Parent</label>
-                    <select id="parent_select" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Assign Parent</label>
+                    <select id="parent_select" required class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none cursor-pointer">
                         <option value="">-- Select Parent --</option>
                     </select>
                 </div>
             </div>
             <div class="pt-6 flex gap-4">
-                <button type="button" onclick="closeStudentModal()" class="flex-1 p-5 bg-slate-100 text-slate-500 rounded-2xl font-black uppercase text-xs tracking-widest">Cancel</button>
-                <button type="submit" class="flex-1 p-5 bg-[#0b0f1a] text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Save Student</button>
+                <button type="button" onclick="closeStudentModal()" class="flex-1 p-5 bg-slate-100 text-slate-500 rounded-2xl font-black uppercase text-xs tracking-widest">Discard</button>
+                <button type="submit" class="flex-1 p-5 bg-[#0b0f1a] text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Commit changes</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    const API_BASE = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx";
-    const STUDENT_API = `${API_BASE}/student`;
-    const PARENT_API = `${API_BASE}/parent`;
+    // NAMESPACED LOGIC TO PREVENT NAVIGATION CONFLICTS
+    const StudentModule = {
+        API: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/student",
+        PARENT_API: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent",
+        parentMap: {},
 
-    let parentStore = {};
-
-    async function loadData() {
-        const fid = localStorage.getItem('locked_franchise_id');
-        const tbody = document.getElementById('student-table-body');
-        
-        try {
-            // Fetch Parents for name mapping
-            const pRes = await fetch(`${PARENT_API}?franchise_id=${fid}`);
-            const parents = await pRes.json();
-            const pSelect = document.getElementById('parent_select');
-            pSelect.innerHTML = '<option value="">-- Select Parent --</option>';
+        async init() {
+            const fid = localStorage.getItem('locked_franchise_id');
+            const tbody = document.getElementById('student-table-body');
             
-            parents.forEach(p => {
-                parentStore[p.id] = `${p.first_name} ${p.last_name}`;
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.innerText = `${p.first_name} ${p.last_name}`;
-                pSelect.appendChild(opt);
-            });
+            try {
+                // 1. Fetch Parents for mapping name [cite: 2026-02-05]
+                const pRes = await fetch(`${this.PARENT_API}?franchise_id=${fid}`);
+                const parents = await pRes.json();
+                const pSelect = document.getElementById('parent_select');
+                pSelect.innerHTML = '<option value="">-- Select Parent --</option>';
+                
+                parents.forEach(p => {
+                    this.parentMap[p.id] = `${p.first_name} ${p.last_name}`;
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.innerText = `${p.first_name} ${p.last_name}`;
+                    pSelect.appendChild(opt);
+                });
 
-            // Fetch Students [cite: 2026-02-05]
-            const sRes = await fetch(`${STUDENT_API}?franchise_id=${fid}`);
-            const students = await sRes.json();
-            
-            tbody.innerHTML = '';
-            students.forEach(s => {
-                const bday = s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString() : '---';
-                tbody.insertAdjacentHTML('beforeend', `
-                    <tr class="hover:bg-slate-50/80 transition-all border-b border-slate-50">
-                        <td class="p-6 text-sm font-bold text-slate-400">#${s.id}</td>
-                        <td class="p-6 text-sm font-black text-slate-800">${s.name}</td>
-                        <td class="p-6 text-sm font-bold text-[#00d1b2]">${parentStore[s.parent_id] || '---'}</td>
-                        <td class="p-6 text-center text-sm font-bold text-slate-500 italic">${bday}</td>
-                        <td class="p-6 text-center">
-                            <span class="status-pill ${s.is_active ? 'active-bg' : 'inactive-bg'}">${s.is_active ? 'Active' : 'Inactive'}</span>
-                        </td>
-                        <td class="p-6 text-right">
-                            <button onclick='openStudentModal(${JSON.stringify(s)})' class="bg-white border border-slate-200 text-slate-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:border-slate-800 hover:text-slate-800 transition-all">Edit Profile</button>
-                        </td>
-                    </tr>
-                `);
-            });
-        } catch (e) { 
-            tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold">Failed to synchronize with Xano.</td></tr>'; 
+                // 2. Fetch Students [cite: 2026-02-05]
+                const sRes = await fetch(`${this.API}?franchise_id=${fid}`);
+                const students = await sRes.json();
+                
+                tbody.innerHTML = '';
+                if(students.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-20 text-center text-slate-400 font-bold italic">No students registered in this branch.</td></tr>';
+                    return;
+                }
+
+                students.forEach(s => {
+                    const bday = s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '---';
+                    tbody.insertAdjacentHTML('beforeend', `
+                        <tr class="hover:bg-slate-50/80 transition-all border-b border-slate-50 group">
+                            <td class="p-6 text-sm font-bold text-slate-400">#${s.id}</td>
+                            <td class="p-6 text-sm font-black text-slate-800">${s.name}</td>
+                            <td class="p-6 text-sm font-bold text-[#00d1b2]">${this.parentMap[s.parent_id] || 'Unassigned'}</td>
+                            <td class="p-6 text-center text-sm font-bold text-slate-500 italic">${bday}</td>
+                            <td class="p-6 text-center">
+                                <span class="status-pill ${s.is_active ? 'active-bg' : 'inactive-bg'}">${s.is_active ? 'Active' : 'Inactive'}</span>
+                            </td>
+                            <td class="p-6 text-right">
+                                <button onclick='openStudentModal(${JSON.stringify(s)})' class="bg-white border border-slate-200 text-slate-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:border-slate-800 hover:text-slate-800 transition-all">Edit Profile</button>
+                            </td>
+                        </tr>
+                    `);
+                });
+            } catch (e) { 
+                console.error("Student Sync Error:", e);
+                tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold">Error: Connection to Xano failed.</td></tr>'; 
+            }
         }
-    }
+    };
 
     function openStudentModal(s = null) {
         document.getElementById('student-modal').classList.remove('hidden');
+        const form = document.getElementById('student-form');
+        form.reset();
         if(s) {
             document.getElementById('edit-student-id').value = s.id;
             document.getElementById('student_name').value = s.name;
@@ -148,11 +159,18 @@
             is_active: true
         };
         const method = id ? 'PATCH' : 'POST';
-        const url = id ? `${STUDENT_API}/${id}` : STUDENT_API;
-        await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        closeStudentModal();
-        loadData();
+        const url = id ? `${StudentModule.API}/${id}` : StudentModule.API;
+        
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if(res.ok) { closeStudentModal(); StudentModule.init(); }
+        } catch (e) { alert("Save failed."); }
     };
 
-    loadData();
+    // Auto-run on load
+    StudentModule.init();
 </script>
