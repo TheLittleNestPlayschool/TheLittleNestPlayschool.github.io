@@ -66,10 +66,7 @@
     async function fetchStudents() {
         const fid = localStorage.getItem('locked_franchise_id');
         const tbody = document.getElementById('student-table-body');
-        if (!fid) {
-            tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">Branch ID missing. Please check Identity Lock.</td></tr>';
-            return;
-        }
+        if (!fid) return;
 
         try {
             const res = await fetch(`${STUDENT_API}?franchise_id=${parseInt(fid)}`);
@@ -96,7 +93,7 @@
 
         tbody.innerHTML = '';
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">No student records found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">No records found.</td></tr>';
             return;
         }
 
@@ -106,11 +103,11 @@
                 <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50 transition-colors">
                     <td class="p-4">
                         <div class="font-bold text-slate-900 text-sm">${s.name}</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5 uppercase">"${s.nickname || '---'}" • ID: ${s.id}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-tighter">"${s.nickname || ''}" • ID: ${s.id}</div>
                     </td>
                     <td class="p-4">
                         <div class="font-medium text-slate-800">DOB: ${s.date_of_birth || '---'}</div>
-                        <div class="text-[9px] text-slate-400 uppercase tracking-tighter">Status: ${s.is_active ? 'Active' : 'Inactive'}</div>
+                        <div class="text-[9px] text-slate-400 uppercase">Status: ${s.is_active ? 'Active' : 'Inactive'}</div>
                     </td>
                     <td class="p-4 text-right">
                         <div class="flex justify-end gap-2">
@@ -128,13 +125,10 @@
         document.getElementById('student-form').reset();
         document.getElementById('s-edit-id').value = s ? s.id : '';
         if(s) {
-            document.getElementById('s-modal-title').innerText = "Update Student";
             document.getElementById('name').value = s.name;
             document.getElementById('nickname').value = s.nickname || '';
             document.getElementById('date_of_birth').value = s.date_of_birth || '';
             document.getElementById('gender').value = s.gender || '';
-        } else {
-            document.getElementById('s-modal-title').innerText = "New Student Profile";
         }
     }
 
@@ -159,7 +153,7 @@
     };
 
     async function deleteStudent(id) {
-        if(confirm("Delete this student permanently?")) {
+        if(confirm("Delete student?")) {
             await fetch(`${STUDENT_API}/${id}`, { method: 'DELETE' });
             fetchStudents();
         }
