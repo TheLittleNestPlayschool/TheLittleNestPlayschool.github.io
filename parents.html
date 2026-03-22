@@ -134,11 +134,16 @@
     async function fetchParents() {
         const fid = localStorage.getItem('locked_franchise_id');
         const tbody = document.getElementById('parent-table-body');
+        tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Synchronizing database...</td></tr>';
+
         try {
             const res = await fetch(`${PARENT_API}?franchise_id=${fid}`);
+            if (!res.ok) throw new Error('Refresh failed');
             allParents = await res.json();
             renderTable();
-        } catch (e) { tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-xs">Sync Error</td></tr>'; }
+        } catch (e) { 
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold">RELOAD ERROR: Connection Lost</td></tr>'; 
+        }
     }
 
     async function renderTable() {
@@ -230,30 +235,48 @@
 
     document.getElementById('parent-form').onsubmit = async (e) => {
         e.preventDefault();
-        const id = document.getElementById('edit-id').value;
+        
+        const rawId = document.getElementById('edit-id').value;
+        const parentId = rawId ? parseInt(rawId) : null;
         const fid = document.getElementById('franchise_id').value;
-        const payload = { franchise_id: parseInt(fid), is_active: true };
+        
+        const payload = { 
+            franchise_id: parseInt(fid), 
+            is_active: true 
+        };
         
         parentFields.forEach(f => {
             const el = document.getElementById(f);
             if(el) payload[f] = el.value;
         });
 
-        const method = id ? 'PATCH' : 'POST';
-        const url = id ? `${PARENT_API}/${id}` : PARENT_API;
+        const method = parentId ? 'PATCH' : 'POST';
+        const url = parentId ? `${PARENT_API}/${parentId}` : PARENT_API;
         
-        await fetch(url, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        closeParentModal(); fetchParents();
+        try {
+            const response = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) throw new Error('Save Error');
+
+            closeParentModal(); 
+            fetchParents();
+        } catch (err) {
+            console.error("Save Error:", err);
+            alert("Record could not be saved. Check connection.");
+            fetchParents();
+        }
     };
 
     async function deleteParent(id) {
         if(confirm("Confirm deletion?")) {
-            await fetch(`${PARENT_API}/${id}`, { method: 'DELETE' });
-            fetchParents();
+            try {
+                await fetch(`${PARENT_API}/${id}`, { method: 'DELETE' });
+                fetchParents();
+            } catch (e) { alert("Delete failed"); }
         }
     }
 
