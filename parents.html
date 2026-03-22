@@ -105,7 +105,7 @@
 </div>
 
 <script>
-    const PARENT_API = "https://x8ki-letl-twmt.n7.x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
+    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
     const FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
     
     let allParents = [];
@@ -142,7 +142,7 @@
             allParents = await res.json();
             renderTable();
         } catch (e) { 
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold">RELOAD ERROR: Connection Lost</td></tr>'; 
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">RELOAD ERROR: Connection Lost</td></tr>'; 
         }
     }
 
@@ -163,7 +163,6 @@
             const fName = await getFranchiseName(p.franchise_id);
             const branchTag = fName ? `<div class="text-[9px] font-bold text-slate-400 uppercase mb-1">${fName}</div>` : '';
             
-            // Alternating row background
             const rowClass = (i % 2 === 0) ? 'bg-white' : 'bg-slate-50';
             
             tbody.insertAdjacentHTML('beforeend', `
@@ -198,8 +197,8 @@
                     </td>
                     <td class="p-4 text-right">
                         <div class="flex flex-col gap-1 items-end">
-                            <button onclick="editParent(${p.id})" class="w-16 text-[9px] font-bold text-slate-500 border border-slate-200 px-2 py-1 rounded hover:bg-slate-100">EDIT</button>
-                            <button onclick="deleteParent(${p.id})" class="w-16 text-[9px] font-bold text-red-500 border border-red-50 px-2 py-1 rounded hover:bg-red-50">DEL</button>
+                            <button onclick="editParent(${p.id})" class="w-16 text-[9px] font-bold text-slate-500 border border-slate-200 px-2 py-1 rounded hover:bg-slate-100 transition-colors">EDIT</button>
+                            <button onclick="deleteParent(${p.id})" class="w-16 text-[9px] font-bold text-red-500 border border-red-50 px-2 py-1 rounded hover:bg-red-50 transition-colors">DEL</button>
                         </div>
                     </td>
                 </tr>
@@ -278,7 +277,8 @@
     async function deleteParent(id) {
         if(confirm("Confirm deletion?")) {
             try {
-                await fetch(`${PARENT_API}/${id}`, { method: 'DELETE' });
+                const res = await fetch(`${PARENT_API}/${id}`, { method: 'DELETE' });
+                if(!res.ok) throw new Error('Delete failed');
                 fetchParents();
             } catch (e) { alert("Delete failed"); }
         }
