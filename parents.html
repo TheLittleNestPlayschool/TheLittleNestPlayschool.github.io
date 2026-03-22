@@ -21,14 +21,14 @@
 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
     <table class="w-full text-left border-collapse">
         <thead>
-            <tr class="bg-slate-50 border-b border-slate-200">
+            <tr class="bg-slate-100 border-b border-slate-200">
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Primary Guardian</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Secondary Guardian</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Emergency Contacts</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase text-right">Actions</th>
             </tr>
         </thead>
-        <tbody id="parent-table-body" class="divide-y divide-slate-100">
+        <tbody id="parent-table-body">
             <tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Synchronizing database...</td></tr>
         </tbody>
     </table>
@@ -105,7 +105,7 @@
 </div>
 
 <script>
-    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
+    const PARENT_API = "https://x8ki-letl-twmt.n7.x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
     const FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
     
     let allParents = [];
@@ -158,12 +158,16 @@
 
         tbody.innerHTML = '';
 
-        for (const p of filtered) {
+        for (let i = 0; i < filtered.length; i++) {
+            const p = filtered[i];
             const fName = await getFranchiseName(p.franchise_id);
             const branchTag = fName ? `<div class="text-[9px] font-bold text-slate-400 uppercase mb-1">${fName}</div>` : '';
             
+            // Alternating row background
+            const rowClass = (i % 2 === 0) ? 'bg-white' : 'bg-slate-50';
+            
             tbody.insertAdjacentHTML('beforeend', `
-                <tr class="align-top text-xs text-slate-600">
+                <tr class="align-top text-xs text-slate-600 border-b border-slate-100 ${rowClass}">
                     <td class="p-4">
                         ${branchTag}
                         <div class="text-sm font-bold text-slate-900">${p.first_name} ${p.last_name}</div>
@@ -194,7 +198,7 @@
                     </td>
                     <td class="p-4 text-right">
                         <div class="flex flex-col gap-1 items-end">
-                            <button onclick="editParent(${p.id})" class="w-16 text-[9px] font-bold text-slate-500 border border-slate-200 px-2 py-1 rounded hover:bg-slate-50">EDIT</button>
+                            <button onclick="editParent(${p.id})" class="w-16 text-[9px] font-bold text-slate-500 border border-slate-200 px-2 py-1 rounded hover:bg-slate-100">EDIT</button>
                             <button onclick="deleteParent(${p.id})" class="w-16 text-[9px] font-bold text-red-500 border border-red-50 px-2 py-1 rounded hover:bg-red-50">DEL</button>
                         </div>
                     </td>
