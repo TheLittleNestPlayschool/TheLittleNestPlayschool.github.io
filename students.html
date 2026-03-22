@@ -1,20 +1,20 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
-        <h1 class="text-2xl font-bold text-emerald-500 uppercase tracking-tight">Student Directory</h1>
-        <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Franchise Management System</p>
+        <h1 class="text-2xl font-bold text-emerald-500 uppercase tracking-tight">Student Roster</h1>
+        <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Enrolled Learners Directory</p>
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="student-search" oninput="renderStudentTable()" placeholder="Search students..." 
+        <input type="text" id="student-search" placeholder="Search student name..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-slate-500 shadow-sm w-full md:w-64">
 
-        <select id="student-sort" onchange="renderStudentTable()" class="bg-white border border-slate-300 px-3 py-2 rounded-lg text-[10px] font-medium text-slate-600 outline-none">
+        <select id="student-sort" class="bg-white border border-slate-300 px-3 py-2 rounded-lg text-[10px] font-medium text-slate-600 outline-none">
             <option value="newest">Newest First</option>
             <option value="name_asc">Name: A-Z</option>
         </select>
         
-        <button onclick="openStudentModal()" class="bg-[#1e293b] hover:bg-slate-900 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
-            + ADD STUDENT
+        <button id="add-student-btn" class="bg-[#1e293b] hover:bg-slate-900 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
+            + REGISTER STUDENT
         </button>
     </div>
 </div>
@@ -23,177 +23,195 @@
     <table class="w-full text-left border-collapse">
         <thead>
             <tr class="bg-slate-100 border-b border-slate-200">
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Student Name</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Birth & Bio</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Status</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase text-right">Actions</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/4">Student Name</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/4">Guardian / Parent</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/6">Birth Date</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/8">Status</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right w-1/8">Actions</th>
             </tr>
         </thead>
         <tbody id="student-table-body">
-            <tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Synchronizing database...</td></tr>
+            <tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic font-medium uppercase tracking-widest animate-pulse">Synchronizing Student Data...</td></tr>
         </tbody>
     </table>
 </div>
 
 <div id="student-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-300">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-300">
         <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-            <h2 id="s-modal-title" class="text-sm font-bold text-slate-800 uppercase">Student Profile</h2>
-            <button onclick="closeStudentModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            <div>
+                <h2 id="s-modal-title" class="text-sm font-bold text-slate-800 uppercase">Student Registration</h2>
+                <p class="text-[9px] text-slate-400 uppercase tracking-tighter">Enrollment & Profile Management</p>
+            </div>
+            <button id="close-stu-x" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
         </div>
+        
         <form id="student-form" class="p-6 space-y-4">
             <input type="hidden" id="s-edit-id">
-            <input type="hidden" id="s-franchise-id">
-            <div class="grid grid-cols-2 gap-4">
-                <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Full Name [cite: 2026-02-05]</label><input type="text" id="name" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
-                <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Nickname</label><input type="text" id="nickname" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
+            
+            <div>
+                <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Full Name</label>
+                <input type="text" id="s-name" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500">
             </div>
+
             <div class="grid grid-cols-2 gap-4">
-                <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Date of Birth [cite: 2026-02-05]</label><input type="date" id="date_of_birth" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
-                <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Gender</label><input type="text" id="gender" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
+                <div>
+                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Date of Birth</label>
+                    <input type="date" id="s-date_of_birth" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Primary Guardian</label>
+                    <select id="s-parent_id" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500">
+                        <option value="">Loading Parents...</option>
+                    </select>
+                </div>
             </div>
-            <div class="pt-2">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="is_active" class="rounded border-slate-300">
-                    <span class="text-[10px] font-bold text-slate-600 uppercase">Active Enrollment [cite: 2026-02-05]</span>
+
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 mt-4">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" id="s-is_active" class="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500">
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-700 uppercase block">Active Enrollment</span>
+                        <span class="text-[9px] text-slate-400 block">Uncheck to mark student as withdrawn or graduated.</span>
+                    </div>
                 </label>
             </div>
-            <div class="flex gap-3 pt-4">
-                <button type="button" onclick="closeStudentModal()" class="px-6 py-2 bg-slate-100 text-slate-500 rounded font-bold text-[10px] uppercase">Cancel</button>
-                <button type="submit" class="flex-1 py-2 bg-[#1e293b] text-white rounded font-bold text-[10px] uppercase shadow-lg">Save Student</button>
+
+            <div class="flex gap-3 pt-6 border-t border-slate-100">
+                <button type="button" id="cancel-stu-btn" class="px-6 py-2.5 bg-slate-100 text-slate-500 rounded-lg font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Cancel</button>
+                <button type="submit" class="flex-1 py-2.5 bg-[#1e293b] text-white rounded-lg font-bold text-[10px] uppercase shadow-lg hover:bg-black transition-all">
+                    Save Student Profile
+                </button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
-    let allStudents = [];
-    const studentFields = ['name', 'nickname', 'date_of_birth', 'gender', 'is_active'];
+(function() {
+    const StudentModule = {
+        API: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/student",
+        PARENT_API: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent",
+        data: [],
+        parents: [],
+        fields: ['name', 'date_of_birth', 'parent_id', 'is_active'],
 
-    async function fetchStudents() {
-        const tbody = document.getElementById('student-table-body');
-        // 1. Force clear current memory to prevent "jumping" data
-        allStudents = []; 
-        tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Synchronizing database...</td></tr>';
+        async init() {
+            const fid = localStorage.getItem('locked_franchise_id');
+            const tbody = document.getElementById('student-table-body');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic font-bold animate-pulse uppercase">Syncing...</td></tr>';
 
-        const fid = localStorage.getItem('locked_franchise_id');
+            try {
+                // Parallel fetch for Students AND Parents (to link names)
+                const [sRes, pRes] = await Promise.all([
+                    fetch(`${this.API}?franchise_id=${fid}`),
+                    fetch(`${this.PARENT_API}?franchise_id=${fid}`)
+                ]);
 
-        if (!fid) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">Branch ID Missing</td></tr>';
-            return;
-        }
-
-        try {
-            // Added cache-busting timestamp to prevent getting "stuck" on old browser-cached responses
-            const res = await fetch(`${STUDENT_API}?franchise_id=${fid}&_t=${Date.now()}`);
-            if (res.ok) {
-                allStudents = await res.json();
-                renderStudentTable();
-            } else {
-                throw new Error("API Error");
+                this.data = await sRes.json();
+                this.parents = await pRes.json();
+                
+                this.render();
+                this.populateParentDropdown();
+                this.setupListeners();
+            } catch (err) {
+                console.error("Sync Error:", err);
             }
-        } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">SYNC ERROR: CHECK CONNECTION</td></tr>';
-        }
-    }
+        },
 
-    function renderStudentTable() {
-        const tbody = document.getElementById('student-table-body');
-        const searchTerm = (document.getElementById('student-search')?.value || '').toLowerCase();
-        const sortVal = document.getElementById('student-sort')?.value || 'newest';
+        render() {
+            const tbody = document.getElementById('student-table-body');
+            if (!tbody) return;
 
-        let filtered = allStudents.filter(s => 
-            s.name.toLowerCase().includes(searchTerm) || 
-            (s.nickname && s.nickname.toLowerCase().includes(searchTerm))
-        );
+            const searchTerm = (document.getElementById('student-search')?.value || '').toLowerCase();
+            const filtered = this.data.filter(s => s.name.toLowerCase().includes(searchTerm));
 
-        if (sortVal === 'name_asc') filtered.sort((a,b) => a.name.localeCompare(b.name));
-        else filtered.sort((a,b) => b.id - a.id);
-
-        tbody.innerHTML = '';
-        if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">No student records found.</td></tr>';
-            return;
-        }
-
-        filtered.forEach((s, idx) => {
-            const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30';
-            tbody.insertAdjacentHTML('beforeend', `
-                <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50">
-                    <td class="p-4">
-                        <div class="font-bold text-slate-900 text-sm">${s.name} [cite: 2026-02-05]</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-tighter">ID: ${s.id}</div>
-                    </td>
-                    <td class="p-4">
-                        <div class="font-medium text-slate-800 uppercase">Nickname: ${s.nickname || '---'}</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">DOB: ${s.date_of_birth || '---'} [cite: 2026-02-05]</div>
-                    </td>
-                    <td class="p-4">
-                        <span class="px-2 py-1 rounded text-[9px] font-bold uppercase ${s.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}">
-                            ${s.is_active ? 'Active' : 'Inactive'} [cite: 2026-02-05]
-                        </span>
-                    </td>
-                    <td class="p-4 text-right">
-                        <div class="flex justify-end gap-2">
-                            <button onclick='openStudentModal(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase hover:bg-white shadow-sm">Edit</button>
-                            <button onclick="deleteStudent(${s.id})" class="px-3 py-1.5 border border-red-50 text-red-200 rounded text-[9px] font-bold uppercase hover:text-red-500">Del</button>
-                        </div>
-                    </td>
-                </tr>
-            `);
-        });
-    }
-
-    // Modal and Submit functions remain consistent with parents.html structure
-    function openStudentModal(s = null) {
-        const modal = document.getElementById('student-modal');
-        const fid = localStorage.getItem('locked_franchise_id');
-        modal.classList.remove('hidden');
-        document.getElementById('student-form').reset();
-        document.getElementById('s-edit-id').value = s ? s.id : '';
-        document.getElementById('s-franchise-id').value = fid;
-        if(s) {
-            studentFields.forEach(f => {
-                const el = document.getElementById(f);
-                if (el) {
-                    if (el.type === 'checkbox') el.checked = s[f];
-                    else el.value = s[f] || '';
-                }
+            tbody.innerHTML = '';
+            filtered.forEach((s, idx) => {
+                const parent = this.parents.find(p => p.id === s.parent_id);
+                const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40';
+                
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50 transition-all group">
+                        <td class="p-4 font-bold text-slate-900 text-sm">${s.name}</td>
+                        <td class="p-4 font-medium text-slate-500 uppercase text-[10px]">
+                            ${parent ? `${parent.first_name} ${parent.last_name}` : 'UNLINKED'}
+                        </td>
+                        <td class="p-4 text-slate-400 font-mono">${s.date_of_birth || '---'}</td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded-full text-[9px] font-black uppercase ${s.is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400'}">
+                                ${s.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </td>
+                        <td class="p-4 text-right">
+                            <button data-id="${s.id}" class="stu-edit px-3 py-1 bg-white border border-slate-200 rounded text-[9px] font-bold uppercase hover:text-emerald-600 transition-all">Edit</button>
+                        </td>
+                    </tr>
+                `);
             });
-        } else {
-            document.getElementById('is_active').checked = true;
-        }
-    }
 
-    function closeStudentModal() { document.getElementById('student-modal').classList.add('hidden'); }
+            tbody.querySelectorAll('.stu-edit').forEach(b => b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id)));
+        },
+
+        populateParentDropdown() {
+            const select = document.getElementById('s-parent_id');
+            if (!select) return;
+            select.innerHTML = '<option value="">Select Guardian</option>';
+            this.parents.forEach(p => {
+                select.insertAdjacentHTML('beforeend', `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
+            });
+        },
+
+        setupListeners() {
+            document.getElementById('student-search').oninput = () => this.render();
+            document.getElementById('add-student-btn').onclick = () => this.openModal();
+            document.getElementById('close-stu-x').onclick = () => this.closeModal();
+            document.getElementById('cancel-stu-btn').onclick = () => this.closeModal();
+        },
+
+        openModal(s = null) {
+            document.getElementById('student-modal').classList.remove('hidden');
+            document.getElementById('student-form').reset();
+            document.getElementById('s-edit-id').value = s ? s.id : '';
+            
+            if(s) {
+                this.fields.forEach(f => {
+                    const el = document.getElementById('s-' + f);
+                    if (el) {
+                        if (el.type === 'checkbox') el.checked = s[f];
+                        else el.value = s[f] || '';
+                    }
+                });
+            } else {
+                document.getElementById('s-is_active').checked = true;
+            }
+        },
+
+        closeModal() { document.getElementById('student-modal').classList.add('hidden'); }
+    };
 
     document.getElementById('student-form').onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('s-edit-id').value;
-        const fid = document.getElementById('s-franchise-id').value;
+        const fid = localStorage.getItem('locked_franchise_id');
         const payload = { franchise_id: parseInt(fid) };
-        studentFields.forEach(f => {
-            const el = document.getElementById(f);
-            if (el) {
-                if (el.type === 'checkbox') payload[f] = el.checked;
-                else payload[f] = el.value;
-            }
+        
+        StudentModule.fields.forEach(f => {
+            const el = document.getElementById('s-' + f);
+            if (el) payload[f] = el.type === 'checkbox' ? el.checked : el.value;
         });
-        const method = id ? 'PATCH' : 'POST';
-        const url = id ? `${STUDENT_API}/${id}` : STUDENT_API;
-        await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        closeStudentModal();
-        fetchStudents();
+
+        const res = await fetch(id ? `${StudentModule.API}/${id}` : StudentModule.API, { 
+            method: id ? 'PATCH' : 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(payload) 
+        });
+        if (res.ok) {
+            StudentModule.closeModal();
+            StudentModule.init();
+        }
     };
 
-    async function deleteStudent(id) {
-        if(confirm("Delete student?")) {
-            await fetch(`${STUDENT_API}/${id}`, { method: 'DELETE' });
-            fetchStudents();
-        }
-    }
-
-    // Run fetch
-    fetchStudents();
+    StudentModule.init();
+})();
 </script>
