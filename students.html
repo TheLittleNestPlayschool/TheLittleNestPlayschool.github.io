@@ -5,7 +5,7 @@
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="student-search" oninput="renderStudentTable()" placeholder="Search students or parents..." 
+        <input type="text" id="student-search" oninput="renderStudentTable()" placeholder="Search students..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-slate-500 shadow-sm w-full md:w-64">
 
         <select id="student-sort" onchange="renderStudentTable()" class="bg-white border border-slate-300 px-3 py-2 rounded-lg text-[10px] font-medium text-slate-600 outline-none">
@@ -23,24 +23,25 @@
     <table class="w-full text-left border-collapse">
         <thead>
             <tr class="bg-slate-100 border-b border-slate-200">
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Student & Bio</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Parent & Enrollment</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Student Details</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Guardian</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Emergency Info</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase text-right">Actions</th>
             </tr>
         </thead>
         <tbody id="student-table-body">
-            <tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Synchronizing database...</td></tr>
+            <tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Connecting to NestMind...</td></tr>
         </tbody>
     </table>
 </div>
 
 <div id="student-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-300">
         <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-            <h2 class="text-sm font-bold text-slate-800 uppercase">Student Profile</h2>
+            <h2 id="s-modal-title" class="text-sm font-bold text-slate-800 uppercase">Student Profile</h2>
             <button onclick="closeStudentModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
         </div>
+        
         <form id="student-form" class="p-6 space-y-4">
             <input type="hidden" id="s-edit-id">
             <div class="grid grid-cols-2 gap-4">
@@ -51,7 +52,10 @@
                 <div><label class="text-[9px] text-slate-500 block">Date of Birth</label><input type="date" id="date_of_birth" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
                 <div><label class="text-[9px] text-slate-500 block">Gender</label><input type="text" id="gender" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
             </div>
-            <button type="submit" class="w-full py-3 bg-[#1e293b] text-white rounded font-bold text-[10px] uppercase">Save Student</button>
+            <div class="pt-4 flex gap-3">
+                <button type="button" onclick="closeStudentModal()" class="px-6 py-2 bg-slate-100 text-slate-500 rounded font-bold text-[10px] uppercase">Cancel</button>
+                <button type="submit" class="flex-1 py-2 bg-[#1e293b] text-white rounded font-bold text-[10px] uppercase shadow-lg">Save Student</button>
+            </div>
         </form>
     </div>
 </div>
@@ -60,8 +64,8 @@
     const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/student";
     let allStudents = [];
 
-    // This pulls the ID we set in index.html
     async function fetchStudents() {
+        // CRITICAL FIX: Ensure we grab the ID from the global lock
         const fid = localStorage.getItem('locked_franchise_id');
         const tbody = document.getElementById('student-table-body');
 
@@ -71,62 +75,65 @@
         }
 
         try {
-            // Filter API by the current Franchise ID
+            // Updated API call to specifically filter by the locked franchise
             const res = await fetch(`${STUDENT_API}?franchise_id=${fid}`);
             if (res.ok) {
                 allStudents = await res.json();
                 renderStudentTable();
             } else {
-                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">RELOAD ERROR: Connection Lost</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">SYNC ERROR: Check Connection</td></tr>';
             }
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">RELOAD ERROR: Connection Lost</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">CONNECTION ERROR</td></tr>';
         }
     }
 
     function renderStudentTable() {
         const tbody = document.getElementById('student-table-body');
         const searchTerm = document.getElementById('student-search').value.toLowerCase();
-        
+        const sortVal = document.getElementById('student-sort').value;
+
         let filtered = allStudents.filter(s => 
             s.name.toLowerCase().includes(searchTerm) || 
-            (s._parent && s._parent.first_name.toLowerCase().includes(searchTerm))
+            (s.nickname && s.nickname.toLowerCase().includes(searchTerm))
         );
+
+        if (sortVal === 'name_asc') filtered.sort((a,b) => a.name.localeCompare(b.name));
+        else filtered.sort((a,b) => b.id - a.id);
 
         tbody.innerHTML = '';
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">No student records found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">No students found for this branch.</td></tr>';
             return;
         }
 
         filtered.forEach((s, idx) => {
             const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30';
             
-            // Match the UI from your screenshots
             tbody.insertAdjacentHTML('beforeend', `
-                <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50">
+                <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50 transition-colors">
                     <td class="p-4">
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-slate-900 text-sm">${s.name}</span>
-                            <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-600 text-[8px] font-black rounded uppercase">${s.is_active ? 'Active' : 'Inactive'}</span>
+                            <span class="px-1.5 py-0.5 ${s.is_active ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'} text-[8px] font-black rounded uppercase">${s.is_active ? 'Active' : 'Inactive'}</span>
                         </div>
-                        <div class="text-[10px] text-slate-400 mt-0.5 italic">"${s.nickname || '---'}" • ${s.gender || ''} • DOB: ${s.date_of_birth || ''}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5 italic">"${s.nickname || 'No Nickname'}" • ${s.gender || '---'} • DOB: ${s.date_of_birth || '---'}</div>
                     </td>
                     <td class="p-4">
                         <div class="font-medium text-slate-800">${s._parent ? s._parent.first_name + ' ' + s._parent.last_name : 'No Parent Assigned'}</div>
-                        <div class="text-[9px] text-slate-400 uppercase tracking-tighter">Enrolled: ${s.created_at ? new Date(s.created_at).toLocaleDateString() : '---'}</div>
+                        <div class="text-[9px] text-slate-400 uppercase tracking-tighter">Joined: ${new Date(s.created_at).toLocaleDateString()}</div>
                     </td>
                     <td class="p-4">
-                        <div class="bg-red-50/50 p-2 rounded border border-red-100 max-w-[200px]">
-                            <div class="text-[8px] font-black text-red-400 uppercase leading-none mb-1">Primary Emergency</div>
-                            <div class="font-bold text-slate-700 truncate">${s._parent ? s._parent.emergency_contact_1_name : '---'}</div>
+                        <div class="bg-red-50 p-2 rounded border border-red-100/50 max-w-[180px]">
+                            <div class="text-[8px] font-bold text-red-400 uppercase leading-none mb-1">Primary Emergency</div>
+                            <div class="font-bold text-slate-700 truncate">${s._parent ? s._parent.emergency_contact_1_name : 'NONE'}</div>
                             <div class="text-[10px] text-red-600 font-medium">${s._parent ? s._parent.emergency_contact_1_phone_number : ''}</div>
                         </div>
                     </td>
                     <td class="p-4 text-right">
                         <div class="flex justify-end gap-2">
-                            <button onclick='openStudentModal(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="px-3 py-1 border border-slate-200 rounded text-[9px] font-bold uppercase hover:bg-white shadow-sm">Edit</button>
-                            <button onclick="deleteStudent(${s.id})" class="px-3 py-1 border border-red-50 text-red-200 rounded text-[9px] font-bold uppercase hover:text-red-500">Del</button>
+                            <button onclick='openStudentModal(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase hover:bg-white shadow-sm">Edit</button>
+                            <button onclick="deleteStudent(${s.id})" class="px-3 py-1.5 border border-red-50 text-red-200 rounded text-[9px] font-bold uppercase hover:text-red-500">Del</button>
                         </div>
                     </td>
                 </tr>
@@ -135,16 +142,21 @@
     }
 
     function openStudentModal(s = null) {
-        document.getElementById('student-modal').classList.remove('hidden');
-        if(s) {
-            document.getElementById('s-edit-id').value = s.id;
+        const modal = document.getElementById('student-modal');
+        modal.classList.remove('hidden');
+        document.getElementById('student-form').reset();
+        document.getElementById('s-edit-id').value = s ? s.id : '';
+        
+        if (s) {
             document.getElementById('name').value = s.name;
-            // ... load other fields
+            document.getElementById('nickname').value = s.nickname || '';
+            document.getElementById('date_of_birth').value = s.date_of_birth || '';
+            document.getElementById('gender').value = s.gender || '';
         }
     }
 
     function closeStudentModal() { document.getElementById('student-modal').classList.add('hidden'); }
 
-    // Start
+    // Start Load
     fetchStudents();
 </script>
