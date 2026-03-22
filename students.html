@@ -23,15 +23,14 @@
     <table class="w-full text-left border-collapse">
         <thead>
             <tr class="bg-slate-100 border-b border-slate-200">
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/4">Student Name</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/4">Guardian / Parent</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/6">Birth Date</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/8">Status</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/3">Student Name</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/4">Birth Date</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/4">Status</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right w-1/8">Actions</th>
             </tr>
         </thead>
         <tbody id="student-table-body">
-            <tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic font-medium uppercase tracking-widest animate-pulse">Synchronizing Student Data...</td></tr>
+            <tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic font-medium uppercase tracking-widest animate-pulse">Synchronizing Student Data...</td></tr>
         </tbody>
     </table>
 </div>
@@ -54,17 +53,9 @@
                 <input type="text" id="s-name" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500">
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Date of Birth</label>
-                    <input type="date" id="s-date_of_birth" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500">
-                </div>
-                <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Primary Guardian</label>
-                    <select id="s-parent_id" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500">
-                        <option value="">Loading Parents...</option>
-                    </select>
-                </div>
+            <div>
+                <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Date of Birth</label>
+                <input type="date" id="s-date_of_birth" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500">
             </div>
 
             <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 mt-4">
@@ -91,35 +82,27 @@
 (function() {
     const StudentModule = {
         API: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/student",
-        PARENT_API: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent",
         data: [],
-        parents: [],
-        // Fields exactly as named in the Xano student table
-        fields: ['name', 'date_of_birth', 'parent_id', 'is_active'],
+        fields: ['name', 'date_of_birth', 'is_active'],
 
         async init() {
             const fid = localStorage.getItem('locked_franchise_id');
             const tbody = document.getElementById('student-table-body');
-            if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic font-bold animate-pulse uppercase">Syncing NestMind Database...</td></tr>';
+            
+            if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">Syncing Database...</td></tr>';
 
             if (!fid) return;
 
             try {
-                // Fetch students and parents in parallel
-                const [sRes, pRes] = await Promise.all([
-                    fetch(`${this.API}?franchise_id=${fid}`),
-                    fetch(`${this.PARENT_API}?franchise_id=${fid}`)
-                ]);
-
-                this.data = await sRes.json();
-                this.parents = await pRes.json();
+                const response = await fetch(`${this.API}?franchise_id=${fid}`);
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
                 
+                this.data = await response.json();
                 this.render();
-                this.populateParentDropdown();
                 this.setupListeners();
-            } catch (err) {
-                console.error("Student Sync Error:", err);
-                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 text-xs font-bold uppercase">Sync Failed</td></tr>';
+            } catch (error) {
+                console.error("Student Sync Error:", error);
+                if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">Sync Failed</td></tr>';
             }
         },
 
@@ -134,33 +117,31 @@
                 (s.name && s.name.toLowerCase().includes(searchTerm))
             );
 
-            if (sortVal === 'name_asc') filtered.sort((a,b) => (a.name || '').localeCompare(b.name || ''));
-            else filtered.sort((a,b) => (b.id || 0) - (a.id || 0));
+            if (sortVal === 'name_asc') {
+                filtered.sort((a,b) => (a.name || '').localeCompare(b.name || ''));
+            } else {
+                filtered.sort((a,b) => (b.id || 0) - (a.id || 0));
+            }
 
             tbody.innerHTML = '';
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-300 text-[10px] font-bold uppercase">No records found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-300 text-[10px] font-bold uppercase tracking-widest">No matching student records.</td></tr>';
                 return;
             }
 
             filtered.forEach((s, idx) => {
-                const parent = this.parents.find(p => p.id === s.parent_id);
                 const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40';
-                
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50 transition-all group">
-                        <td class="p-4 font-bold text-slate-900 text-sm">${s.name}</td>
-                        <td class="p-4 font-medium text-slate-500 uppercase text-[10px]">
-                            ${parent ? `${parent.first_name} ${parent.last_name}` : 'UNLINKED'}
-                        </td>
+                        <td class="p-4 font-bold text-slate-900 text-sm group-hover:text-emerald-600 transition-colors">${s.name}</td>
                         <td class="p-4 text-slate-400 font-mono">${s.date_of_birth || '---'}</td>
                         <td class="p-4">
-                            <span class="px-2 py-1 rounded-full text-[9px] font-black uppercase ${s.is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400'}">
+                            <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${s.is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-400 border border-slate-200'}">
                                 ${s.is_active ? 'Active' : 'Inactive'}
                             </span>
                         </td>
                         <td class="p-4 text-right">
-                            <button data-id="${s.id}" class="stu-edit-btn px-3 py-1 bg-white border border-slate-200 rounded text-[9px] font-bold uppercase hover:text-emerald-600 shadow-sm transition-all">Edit</button>
+                            <button data-id="${s.id}" class="stu-edit-btn px-3 py-1.5 bg-white border border-slate-200 rounded text-[9px] font-bold uppercase hover:text-emerald-600 shadow-sm transition-all">Edit</button>
                         </td>
                     </tr>
                 `);
@@ -168,15 +149,6 @@
 
             tbody.querySelectorAll('.stu-edit-btn').forEach(b => {
                 b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id));
-            });
-        },
-
-        populateParentDropdown() {
-            const select = document.getElementById('s-parent_id');
-            if (!select) return;
-            select.innerHTML = '<option value="">Select Guardian</option>';
-            this.parents.forEach(p => {
-                select.insertAdjacentHTML('beforeend', `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
             });
         },
 
@@ -219,9 +191,7 @@
         
         StudentModule.fields.forEach(f => {
             const el = document.getElementById('s-' + f);
-            if (el) {
-                payload[f] = el.type === 'checkbox' ? el.checked : (f === 'parent_id' ? parseInt(el.value) : el.value);
-            }
+            if (el) payload[f] = el.type === 'checkbox' ? el.checked : el.value;
         });
 
         try {
