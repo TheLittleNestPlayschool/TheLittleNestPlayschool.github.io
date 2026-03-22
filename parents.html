@@ -31,7 +31,7 @@
             </tr>
         </thead>
         <tbody id="parent-table-body">
-            <tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic font-medium uppercase tracking-widest">Synchronizing NestMind Database...</td></tr>
+            <tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic font-medium uppercase tracking-widest animate-pulse">Synchronizing NestMind Database...</td></tr>
         </tbody>
     </table>
 </div>
@@ -52,28 +52,28 @@
             
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">First Name [cite: 2026-02-05]</label>
+                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">First Name</label>
                     <input type="text" id="first_name" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
                 </div>
                 <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Last Name [cite: 2026-02-05]</label>
+                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Last Name</label>
                     <input type="text" id="last_name" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Email Address [cite: 2026-02-05]</label>
+                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Email Address</label>
                     <input type="email" id="email" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
                 </div>
                 <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Phone Number [cite: 2026-02-05]</label>
+                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Phone Number</label>
                     <input type="text" id="phone" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
                 </div>
             </div>
 
             <div>
-                <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Physical Address [cite: 2026-02-05]</label>
+                <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Physical Address</label>
                 <textarea id="address" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 outline-none"></textarea>
             </div>
 
@@ -81,15 +81,15 @@
                 <label class="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" id="is_active" class="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500">
                     <div>
-                        <span class="text-[10px] font-bold text-slate-700 uppercase block">Active Guardian Status [cite: 2026-02-05]</span>
-                        <span class="text-[9px] text-slate-400 block">Uncheck to archive this record from active branch views.</span>
+                        <span class="text-[10px] font-bold text-slate-700 uppercase block">Active Guardian Status</span>
+                        <span class="text-[9px] text-slate-400 block">Uncheck to archive this record.</span>
                     </div>
                 </label>
             </div>
 
             <div class="flex gap-3 pt-6 border-t border-slate-100">
                 <button type="button" onclick="ParentManager.closeModal()" class="px-6 py-2.5 bg-slate-100 text-slate-500 rounded-lg font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Cancel</button>
-                <button type="submit" class="flex-1 py-2.5 bg-[#1e293b] text-white rounded-lg font-bold text-[10px] uppercase shadow-lg hover:bg-black transition-all transform active:scale-[0.98]">
+                <button type="submit" class="flex-1 py-2.5 bg-[#1e293b] text-white rounded-lg font-bold text-[10px] uppercase shadow-lg hover:bg-black transition-all">
                     Save Guardian Record
                 </button>
             </div>
@@ -99,35 +99,29 @@
 
 <script>
     const ParentManager = {
-        API: "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent",
+        // Corrected API Group from 8Je8Zszx
+        API: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent",
         data: [],
         fields: ['first_name', 'last_name', 'email', 'phone', 'address', 'is_active'],
 
         async init() {
-            const fid = localStorage.getItem('locked_franchise_id'); [cite: 2026-02-05]
+            const fid = localStorage.getItem('locked_franchise_id');
             const tbody = document.getElementById('parent-table-body');
             
             this.data = []; 
             if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">Synchronizing NestMind...</td></tr>';
 
-            if (!fid) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">IDENTITY LOCK ERROR</td></tr>';
-                return;
-            }
+            if (!fid) return;
 
             try {
-                const response = await fetch(`${this.API}?franchise_id=${fid}`); [cite: 2026-02-05]
+                const response = await fetch(`${this.API}?franchise_id=${fid}`);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 this.data = await response.json();
                 this.render();
             } catch (error) {
                 console.error("Parent Sync Error:", error);
-                if (tbody) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">
-                        SYNC ERROR: ${error.message === 'Failed to fetch' ? 'CONNECTION REFUSED' : 'API REJECTED'}
-                    </td></tr>`;
-                }
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">SYNC ERROR: API UNREACHABLE</td></tr>';
             }
         },
 
@@ -141,19 +135,15 @@
             let filtered = this.data.filter(p => 
                 (p.first_name && p.first_name.toLowerCase().includes(searchTerm)) || 
                 (p.last_name && p.last_name.toLowerCase().includes(searchTerm)) ||
-                (p.email && p.email.toLowerCase().includes(searchTerm)) ||
-                (p.phone && p.phone.includes(searchTerm))
+                (p.email && p.email.toLowerCase().includes(searchTerm))
             );
 
-            if (sortVal === 'name_asc') {
-                filtered.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || ''));
-            } else {
-                filtered.sort((a,b) => (b.id || 0) - (a.id || 0));
-            }
+            if (sortVal === 'name_asc') filtered.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || ''));
+            else filtered.sort((a,b) => (b.id || 0) - (a.id || 0));
 
             tbody.innerHTML = '';
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-300 text-[10px] font-bold uppercase tracking-widest">No matching parent records found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-300 text-[10px] font-bold uppercase tracking-widest">No parent records found.</td></tr>';
                 return;
             }
 
@@ -162,28 +152,28 @@
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50 transition-all group">
                         <td class="p-4">
-                            <div class="font-bold text-slate-900 text-sm group-hover:text-emerald-600 transition-colors">${p.first_name} ${p.last_name} [cite: 2026-02-05]</div>
+                            <div class="font-bold text-slate-900 text-sm group-hover:text-emerald-600 transition-colors">${p.first_name} ${p.last_name}</div>
                             <div class="text-[9px] text-slate-400 mt-0.5 uppercase tracking-tighter font-medium">Record ID: #PN-${p.id}</div>
                         </td>
                         <td class="p-4">
-                            <div class="font-semibold text-slate-700">${p.email || 'NO EMAIL'} [cite: 2026-02-05]</div>
-                            <div class="text-[10px] text-slate-400 mt-1 font-mono">${p.phone || 'NO PHONE'} [cite: 2026-02-05]</div>
+                            <div class="font-semibold text-slate-700">${p.email || 'NO EMAIL'}</div>
+                            <div class="text-[10px] text-slate-400 mt-1 font-mono">${p.phone || 'NO PHONE'}</div>
                         </td>
                         <td class="p-4">
-                            <div class="text-[10px] text-slate-500 uppercase leading-relaxed max-w-[240px] line-clamp-2">${p.address || '---'} [cite: 2026-02-05]</div>
+                            <div class="text-[10px] text-slate-500 uppercase leading-relaxed max-w-[240px] line-clamp-2">${p.address || '---'}</div>
                         </td>
                         <td class="p-4">
                             <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${p.is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-400 border border-slate-200'}">
-                                ${p.is_active ? 'Active' : 'Archived'} [cite: 2026-02-05]
+                                ${p.is_active ? 'Active' : 'Archived'}
                             </span>
                         </td>
                         <td class="p-4 text-right">
                             <div class="flex justify-end gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
                                 <button onclick='ParentManager.openModal(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="p-2 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-emerald-600 hover:border-emerald-200 shadow-sm transition-all">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                    Edit
                                 </button>
                                 <button onclick="ParentManager.delete(${p.id})" class="p-2 bg-white border border-slate-200 rounded-lg text-slate-300 hover:text-red-500 hover:border-red-100 shadow-sm transition-all">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    Del
                                 </button>
                             </div>
                         </td>
@@ -194,11 +184,10 @@
 
         openModal(p = null) {
             const modal = document.getElementById('parent-modal');
-            const fid = localStorage.getItem('locked_franchise_id'); [cite: 2026-02-05]
             modal.classList.remove('hidden');
             document.getElementById('parent-form').reset();
             document.getElementById('p-edit-id').value = p ? p.id : '';
-            document.getElementById('p-franchise-id').value = fid;
+            document.getElementById('p-franchise-id').value = localStorage.getItem('locked_franchise_id');
             document.getElementById('p-modal-title').innerText = p ? 'Update Guardian Profile' : 'Register New Guardian';
 
             if(p) {
@@ -217,18 +206,17 @@
         closeModal() { document.getElementById('parent-modal').classList.add('hidden'); },
 
         async delete(id) {
-            if(confirm("Confirm: Delete this guardian and all associated contact records?")) {
+            if(confirm("Confirm: Delete this guardian?")) {
                 const res = await fetch(`${this.API}/${id}`, { method: 'DELETE' });
                 if (res.ok) this.init();
             }
         }
     };
 
-    // Unified Submission Logic
     document.getElementById('parent-form').onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('p-edit-id').value;
-        const fid = document.getElementById('p-franchise-id').value; [cite: 2026-02-05]
+        const fid = document.getElementById('p-franchise-id').value;
         const payload = { franchise_id: parseInt(fid) };
         
         ParentManager.fields.forEach(f => {
@@ -245,12 +233,9 @@
             if (res.ok) {
                 ParentManager.closeModal();
                 ParentManager.init();
-            } else {
-                alert("Xano Rejected Request: Check Fields");
             }
-        } catch (err) { console.error("Critical Save Error:", err); }
+        } catch (err) { console.error("Save Error:", err); }
     };
 
-    // Execute
     ParentManager.init();
 </script>
