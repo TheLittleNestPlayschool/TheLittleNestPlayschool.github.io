@@ -94,15 +94,18 @@
         PARENT_API: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent",
         data: [],
         parents: [],
+        // Fields exactly as named in the Xano student table
         fields: ['name', 'date_of_birth', 'parent_id', 'is_active'],
 
         async init() {
             const fid = localStorage.getItem('locked_franchise_id');
             const tbody = document.getElementById('student-table-body');
-            if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic font-bold animate-pulse uppercase">Syncing...</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic font-bold animate-pulse uppercase">Syncing NestMind Database...</td></tr>';
+
+            if (!fid) return;
 
             try {
-                // Parallel fetch for Students AND Parents (to link names)
+                // Fetch students and parents in parallel
                 const [sRes, pRes] = await Promise.all([
                     fetch(`${this.API}?franchise_id=${fid}`),
                     fetch(`${this.PARENT_API}?franchise_id=${fid}`)
@@ -115,7 +118,8 @@
                 this.populateParentDropdown();
                 this.setupListeners();
             } catch (err) {
-                console.error("Sync Error:", err);
+                console.error("Student Sync Error:", err);
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 text-xs font-bold uppercase">Sync Failed</td></tr>';
             }
         },
 
@@ -124,9 +128,21 @@
             if (!tbody) return;
 
             const searchTerm = (document.getElementById('student-search')?.value || '').toLowerCase();
-            const filtered = this.data.filter(s => s.name.toLowerCase().includes(searchTerm));
+            const sortVal = document.getElementById('student-sort')?.value || 'newest';
+
+            let filtered = this.data.filter(s => 
+                (s.name && s.name.toLowerCase().includes(searchTerm))
+            );
+
+            if (sortVal === 'name_asc') filtered.sort((a,b) => (a.name || '').localeCompare(b.name || ''));
+            else filtered.sort((a,b) => (b.id || 0) - (a.id || 0));
 
             tbody.innerHTML = '';
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-300 text-[10px] font-bold uppercase">No records found.</td></tr>';
+                return;
+            }
+
             filtered.forEach((s, idx) => {
                 const parent = this.parents.find(p => p.id === s.parent_id);
                 const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40';
@@ -144,13 +160,15 @@
                             </span>
                         </td>
                         <td class="p-4 text-right">
-                            <button data-id="${s.id}" class="stu-edit px-3 py-1 bg-white border border-slate-200 rounded text-[9px] font-bold uppercase hover:text-emerald-600 transition-all">Edit</button>
+                            <button data-id="${s.id}" class="stu-edit-btn px-3 py-1 bg-white border border-slate-200 rounded text-[9px] font-bold uppercase hover:text-emerald-600 shadow-sm transition-all">Edit</button>
                         </td>
                     </tr>
                 `);
             });
 
-            tbody.querySelectorAll('.stu-edit').forEach(b => b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id)));
+            tbody.querySelectorAll('.stu-edit-btn').forEach(b => {
+                b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id));
+            });
         },
 
         populateParentDropdown() {
@@ -164,16 +182,19 @@
 
         setupListeners() {
             document.getElementById('student-search').oninput = () => this.render();
+            document.getElementById('student-sort').onchange = () => this.render();
             document.getElementById('add-student-btn').onclick = () => this.openModal();
             document.getElementById('close-stu-x').onclick = () => this.closeModal();
             document.getElementById('cancel-stu-btn').onclick = () => this.closeModal();
         },
 
         openModal(s = null) {
-            document.getElementById('student-modal').classList.remove('hidden');
+            const modal = document.getElementById('student-modal');
+            modal.classList.remove('hidden');
             document.getElementById('student-form').reset();
             document.getElementById('s-edit-id').value = s ? s.id : '';
-            
+            document.getElementById('s-modal-title').innerText = s ? 'Update Student Profile' : 'Register New Student';
+
             if(s) {
                 this.fields.forEach(f => {
                     const el = document.getElementById('s-' + f);
@@ -198,17 +219,23 @@
         
         StudentModule.fields.forEach(f => {
             const el = document.getElementById('s-' + f);
-            if (el) payload[f] = el.type === 'checkbox' ? el.checked : el.value;
+            if (el) {
+                payload[f] = el.type === 'checkbox' ? el.checked : (f === 'parent_id' ? parseInt(el.value) : el.value);
+            }
         });
 
-        const res = await fetch(id ? `${StudentModule.API}/${id}` : StudentModule.API, { 
-            method: id ? 'PATCH' : 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify(payload) 
-        });
-        if (res.ok) {
-            StudentModule.closeModal();
-            StudentModule.init();
+        try {
+            const res = await fetch(id ? `${StudentModule.API}/${id}` : StudentModule.API, { 
+                method: id ? 'PATCH' : 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(payload) 
+            });
+            if (res.ok) {
+                StudentModule.closeModal();
+                StudentModule.init();
+            }
+        } catch (err) {
+            console.error("Save Error:", err);
         }
     };
 
