@@ -5,7 +5,7 @@
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="student-search" oninput="renderStudentTable()" placeholder="Search students or parents..." 
+        <input type="text" id="student-search" oninput="renderStudentTable()" placeholder="Search students..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-slate-500 shadow-sm w-full md:w-64">
 
         <select id="student-sort" onchange="renderStudentTable()" class="bg-white border border-slate-300 px-3 py-2 rounded-lg text-[10px] font-medium text-slate-600 outline-none">
@@ -24,7 +24,7 @@
         <thead>
             <tr class="bg-slate-100 border-b border-slate-200">
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Student & Bio</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Parent & Enrollment</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Guardian</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Emergency Info</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase text-right">Actions</th>
             </tr>
@@ -45,16 +45,16 @@
         <form id="student-form" class="p-6 space-y-4">
             <input type="hidden" id="s-edit-id">
             <div class="grid grid-cols-2 gap-4">
-                <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Full Name</label><input type="text" id="name" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
-                <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Nickname</label><input type="text" id="nickname" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
+                <div><label class="text-[9px] text-slate-500 block">Full Name</label><input type="text" id="name" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
+                <div><label class="text-[9px] text-slate-500 block">Nickname</label><input type="text" id="nickname" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
             </div>
             <div class="grid grid-cols-2 gap-4">
-                <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Date of Birth</label><input type="date" id="date_of_birth" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
-                <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Gender</label><input type="text" id="gender" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
+                <div><label class="text-[9px] text-slate-500 block">Date of Birth</label><input type="date" id="date_of_birth" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
+                <div><label class="text-[9px] text-slate-500 block">Gender</label><input type="text" id="gender" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
             </div>
             <div class="pt-4 flex gap-3">
                 <button type="button" onclick="closeStudentModal()" class="px-6 py-2 bg-slate-100 text-slate-500 rounded font-bold text-[10px] uppercase">Cancel</button>
-                <button type="submit" class="flex-1 py-2 bg-[#1e293b] text-white rounded font-bold text-[10px] uppercase shadow-lg hover:bg-slate-800">Save Student Profile</button>
+                <button type="submit" class="flex-1 py-2 bg-[#1e293b] text-white rounded font-bold text-[10px] uppercase shadow-lg">Save Student</button>
             </div>
         </form>
     </div>
@@ -63,90 +63,68 @@
 <script>
     const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/student";
     const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
-    
     let allStudents = [];
-    let allParents = [];
 
-    async function fetchData() {
+    async function fetchStudents() {
         const fid = localStorage.getItem('locked_franchise_id');
         const tbody = document.getElementById('student-table-body');
-
-        if (!fid) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Branch ID missing. Please re-select from Identity Lock.</td></tr>';
-            return;
-        }
+        if (!fid) return;
 
         try {
-            // Read Parents first to ensure data is ready for mapping [cite: 2026-02-05]
-            const pRes = await fetch(`${PARENT_API}?franchise_id=${fid}`);
-            if (!pRes.ok) throw new Error("Parent API Failed");
-            allParents = await pRes.json();
-
-            // Read Students [cite: 2026-02-05]
-            const sRes = await fetch(`${STUDENT_API}?franchise_id=${fid}`);
-            if (!sRes.ok) throw new Error("Student API Failed");
-            allStudents = await sRes.json();
-
-            renderStudentTable();
+            const res = await fetch(`${STUDENT_API}?franchise_id=${fid}`);
+            if (res.ok) {
+                allStudents = await res.json();
+                renderStudentTable();
+            }
         } catch (e) {
-            console.error(e);
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">SYNC ERROR: CONNECTION FAILED</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">CONNECTION ERROR</td></tr>';
         }
+    }
+
+    async function getParentData(parentId, studentId) {
+        if (!parentId) return;
+        try {
+            const res = await fetch(`${PARENT_API}/${parentId}`);
+            if (res.ok) {
+                const p = await res.json();
+                // Update the specific UI cells once the parent data arrives
+                document.getElementById(`guardian-${studentId}`).innerText = `${p.first_name} ${p.last_name}`;
+                document.getElementById(`emergency-name-${studentId}`).innerText = p.emergency_contact_1_name;
+                document.getElementById(`emergency-phone-${studentId}`).innerText = p.emergency_contact_1_phone_number;
+            }
+        } catch (e) { console.error("Parent read failed"); }
     }
 
     function renderStudentTable() {
         const tbody = document.getElementById('student-table-body');
         const searchTerm = document.getElementById('student-search').value.toLowerCase();
-        const sortVal = document.getElementById('student-sort').value;
-
-        let filtered = allStudents.filter(s => {
-            const parent = allParents.find(p => p.id === s.parent_id);
-            const pName = parent ? `${parent.first_name} ${parent.last_name}`.toLowerCase() : "";
-            return s.name.toLowerCase().includes(searchTerm) || pName.includes(searchTerm);
-        });
-
-        if (sortVal === 'name_asc') filtered.sort((a,b) => a.name.localeCompare(b.name));
-        else filtered.sort((a,b) => b.id - a.id);
+        const filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
 
         tbody.innerHTML = '';
-        if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">No student records found.</td></tr>';
-            return;
-        }
-
         filtered.forEach((s, idx) => {
-            const parent = allParents.find(p => p.id === s.parent_id);
-            const parentName = parent ? `${parent.first_name} ${parent.last_name}` : 'No Parent Linked';
             const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30';
-            
             tbody.insertAdjacentHTML('beforeend', `
-                <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50 transition-colors">
+                <tr class="${bg} border-b border-slate-100 text-xs text-slate-600">
                     <td class="p-4">
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-slate-900 text-sm">${s.name}</span>
-                            <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-600 text-[8px] font-black rounded uppercase">${s.is_active ? 'Active' : 'Inactive'}</span>
-                        </div>
-                        <div class="text-[10px] text-slate-400 mt-0.5 italic">"${s.nickname || '---'}" • ${s.gender || '---'} • DOB: ${s.date_of_birth || '---'}</div>
+                        <div class="font-bold text-slate-900 text-sm">${s.name}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">"${s.nickname || ''}"</div>
                     </td>
                     <td class="p-4">
-                        <div class="font-medium text-slate-800">${parentName}</div>
-                        <div class="text-[9px] text-slate-400 uppercase tracking-tighter">Enrolled: ${new Date(s.created_at).toLocaleDateString()}</div>
+                        <div id="guardian-${s.id}" class="font-medium text-slate-800 italic text-slate-400">Loading...</div>
                     </td>
                     <td class="p-4">
                         <div class="bg-red-50/50 p-2 rounded border border-red-100 max-w-[200px]">
-                            <div class="text-[8px] font-black text-red-400 uppercase leading-none mb-1">Primary Emergency</div>
-                            <div class="font-bold text-slate-700 truncate">${parent ? parent.emergency_contact_1_name : '---'}</div>
-                            <div class="text-[10px] text-red-600 font-medium">${parent ? parent.emergency_contact_1_phone_number : ''}</div>
+                            <div id="emergency-name-${s.id}" class="text-[8px] font-black text-red-400 uppercase leading-none mb-1">---</div>
+                            <div id="emergency-phone-${s.id}" class="text-[10px] text-red-600 font-medium">---</div>
                         </div>
                     </td>
                     <td class="p-4 text-right">
-                        <div class="flex justify-end gap-2">
-                            <button onclick='openStudentModal(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase hover:bg-white shadow-sm">Edit</button>
-                            <button onclick="deleteStudent(${s.id})" class="px-3 py-1.5 border border-red-50 text-red-200 rounded text-[9px] font-bold uppercase hover:text-red-500 transition-all">Del</button>
-                        </div>
+                        <button onclick='openStudentModal(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase">Edit</button>
                     </td>
                 </tr>
             `);
+            // Trigger the single-record read for this student's parent
+            getParentData(s.parent_id, s.id);
         });
     }
 
@@ -155,53 +133,14 @@
         document.getElementById('student-form').reset();
         document.getElementById('s-edit-id').value = s ? s.id : '';
         if(s) {
-            document.getElementById('s-modal-title').innerText = "Update Student Profile";
             document.getElementById('name').value = s.name;
             document.getElementById('nickname').value = s.nickname || '';
             document.getElementById('date_of_birth').value = s.date_of_birth || '';
             document.getElementById('gender').value = s.gender || '';
-        } else {
-            document.getElementById('s-modal-title').innerText = "New Student Profile";
         }
     }
 
     function closeStudentModal() { document.getElementById('student-modal').classList.add('hidden'); }
 
-    document.getElementById('student-form').onsubmit = async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('s-edit-id').value;
-        const fid = localStorage.getItem('locked_franchise_id');
-        
-        const payload = {
-            franchise_id: parseInt(fid),
-            name: document.getElementById('name').value,
-            nickname: document.getElementById('nickname').value,
-            date_of_birth: document.getElementById('date_of_birth').value,
-            gender: document.getElementById('gender').value
-        };
-
-        const method = id ? 'PATCH' : 'POST';
-        const url = id ? `${STUDENT_API}/${id}` : STUDENT_API;
-
-        try {
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-                closeStudentModal();
-                fetchData();
-            }
-        } catch (err) { alert("Error saving student record."); }
-    };
-
-    async function deleteStudent(id) {
-        if(confirm("Delete this student permanently?")) {
-            await fetch(`${STUDENT_API}/${id}`, { method: 'DELETE' });
-            fetchData();
-        }
-    }
-
-    fetchData();
+    fetchStudents();
 </script>
