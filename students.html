@@ -1,6 +1,6 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
-        <h1 class="text-2xl font-bold text-slate-800 uppercase tracking-tight text-emerald-500">Student Directory</h1>
+        <h1 class="text-2xl font-bold text-emerald-500 uppercase tracking-tight">Student Directory</h1>
         <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Franchise Management System</p>
     </div>
     
@@ -45,12 +45,12 @@
         <form id="student-form" class="p-6 space-y-4">
             <input type="hidden" id="s-edit-id">
             <div class="grid grid-cols-2 gap-4">
-                <div><label class="text-[9px] text-slate-500 block">Full Name</label><input type="text" id="name" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
-                <div><label class="text-[9px] text-slate-500 block">Nickname</label><input type="text" id="nickname" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
+                <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Full Name</label><input type="text" id="name" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
+                <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Nickname</label><input type="text" id="nickname" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
             </div>
             <div class="grid grid-cols-2 gap-4">
-                <div><label class="text-[9px] text-slate-500 block">Date of Birth</label><input type="date" id="date_of_birth" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
-                <div><label class="text-[9px] text-slate-500 block">Gender</label><input type="text" id="gender" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
+                <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Date of Birth</label><input type="date" id="date_of_birth" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
+                <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Gender</label><input type="text" id="gender" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
             </div>
             <div class="pt-4 flex gap-3">
                 <button type="button" onclick="closeStudentModal()" class="px-6 py-2 bg-slate-100 text-slate-500 rounded font-bold text-[10px] uppercase">Cancel</button>
@@ -68,30 +68,40 @@
     async function fetchStudents() {
         const fid = localStorage.getItem('locked_franchise_id');
         const tbody = document.getElementById('student-table-body');
-        if (!fid) return;
+        if (!fid) {
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic uppercase">Identity Lock: No Branch Selected</td></tr>';
+            return;
+        }
 
         try {
-            const res = await fetch(`${STUDENT_API}?franchise_id=${fid}`);
+            // Convert to number for the API query [cite: 2026-02-05]
+            const res = await fetch(`${STUDENT_API}?franchise_id=${parseInt(fid)}`);
             if (res.ok) {
                 allStudents = await res.json();
                 renderStudentTable();
+            } else {
+                throw new Error(`API Status: ${res.status}`);
             }
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">CONNECTION ERROR</td></tr>';
+            console.error("DEBUG FETCH ERROR:", e);
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">SYNC ERROR: CHECK CONNECTION</td></tr>';
         }
     }
 
     async function getParentData(parentId, studentId) {
-        if (!parentId) return;
+        if (!parentId) {
+            document.getElementById(`guardian-${studentId}`).innerText = "Unlinked";
+            return;
+        }
         try {
             const res = await fetch(`${PARENT_API}/${parentId}`);
             if (res.ok) {
                 const p = await res.json();
                 document.getElementById(`guardian-${studentId}`).innerText = `${p.first_name} ${p.last_name}`;
-                document.getElementById(`emergency-name-${studentId}`).innerText = p.emergency_contact_1_name;
-                document.getElementById(`emergency-phone-${studentId}`).innerText = p.emergency_contact_1_phone_number;
+                document.getElementById(`emergency-name-${studentId}`).innerText = p.emergency_contact_1_name || '---';
+                document.getElementById(`emergency-phone-${studentId}`).innerText = p.emergency_contact_1_phone_number || '---';
             }
-        } catch (e) { console.error("Parent read failed"); }
+        } catch (e) { console.warn(`Parent lookup failed for ID: ${parentId}`); }
     }
 
     function renderStudentTable() {
@@ -105,21 +115,26 @@
         else filtered.sort((a,b) => b.id - a.id);
 
         tbody.innerHTML = '';
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">No matching records found.</td></tr>';
+            return;
+        }
+
         filtered.forEach((s, idx) => {
             const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30';
             tbody.insertAdjacentHTML('beforeend', `
-                <tr class="${bg} border-b border-slate-100 text-xs text-slate-600">
+                <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50 transition-colors">
                     <td class="p-4">
                         <div class="font-bold text-slate-900 text-sm">${s.name}</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">"${s.nickname || ''}"</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-tighter">"${s.nickname || ''}" • DOB: ${s.date_of_birth || '---'}</div>
                     </td>
                     <td class="p-4">
                         <div id="guardian-${s.id}" class="font-medium text-slate-800">Loading...</div>
                     </td>
                     <td class="p-4">
                         <div class="bg-red-50/50 p-2 rounded border border-red-100 max-w-[200px]">
-                            <div id="emergency-name-${s.id}" class="text-[8px] font-black text-red-400 uppercase leading-none mb-1">---</div>
-                            <div id="emergency-phone-${s.id}" class="text-[10px] text-red-600 font-medium">---</div>
+                            <div id="emergency-name-${s.id}" class="text-[8px] font-black text-red-400 uppercase leading-none mb-1">...</div>
+                            <div id="emergency-phone-${s.id}" class="text-[10px] text-red-600 font-medium italic">...</div>
                         </div>
                     </td>
                     <td class="p-4 text-right">
