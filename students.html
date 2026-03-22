@@ -23,13 +23,13 @@
     <table class="w-full text-left border-collapse">
         <thead>
             <tr class="bg-slate-100 border-b border-slate-200">
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Student Details</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Birth & Info</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Student Name</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Status & Info</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase text-right">Actions</th>
             </tr>
         </thead>
         <tbody id="student-table-body">
-            <tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">Synchronizing database...</td></tr>
+            <tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">Connecting to Xano...</td></tr>
         </tbody>
     </table>
 </div>
@@ -66,7 +66,11 @@
     async function fetchStudents() {
         const fid = localStorage.getItem('locked_franchise_id');
         const tbody = document.getElementById('student-table-body');
-        if (!fid) return;
+        
+        if (!fid) {
+            tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">Branch ID Missing.</td></tr>';
+            return;
+        }
 
         try {
             const res = await fetch(`${STUDENT_API}?franchise_id=${parseInt(fid)}`);
@@ -74,7 +78,7 @@
                 allStudents = await res.json();
                 renderStudentTable();
             } else {
-                throw new Error("API Failure");
+                tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-red-500 text-xs font-bold uppercase">SYNC ERROR: API FAILED</td></tr>';
             }
         } catch (e) {
             tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-red-500 text-xs font-bold uppercase">SYNC ERROR: CONNECTION FAILED</td></tr>';
@@ -93,25 +97,25 @@
 
         tbody.innerHTML = '';
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">No records found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">No students found for this branch.</td></tr>';
             return;
         }
 
         filtered.forEach((s, idx) => {
             const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30';
             tbody.insertAdjacentHTML('beforeend', `
-                <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50 transition-colors">
+                <tr class="${bg} border-b border-slate-100 text-xs text-slate-600">
                     <td class="p-4">
                         <div class="font-bold text-slate-900 text-sm">${s.name}</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-tighter">"${s.nickname || ''}" • ID: ${s.id}</div>
+                        <div class="text-[10px] text-slate-400 uppercase mt-0.5">"${s.nickname || '---'}" • ID: ${s.id}</div>
                     </td>
                     <td class="p-4">
-                        <div class="font-medium text-slate-800">DOB: ${s.date_of_birth || '---'}</div>
-                        <div class="text-[9px] text-slate-400 uppercase">Status: ${s.is_active ? 'Active' : 'Inactive'}</div>
+                        <div class="font-medium text-slate-800 uppercase">DOB: ${s.date_of_birth || '---'}</div>
+                        <div class="text-[9px] ${s.is_active ? 'text-emerald-500' : 'text-slate-400'} font-bold uppercase">Status: ${s.is_active ? 'Active' : 'Inactive'}</div>
                     </td>
                     <td class="p-4 text-right">
                         <div class="flex justify-end gap-2">
-                            <button onclick='openStudentModal(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase hover:bg-white shadow-sm">Edit</button>
+                            <button onclick='openStudentModal(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase hover:bg-white">Edit</button>
                             <button onclick="deleteStudent(${s.id})" class="px-3 py-1.5 border border-red-50 text-red-200 rounded text-[9px] font-bold uppercase hover:text-red-500">Del</button>
                         </div>
                     </td>
@@ -153,7 +157,7 @@
     };
 
     async function deleteStudent(id) {
-        if(confirm("Delete student?")) {
+        if(confirm("Permanently delete student record?")) {
             await fetch(`${STUDENT_API}/${id}`, { method: 'DELETE' });
             fetchStudents();
         }
