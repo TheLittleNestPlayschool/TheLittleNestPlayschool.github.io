@@ -1,20 +1,20 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
-        <h1 class="text-2xl font-bold text-emerald-500 uppercase tracking-tight">Student Directory</h1>
+        <h1 class="text-2xl font-bold text-emerald-500 uppercase tracking-tight">Parent Directory</h1>
         <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Franchise Management System</p>
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="student-search" oninput="StudentManager.render()" placeholder="Search students..." 
+        <input type="text" id="parent-search" oninput="ParentManager.render()" placeholder="Search parents..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-slate-500 shadow-sm w-full md:w-64">
 
-        <select id="student-sort" onchange="StudentManager.render()" class="bg-white border border-slate-300 px-3 py-2 rounded-lg text-[10px] font-medium text-slate-600 outline-none">
+        <select id="parent-sort" onchange="ParentManager.render()" class="bg-white border border-slate-300 px-3 py-2 rounded-lg text-[10px] font-medium text-slate-600 outline-none">
             <option value="newest">Newest First</option>
             <option value="name_asc">Name: A-Z</option>
         </select>
         
-        <button onclick="StudentManager.openModal()" class="bg-[#1e293b] hover:bg-slate-900 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
-            + ADD STUDENT
+        <button onclick="ParentManager.openModal()" class="bg-[#1e293b] hover:bg-slate-900 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
+            + ADD PARENT
         </button>
     </div>
 </div>
@@ -23,84 +23,84 @@
     <table class="w-full text-left border-collapse">
         <thead>
             <tr class="bg-slate-100 border-b border-slate-200">
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Student Name</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Birth & Bio</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Guardian Name</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Contact Info</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Address</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Status</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase text-right">Actions</th>
             </tr>
         </thead>
-        <tbody id="student-table-body">
-            <tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Synchronizing database...</td></tr>
+        <tbody id="parent-table-body">
+            <tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic">Synchronizing database...</td></tr>
         </tbody>
     </table>
 </div>
 
-<div id="student-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+<div id="parent-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-300">
         <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-            <h2 id="s-modal-title" class="text-sm font-bold text-slate-800 uppercase">Student Profile</h2>
-            <button onclick="StudentManager.closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            <h2 id="p-modal-title" class="text-sm font-bold text-slate-800 uppercase">Parent Profile</h2>
+            <button onclick="ParentManager.closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
         </div>
         
-        <form id="student-form" class="p-6 space-y-4">
-            <input type="hidden" id="s-edit-id">
-            <input type="hidden" id="s-franchise-id">
+        <form id="parent-form" class="p-6 space-y-4">
+            <input type="hidden" id="p-edit-id">
+            <input type="hidden" id="p-franchise-id">
             
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold">Full Name</label>
-                    <input type="text" id="name" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs">
+                    <label class="text-[9px] text-slate-500 block uppercase font-bold">First Name</label>
+                    <input type="text" id="first_name" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs">
                 </div>
                 <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold">Nickname</label>
-                    <input type="text" id="nickname" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs">
+                    <label class="text-[9px] text-slate-500 block uppercase font-bold">Last Name</label>
+                    <input type="text" id="last_name" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold">Date of Birth</label>
-                    <input type="date" id="date_of_birth" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs">
+                    <label class="text-[9px] text-slate-500 block uppercase font-bold">Email Address</label>
+                    <input type="email" id="email" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs">
                 </div>
                 <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold">Gender</label>
-                    <select id="gender" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs">
-                        <option value="">Select Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                    </select>
+                    <label class="text-[9px] text-slate-500 block uppercase font-bold">Phone Number</label>
+                    <input type="text" id="phone" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs">
                 </div>
+            </div>
+
+            <div>
+                <label class="text-[9px] text-slate-500 block uppercase font-bold">Physical Address</label>
+                <input type="text" id="address" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs">
             </div>
 
             <div class="pt-2">
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" id="is_active" class="rounded border-slate-300">
-                    <span class="text-[10px] font-bold text-slate-600 uppercase">Active Enrollment</span>
+                    <span class="text-[10px] font-bold text-slate-600 uppercase">Active Profile</span>
                 </label>
             </div>
 
             <div class="flex gap-3 pt-4 border-t border-slate-100">
-                <button type="button" onclick="StudentManager.closeModal()" class="px-6 py-2 bg-slate-100 text-slate-500 rounded font-bold text-[10px] uppercase">Cancel</button>
-                <button type="submit" class="flex-1 py-2 bg-[#1e293b] text-white rounded font-bold text-[10px] uppercase shadow-lg hover:bg-black transition-all">Save Student Record</button>
+                <button type="button" onclick="ParentManager.closeModal()" class="px-6 py-2 bg-slate-100 text-slate-500 rounded font-bold text-[10px] uppercase">Cancel</button>
+                <button type="submit" class="flex-1 py-2 bg-[#1e293b] text-white rounded font-bold text-[10px] uppercase shadow-lg hover:bg-black transition-all">Save Parent Record</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    const StudentManager = {
-        API: "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student",
+    const ParentManager = {
+        API: "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/parent",
         data: [],
-        // Added all fields present in the Xano student table
-        fields: ['name', 'nickname', 'date_of_birth', 'gender', 'is_active'],
+        fields: ['first_name', 'last_name', 'email', 'phone', 'address', 'is_active'],
 
         async init() {
             const fid = localStorage.getItem('locked_franchise_id');
-            const tbody = document.getElementById('student-table-body');
+            const tbody = document.getElementById('parent-table-body');
             
-            this.data = []; // Immediate reset
-            if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Synchronizing database...</td></tr>';
+            this.data = [];
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic">Synchronizing database...</td></tr>';
 
             if (!fid) return;
 
@@ -111,50 +111,54 @@
                     this.render();
                 }
             } catch (e) {
-                if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">RELOAD ERROR: Connection Lost</td></tr>';
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">Connection Lost</td></tr>';
             }
         },
 
         render() {
-            const tbody = document.getElementById('student-table-body');
-            const searchTerm = (document.getElementById('student-search')?.value || '').toLowerCase();
-            const sortVal = document.getElementById('student-sort')?.value || 'newest';
+            const tbody = document.getElementById('parent-table-body');
+            const searchTerm = (document.getElementById('parent-search')?.value || '').toLowerCase();
+            const sortVal = document.getElementById('parent-sort')?.value || 'newest';
 
-            let filtered = this.data.filter(s => 
-                (s.name && s.name.toLowerCase().includes(searchTerm)) || 
-                (s.nickname && s.nickname.toLowerCase().includes(searchTerm))
+            let filtered = this.data.filter(p => 
+                (p.first_name && p.first_name.toLowerCase().includes(searchTerm)) || 
+                (p.last_name && p.last_name.toLowerCase().includes(searchTerm)) ||
+                (p.email && p.email.toLowerCase().includes(searchTerm))
             );
 
-            if (sortVal === 'name_asc') filtered.sort((a,b) => (a.name || '').localeCompare(b.name || ''));
+            if (sortVal === 'name_asc') filtered.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || ''));
             else filtered.sort((a,b) => b.id - a.id);
 
             tbody.innerHTML = '';
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">No student records found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic">No parent records found.</td></tr>';
                 return;
             }
 
-            filtered.forEach((s, idx) => {
+            filtered.forEach((p, idx) => {
                 const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30';
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50 transition-colors">
                         <td class="p-4">
-                            <div class="font-bold text-slate-900 text-sm">${s.name}</div>
-                            <div class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-tighter">System ID: ${s.id}</div>
+                            <div class="font-bold text-slate-900 text-sm">${p.first_name} ${p.last_name}</div>
+                            <div class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-tighter">ID: ${p.id}</div>
                         </td>
                         <td class="p-4">
-                            <div class="font-medium text-slate-800 uppercase">Nickname: ${s.nickname || '---'}</div>
-                            <div class="text-[10px] text-slate-400 mt-0.5">DOB: ${s.date_of_birth || '---'} | ${s.gender || 'N/A'}</div>
+                            <div class="font-medium text-slate-800">${p.email || '---'}</div>
+                            <div class="text-[10px] text-slate-400 mt-0.5">${p.phone || '---'}</div>
+                        </td>
+                        <td class="p-4 max-w-[200px] truncate">
+                            <div class="text-[10px] text-slate-500 uppercase">${p.address || '---'}</div>
                         </td>
                         <td class="p-4">
-                            <span class="px-2 py-1 rounded text-[9px] font-bold uppercase ${s.is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}">
-                                ${s.is_active ? 'Active' : 'Inactive'}
+                            <span class="px-2 py-1 rounded text-[9px] font-bold uppercase ${p.is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}">
+                                ${p.is_active ? 'Active' : 'Inactive'}
                             </span>
                         </td>
                         <td class="p-4 text-right">
                             <div class="flex justify-end gap-2">
-                                <button onclick='StudentManager.openModal(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase hover:bg-white shadow-sm transition-all">Edit</button>
-                                <button onclick="StudentManager.delete(${s.id})" class="px-3 py-1.5 border border-red-50 text-red-200 rounded text-[9px] font-bold uppercase hover:text-red-500 transition-colors">Del</button>
+                                <button onclick='ParentManager.openModal(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase hover:bg-white shadow-sm transition-all">Edit</button>
+                                <button onclick="ParentManager.delete(${p.id})" class="px-3 py-1.5 border border-red-50 text-red-200 rounded text-[9px] font-bold uppercase hover:text-red-500 transition-colors">Del</button>
                             </div>
                         </td>
                     </tr>
@@ -162,21 +166,21 @@
             });
         },
 
-        openModal(s = null) {
-            const modal = document.getElementById('student-modal');
+        openModal(p = null) {
+            const modal = document.getElementById('parent-modal');
             const fid = localStorage.getItem('locked_franchise_id');
             modal.classList.remove('hidden');
-            document.getElementById('student-form').reset();
-            document.getElementById('s-edit-id').value = s ? s.id : '';
-            document.getElementById('s-franchise-id').value = fid;
-            document.getElementById('s-modal-title').innerText = s ? 'Update Student Profile' : 'New Student Profile';
+            document.getElementById('parent-form').reset();
+            document.getElementById('p-edit-id').value = p ? p.id : '';
+            document.getElementById('p-franchise-id').value = fid;
+            document.getElementById('p-modal-title').innerText = p ? 'Update Parent Profile' : 'New Parent Profile';
 
-            if(s) {
+            if(p) {
                 this.fields.forEach(f => {
                     const el = document.getElementById(f);
                     if (el) {
-                        if (el.type === 'checkbox') el.checked = s[f];
-                        else el.value = s[f] || '';
+                        if (el.type === 'checkbox') el.checked = p[f];
+                        else el.value = p[f] || '';
                     }
                 });
             } else {
@@ -184,44 +188,39 @@
             }
         },
 
-        closeModal() { document.getElementById('student-modal').classList.add('hidden'); },
+        closeModal() { document.getElementById('parent-modal').classList.add('hidden'); },
 
         async delete(id) {
-            if(confirm("Permanently delete this student record?")) {
+            if(confirm("Delete this parent record?")) {
                 await fetch(`${this.API}/${id}`, { method: 'DELETE' });
                 this.init();
             }
         }
     };
 
-    // Form submission logic
-    document.getElementById('student-form').onsubmit = async (e) => {
+    document.getElementById('parent-form').onsubmit = async (e) => {
         e.preventDefault();
-        const id = document.getElementById('s-edit-id').value;
-        const fid = document.getElementById('s-franchise-id').value;
+        const id = document.getElementById('p-edit-id').value;
+        const fid = document.getElementById('p-franchise-id').value;
         const payload = { franchise_id: parseInt(fid) };
         
-        StudentManager.fields.forEach(f => {
+        ParentManager.fields.forEach(f => {
             const el = document.getElementById(f);
             if (el) payload[f] = el.type === 'checkbox' ? el.checked : el.value;
         });
 
-        const method = id ? 'PATCH' : 'POST';
-        const url = id ? `${StudentManager.API}/${id}` : StudentManager.API;
-
         try {
-            const res = await fetch(url, { 
-                method, 
+            const res = await fetch(id ? `${ParentManager.API}/${id}` : ParentManager.API, { 
+                method: id ? 'PATCH' : 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify(payload) 
             });
             if (res.ok) {
-                StudentManager.closeModal();
-                StudentManager.init();
+                ParentManager.closeModal();
+                ParentManager.init();
             }
         } catch (err) { alert("Error saving record."); }
     };
 
-    // Load directory
-    StudentManager.init();
+    ParentManager.init();
 </script>
