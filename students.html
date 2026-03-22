@@ -24,12 +24,13 @@
         <thead>
             <tr class="bg-slate-100 border-b border-slate-200">
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Student Name</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Status & Info</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Birth & Bio</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Status</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase text-right">Actions</th>
             </tr>
         </thead>
         <tbody id="student-table-body">
-            <tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">Connecting to Xano...</td></tr>
+            <tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Synchronizing database...</td></tr>
         </tbody>
     </table>
 </div>
@@ -43,6 +44,8 @@
         
         <form id="student-form" class="p-6 space-y-4">
             <input type="hidden" id="s-edit-id">
+            <input type="hidden" id="s-franchise-id">
+            
             <div class="grid grid-cols-2 gap-4">
                 <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Full Name</label><input type="text" id="name" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
                 <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Nickname</label><input type="text" id="nickname" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
@@ -51,7 +54,13 @@
                 <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Date of Birth</label><input type="date" id="date_of_birth" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
                 <div><label class="text-[9px] text-slate-500 block uppercase font-bold">Gender</label><input type="text" id="gender" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
             </div>
-            <div class="pt-4 flex gap-3">
+            <div class="pt-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="is_active" class="rounded border-slate-300">
+                    <span class="text-[10px] font-bold text-slate-600 uppercase">Active Enrollment</span>
+                </label>
+            </div>
+            <div class="flex gap-3 pt-4">
                 <button type="button" onclick="closeStudentModal()" class="px-6 py-2 bg-slate-100 text-slate-500 rounded font-bold text-[10px] uppercase">Cancel</button>
                 <button type="submit" class="flex-1 py-2 bg-[#1e293b] text-white rounded font-bold text-[10px] uppercase shadow-lg">Save Student</button>
             </div>
@@ -62,26 +71,28 @@
 <script>
     const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/student";
     let allStudents = [];
+    
+    const studentFields = ['name', 'nickname', 'date_of_birth', 'gender', 'is_active'];
 
     async function fetchStudents() {
         const fid = localStorage.getItem('locked_franchise_id');
         const tbody = document.getElementById('student-table-body');
-        
+
         if (!fid) {
-            tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">Branch ID Missing.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Branch ID Missing.</td></tr>';
             return;
         }
 
         try {
-            const res = await fetch(`${STUDENT_API}?franchise_id=${parseInt(fid)}`);
+            const res = await fetch(`${STUDENT_API}?franchise_id=${fid}`);
             if (res.ok) {
                 allStudents = await res.json();
                 renderStudentTable();
             } else {
-                tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-red-500 text-xs font-bold uppercase">SYNC ERROR: API FAILED</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">SYNC ERROR: API FAILED</td></tr>';
             }
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-red-500 text-xs font-bold uppercase">SYNC ERROR: CONNECTION FAILED</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">SYNC ERROR: CONNECTION FAILED</td></tr>';
         }
     }
 
@@ -97,25 +108,30 @@
 
         tbody.innerHTML = '';
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-slate-400 text-xs italic">No students found for this branch.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">No student records found.</td></tr>';
             return;
         }
 
         filtered.forEach((s, idx) => {
             const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30';
             tbody.insertAdjacentHTML('beforeend', `
-                <tr class="${bg} border-b border-slate-100 text-xs text-slate-600">
+                <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50">
                     <td class="p-4">
                         <div class="font-bold text-slate-900 text-sm">${s.name}</div>
-                        <div class="text-[10px] text-slate-400 uppercase mt-0.5">"${s.nickname || '---'}" • ID: ${s.id}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-tighter">ID: ${s.id}</div>
                     </td>
                     <td class="p-4">
-                        <div class="font-medium text-slate-800 uppercase">DOB: ${s.date_of_birth || '---'}</div>
-                        <div class="text-[9px] ${s.is_active ? 'text-emerald-500' : 'text-slate-400'} font-bold uppercase">Status: ${s.is_active ? 'Active' : 'Inactive'}</div>
+                        <div class="font-medium text-slate-800 uppercase">Nickname: ${s.nickname || '---'}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">DOB: ${s.date_of_birth || '---'}</div>
+                    </td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 rounded text-[9px] font-bold uppercase ${s.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}">
+                            ${s.is_active ? 'Active' : 'Inactive'}
+                        </span>
                     </td>
                     <td class="p-4 text-right">
                         <div class="flex justify-end gap-2">
-                            <button onclick='openStudentModal(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase hover:bg-white">Edit</button>
+                            <button onclick='openStudentModal(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase hover:bg-white shadow-sm">Edit</button>
                             <button onclick="deleteStudent(${s.id})" class="px-3 py-1.5 border border-red-50 text-red-200 rounded text-[9px] font-bold uppercase hover:text-red-500">Del</button>
                         </div>
                     </td>
@@ -125,14 +141,23 @@
     }
 
     function openStudentModal(s = null) {
-        document.getElementById('student-modal').classList.remove('hidden');
+        const modal = document.getElementById('student-modal');
+        const fid = localStorage.getItem('locked_franchise_id');
+        modal.classList.remove('hidden');
         document.getElementById('student-form').reset();
         document.getElementById('s-edit-id').value = s ? s.id : '';
+        document.getElementById('s-franchise-id').value = fid;
+
         if(s) {
-            document.getElementById('name').value = s.name;
-            document.getElementById('nickname').value = s.nickname || '';
-            document.getElementById('date_of_birth').value = s.date_of_birth || '';
-            document.getElementById('gender').value = s.gender || '';
+            studentFields.forEach(f => {
+                const el = document.getElementById(f);
+                if (el) {
+                    if (el.type === 'checkbox') el.checked = s[f];
+                    else el.value = s[f] || '';
+                }
+            });
+        } else {
+            document.getElementById('is_active').checked = true;
         }
     }
 
@@ -141,14 +166,17 @@
     document.getElementById('student-form').onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('s-edit-id').value;
-        const fid = localStorage.getItem('locked_franchise_id');
-        const payload = {
-            franchise_id: parseInt(fid),
-            name: document.getElementById('name').value,
-            nickname: document.getElementById('nickname').value,
-            date_of_birth: document.getElementById('date_of_birth').value,
-            gender: document.getElementById('gender').value
-        };
+        const fid = document.getElementById('s-franchise-id').value;
+        const payload = { franchise_id: parseInt(fid) };
+        
+        studentFields.forEach(f => {
+            const el = document.getElementById(f);
+            if (el) {
+                if (el.type === 'checkbox') payload[f] = el.checked;
+                else payload[f] = el.value;
+            }
+        });
+
         const method = id ? 'PATCH' : 'POST';
         const url = id ? `${STUDENT_API}/${id}` : STUDENT_API;
         await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -157,7 +185,7 @@
     };
 
     async function deleteStudent(id) {
-        if(confirm("Permanently delete student record?")) {
+        if(confirm("Delete student record?")) {
             await fetch(`${STUDENT_API}/${id}`, { method: 'DELETE' });
             fetchStudents();
         }
