@@ -58,7 +58,6 @@
             <div onclick="loadPage('students.html', 'Students')" class="sidebar-link">🏫 Students</div>
             <div onclick="loadPage('teachers.html', 'Teachers')" class="sidebar-link">👩‍🏫 Teachers</div>
             <div onclick="loadPage('sessions.html', 'Sessions')" class="sidebar-link">🗓️ Sessions</div>
-            
          </nav>
     </aside>
 
@@ -69,10 +68,14 @@
     <script>
         const API_URL = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
 
+        // Global Variable for sub-pages to access [cite: 2026-03-21]
+        window.currentFranchiseId = null;
+
         async function init() {
             try {
-                localStorage.removeItem('locked_franchise_id');
-                localStorage.removeItem('locked_franchise_name');
+                // Check if a lock already exists before clearing it [cite: 2026-03-21]
+                const existingId = localStorage.getItem('locked_franchise_id');
+                const existingName = localStorage.getItem('locked_franchise_name');
 
                 const res = await fetch(API_URL);
                 const data = await res.json();
@@ -84,6 +87,12 @@
                     opt.innerText = f.name;
                     select.appendChild(opt);
                 });
+
+                // Re-apply lock if it exists [cite: 2026-03-21]
+                if (existingId) {
+                    select.value = existingId;
+                    confirmFranchiseSelection();
+                }
             } catch (err) { console.error("Sidebar Load Error:", err); }
         }
 
@@ -92,13 +101,15 @@
             if (!select.value) return;
 
             const branchName = select.options[select.selectedIndex].text;
+            
+            // Set Global and Local Storage [cite: 2026-03-21]
+            window.currentFranchiseId = select.value;
             localStorage.setItem('locked_franchise_id', select.value);
             localStorage.setItem('locked_franchise_name', branchName);
             
             document.getElementById('sidebar-profile').classList.remove('hidden-until-locked');
             document.getElementById('sidebar-menu-links').classList.remove('hidden-until-locked');
             
-            // REMOVED loadPage CALL: This keeps the right side BLANK [cite: 2026-03-21]
             document.getElementById('current-screen-name').innerText = "SELECT MODULE";
         }
 
