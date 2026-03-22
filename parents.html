@@ -5,15 +5,15 @@
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="parent-search" oninput="ParentManager.render()" placeholder="Search parents or emails..." 
+        <input type="text" id="parent-search" oninput="ParentCore.render()" placeholder="Search parents or emails..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-slate-500 shadow-sm w-full md:w-64">
 
-        <select id="parent-sort" onchange="ParentManager.render()" class="bg-white border border-slate-300 px-3 py-2 rounded-lg text-[10px] font-medium text-slate-600 outline-none">
+        <select id="parent-sort" onchange="ParentCore.render()" class="bg-white border border-slate-300 px-3 py-2 rounded-lg text-[10px] font-medium text-slate-600 outline-none">
             <option value="newest">Newest First</option>
             <option value="name_asc">Name: A-Z</option>
         </select>
         
-        <button onclick="ParentManager.openModal()" class="bg-[#1e293b] hover:bg-slate-900 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
+        <button onclick="ParentCore.openModal()" class="bg-[#1e293b] hover:bg-slate-900 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
             + ADD PARENT
         </button>
     </div>
@@ -43,7 +43,7 @@
                 <h2 id="p-modal-title" class="text-sm font-bold text-slate-800 uppercase">Parent Profile</h2>
                 <p class="text-[9px] text-slate-400 uppercase tracking-tighter">Enter legal guardian details</p>
             </div>
-            <button onclick="ParentManager.closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            <button onclick="ParentCore.closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
         </div>
         
         <form id="parent-form" class="p-6 space-y-4">
@@ -82,14 +82,14 @@
                     <input type="checkbox" id="is_active" class="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500">
                     <div>
                         <span class="text-[10px] font-bold text-slate-700 uppercase block">Active Guardian Status</span>
-                        <span class="text-[9px] text-slate-400 block">Uncheck to archive this record.</span>
+                        <span class="text-[9px] text-slate-400 block">Record remains visible in active branch reports.</span>
                     </div>
                 </label>
             </div>
 
             <div class="flex gap-3 pt-6 border-t border-slate-100">
-                <button type="button" onclick="ParentManager.closeModal()" class="px-6 py-2.5 bg-slate-100 text-slate-500 rounded-lg font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Cancel</button>
-                <button type="submit" class="flex-1 py-2.5 bg-[#1e293b] text-white rounded-lg font-bold text-[10px] uppercase shadow-lg hover:bg-black transition-all">
+                <button type="button" onclick="ParentCore.closeModal()" class="px-6 py-2.5 bg-slate-100 text-slate-500 rounded-lg font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Cancel</button>
+                <button type="submit" class="flex-1 py-2.5 bg-[#1e293b] text-white rounded-lg font-bold text-[10px] uppercase shadow-lg hover:bg-black transition-all transform active:scale-[0.98]">
                     Save Guardian Record
                 </button>
             </div>
@@ -98,8 +98,7 @@
 </div>
 
 <script>
-    const ParentManager = {
-        // Corrected API Group from 8Je8Zszx
+    const ParentCore = {
         API: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent",
         data: [],
         fields: ['first_name', 'last_name', 'email', 'phone', 'address', 'is_active'],
@@ -109,7 +108,7 @@
             const tbody = document.getElementById('parent-table-body');
             
             this.data = []; 
-            if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">Synchronizing NestMind...</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">Syncing NestMind Database...</td></tr>';
 
             if (!fid) return;
 
@@ -120,8 +119,8 @@
                 this.data = await response.json();
                 this.render();
             } catch (error) {
-                console.error("Parent Sync Error:", error);
-                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">SYNC ERROR: API UNREACHABLE</td></tr>';
+                console.error("Parent Sync Failure:", error);
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">SYNC ERROR: API REJECTED</td></tr>';
             }
         },
 
@@ -138,12 +137,15 @@
                 (p.email && p.email.toLowerCase().includes(searchTerm))
             );
 
-            if (sortVal === 'name_asc') filtered.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || ''));
-            else filtered.sort((a,b) => (b.id || 0) - (a.id || 0));
+            if (sortVal === 'name_asc') {
+                filtered.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || ''));
+            } else {
+                filtered.sort((a,b) => (b.id || 0) - (a.id || 0));
+            }
 
             tbody.innerHTML = '';
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-300 text-[10px] font-bold uppercase tracking-widest">No parent records found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-300 text-[10px] font-bold uppercase tracking-widest">No matching guardian records.</td></tr>';
                 return;
             }
 
@@ -169,11 +171,11 @@
                         </td>
                         <td class="p-4 text-right">
                             <div class="flex justify-end gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
-                                <button onclick='ParentManager.openModal(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="p-2 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-emerald-600 hover:border-emerald-200 shadow-sm transition-all">
-                                    Edit
+                                <button onclick='ParentCore.openModal(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="p-2 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-emerald-600 hover:border-emerald-200 shadow-sm transition-all">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                 </button>
-                                <button onclick="ParentManager.delete(${p.id})" class="p-2 bg-white border border-slate-200 rounded-lg text-slate-300 hover:text-red-500 hover:border-red-100 shadow-sm transition-all">
-                                    Del
+                                <button onclick="ParentCore.delete(${p.id})" class="p-2 bg-white border border-slate-200 rounded-lg text-slate-300 hover:text-red-500 hover:border-red-100 shadow-sm transition-all">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
                             </div>
                         </td>
@@ -184,10 +186,11 @@
 
         openModal(p = null) {
             const modal = document.getElementById('parent-modal');
+            const fid = localStorage.getItem('locked_franchise_id');
             modal.classList.remove('hidden');
             document.getElementById('parent-form').reset();
             document.getElementById('p-edit-id').value = p ? p.id : '';
-            document.getElementById('p-franchise-id').value = localStorage.getItem('locked_franchise_id');
+            document.getElementById('p-franchise-id').value = fid;
             document.getElementById('p-modal-title').innerText = p ? 'Update Guardian Profile' : 'Register New Guardian';
 
             if(p) {
@@ -206,7 +209,7 @@
         closeModal() { document.getElementById('parent-modal').classList.add('hidden'); },
 
         async delete(id) {
-            if(confirm("Confirm: Delete this guardian?")) {
+            if(confirm("Confirm: Permanently delete this guardian record?")) {
                 const res = await fetch(`${this.API}/${id}`, { method: 'DELETE' });
                 if (res.ok) this.init();
             }
@@ -219,23 +222,23 @@
         const fid = document.getElementById('p-franchise-id').value;
         const payload = { franchise_id: parseInt(fid) };
         
-        ParentManager.fields.forEach(f => {
+        ParentCore.fields.forEach(f => {
             const el = document.getElementById(f);
             if (el) payload[f] = el.type === 'checkbox' ? el.checked : el.value;
         });
 
         try {
-            const res = await fetch(id ? `${ParentManager.API}/${id}` : ParentManager.API, { 
+            const res = await fetch(id ? `${ParentCore.API}/${id}` : ParentCore.API, { 
                 method: id ? 'PATCH' : 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify(payload) 
             });
             if (res.ok) {
-                ParentManager.closeModal();
-                ParentManager.init();
+                ParentCore.closeModal();
+                ParentCore.init();
             }
-        } catch (err) { console.error("Save Error:", err); }
+        } catch (err) { console.error("Critical Save Error:", err); }
     };
 
-    ParentManager.init();
+    ParentCore.init();
 </script>
