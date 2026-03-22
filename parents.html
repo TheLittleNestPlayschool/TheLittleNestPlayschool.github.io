@@ -1,13 +1,10 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
         <h1 class="text-2xl font-bold text-slate-800 uppercase tracking-tight">Parent Directory</h1>
-        <p id="branch-indicator" class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded inline-block mt-1">
-            Loading Branch Context...
-        </p>
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="parent-search" oninput="renderParentTable()" placeholder="Search names, emails, or phones..." 
+        <input type="text" id="parent-search" oninput="renderParentTable()" placeholder="Search parents..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-slate-500 shadow-sm w-full md:w-64">
 
         <select id="parent-sort" onchange="renderParentTable()" class="bg-white border border-slate-300 px-3 py-2 rounded-lg text-[10px] font-medium text-slate-600 outline-none">
@@ -15,8 +12,8 @@
             <option value="name_asc">Name: A-Z</option>
         </select>
         
-        <button onclick="openParentModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
-            + Add Parent
+        <button onclick="openParentModal()" class="bg-[#1e293b] hover:bg-slate-900 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
+            + ADD PARENT
         </button>
     </div>
 </div>
@@ -26,13 +23,13 @@
         <thead>
             <tr class="bg-slate-100 border-b border-slate-200">
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Primary Guardian</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Secondary / Spouse</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Secondary Guardian</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Emergency Contacts</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase text-right">Actions</th>
             </tr>
         </thead>
         <tbody id="parent-table-body">
-            <tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Connecting to directory...</td></tr>
+            <tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Synchronizing database...</td></tr>
         </tbody>
     </table>
 </div>
@@ -40,10 +37,7 @@
 <div id="parent-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden border border-slate-300">
         <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-            <div>
-                <h2 id="p-modal-title" class="text-sm font-bold text-slate-800 uppercase">Parent Profile</h2>
-                <span id="modal-franchise-label" class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter"></span>
-            </div>
+            <h2 id="p-modal-title" class="text-sm font-bold text-slate-800 uppercase">Parent Profile</h2>
             <button onclick="closeParentModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
         </div>
         
@@ -53,7 +47,7 @@
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="space-y-4">
-                    <p class="text-[10px] font-black text-slate-800 uppercase border-b border-slate-200 pb-1">Primary Guardian</p>
+                    <p class="text-[10px] font-black text-slate-800 uppercase border-b pb-1">Primary Guardian</p>
                     <div class="grid grid-cols-2 gap-2">
                         <div><label class="text-[9px] text-slate-500 block">First Name</label><input type="text" id="first_name" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
                         <div><label class="text-[9px] text-slate-500 block">Last Name</label><input type="text" id="last_name" required class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
@@ -70,11 +64,11 @@
                 </div>
 
                 <div class="space-y-4">
-                    <p class="text-[10px] font-black text-slate-800 uppercase border-b border-slate-200 pb-1">Spouse / Secondary</p>
+                    <p class="text-[10px] font-black text-slate-800 uppercase border-b pb-1">Spouse / Secondary</p>
                     <div><label class="text-[9px] text-slate-500 block">Full Name</label><input type="text" id="second_parent_name" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
                     <div><label class="text-[9px] text-slate-500 block">Secondary Phone</label><input type="text" id="second_parent_phone" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
                     
-                    <p class="text-[10px] font-black text-red-600 uppercase border-b border-red-100 pb-1 pt-4">Primary Emergency</p>
+                    <p class="text-[10px] font-black text-[#e11d48] uppercase border-b pb-1 pt-4">Primary Emergency</p>
                     <div><label class="text-[9px] text-slate-500 block">Contact Name</label><input type="text" id="emergency_contact_1_name" class="w-full p-2 bg-red-50/30 border border-slate-300 rounded text-xs"></div>
                     <div class="grid grid-cols-2 gap-2">
                         <div><label class="text-[9px] text-slate-500 block">Phone</label><input type="text" id="emergency_contact_1_phone_number" class="w-full p-2 bg-red-50/30 border border-slate-300 rounded text-xs"></div>
@@ -83,21 +77,21 @@
                 </div>
 
                 <div class="space-y-4">
-                    <p class="text-[10px] font-black text-slate-800 uppercase border-b border-slate-200 pb-1">Backup Emergency</p>
+                    <p class="text-[10px] font-black text-slate-800 uppercase border-b pb-1">Backup Emergency</p>
                     <div><label class="text-[9px] text-slate-500 block">Contact Name</label><input type="text" id="emergency_contact_2_name" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
                     <div class="grid grid-cols-2 gap-2">
                         <div><label class="text-[9px] text-slate-500 block">Phone</label><input type="text" id="emergency_contact_2_phone_number" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
                         <div><label class="text-[9px] text-slate-500 block">Relation</label><input type="text" id="emergency_contact_2_relationship" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></div>
                     </div>
                     
-                    <p class="text-[10px] font-black text-slate-800 uppercase border-b border-slate-200 pb-1 pt-4">Internal Admin Notes</p>
-                    <div><label class="text-[9px] text-slate-500 block">Status/Inactivation Reason</label><textarea id="inactivation_reason_comments" rows="3" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></textarea></div>
+                    <p class="text-[10px] font-black text-slate-800 uppercase border-b pb-1 pt-4">Admin Notes</p>
+                    <div><textarea id="inactivation_reason_comments" rows="3" class="w-full p-2 bg-slate-50 border border-slate-300 rounded text-xs"></textarea></div>
                 </div>
             </div>
 
-            <div class="flex gap-3 pt-6 border-t border-slate-100">
-                <button type="button" onclick="closeParentModal()" class="px-6 py-2 bg-slate-100 text-slate-500 rounded font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Cancel</button>
-                <button type="submit" class="flex-1 py-2 bg-slate-800 text-white rounded font-bold text-[10px] uppercase hover:bg-slate-900 shadow-lg transition-all">Update Parent Record</button>
+            <div class="flex gap-3 pt-6">
+                <button type="button" onclick="closeParentModal()" class="px-6 py-2 bg-slate-100 text-slate-500 rounded font-bold text-[10px] uppercase">Cancel</button>
+                <button type="submit" class="flex-1 py-2 bg-[#1e293b] text-white rounded font-bold text-[10px] uppercase shadow-lg">Save Profile</button>
             </div>
         </form>
     </div>
@@ -107,7 +101,6 @@
     const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
     let allParents = [];
     
-    // The specific fields to map from Xano
     const parentFields = [
         'first_name', 'last_name', 'email', 'phone', 'address', 'is_active',
         'second_parent_name', 'second_parent_phone', 'emergency_contact_1_name',
@@ -117,15 +110,12 @@
     ];
 
     async function fetchParents() {
+        // Use your specific key: 'locked_franchise_id'
         const fid = localStorage.getItem('locked_franchise_id');
-        const fname = localStorage.getItem('locked_franchise_name');
         const tbody = document.getElementById('parent-table-body');
-        
-        // Update UI Context
-        document.getElementById('branch-indicator').innerText = fname ? `Branch: ${fname}` : "No Branch Selected";
 
         if (!fid) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Please select a franchise first.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Branch ID missing. Please re-select from Identity Lock.</td></tr>';
             return;
         }
 
@@ -134,9 +124,11 @@
             if (res.ok) {
                 allParents = await res.json();
                 renderParentTable();
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">RELOAD ERROR: Connection Lost</td></tr>';
             }
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-400 text-xs font-bold uppercase">Database Connection Error</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">RELOAD ERROR: Connection Lost</td></tr>';
         }
     }
 
@@ -156,37 +148,37 @@
 
         tbody.innerHTML = '';
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs">No records found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">No parent records found for this branch.</td></tr>';
             return;
         }
 
         filtered.forEach((p, idx) => {
-            const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
-            const status = p.is_active ? 'border-emerald-500' : 'border-slate-300';
+            const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30';
             
             tbody.insertAdjacentHTML('beforeend', `
                 <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50 transition-colors">
-                    <td class="p-4 border-l-4 ${status}">
+                    <td class="p-4">
                         <div class="font-bold text-slate-900 text-sm">${p.first_name} ${p.last_name}</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">${p.email}</div>
-                        <div class="text-[10px] font-bold text-slate-600 mt-1">${p.phone}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">Email: ${p.email}</div>
+                        <div class="text-[10px] text-slate-400">Phone: ${p.phone}</div>
+                        <div class="text-[10px] text-slate-400 mt-1 max-w-[250px]">${p.address || ''}</div>
                     </td>
                     <td class="p-4">
-                        <div class="font-medium text-slate-800">${p.second_parent_name || '<span class="text-slate-300 italic">None Listed</span>'}</div>
-                        <div class="text-[10px] text-slate-500">${p.second_parent_phone || ''}</div>
+                        <div class="font-medium text-slate-800">${p.second_parent_name || '---'}</div>
+                        <div class="text-[10px] text-slate-400">${p.second_parent_phone || ''}</div>
                     </td>
                     <td class="p-4">
-                        <div class="flex flex-col gap-1">
-                            <div class="bg-red-50 p-1.5 rounded border border-red-100 max-w-[200px]">
-                                <div class="text-[8px] font-bold text-red-400 uppercase leading-none">${p.emergency_contact_1_relationship || 'Emergency'}</div>
-                                <div class="font-bold text-slate-700 truncate">${p.emergency_contact_1_name || '---'}</div>
-                                <div class="text-[10px] text-red-600 font-black">${p.emergency_contact_1_phone_number || ''}</div>
+                        <div class="space-y-2">
+                            <div class="bg-red-50 p-1.5 rounded border border-red-100/50">
+                                <div class="text-[8px] font-bold text-red-400 uppercase leading-none mb-1">#1 ${p.emergency_contact_1_relationship || 'Emergency'}</div>
+                                <div class="font-bold text-slate-700 truncate">${p.emergency_contact_1_name || 'NONE'}</div>
+                                <div class="text-[10px] text-slate-500">${p.emergency_contact_1_phone_number || ''}</div>
                             </div>
                         </div>
                     </td>
                     <td class="p-4 text-right">
                         <div class="flex justify-end gap-2">
-                            <button onclick='editParent(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase hover:bg-white hover:shadow-sm">Edit</button>
+                            <button onclick='editParent(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase hover:bg-white">Edit</button>
                             <button onclick="deleteParent(${p.id})" class="px-3 py-1.5 border border-red-50 text-red-300 rounded text-[9px] font-bold uppercase hover:text-red-500">Del</button>
                         </div>
                     </td>
@@ -197,17 +189,14 @@
 
     function openParentModal(p = null) {
         const modal = document.getElementById('parent-modal');
-        const form = document.getElementById('parent-form');
         const fid = localStorage.getItem('locked_franchise_id');
-        const fname = localStorage.getItem('locked_franchise_name');
 
         modal.classList.remove('hidden');
-        form.reset();
+        document.getElementById('parent-form').reset();
 
         document.getElementById('p-edit-id').value = p ? p.id : '';
         document.getElementById('p-franchise-id').value = fid;
         document.getElementById('p-modal-title').innerText = p ? 'Update Parent Profile' : 'New Parent Profile';
-        document.getElementById('modal-franchise-label').innerText = `Registering to: ${fname}`;
 
         if (p) {
             parentFields.forEach(f => {
@@ -251,16 +240,16 @@
                 closeParentModal();
                 fetchParents();
             }
-        } catch (err) { alert("Error saving parent record."); }
+        } catch (err) { alert("Error saving record."); }
     };
 
     async function deleteParent(id) {
-        if (confirm("Permanently delete this parent and their records?")) {
+        if (confirm("Delete this record?")) {
             await fetch(`${PARENT_API}/${id}`, { method: 'DELETE' });
             fetchParents();
         }
     }
 
-    // Initialize
+    // Load table on startup
     fetchParents();
 </script>
