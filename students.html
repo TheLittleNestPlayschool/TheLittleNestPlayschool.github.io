@@ -1,32 +1,11 @@
-<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-    <div>
-        <h1 class="text-2xl font-bold text-emerald-500 uppercase tracking-tight">Student Roster</h1>
-        <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Enrolled Learners Directory</p>
-    </div>
-    
-    <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="student-search" placeholder="Search student name..." 
-            class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-slate-500 shadow-sm w-full md:w-64">
-
-        <select id="student-sort" class="bg-white border border-slate-300 px-3 py-2 rounded-lg text-[10px] font-medium text-slate-600 outline-none">
-            <option value="newest">Newest First</option>
-            <option value="name_asc">Name: A-Z</option>
-        </select>
-        
-        <button id="add-student-btn" class="bg-[#1e293b] hover:bg-slate-900 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
-            + REGISTER STUDENT
-        </button>
-    </div>
-</div>
-
 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
     <table class="w-full text-left border-collapse">
         <thead>
             <tr class="bg-slate-100 border-b border-slate-200">
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/3">Student Name</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/4">Birth Date</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/4">Status</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right w-1/8">Actions</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Student Name</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Birth Date</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
             </tr>
         </thead>
         <tbody id="student-table-body">
@@ -35,52 +14,10 @@
     </table>
 </div>
 
-<div id="student-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-300">
-        <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-            <div>
-                <h2 id="s-modal-title" class="text-sm font-bold text-slate-800 uppercase">Student Registration</h2>
-                <p class="text-[9px] text-slate-400 uppercase tracking-tighter">Enrollment & Profile Management</p>
-            </div>
-            <button id="close-stu-x" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
-        </div>
-        
-        <form id="student-form" class="p-6 space-y-4">
-            <input type="hidden" id="s-edit-id">
-            
-            <div>
-                <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Full Name</label>
-                <input type="text" id="s-name" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500">
-            </div>
-
-            <div>
-                <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Date of Birth</label>
-                <input type="date" id="s-date_of_birth" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500">
-            </div>
-
-            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 mt-4">
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" id="s-is_active" class="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500">
-                    <div>
-                        <span class="text-[10px] font-bold text-slate-700 uppercase block">Active Enrollment</span>
-                        <span class="text-[9px] text-slate-400 block">Uncheck to mark student as withdrawn or graduated.</span>
-                    </div>
-                </label>
-            </div>
-
-            <div class="flex gap-3 pt-6 border-t border-slate-100">
-                <button type="button" id="cancel-stu-btn" class="px-6 py-2.5 bg-slate-100 text-slate-500 rounded-lg font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Cancel</button>
-                <button type="submit" class="flex-1 py-2.5 bg-[#1e293b] text-white rounded-lg font-bold text-[10px] uppercase shadow-lg hover:bg-black transition-all">
-                    Save Student Profile
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script>
 (function() {
     const StudentModule = {
+        // Correct API endpoint for students [cite: 2026-02-05]
         API: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/student",
         data: [],
         fields: ['name', 'date_of_birth', 'is_active'],
@@ -91,7 +28,10 @@
             
             if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">Syncing Database...</td></tr>';
 
-            if (!fid) return;
+            if (!fid) {
+                if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">No Franchise ID Found</td></tr>';
+                return;
+            }
 
             try {
                 const response = await fetch(`${this.API}?franchise_id=${fid}`);
@@ -111,21 +51,11 @@
             if (!tbody) return;
 
             const searchTerm = (document.getElementById('student-search')?.value || '').toLowerCase();
-            const sortVal = document.getElementById('student-sort')?.value || 'newest';
-
-            let filtered = this.data.filter(s => 
-                (s.name && s.name.toLowerCase().includes(searchTerm))
-            );
-
-            if (sortVal === 'name_asc') {
-                filtered.sort((a,b) => (a.name || '').localeCompare(b.name || ''));
-            } else {
-                filtered.sort((a,b) => (b.id || 0) - (a.id || 0));
-            }
+            let filtered = this.data.filter(s => (s.name && s.name.toLowerCase().includes(searchTerm)));
 
             tbody.innerHTML = '';
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-300 text-[10px] font-bold uppercase tracking-widest">No matching student records.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-300 text-[10px] font-bold uppercase tracking-widest">No student records.</td></tr>';
                 return;
             }
 
@@ -153,11 +83,14 @@
         },
 
         setupListeners() {
-            document.getElementById('student-search').oninput = () => this.render();
-            document.getElementById('student-sort').onchange = () => this.render();
-            document.getElementById('add-student-btn').onclick = () => this.openModal();
-            document.getElementById('close-stu-x').onclick = () => this.closeModal();
-            document.getElementById('cancel-stu-btn').onclick = () => this.closeModal();
+            const search = document.getElementById('student-search');
+            if (search) search.oninput = () => this.render();
+
+            const addBtn = document.getElementById('add-student-btn');
+            if (addBtn) addBtn.onclick = () => this.openModal();
+
+            const closeX = document.getElementById('close-stu-x');
+            if (closeX) closeX.onclick = () => this.closeModal();
         },
 
         openModal(s = null) {
@@ -165,7 +98,6 @@
             modal.classList.remove('hidden');
             document.getElementById('student-form').reset();
             document.getElementById('s-edit-id').value = s ? s.id : '';
-            document.getElementById('s-modal-title').innerText = s ? 'Update Student Profile' : 'Register New Student';
 
             if(s) {
                 this.fields.forEach(f => {
@@ -183,18 +115,20 @@
         closeModal() { document.getElementById('student-modal').classList.add('hidden'); }
     };
 
-    document.getElementById('student-form').onsubmit = async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('s-edit-id').value;
-        const fid = localStorage.getItem('locked_franchise_id');
-        const payload = { franchise_id: parseInt(fid) };
-        
-        StudentModule.fields.forEach(f => {
-            const el = document.getElementById('s-' + f);
-            if (el) payload[f] = el.type === 'checkbox' ? el.checked : el.value;
-        });
+    // Form Submission
+    const form = document.getElementById('student-form');
+    if (form) {
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('s-edit-id').value;
+            const fid = localStorage.getItem('locked_franchise_id');
+            const payload = { franchise_id: parseInt(fid) };
+            
+            StudentModule.fields.forEach(f => {
+                const el = document.getElementById('s-' + f);
+                if (el) payload[f] = el.type === 'checkbox' ? el.checked : el.value;
+            });
 
-        try {
             const res = await fetch(id ? `${StudentModule.API}/${id}` : StudentModule.API, { 
                 method: id ? 'PATCH' : 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
@@ -204,10 +138,8 @@
                 StudentModule.closeModal();
                 StudentModule.init();
             }
-        } catch (err) {
-            console.error("Save Error:", err);
-        }
-    };
+        };
+    }
 
     StudentModule.init();
 })();
