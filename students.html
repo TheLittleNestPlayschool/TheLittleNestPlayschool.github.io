@@ -87,7 +87,6 @@
             const res = await fetch(`${PARENT_API}/${parentId}`);
             if (res.ok) {
                 const p = await res.json();
-                // Update the specific UI cells once the parent data arrives
                 document.getElementById(`guardian-${studentId}`).innerText = `${p.first_name} ${p.last_name}`;
                 document.getElementById(`emergency-name-${studentId}`).innerText = p.emergency_contact_1_name;
                 document.getElementById(`emergency-phone-${studentId}`).innerText = p.emergency_contact_1_phone_number;
@@ -98,7 +97,12 @@
     function renderStudentTable() {
         const tbody = document.getElementById('student-table-body');
         const searchTerm = document.getElementById('student-search').value.toLowerCase();
-        const filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
+        const sortVal = document.getElementById('student-sort').value;
+
+        let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
+
+        if (sortVal === 'name_asc') filtered.sort((a,b) => a.name.localeCompare(b.name));
+        else filtered.sort((a,b) => b.id - a.id);
 
         tbody.innerHTML = '';
         filtered.forEach((s, idx) => {
@@ -110,7 +114,7 @@
                         <div class="text-[10px] text-slate-400 mt-0.5">"${s.nickname || ''}"</div>
                     </td>
                     <td class="p-4">
-                        <div id="guardian-${s.id}" class="font-medium text-slate-800 italic text-slate-400">Loading...</div>
+                        <div id="guardian-${s.id}" class="font-medium text-slate-800">Loading...</div>
                     </td>
                     <td class="p-4">
                         <div class="bg-red-50/50 p-2 rounded border border-red-100 max-w-[200px]">
@@ -119,11 +123,13 @@
                         </div>
                     </td>
                     <td class="p-4 text-right">
-                        <button onclick='openStudentModal(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase">Edit</button>
+                        <div class="flex justify-end gap-2">
+                            <button onclick='openStudentModal(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="px-3 py-1.5 border border-slate-200 rounded text-[9px] font-bold uppercase hover:bg-white">Edit</button>
+                            <button onclick="deleteStudent(${s.id})" class="px-3 py-1.5 border border-red-50 text-red-200 rounded text-[9px] font-bold uppercase hover:text-red-500">Del</button>
+                        </div>
                     </td>
                 </tr>
             `);
-            // Trigger the single-record read for this student's parent
             getParentData(s.parent_id, s.id);
         });
     }
@@ -141,6 +147,31 @@
     }
 
     function closeStudentModal() { document.getElementById('student-modal').classList.add('hidden'); }
+
+    document.getElementById('student-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('s-edit-id').value;
+        const fid = localStorage.getItem('locked_franchise_id');
+        const payload = {
+            franchise_id: parseInt(fid),
+            name: document.getElementById('name').value,
+            nickname: document.getElementById('nickname').value,
+            date_of_birth: document.getElementById('date_of_birth').value,
+            gender: document.getElementById('gender').value
+        };
+        const method = id ? 'PATCH' : 'POST';
+        const url = id ? `${STUDENT_API}/${id}` : STUDENT_API;
+        await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        closeStudentModal();
+        fetchStudents();
+    };
+
+    async function deleteStudent(id) {
+        if(confirm("Delete student?")) {
+            await fetch(`${STUDENT_API}/${id}`, { method: 'DELETE' });
+            fetchStudents();
+        }
+    }
 
     fetchStudents();
 </script>
