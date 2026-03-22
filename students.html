@@ -5,7 +5,7 @@
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="student-search" oninput="renderStudentTable()" placeholder="Search students..." 
+        <input type="text" id="student-search" oninput="renderStudentTable()" placeholder="Search students or parents..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-slate-500 shadow-sm w-full md:w-64">
 
         <select id="student-sort" onchange="renderStudentTable()" class="bg-white border border-slate-300 px-3 py-2 rounded-lg text-[10px] font-medium text-slate-600 outline-none">
@@ -23,14 +23,14 @@
     <table class="w-full text-left border-collapse">
         <thead>
             <tr class="bg-slate-100 border-b border-slate-200">
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Student Details</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Guardian</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Student & Bio</th>
+                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Parent & Enrollment</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase">Emergency Info</th>
                 <th class="p-4 text-[10px] font-bold text-slate-500 uppercase text-right">Actions</th>
             </tr>
         </thead>
         <tbody id="student-table-body">
-            <tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Connecting to NestMind...</td></tr>
+            <tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">Synchronizing database...</td></tr>
         </tbody>
     </table>
 </div>
@@ -62,10 +62,12 @@
 
 <script>
     const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/student";
+    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
+    
     let allStudents = [];
+    let allParents = [];
 
-    async function fetchStudents() {
-        // CRITICAL FIX: Ensure we grab the ID from the global lock
+    async function fetchData() {
         const fid = localStorage.getItem('locked_franchise_id');
         const tbody = document.getElementById('student-table-body');
 
@@ -75,16 +77,17 @@
         }
 
         try {
-            // Updated API call to specifically filter by the locked franchise
-            const res = await fetch(`${STUDENT_API}?franchise_id=${fid}`);
-            if (res.ok) {
-                allStudents = await res.json();
-                renderStudentTable();
-            } else {
-                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">SYNC ERROR: Check Connection</td></tr>';
-            }
+            // Read Parents first to have the names ready [cite: 2026-02-05]
+            const pRes = await fetch(`${PARENT_API}?franchise_id=${fid}`);
+            allParents = await pRes.json();
+
+            // Read Students for this branch [cite: 2026-02-05]
+            const sRes = await fetch(`${STUDENT_API}?franchise_id=${fid}`);
+            allStudents = await sRes.json();
+
+            renderStudentTable();
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">CONNECTION ERROR</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase">SYNC ERROR: CONNECTION FAILED</td></tr>';
         }
     }
 
@@ -93,41 +96,46 @@
         const searchTerm = document.getElementById('student-search').value.toLowerCase();
         const sortVal = document.getElementById('student-sort').value;
 
-        let filtered = allStudents.filter(s => 
-            s.name.toLowerCase().includes(searchTerm) || 
-            (s.nickname && s.nickname.toLowerCase().includes(searchTerm))
-        );
+        // Filter by student name OR mapped parent name [cite: 2026-02-05]
+        let filtered = allStudents.filter(s => {
+            const parent = allParents.find(p => p.id === s.parent_id);
+            const pName = parent ? `${parent.first_name} ${parent.last_name}`.toLowerCase() : "";
+            return s.name.toLowerCase().includes(searchTerm) || pName.includes(searchTerm);
+        });
 
         if (sortVal === 'name_asc') filtered.sort((a,b) => a.name.localeCompare(b.name));
         else filtered.sort((a,b) => b.id - a.id);
 
         tbody.innerHTML = '';
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">No students found for this branch.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 text-xs italic">No student records found.</td></tr>';
             return;
         }
 
         filtered.forEach((s, idx) => {
+            const parent = allParents.find(p => p.id === s.parent_id);
+            const parentName = parent ? `${parent.first_name} ${parent.last_name}` : 'No Parent Linked';
+            
             const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30';
             
             tbody.insertAdjacentHTML('beforeend', `
-                <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50 transition-colors">
+                <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50">
                     <td class="p-4">
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-slate-900 text-sm">${s.name}</span>
-                            <span class="px-1.5 py-0.5 ${s.is_active ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'} text-[8px] font-black rounded uppercase">${s.is_active ? 'Active' : 'Inactive'}</span>
+                            <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-600 text-[8px] font-black rounded uppercase">${s.is_active ? 'Active' : 'Inactive'}</span>
                         </div>
-                        <div class="text-[10px] text-slate-400 mt-0.5 italic">"${s.nickname || 'No Nickname'}" • ${s.gender || '---'} • DOB: ${s.date_of_birth || '---'}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5 italic">"${s.nickname || '---'}" • ${s.gender || ''} • DOB: ${s.date_of_birth || ''}</div>
                     </td>
                     <td class="p-4">
-                        <div class="font-medium text-slate-800">${s._parent ? s._parent.first_name + ' ' + s._parent.last_name : 'No Parent Assigned'}</div>
-                        <div class="text-[9px] text-slate-400 uppercase tracking-tighter">Joined: ${new Date(s.created_at).toLocaleDateString()}</div>
+                        <div class="font-medium text-slate-800">${parentName}</div>
+                        <div class="text-[9px] text-slate-400 uppercase tracking-tighter">Enrolled: ${new Date(s.created_at).toLocaleDateString()}</div>
                     </td>
                     <td class="p-4">
-                        <div class="bg-red-50 p-2 rounded border border-red-100/50 max-w-[180px]">
-                            <div class="text-[8px] font-bold text-red-400 uppercase leading-none mb-1">Primary Emergency</div>
-                            <div class="font-bold text-slate-700 truncate">${s._parent ? s._parent.emergency_contact_1_name : 'NONE'}</div>
-                            <div class="text-[10px] text-red-600 font-medium">${s._parent ? s._parent.emergency_contact_1_phone_number : ''}</div>
+                        <div class="bg-red-50/50 p-2 rounded border border-red-100 max-w-[200px]">
+                            <div class="text-[8px] font-black text-red-400 uppercase leading-none mb-1">Primary Emergency</div>
+                            <div class="font-bold text-slate-700 truncate">${parent ? parent.emergency_contact_1_name : '---'}</div>
+                            <div class="text-[10px] text-red-600 font-medium">${parent ? parent.emergency_contact_1_phone_number : ''}</div>
                         </div>
                     </td>
                     <td class="p-4 text-right">
@@ -142,12 +150,10 @@
     }
 
     function openStudentModal(s = null) {
-        const modal = document.getElementById('student-modal');
-        modal.classList.remove('hidden');
+        document.getElementById('student-modal').classList.remove('hidden');
         document.getElementById('student-form').reset();
         document.getElementById('s-edit-id').value = s ? s.id : '';
-        
-        if (s) {
+        if(s) {
             document.getElementById('name').value = s.name;
             document.getElementById('nickname').value = s.nickname || '';
             document.getElementById('date_of_birth').value = s.date_of_birth || '';
@@ -157,6 +163,12 @@
 
     function closeStudentModal() { document.getElementById('student-modal').classList.add('hidden'); }
 
-    // Start Load
-    fetchStudents();
+    async function deleteStudent(id) {
+        if(confirm("Delete this student permanently?")) {
+            await fetch(`${STUDENT_API}/${id}`, { method: 'DELETE' });
+            fetchData();
+        }
+    }
+
+    fetchData();
 </script>
