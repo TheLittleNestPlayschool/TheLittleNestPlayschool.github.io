@@ -74,9 +74,9 @@
             <table class="w-full text-left">
                 <thead class="bg-white border-b border-slate-100 sticky top-0">
                     <tr>
-                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase">Session / Teacher</th>
-                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase text-center">Enrollment</th>
-                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase">Utilization</th>
+                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Session Name</th>
+                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase text-center tracking-widest">Enrollment</th>
+                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Utilization</th>
                     </tr>
                 </thead>
                 <tbody id="perf-sessions-body" class="divide-y divide-slate-50">
@@ -122,13 +122,79 @@
 </div>
 
 <script>
-    // Logic for this page was kept separate and restored as requested.
     async function initPerformance() {
         const fid = localStorage.getItem('locked_franchise_id');
         if (!fid) return;
 
-        // Fetch students and calculate the Pulse, Revenue, ROI and Session Distribution
-        // Using the 15-student cap logic for the session table.
+        const API_ROOT = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx";
+
+        try {
+            // Fetch Sessions and Students
+            const [sessionRes, studentRes] = await Promise.all([
+                fetch(`${API_ROOT}/session?franchise_id=${fid}`),
+                fetch(`${API_ROOT}/student?franchise_id=${fid}`)
+            ]);
+
+            const sessions = await sessionRes.json();
+            const students = await studentRes.json();
+
+            // Calculate Active Pulse
+            const activeStudents = students.filter(s => s.is_active === true);
+            const totalActive = activeStudents.length;
+            document.getElementById('perf-total-active').innerText = totalActive;
+
+            // Map Students to Sessions
+            const sessionCounts = {};
+            activeStudents.forEach(s => {
+                if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1;
+            });
+
+            // Revenue Calculations
+            const monthlyRev = totalActive * 3500;
+            document.getElementById('rev-monthly').innerText = monthlyRev.toLocaleString();
+            document.getElementById('rev-daily').innerText = Math.round(monthlyRev / 30).toLocaleString();
+
+            // ROI Update
+            window.calculateROI = () => {
+                const investment = 350000;
+                const opex = document.getElementById('perf-opex-input').value || 15000;
+                const net = monthlyRev - opex;
+                const roi = net > 0 ? (investment / net).toFixed(1) : "0.0";
+                
+                document.getElementById('perf-roi').innerText = roi;
+                document.getElementById('perf-gross').innerText = "₱" + monthlyRev.toLocaleString();
+                document.getElementById('perf-opex-display').innerText = "₱" + parseInt(opex).toLocaleString();
+            };
+            window.calculateROI();
+
+            // Populate Session Table
+            const tbody = document.getElementById('perf-sessions-body');
+            tbody.innerHTML = '';
+            sessions.forEach(session => {
+                const count = sessionCounts[session.id] || 0;
+                const percent = Math.min((count / 15) * 100, 100);
+                const barColor = percent >= 100 ? 'bg-red-500' : (percent > 80 ? 'bg-orange-400' : 'bg-[#00d1b2]');
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="px-6 py-3 text-[11px] font-black text-slate-700 uppercase">${session.name}</td>
+                        <td class="px-6 py-3 text-center">
+                            <span class="text-xs font-black text-slate-800">${count}</span>
+                            <span class="text-[9px] font-bold text-slate-300">/ 15</span>
+                        </td>
+                        <td class="px-6 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="flex-grow h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full ${barColor} transition-all duration-500" style="width: ${percent}%"></div>
+                                </div>
+                                <span class="text-[9px] font-black text-slate-400 w-6 text-right">${Math.round(percent)}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+        } catch (e) { console.error("Sync Failure:", e); }
     }
     initPerformance();
 </script>
