@@ -24,6 +24,13 @@
                         <div class="w-10 text-right"><span id="perf-prev-week-active" class="text-sm font-bold text-slate-300">0</span></div>
                     </div>
                 </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Monthly</span>
+                    <div class="flex gap-4">
+                        <div class="w-10 text-right"><span id="perf-month-active" class="text-sm font-black text-slate-800">0</span></div>
+                        <div class="w-10 text-right"><span id="perf-prev-month-active" class="text-sm font-bold text-slate-300">0</span></div>
+                    </div>
+                </div>
                 <div class="flex justify-between items-end pt-3 border-t border-slate-50">
                     <div>
                         <span class="text-[8px] font-black text-[#00d1b2] uppercase block tracking-widest">Active Total</span>
@@ -213,13 +220,44 @@
             if (!Array.isArray(sessions)) sessions = [];
             if (!Array.isArray(students)) students = [];
 
+            const now = new Date();
+            const oneDay = 24 * 60 * 60 * 1000;
+            const oneWeek = 7 * oneDay;
+            const oneMonth = 30 * oneDay;
+
             const activeStudents = students.filter(s => s.is_active === true);
-            const totalActive = activeStudents.length;
+            const totalActiveCount = activeStudents.length;
             const sessionCounts = {};
             activeStudents.forEach(s => { if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1; });
 
-            document.getElementById('perf-total-active').innerText = totalActive;
-            const monthlyRev = totalActive * 3500;
+            // ENROLLMENT LOGIC RE-INSERTED
+            const todayEnroll = activeStudents.filter(s => (now - s.created_at) < oneDay).length;
+            const prevDayEnroll = activeStudents.filter(s => {
+                const age = now - s.created_at;
+                return age >= oneDay && age < (oneDay * 2);
+            }).length;
+
+            const weekEnroll = activeStudents.filter(s => (now - s.created_at) < oneWeek).length;
+            const prevWeekEnroll = activeStudents.filter(s => {
+                const age = now - s.created_at;
+                return age >= oneWeek && age < (oneWeek * 2);
+            }).length;
+
+            const monthEnroll = activeStudents.filter(s => (now - s.created_at) < oneMonth).length;
+            const prevMonthEnroll = activeStudents.filter(s => {
+                const age = now - s.created_at;
+                return age >= oneMonth && age < (oneMonth * 2);
+            }).length;
+
+            document.getElementById('perf-today-active').innerText = todayEnroll;
+            document.getElementById('perf-prev-day-active').innerText = prevDayEnroll;
+            document.getElementById('perf-week-active').innerText = weekEnroll;
+            document.getElementById('perf-prev-week-active').innerText = prevWeekEnroll;
+            document.getElementById('perf-month-active').innerText = monthEnroll;
+            document.getElementById('perf-prev-month-active').innerText = prevMonthEnroll;
+            document.getElementById('perf-total-active').innerText = totalActiveCount;
+
+            const monthlyRev = totalActiveCount * 3500;
             const dailyRev = monthlyRev / 30;
             
             document.getElementById('rev-monthly').innerText = monthlyRev.toLocaleString();
@@ -246,7 +284,6 @@
                 document.getElementById('calc-extra-wages').innerText = "₱" + Math.round(extraWages).toLocaleString();
                 document.getElementById('calc-royalties').innerText = "₱" + Math.round(royalties).toLocaleString();
                 
-                // Set the values under the bar
                 document.getElementById('label-current-val').innerText = `₱${Math.round(netDaily).toLocaleString()}`;
                 document.getElementById('label-total-val').innerText = `₱${fee.toLocaleString()}`;
                 document.getElementById('recovery-bar').style.width = Math.max(recoveryPercent * 10, 0.5) + "%";
