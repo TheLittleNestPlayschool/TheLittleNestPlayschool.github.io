@@ -14,6 +14,13 @@
                     <option value="">-- Select Branch --</option>
                 </select>
                 <div id="active-branch-name" class="hidden text-white font-extrabold text-base tracking-tight py-1"></div>
+                
+                <div id="breadcrumb-container" class="hidden mt-3 pt-3 border-t border-slate-700/50">
+                    <div class="flex items-center justify-center gap-2">
+                        <div class="w-1 h-1 rounded-full bg-[#00d1b2] animate-pulse"></div>
+                        <span id="breadcrumb-text" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Portal Root</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -72,6 +79,7 @@
     function unlockDashboard() {
         const select = document.getElementById('branch-select');
         const branchDisplay = document.getElementById('active-branch-name');
+        const breadcrumbBox = document.getElementById('breadcrumb-container');
         const fid = select.value;
         const fname = select.options[select.selectedIndex].text;
         if(!fid) return;
@@ -82,13 +90,20 @@
         select.classList.add('hidden');
         branchDisplay.innerText = fname;
         branchDisplay.classList.remove('hidden');
+        breadcrumbBox.classList.remove('hidden'); // Reveal breadcrumbs upon unlock
         document.getElementById('nav-menu').classList.remove('hidden');
         document.getElementById('status-text').innerText = "Identity Verified.";
     }
 
     async function loadModule(file, title) {
         const workspace = document.getElementById('main-workspace');
+        const breadcrumbText = document.getElementById('breadcrumb-text');
+        
         workspace.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic">Synchronizing ${title}...</div>`;
+        
+        // Update the breadcrumb text
+        if(breadcrumbText) breadcrumbText.innerText = title;
+
         try {
             const res = await fetch(GITHUB_ROOT + file + '?v=' + Date.now());
             const html = await res.text();
