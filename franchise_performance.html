@@ -1,7 +1,6 @@
 <div class="flex flex-col items-center justify-start w-full max-w-6xl mx-auto space-y-4 animate-in fade-in duration-500 pb-20">
     
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
-        
         <div onclick="loadModule('students.html', 'Students')" class="group cursor-pointer bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-[#00d1b2] transition-all">
             <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-2">
                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest group-hover:text-[#00d1b2]">Enrollment Pulse</p>
@@ -10,7 +9,6 @@
                     <span class="w-10 text-right">Prev</span>
                 </div>
             </div>
-            
             <div class="space-y-3">
                 <div class="flex justify-between items-center">
                     <span class="text-[10px] font-bold text-slate-500 uppercase">Today</span>
@@ -79,44 +77,101 @@
                         <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Utilization</th>
                     </tr>
                 </thead>
-                <tbody id="perf-sessions-body" class="divide-y divide-slate-50">
-                    </tbody>
+                <tbody id="perf-sessions-body" class="divide-y divide-slate-50"></tbody>
             </table>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
-        <div class="md:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <h2 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+    <div class="w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex justify-between items-start mb-6">
+            <h2 class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                 <span>💎</span> ROI Intelligence
             </h2>
-            <div class="grid grid-cols-2 gap-6">
-                <div>
-                    <p class="text-[9px] text-slate-400 uppercase font-black mb-1 tracking-widest leading-none">Projected Payback</p>
-                    <div class="flex items-end gap-1">
-                        <span id="perf-roi" class="text-5xl font-black text-slate-800 tracking-tighter">0.0</span>
-                        <span class="text-[#00d1b2] font-black pb-1 uppercase text-[10px]">Months</span>
+            <button onclick="document.getElementById('expense-modal').classList.remove('hidden')" class="text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 px-4 py-2 rounded-xl hover:bg-[#00d1b2] hover:text-white transition-all">
+                Update Expenses
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="flex flex-col justify-center border-r border-slate-50">
+                <p class="text-[9px] text-slate-400 uppercase font-black mb-1 tracking-widest leading-none">Projected Payback</p>
+                <div class="flex items-end gap-1">
+                    <span id="perf-roi" class="text-6xl font-black text-slate-800 tracking-tighter">0.0</span>
+                    <span class="text-[#00d1b2] font-black pb-2 uppercase text-[10px]">Months</span>
+                </div>
+            </div>
+            
+            <div class="space-y-4 py-2 col-span-2">
+                <div class="grid grid-cols-2 gap-8">
+                    <div>
+                        <span class="text-[9px] text-slate-400 uppercase font-bold tracking-widest block mb-1">Monthly Gross</span>
+                        <span id="perf-gross" class="text-2xl font-black text-slate-800">₱0</span>
+                    </div>
+                    <div>
+                        <span class="text-[9px] font-black text-red-400 uppercase tracking-widest block mb-1">Total Monthly OpEx</span>
+                        <span id="perf-opex-display" class="text-2xl font-black text-red-500">₱0</span>
                     </div>
                 </div>
-                <div class="space-y-3 pt-1">
-                    <div class="flex justify-between border-b border-slate-50 pb-1">
-                        <span class="text-[9px] text-slate-400 uppercase font-bold tracking-widest">Est. Gross</span>
-                        <span id="perf-gross" class="text-xs font-black text-slate-700">₱0</span>
-                    </div>
-                    <div class="flex justify-between border-b border-slate-50 pb-1">
-                        <span class="text-[9px] font-black text-red-400 uppercase tracking-widest">Monthly OpEx</span>
-                        <span id="perf-opex-display" class="text-xs font-black text-red-500">₱0</span>
-                    </div>
+                <div class="pt-4 border-t border-slate-50 flex gap-6">
+                    <div class="text-[10px] font-bold text-slate-400 uppercase">Franchise Price: <span id="display-franchise-price" class="text-slate-800">₱350,000</span></div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase">Net Monthly: <span id="perf-net" class="text-[#00d1b2]">₱0</span></div>
                 </div>
             </div>
         </div>
-        
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-            <div>
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3 text-center">Simulation Tool</p>
-                <input type="number" id="perf-opex-input" value="15000" oninput="calculateROI()" class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-sm font-bold text-center outline-none focus:border-[#00d1b2]">
+    </div>
+</div>
+
+<div id="expense-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+        <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+            <h3 class="text-xs font-black uppercase tracking-widest text-slate-500">Expense Configuration</h3>
+            <button onclick="document.getElementById('expense-modal').classList.add('hidden')" class="text-slate-400 hover:text-red-500">✕</button>
+        </div>
+        <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black uppercase text-slate-400">Rent</label>
+                    <input type="number" id="exp-rent" value="15000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none focus:border-[#00d1b2]">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black uppercase text-slate-400">Wages</label>
+                    <input type="number" id="exp-wages" value="25000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none focus:border-[#00d1b2]">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black uppercase text-slate-400">Power</label>
+                    <input type="number" id="exp-power" value="3000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none focus:border-[#00d1b2]">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black uppercase text-slate-400">Water</label>
+                    <input type="number" id="exp-water" value="500" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none focus:border-[#00d1b2]">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black uppercase text-slate-400">Advertising</label>
+                    <input type="number" id="exp-ads" value="5000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none focus:border-[#00d1b2]">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black uppercase text-slate-400">Other</label>
+                    <input type="number" id="exp-other" value="2000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none focus:border-[#00d1b2]">
+                </div>
             </div>
-            <p class="text-[8px] text-slate-400 italic text-center">7-10 Month Target ROI [2026-02]</p>
+            <div class="space-y-1 pt-2 border-t border-slate-50">
+                <label class="text-[9px] font-black uppercase text-slate-400">Franchise Price (Investment)</label>
+                <input type="number" id="exp-fprice" value="350000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-black outline-none focus:border-[#00d1b2]">
+            </div>
+            <div class="bg-blue-50/50 p-3 rounded-xl space-y-2">
+                <p class="text-[8px] font-black uppercase text-blue-400 tracking-widest">Auto-Calculations</p>
+                <div class="flex justify-between text-[10px] font-bold text-blue-600">
+                    <span>Extra Wages (10%):</span>
+                    <span id="calc-extra-wages">₱0</span>
+                </div>
+                <div class="flex justify-between text-[10px] font-bold text-blue-600">
+                    <span>Royalties (8%):</span>
+                    <span id="calc-royalties">₱0</span>
+                </div>
+            </div>
+        </div>
+        <div class="p-4 bg-slate-50 border-t border-slate-100">
+            <button onclick="calculateROI(); document.getElementById('expense-modal').classList.add('hidden')" class="w-full bg-[#00d1b2] text-white font-black py-3 rounded-xl uppercase text-[11px] tracking-widest shadow-lg shadow-[#00d1b2]/20">Update Intelligence</button>
         </div>
     </div>
 </div>
@@ -126,15 +181,12 @@
         const fid = localStorage.getItem('locked_franchise_id');
         if (!fid) return;
 
-        // Ensure api_config is loaded from the root directory
         if (!window.NEST_ENDPOINTS) {
             await new Promise((resolve) => {
                 const script = document.createElement('script');
-                // The leading slash / ensures it looks at the root domain, not the subfolder
                 script.src = '/api_config.js';
                 script.onload = resolve;
                 script.onerror = () => {
-                    // Fallback to current dir if root slash fails
                     script.src = 'api_config.js';
                     script.onload = resolve;
                 };
@@ -173,15 +225,35 @@
             document.getElementById('rev-daily').innerText = Math.round(monthlyRev / 30).toLocaleString();
 
             window.calculateROI = () => {
-                const investment = 350000;
-                const opex = document.getElementById('perf-opex-input').value || 15000;
-                const net = monthlyRev - opex;
-                const roi = net > 0 ? (investment / net).toFixed(1) : "0.0";
-                
+                // Get inputs
+                const rent = parseFloat(document.getElementById('exp-rent').value) || 0;
+                const wages = parseFloat(document.getElementById('exp-wages').value) || 0;
+                const power = parseFloat(document.getElementById('exp-power').value) || 0;
+                const water = parseFloat(document.getElementById('exp-water').value) || 0;
+                const ads = parseFloat(document.getElementById('exp-ads').value) || 0;
+                const other = parseFloat(document.getElementById('exp-other').value) || 0;
+                const fPrice = parseFloat(document.getElementById('exp-fprice').value) || 350000;
+
+                // Calcs
+                const extraWages = wages * 0.10;
+                const royalties = monthlyRev * 0.08;
+                const totalOpex = rent + wages + power + water + ads + other + extraWages + royalties;
+                const netMonthly = monthlyRev - totalOpex;
+                const roi = netMonthly > 0 ? (fPrice / netMonthly).toFixed(1) : "0.0";
+
+                // Update Modal Displays
+                document.getElementById('calc-extra-wages').innerText = "₱" + extraWages.toLocaleString();
+                document.getElementById('calc-royalties').innerText = "₱" + royalties.toLocaleString();
+
+                // Update Main Displays
                 document.getElementById('perf-roi').innerText = roi;
                 document.getElementById('perf-gross').innerText = "₱" + monthlyRev.toLocaleString();
-                document.getElementById('perf-opex-display').innerText = "₱" + parseInt(opex).toLocaleString();
+                document.getElementById('perf-opex-display').innerText = "₱" + Math.round(totalOpex).toLocaleString();
+                document.getElementById('perf-net').innerText = "₱" + Math.round(netMonthly).toLocaleString();
+                document.getElementById('display-franchise-price').innerText = "₱" + fPrice.toLocaleString();
             };
+            
+            // Initial run
             window.calculateROI();
 
             const tbody = document.getElementById('perf-sessions-body');
