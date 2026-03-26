@@ -126,16 +126,16 @@
         const fid = localStorage.getItem('locked_franchise_id');
         if (!fid) return;
 
-        // Check if config exists, otherwise wait a beat
-        if (!window.NEST_ENDPOINTS) {
-            console.error("Config not ready, retrying...");
-            setTimeout(initPerformance, 100);
+        // Direct check without the loop to stop the console spam
+        const endpoints = window.NEST_ENDPOINTS;
+        if (!endpoints || !endpoints.session || !endpoints.student) {
+            console.error("NEST_ENDPOINTS not found or incomplete in window scope.");
             return;
         }
 
         try {
-            const sessionUrl = `${window.NEST_ENDPOINTS.session.list}?franchise_id=${fid}`;
-            const studentUrl = `${window.NEST_ENDPOINTS.student.list}?franchise_id=${fid}`;
+            const sessionUrl = `${endpoints.session.list}?franchise_id=${fid}`;
+            const studentUrl = `${endpoints.student.list}?franchise_id=${fid}`;
 
             const [sessionRes, studentRes] = await Promise.all([
                 fetch(sessionUrl),
