@@ -58,6 +58,7 @@
     const StudentModule = {
         data: [],
         parents: [],
+        sessions: [],
         schema: null,
 
         async init() {
@@ -71,19 +72,21 @@
             if (!fid) return;
 
             try {
-                // Fetch Students and Parents to cross-reference names
-                const [sRes, pRes] = await Promise.all([
+                // TRIPLE FETCH: Students, Parents (for names), and Sessions (for names)
+                const [sRes, pRes, sessRes] = await Promise.all([
                     fetch(`${window.NEST_ENDPOINTS.student.list}?franchise_id=${fid}`),
-                    fetch(`${window.NEST_ENDPOINTS.parent.list}?franchise_id=${fid}`)
+                    fetch(`${window.NEST_ENDPOINTS.parent.list}?franchise_id=${fid}`),
+                    fetch(`${window.NEST_ENDPOINTS.session.list}?franchise_id=${fid}`)
                 ]);
                 
                 this.data = await sRes.json();
                 this.parents = await pRes.json();
+                this.sessions = await sessRes.json();
                 
                 this.render();
                 this.setupListeners();
             } catch (err) {
-                console.error("Student Fetch Error:", err);
+                console.error("Data Sync Error:", err);
             }
         },
 
@@ -143,9 +146,12 @@
             filtered.forEach((s, idx) => {
                 const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40';
                 
-                // Lookup Parent Name
+                // DATA LOOKUPS
                 const parent = this.parents.find(p => p.id === s.parent_id);
                 const parentDisplay = parent ? `${parent.first_name} ${parent.last_name}` : `Guardian ID: ${s.parent_id}`;
+
+                const session = this.sessions.find(sess => sess.id === s.session_enrolled);
+                const sessionDisplay = session ? session.name : `ID: ${s.session_enrolled || 'Not Assigned'}`;
 
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="${bg} border-b border-slate-100 group hover:bg-slate-50 transition-all">
@@ -161,8 +167,8 @@
                                     </div>
                                     <div class="grid grid-cols-2 gap-y-3 gap-x-4">
                                         <div class="col-span-2 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <p class="text-[8px] text-teal-600 font-black uppercase tracking-widest mb-0.5">Primary Guardian</p>
-                                            <p class="text-[12px] font-black text-slate-800 uppercase">${parentDisplay}</p>
+                                            <p class="text-[8px] text-teal-600 font-black uppercase tracking-widest mb-0.5 text-center">Primary Guardian</p>
+                                            <p class="text-[12px] font-black text-slate-800 uppercase text-center">${parentDisplay}</p>
                                         </div>
                                         <div>
                                             <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Preferred Name</p>
@@ -178,9 +184,9 @@
                                 <div class="flex-1 border-l border-slate-100 pl-8">
                                     <div class="grid grid-cols-2 gap-y-3 gap-x-4">
                                         <div class="col-span-2">
-                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Current Session</p>
+                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Assigned Class / Session</p>
                                             <p class="text-[11px] font-black text-teal-600 uppercase italic">
-                                                <span class="bg-teal-100 px-2 py-0.5 rounded mr-1">Session</span> #${s.session_enrolled || 'NOT ASSIGNED'}
+                                                <span class="bg-teal-500 text-white px-2 py-0.5 rounded mr-1 not-italic">SESSION</span> ${sessionDisplay}
                                             </p>
                                         </div>
                                         <div>
@@ -193,7 +199,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Home Address</p>
-                                            <p class="text-[11px] font-bold text-slate-700 uppercase leading-tight">${s.home_address || '---'}</p>
+                                            <p class="text-[11px] font-bold text-slate-700 uppercase leading-tight">${s.home_address || 'No Address Provided'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -211,7 +217,7 @@
                                     </div>
                                     
                                     <div class="flex flex-col gap-2 mt-6">
-                                        <button data-id="${s.id}" class="student-edit-btn w-full py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:text-teal-600 hover:border-teal-300 hover:shadow-sm transition-all uppercase font-black text-[9px]">Edit Record</button>
+                                        <button data-id="${s.id}" class="student-edit-btn w-full py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:text-teal-600 hover:border-teal-300 hover:shadow-sm transition-all uppercase font-black text-[9px]">Edit Profile</button>
                                         <button data-id="${s.id}" class="student-delete-btn w-full py-2.5 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white rounded-xl transition-all uppercase font-black text-[9px]">Remove</button>
                                     </div>
                                 </div>
@@ -227,7 +233,7 @@
         },
 
         async deleteRecord(id) {
-            if (!confirm("Confirm permanent removal?")) return;
+            if (!confirm("Permanently remove this student?")) return;
             try {
                 const res = await fetch(`${window.NEST_ENDPOINTS.student.list}/${id}`, { method: 'DELETE' });
                 if (res.ok) this.init();
@@ -238,7 +244,6 @@
             document.getElementById('student-modal').classList.remove('hidden');
             document.getElementById('student-form').reset();
             document.getElementById('s-edit-id').value = s ? s.id : '';
-
             document.getElementById('s-modal-title').innerText = s ? 'Update Student Record' : 'Enroll New Student';
 
             this.schema.fields.forEach(f => {
