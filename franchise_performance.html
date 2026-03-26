@@ -126,11 +126,17 @@
         const fid = localStorage.getItem('locked_franchise_id');
         if (!fid) return;
 
-        // Using your exact provided endpoint object structure
-        const sessionUrl = `${window.NEST_ENDPOINTS.session.list}?franchise_id=${fid}`;
-        const studentUrl = `${window.NEST_ENDPOINTS.student.list}?franchise_id=${fid}`;
+        // Check if config exists, otherwise wait a beat
+        if (!window.NEST_ENDPOINTS) {
+            console.error("Config not ready, retrying...");
+            setTimeout(initPerformance, 100);
+            return;
+        }
 
         try {
+            const sessionUrl = `${window.NEST_ENDPOINTS.session.list}?franchise_id=${fid}`;
+            const studentUrl = `${window.NEST_ENDPOINTS.student.list}?franchise_id=${fid}`;
+
             const [sessionRes, studentRes] = await Promise.all([
                 fetch(sessionUrl),
                 fetch(studentUrl)
