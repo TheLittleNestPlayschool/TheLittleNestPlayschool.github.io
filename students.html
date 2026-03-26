@@ -1,12 +1,11 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
         <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Student Roster</h1>
-        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Franchise Management System</p>
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
         <input type="text" id="student-search" placeholder="Search students..." 
-            class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all">
+            class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all font-bold">
 
         <button id="add-student-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
             + ENROLL STUDENT
@@ -66,7 +65,6 @@
             if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
             
             this.schema = window.NEST_SCHEMA.student;
-            this.buildFormUI(); 
 
             const fid = localStorage.getItem('locked_franchise_id');
             if (!fid) return;
@@ -82,11 +80,19 @@
                 this.parents = await pRes.json();
                 this.sessions = await sessRes.json();
                 
+                // Build UI after data is fetched so dropdowns are populated
+                this.buildFormUI(); 
                 this.render();
                 this.setupListeners();
             } catch (err) {
                 console.error("Data Sync Error:", err);
             }
+        },
+
+        formatEpoch(ms) {
+            if (!ms) return '---';
+            const d = new Date(ms);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         },
 
         buildFormUI() {
@@ -95,7 +101,8 @@
             let currentSection = "";
 
             this.schema.fields.forEach(f => {
-                if (f.id === 'id' || f.hidden) return;
+                // Remove Franchise ID and Hidden fields
+                if (f.id === 'id' || f.id === 'franchise_id' || f.hidden) return;
 
                 if (f.section && f.section !== currentSection) {
                     currentSection = f.section;
@@ -107,23 +114,34 @@
                 }
 
                 const spanClass = f.width === 'full' ? 'col-span-full' : 'col-span-1';
-                const readonly = f.readonly ? 'readonly' : '';
-                const bgClass = f.readonly ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-50';
-
                 let inputHTML = '';
-                if (f.type === 'bool') {
+
+                // Handle Dynamic Dropdowns
+                if (f.id === 'parent_id') {
+                    inputHTML = `<select id="parent_id" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500 font-bold uppercase">
+                        <option value="">Select Parent</option>
+                        ${this.parents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('')}
+                    </select>`;
+                } else if (f.id === 'session_enrolled') {
+                    inputHTML = `<select id="session_enrolled" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500 font-bold uppercase">
+                        <option value="">Select Session</option>
+                        ${this.sessions.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                    </select>`;
+                } else if (f.type === 'bool') {
                     inputHTML = `
                         <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
                             <input type="checkbox" id="${f.id}" class="w-4 h-4 accent-teal-500">
                             <span class="text-[10px] font-bold text-slate-500 uppercase">Active Status</span>
                         </div>`;
                 } else {
+                    const readonly = f.readonly ? 'readonly' : '';
+                    const bgClass = f.readonly ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-50';
                     inputHTML = `<input type="${f.type === 'epochms' ? 'text' : f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 outline-none transition-all font-bold">`;
                 }
 
                 grid.insertAdjacentHTML('beforeend', `
                     <div class="${spanClass}">
-                        <label class="text-[9px] text-slate-400 block uppercase font-black mb-1.5 ml-1 tracking-wider">${f.label}</label>
+                        <label class="text-[9px] text-slate-400 block uppercase font-black mb-1.5 ml-1 tracking-wider">${f.label === 'Parent ID' ? 'Parent' : (f.label === 'Session Enrolled' ? 'Session' : f.label)}</label>
                         ${inputHTML}
                     </div>
                 `);
@@ -155,7 +173,6 @@
                     <tr class="${bg} border-b border-slate-100 group hover:bg-slate-50 transition-all">
                         <td colspan="4" class="p-6">
                             <div class="flex flex-col lg:flex-row justify-between gap-8 text-left">
-                                
                                 <div class="flex-1 min-w-[280px]">
                                     <div class="flex items-center gap-3 mb-3">
                                         <h3 class="font-black text-slate-900 text-base uppercase tracking-tight">${s.name}</h3>
@@ -165,7 +182,7 @@
                                     </div>
                                     <div class="grid grid-cols-2 gap-y-3 gap-x-4">
                                         <div class="col-span-2">
-                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Primary Guardian</p>
+                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Parent</p>
                                             <p class="text-[11px] text-slate-800 uppercase font-black">${parentDisplay}</p>
                                         </div>
                                         <div>
@@ -182,7 +199,7 @@
                                 <div class="flex-1 border-l border-slate-100 pl-8">
                                     <div class="grid grid-cols-2 gap-y-3 gap-x-4">
                                         <div class="col-span-2">
-                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Assigned Class / Session</p>
+                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Session</p>
                                             <p class="text-[11px] text-slate-800 uppercase tracking-tight font-black">${sessionDisplay}</p>
                                         </div>
                                         <div>
@@ -217,7 +234,6 @@
                                         <button data-id="${s.id}" class="student-delete-btn flex-1 py-2 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition-all uppercase font-black text-[9px]">Delete</button>
                                     </div>
                                 </div>
-
                             </div>
                         </td>
                     </tr>
@@ -245,8 +261,13 @@
             this.schema.fields.forEach(f => {
                 const el = document.getElementById(f.id);
                 if (el) {
-                    if (f.type === 'bool') el.checked = s ? !!s[f.id] : (f.default ?? true);
-                    else el.value = s ? (s[f.id] || '') : '';
+                    if (f.id === 'created_at') {
+                        el.value = s ? this.formatEpoch(s.created_at) : this.formatEpoch(Date.now());
+                    } else if (f.type === 'bool') {
+                        el.checked = s ? !!s[f.id] : (f.default ?? true);
+                    } else {
+                        el.value = s ? (s[f.id] || '') : '';
+                    }
                 }
             });
         },
@@ -266,9 +287,9 @@
                 
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
-                    if (el && f.id !== 'id' && !f.readonly) {
+                    if (el && f.id !== 'id' && f.id !== 'franchise_id' && !f.readonly) {
                         payload[f.id] = (f.type === 'bool') ? el.checked : el.value;
-                        if (f.type === 'int') payload[f.id] = parseInt(el.value);
+                        if (f.type === 'int' || f.id === 'parent_id' || f.id === 'session_enrolled') payload[f.id] = parseInt(el.value);
                     }
                 });
 
