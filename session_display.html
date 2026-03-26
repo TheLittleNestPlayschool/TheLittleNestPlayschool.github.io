@@ -1,92 +1,136 @@
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-
-<script src="api_config.js"></script>
-<script src="schema_config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
 <div class="bg-transparent p-4 font-['Inter',_sans-serif]">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-black tracking-tighter text-slate-900">Session Catalog</h1>
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Session Catalog</h1>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Active Academic Schedules • Sariaya Branch</p>
+        </div>
         <div class="bg-slate-100 px-3 py-1.5 rounded-lg text-[10px] font-extrabold text-slate-500 uppercase tracking-widest border border-slate-200">
             View Only Mode
         </div>
     </div>
 
-    <div id="session-container" class="space-y-3">
-        <div id="sync-status" class="text-center py-20 bg-white border-2 border-dashed border-slate-200 rounded-2xl">
-            <div class="animate-spin inline-block w-6 h-6 border-[3px] border-current border-t-transparent text-teal-500 rounded-full mb-4"></div>
-            <p class="text-slate-400 font-bold italic tracking-tight">Initializing NestMind Engine...</p>
+    <div id="session-list-container" class="space-y-4">
+        <div class="p-20 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
+            Synchronizing Sessions...
         </div>
     </div>
 </div>
 
 <script>
 (function() {
-    let retryCount = 0;
+    const SessionModule = {
+        data: [],
 
-    window.loadSessions = async () => {
-        const container = document.getElementById('session-container');
-        const statusText = document.getElementById('sync-status');
-        
-        // 1. RECURSIVE CHECK: If api_config isn't ready yet, wait 100ms and try again
-        if (typeof window.NEST_API === 'undefined' || !window.NEST_API.sessions) {
-            if (retryCount < 50) { // Try for 5 seconds total
-                retryCount++;
-                setTimeout(window.loadSessions, 100);
-                return;
-            } else {
-                container.innerHTML = `<div class="p-8 text-center bg-red-50 text-red-500 rounded-xl font-bold">CRITICAL: api_config.js failed to initialize.</div>`;
-                return;
-            }
-        }
-
-        const lockedId = localStorage.getItem('locked_franchise_id');
-        if (!lockedId) {
-            container.innerHTML = `<div class="p-8 text-center bg-amber-50 text-amber-700 rounded-xl font-bold italic">Identity Lock Required: Please select a branch.</div>`;
-            return;
-        }
-        
-        try {
-            const response = await fetch(`${window.NEST_API.sessions}?t=${Date.now()}`);
-            if (!response.ok) throw new Error("Connection Refused");
+        async init() {
+            // Match the script loading logic from parents.html
+            if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
+            if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
             
-            const data = await response.json();
-            let list = Array.isArray(data) ? data : (data.items || []);
-            
-            // Filter by the Locked Branch
-            list = list.filter(s => s.franchise_id.toString() === lockedId);
-
-            if (list.length === 0) {
-                container.innerHTML = `<div class="p-12 text-center text-slate-400 font-bold border-2 border-dashed border-slate-100 rounded-2xl">No sessions found for this branch.</div>`;
+            const fid = localStorage.getItem('locked_franchise_id');
+            if (!fid) {
+                document.getElementById('session-list-container').innerHTML = `
+                    <div class="p-8 text-center bg-amber-50 text-amber-700 rounded-xl font-bold italic text-xs uppercase tracking-widest">
+                        Identity Lock Required • Select a Branch
+                    </div>`;
                 return;
             }
 
-            container.innerHTML = list.map(s => `
-                <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center hover:shadow-md transition-shadow">
-                    <div class="flex-1">
-                        <h3 class="text-lg font-black text-slate-800">${s.name}</h3>
-                        <p class="text-xs text-slate-500 mt-1">${s.description || 'NestMind Session Record'}</p>
-                    </div>
-                    <div class="flex items-center gap-8 ml-auto">
-                        <div class="text-right">
-                            <p class="text-[9px] font-black text-slate-400 uppercase">Schedule</p>
-                            <p class="text-xs font-bold text-slate-700">${s.start_time_text} - ${s.end_time_text}</p>
-                        </div>
-                        <div class="flex items-center gap-2 pl-6 border-l border-slate-100">
-                            <div class="w-2 h-2 rounded-full ${s.is_active ? 'bg-teal-500' : 'bg-slate-300'}"></div>
-                            <span class="text-[10px] font-black uppercase ${s.is_active ? 'text-teal-500' : 'text-slate-400'}">
-                                ${s.is_active ? 'Active' : 'Closed'}
-                            </span>
-                        </div>
-                    </div>
-                </div>`).join('');
+            try {
+                // Using the specific endpoint structure found in your api_config.js
+                const response = await fetch(`${window.NEST_ENDPOINTS.sessions}?t=${Date.now()}`);
+                const rawData = await response.json();
+                
+                // Handle both array and object responses
+                this.data = Array.isArray(rawData) ? rawData : (rawData.items || []);
+                
+                // Filter by franchise
+                this.data = this.data.filter(s => s.franchise_id.toString() === fid);
+                
+                this.render();
+            } catch (err) {
+                console.error("Session Fetch Error:", err);
+                document.getElementById('session-list-container').innerHTML = `
+                    <div class="p-8 text-center bg-red-50 text-red-500 rounded-xl font-bold text-xs uppercase tracking-widest">
+                        Sync Failed • Check Connection
+                    </div>`;
+            }
+        },
 
-        } catch(e) { 
-            container.innerHTML = `<div class="p-8 text-center bg-red-50 text-red-500 rounded-xl font-bold">Sync Failed: Cloud Connection Error</div>`;
+        render() {
+            const container = document.getElementById('session-list-container');
+            
+            if (this.data.length === 0) {
+                container.innerHTML = `
+                    <div class="p-20 text-center text-slate-400 text-xs font-bold uppercase border-2 border-dashed border-slate-100 rounded-2xl">
+                        No active sessions for this location
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            this.data.forEach(s => {
+                const statusColor = s.is_active ? 'text-teal-500' : 'text-slate-400';
+                const statusBg = s.is_active ? 'bg-teal-500' : 'bg-slate-300';
+                const days = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : (s.scheduled_days || 'TBD');
+
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center hover:border-teal-400 transition-all shadow-sm group">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-1">
+                                <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-widest border border-slate-200">Session</span>
+                                <h3 class="text-sm font-black text-slate-800 uppercase tracking-tight">${s.name}</h3>
+                            </div>
+                            <p class="text-[11px] text-slate-500 font-medium leading-relaxed max-w-md">
+                                ${s.description || 'No specific course description provided for this session block.'}
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-10 ml-auto">
+                            <div class="text-right">
+                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Schedule</p>
+                                <p class="text-[10px] font-bold text-slate-700 uppercase">${days}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Time Slot</p>
+                                <p class="text-[10px] font-bold text-slate-700 uppercase">${s.start_time_text} - ${s.end_time_text}</p>
+                            </div>
+                            <div class="text-right w-16">
+                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Capacity</p>
+                                <p class="text-[10px] font-bold text-slate-700 uppercase">${s.max_students} Seats</p>
+                            </div>
+                            
+                            <div class="flex items-center gap-2 pl-6 border-l border-slate-100 min-w-[90px] justify-end">
+                                <div class="w-1.5 h-1.5 rounded-full ${statusBg}"></div>
+                                <span class="text-[9px] font-black uppercase tracking-widest ${statusColor}">
+                                    ${s.is_active ? 'Active' : 'Closed'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            });
+        },
+
+        async loadScript(src) {
+            return new Promise(resolve => {
+                const s = document.createElement('script'); 
+                s.src = src; 
+                s.onload = resolve;
+                // Fallback for relative paths if in a subfolder
+                s.onerror = () => { 
+                    const fallback = document.createElement('script');
+                    fallback.src = src.replace('/', ''); 
+                    fallback.onload = resolve;
+                    document.head.appendChild(fallback);
+                };
+                document.head.appendChild(s);
+            });
         }
     };
 
-    // Kick off the smart loader
-    window.loadSessions();
+    SessionModule.init();
 })();
 </script>
