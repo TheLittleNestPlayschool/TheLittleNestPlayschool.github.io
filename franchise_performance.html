@@ -126,12 +126,17 @@
         const fid = localStorage.getItem('locked_franchise_id');
         if (!fid) return;
 
-        // Direct check without the loop to stop the console spam
-        const endpoints = window.NEST_ENDPOINTS;
-        if (!endpoints || !endpoints.session || !endpoints.student) {
-            console.error("NEST_ENDPOINTS not found or incomplete in window scope.");
-            return;
+        // Ensure api_config is loaded into the window scope
+        if (!window.NEST_ENDPOINTS) {
+            await new Promise((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'api_config.js';
+                script.onload = resolve;
+                document.head.appendChild(script);
+            });
         }
+
+        const endpoints = window.NEST_ENDPOINTS;
 
         try {
             const sessionUrl = `${endpoints.session.list}?franchise_id=${fid}`;
