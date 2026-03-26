@@ -13,7 +13,7 @@
     </div>
 
     <div id="session-list-container" class="space-y-4">
-        <div id="sync-status" class="p-20 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
+        <div class="p-20 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
             Synchronizing Session Data...
         </div>
     </div>
@@ -23,106 +23,72 @@
 (function() {
     const SessionModule = {
         data: [],
-        retryCount: 0,
-        maxRetries: 10,
 
         async init() {
-            // 1. Attempt to load the configuration files if they aren't in global scope
-            if (!window.NEST_ENDPOINTS) {
-                console.log("Config not found. Attempting script injection...");
-                await this.loadScript('api_config.js');
-            }
-
-            // 2. Map to your specific nested config: window.NEST_ENDPOINTS.session.list
-            const endpoints = window.NEST_ENDPOINTS;
+            // Match the exact loading pattern from parents.html
+            if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
             
-            if (!endpoints || !endpoints.session || !endpoints.session.list) {
-                if (this.retryCount < this.maxRetries) {
-                    this.retryCount++;
-                    setTimeout(() => this.init(), 500);
-                } else {
-                    this.showError("Configuration file (api_config.js) not found or failed to load.");
-                }
-                return;
-            }
-
-            // 3. Fetch Data from Xano
             const fid = localStorage.getItem('locked_franchise_id');
+            if (!fid) return;
+
             try {
-                const response = await fetch(`${endpoints.session.list}?t=${Date.now()}`);
-                if (!response.ok) throw new Error("Network response was not ok");
+                // Use the correct nested mapping: .session.list
+                const url = `${window.NEST_ENDPOINTS.session.list}?franchise_id=${fid}`;
+                const response = await fetch(url);
                 
-                const rawData = await response.json();
-                this.data = Array.isArray(rawData) ? rawData : (rawData.items || []);
+                if (!response.ok) throw new Error("Fetch failed");
                 
-                // 4. Filter by the Sariaya Franchise ID (from LocalStorage)
-                if (fid) {
-                    this.data = this.data.filter(s => s.franchise_id && s.franchise_id.toString() === fid);
-                }
-                
+                this.data = await response.json();
                 this.render();
             } catch (err) {
-                console.error("Session Fetch Error:", err);
-                this.showError("Sync Failed • Check Connection");
+                console.error("Session Sync Error:", err);
+                document.getElementById('session-list-container').innerHTML = `
+                    <div class="p-10 text-center bg-red-50 border border-red-100 rounded-2xl">
+                        <p class="text-red-500 font-black text-[10px] uppercase tracking-widest">Sync Failed • Check Connection</p>
+                    </div>`;
             }
         },
 
-        // This is the "Safety" logic I left out of the shorter version
+        // Mirroring your parents.html loadScript exactly
         async loadScript(src) {
-            return new Promise((resolve) => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = () => {
-                    console.log(`Successfully loaded: ${src}`);
-                    resolve();
+            return new Promise(resolve => {
+                const s = document.createElement('script'); 
+                s.src = src; 
+                s.onload = resolve;
+                s.onerror = () => { 
+                    // This is the part that fixed parents.html
+                    s.src = src.replace('/', ''); 
+                    s.onload = resolve; 
                 };
-                script.onerror = () => {
-                    // Fallback: Try a relative path if the root path fails
-                    const fallback = document.createElement('script');
-                    fallback.src = './' + src;
-                    fallback.onload = resolve;
-                    document.head.appendChild(fallback);
-                };
-                document.head.appendChild(script);
+                document.head.appendChild(s);
             });
-        },
-
-        showError(msg) {
-            document.getElementById('session-list-container').innerHTML = `
-                <div class="p-12 text-center bg-red-50 border border-red-100 rounded-2xl">
-                    <div class="text-red-500 font-black text-xs uppercase tracking-widest mb-2">Sync Failed</div>
-                    <div class="text-red-400 text-[10px] font-bold uppercase">${msg}</div>
-                    <button onclick="window.location.reload()" class="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-colors">
-                        Retry Connection
-                    </button>
-                </div>`;
         },
 
         render() {
             const container = document.getElementById('session-list-container');
-            if (this.data.length === 0) {
-                container.innerHTML = `<div class="p-20 text-center text-slate-400 text-xs font-bold uppercase border-2 border-dashed border-slate-100 rounded-2xl italic tracking-widest text-opacity-50">No sessions currently active</div>`;
+            if (!this.data || this.data.length === 0) {
+                container.innerHTML = `<div class="p-20 text-center text-slate-400 text-xs font-bold uppercase border-2 border-dashed border-slate-100 rounded-2xl italic">No sessions found</div>`;
                 return;
             }
 
             container.innerHTML = this.data.map(s => `
-                <div class="group bg-white border border-slate-200 rounded-2xl p-5 flex items-center hover:border-teal-400 hover:shadow-md transition-all duration-300 cursor-default">
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center hover:border-teal-400 transition-all cursor-default">
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-1">
-                            <h3 class="text-sm font-black text-slate-800 uppercase tracking-tight group-hover:text-teal-600 transition-colors">${s.name}</h3>
+                            <h3 class="text-sm font-black text-slate-800 uppercase tracking-tight">${s.name}</h3>
                             <span class="text-[8px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-400 font-bold uppercase">#${s.id}</span>
                         </div>
-                        <p class="text-[11px] text-slate-500 font-medium leading-relaxed max-w-md">${s.description || 'Verified NestMind Academic Session'}</p>
+                        <p class="text-[11px] text-slate-500 font-medium leading-relaxed">${s.description || 'Academic Session'}</p>
                     </div>
                     <div class="flex items-center gap-12 ml-auto text-right">
                         <div>
                             <p class="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">Schedule</p>
-                            <p class="text-[10px] font-extrabold text-slate-600 uppercase tracking-tighter italic">
+                            <p class="text-[10px] font-extrabold text-slate-600 uppercase italic">
                                 ${s.start_time_text || '--:--'} <span class="text-slate-300 mx-1">TO</span> ${s.end_time_text || '--:--'}
                             </p>
                         </div>
                         <div class="flex items-center gap-2.5 pl-8 border-l border-slate-100 min-w-[100px] justify-end">
-                            <div class="w-2 h-2 rounded-full ${s.is_active ? 'bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.4)]' : 'bg-slate-300'}"></div>
+                            <div class="w-2 h-2 rounded-full ${s.is_active ? 'bg-teal-500' : 'bg-slate-300'}"></div>
                             <span class="text-[9px] font-black uppercase tracking-widest ${s.is_active ? 'text-teal-600' : 'text-slate-400'}">
                                 ${s.is_active ? 'Active' : 'Offline'}
                             </span>
