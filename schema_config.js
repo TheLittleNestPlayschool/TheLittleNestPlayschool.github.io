@@ -64,5 +64,27 @@ window.NEST_SCHEMA = {
             { id: 'parent_id', label: 'Parent ID', type: 'int', section: 'Database Links', width: 'half' },
             { id: 'franchise_id', label: 'Franchise ID', type: 'int', section: 'Database Links', width: 'half' }
         ]
+    },
+
+    session: {
+        fields: [
+            // SYSTEM
+            { id: 'id', label: 'ID', type: 'int', hidden: true },
+            { id: 'created_at', label: 'Created At', type: 'epochms', hidden: false, readonly: true },
+            
+            // CORE SESSION INFO
+            { id: 'name', label: 'Session Name', type: 'text', required: true, width: 'full' },
+            { id: 'description', label: 'Description', type: 'text', width: 'full' },
+            { id: 'is_active', label: 'Session Status', type: 'bool', default: true, width: 'half' },
+            { id: 'max_students', label: 'Max Students', type: 'int', width: 'half' },
+
+            // LOGISTICS
+            { id: 'start_time_text', label: 'Start Time', type: 'text', section: 'Logistics', width: 'half' },
+            { id: 'end_time_text', label: 'End Time', type: 'text', section: 'Logistics', width: 'half' },
+            { id: 'scheduled_days', label: 'Scheduled Days', type: 'enum', list: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], section: 'Logistics', width: 'full' },
+
+            // DATABASE LINKS
+            { id: 'franchise_id', label: 'Franchise ID', type: 'int', section: 'Database Links', width: 'full', readonly: true }
+        ]
     }
 };
