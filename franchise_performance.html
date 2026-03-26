@@ -1,29 +1,141 @@
-<div class="flex flex-col items-center justify-center min-h-[50vh] bg-white rounded-3xl border border-slate-200 shadow-sm p-12 text-center">
-    <div class="w-20 h-20 bg-[#f0fdfa] rounded-2xl flex items-center justify-center mb-6">
-        <span class="text-4xl text-[#00d1b2]">📈</span>
+<div class="flex flex-col items-center justify-start w-full max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
+    
+    <div class="text-center">
+        <h1 class="text-2xl font-black text-slate-800 tracking-tight uppercase">Performance Analytics</h1>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">Live Intelligence for Sariaya</p>
     </div>
-    
-    <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Performance Analytics</h1>
-    <p class="text-slate-500 font-medium italic mb-8" id="perf-branch-display">Initializing data sync...</p>
-    
-    <div class="bg-slate-50 border border-slate-100 rounded-2xl p-6 max-w-md w-full">
-        <p class="text-sm text-slate-600 leading-relaxed">
-            This module is ready for your business intelligence logic. We will eventually link this to your 
-            <span class="font-bold text-slate-800">competitor_metrics</span> and 
-            <span class="font-bold text-slate-800">royalty_statements</span>.
-        </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
+        <div onclick="loadModule('students.html', 'Students')" class="group cursor-pointer bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:border-[#00d1b2] transition-all">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-[#00d1b2]">Total Enrollment</p>
+            <h3 id="perf-count" class="text-3xl font-black text-slate-800">...</h3>
+            <p class="text-[9px] text-[#00d1b2] font-bold mt-2">View Students →</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Daily Revenue</p>
+            <h3 class="text-3xl font-black text-slate-800">₱0</h3>
+            <p class="text-[9px] text-slate-400 font-bold mt-2">Today</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Weekly Revenue</p>
+            <h3 class="text-3xl font-black text-slate-800">₱0</h3>
+            <p class="text-[9px] text-slate-400 font-bold mt-2 uppercase tracking-widest">This Week</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Monthly Revenue</p>
+            <h3 class="text-3xl font-black text-slate-800">₱0</h3>
+            <p class="text-[9px] text-emerald-500 font-bold mt-2 uppercase">Status: Healthy</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+        <div class="md:col-span-2 bg-[#0f172a] p-8 rounded-3xl text-white shadow-xl border border-slate-800">
+            <h2 class="text-lg font-black uppercase tracking-tight text-[#00d1b2] mb-6 flex items-center gap-2">
+                <span>💎</span> ROI Intelligence
+            </h2>
+            <div class="grid grid-cols-2 gap-8">
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase font-black mb-2 tracking-widest">Projected Payback</p>
+                    <div class="flex items-end gap-2">
+                        <span id="perf-roi" class="text-6xl font-black text-white tracking-tighter">0.0</span>
+                        <span class="text-[#00d1b2] font-black pb-2 uppercase text-xs">Months</span>
+                    </div>
+                </div>
+                <div class="space-y-4 pt-2">
+                    <div class="flex justify-between border-b border-slate-700 pb-2">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Est. Gross Profit</span>
+                        <span id="perf-gross" class="text-xs font-bold tracking-tighter">₱0</span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-700 pb-2">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Operating Costs</span>
+                        <span id="perf-opex-display" class="text-xs font-bold text-red-400 tracking-tighter">₱0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center">ROI Simulation</p>
+            <div class="space-y-5">
+                <div>
+                    <label class="text-[9px] font-black text-slate-500 uppercase block mb-2 tracking-widest">Monthly OpEx (₱)</label>
+                    <input type="number" id="perf-opex-input" value="15000" oninput="calculateROI()" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm font-bold outline-none focus:border-[#00d1b2]">
+                </div>
+                <p class="text-[9px] text-slate-400 italic leading-relaxed">Calculating ROI based on a 7-10 month target window.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white w-full rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+            <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest">Session Distribution</h2>
+            <span class="px-3 py-1 bg-[#0f172a] text-[#00d1b2] rounded-full text-[8px] font-black uppercase tracking-widest">Live Table</span>
+        </div>
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-white border-b border-slate-50">
+                    <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Session / Class</th>
+                    <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Enrollment Count</th>
+                </tr>
+            </thead>
+            <tbody id="perf-sessions-body">
+                <tr><td colspan="2" class="p-8 text-center text-slate-300 text-[10px] font-bold uppercase">Syncing Branch Data...</td></tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    (function initPerf() {
-        const branchName = localStorage.getItem('locked_franchise_name');
-        const display = document.getElementById('perf-branch-display');
-        if (branchName) {
-            display.innerText = `Viewing metrics for: ${branchName}`;
-        } else {
-            display.innerText = "Error: No branch identity detected.";
+    async function initPerformance() {
+        const fid = localStorage.getItem('locked_franchise_id');
+        if (!fid) return;
+
+        try {
+            // Using correct API group iEHfqd-N for Students [cite: 2026-02-05, 2026-03-21]
+            const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?franchise_id=${fid}`);
+            const students = await res.json();
+            const active = students.filter(s => s.is_active);
+            
+            document.getElementById('perf-count').innerText = active.length;
+            
+            // Render Session Table
+            const sessions = {};
+            active.forEach(s => {
+                const name = s.session_enrolled || 'Unassigned';
+                sessions[name] = (sessions[name] || 0) + 1;
+            });
+
+            const tbody = document.getElementById('perf-sessions-body');
+            tbody.innerHTML = '';
+            Object.entries(sessions).forEach(([name, count]) => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-all">
+                        <td class="p-4 text-xs font-bold text-slate-700 uppercase">${name}</td>
+                        <td class="p-4 text-center font-black text-slate-800 text-sm">${count}</td>
+                    </tr>`;
+            });
+
+            calculateROI();
+        } catch (e) {
+            console.error("Performance Sync Error", e);
+            document.getElementById('perf-count').innerText = "0";
         }
-        console.log("franchise_performance.html: Handshake Complete.");
-    })();
+    }
+
+    function calculateROI() {
+        const count = parseInt(document.getElementById('perf-count').innerText) || 0;
+        const opex = parseFloat(document.getElementById('perf-opex-input').value) || 15000;
+        const avgTuition = 4500; 
+        const investment = 350000;
+        
+        const gross = count * avgTuition;
+        const net = gross - opex;
+        const months = net > 0 ? (investment / net).toFixed(1) : "---";
+
+        document.getElementById('perf-gross').innerText = "₱" + gross.toLocaleString();
+        document.getElementById('perf-opex-display').innerText = "₱" + opex.toLocaleString();
+        document.getElementById('perf-roi').innerText = months;
+    }
+
+    initPerformance();
 </script>
