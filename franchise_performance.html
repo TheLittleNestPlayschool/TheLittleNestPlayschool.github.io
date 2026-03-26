@@ -63,6 +63,25 @@
         </div>
     </div>
 
+    <div class="bg-white w-full rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-3 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
+            <h2 class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Session Capacity Monitor</h2>
+            <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest italic">Live Distribution</span>
+        </div>
+        <div class="max-h-64 overflow-y-auto">
+            <table class="w-full text-left">
+                <thead class="bg-white border-b border-slate-100 sticky top-0">
+                    <tr>
+                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Session Name / Time</th>
+                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase text-center tracking-widest">Enrollment</th>
+                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Utilization</th>
+                    </tr>
+                </thead>
+                <tbody id="perf-sessions-body" class="divide-y divide-slate-50"></tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
@@ -94,55 +113,40 @@
             <div class="md:col-span-9 space-y-6">
                 <div class="space-y-2">
                     <div class="flex justify-between items-end">
-                        <p id="recovery-text" class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Recovered ₱0 of ₱350,000 Today</p>
+                        <p id="recovery-text" class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Recovered ₱0 Today</p>
                         <span id="recovery-percent" class="text-[10px] font-black text-[#00d1b2]">0%</span>
                     </div>
                     <div class="h-4 bg-slate-50 border border-slate-100 rounded-full overflow-hidden p-0.5">
-                        <div id="recovery-bar" class="h-full bg-gradient-to-r from-[#00d1b2] to-[#00b89c] rounded-full transition-all duration-1000 shadow-sm" style="width: 0%"></div>
+                        <div id="recovery-bar" class="h-full bg-gradient-to-r from-[#00d1b2] to-[#00b89c] rounded-full transition-all duration-1000 shadow-sm" style="width: 0.5%"></div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="bg-slate-50/50 p-3 rounded-xl border border-slate-50">
-                        <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">Daily Net Profit</span>
-                        <span id="perf-daily-net" class="text-sm font-black text-[#00d1b2]">₱0</span>
+                        <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">Monthly Gross</span>
+                        <span id="perf-gross-display" class="text-sm font-black text-slate-800">₱0</span>
                     </div>
                     <div class="bg-slate-50/50 p-3 rounded-xl border border-slate-50">
                         <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">Monthly OpEx</span>
                         <span id="perf-opex-display" class="text-sm font-black text-red-400">₱0</span>
                     </div>
                     <div class="bg-slate-50/50 p-3 rounded-xl border border-slate-50">
-                        <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">Franchise Fee</span>
-                        <span id="display-franchise-price" class="text-sm font-black text-slate-800">₱350,000</span>
+                        <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">Monthly Net</span>
+                        <span id="perf-net-display" class="text-sm font-black text-[#00d1b2]">₱0</span>
+                    </div>
+                    <div class="bg-slate-50/50 p-3 rounded-xl border border-slate-50">
+                        <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">Daily Recovery</span>
+                        <span id="perf-daily-net" class="text-sm font-black text-[#00d1b2]">₱0</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="bg-white w-full rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="px-6 py-3 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
-            <h2 class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Session Capacity Monitor</h2>
-            <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest italic">Live Distribution</span>
-        </div>
-        <div class="max-h-48 overflow-y-auto">
-            <table class="w-full text-left">
-                <thead class="bg-white border-b border-slate-100 sticky top-0">
-                    <tr>
-                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Session Name / Time</th>
-                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase text-center tracking-widest">Enrollment</th>
-                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Utilization</th>
-                    </tr>
-                </thead>
-                <tbody id="perf-sessions-body" class="divide-y divide-slate-50"></tbody>
-            </table>
-        </div>
-    </div>
 </div>
 
 <div id="investment-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-        <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl animate-in zoom-in duration-200">
+        <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50 rounded-t-3xl">
             <h3 class="text-xs font-black uppercase tracking-widest text-slate-500">Initial Investment</h3>
             <button onclick="document.getElementById('investment-modal').classList.add('hidden')" class="text-slate-400 hover:text-red-500">✕</button>
         </div>
@@ -152,74 +156,40 @@
                 <input type="number" id="inv-fee" value="350000" class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-sm font-black outline-none focus:border-[#00d1b2]">
             </div>
             <div class="space-y-1">
-                <label class="text-[9px] font-black uppercase text-slate-400">Rent Deposits (Refundable)</label>
+                <label class="text-[9px] font-black uppercase text-slate-400">Rent Deposits</label>
                 <input type="number" id="inv-rent-dep" value="45000" class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-sm font-bold outline-none focus:border-[#00d1b2]">
             </div>
             <div class="space-y-1">
-                <label class="text-[9px] font-black uppercase text-slate-400">Utility Deposits (Refundable)</label>
+                <label class="text-[9px] font-black uppercase text-slate-400">Utility Deposits</label>
                 <input type="number" id="inv-util-dep" value="10000" class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-sm font-bold outline-none focus:border-[#00d1b2]">
             </div>
-            <div class="bg-slate-50 p-3 rounded-xl">
-                <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase">
-                    <span>Total Cash Required:</span>
-                    <span id="display-total-cash" class="text-slate-800">₱0</span>
-                </div>
-            </div>
         </div>
-        <div class="p-4">
-            <button onclick="calculateROI(); document.getElementById('investment-modal').classList.add('hidden')" class="w-full bg-slate-800 text-white font-black py-3 rounded-xl uppercase text-[11px] tracking-widest">Save Investment</button>
-        </div>
+        <div class="p-4"><button onclick="calculateROI(); document.getElementById('investment-modal').classList.add('hidden')" class="w-full bg-slate-800 text-white font-black py-3 rounded-xl uppercase text-[11px] tracking-widest">Update Investment</button></div>
     </div>
 </div>
 
 <div id="expense-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-        <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl animate-in zoom-in duration-200">
+        <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50 rounded-t-3xl">
             <h3 class="text-xs font-black uppercase tracking-widest text-slate-500">Monthly Expenses</h3>
             <button onclick="document.getElementById('expense-modal').classList.add('hidden')" class="text-slate-400 hover:text-red-500">✕</button>
         </div>
         <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
             <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-400">Rent</label>
-                    <input type="number" id="exp-rent" value="15000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none focus:border-[#00d1b2]">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-400">Wages</label>
-                    <input type="number" id="exp-wages" value="25000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none focus:border-[#00d1b2]">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-400">Power</label>
-                    <input type="number" id="exp-power" value="3000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none focus:border-[#00d1b2]">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-400">Water</label>
-                    <input type="number" id="exp-water" value="500" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none focus:border-[#00d1b2]">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-400">Advertising</label>
-                    <input type="number" id="exp-ads" value="5000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none focus:border-[#00d1b2]">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black uppercase text-slate-400">Other</label>
-                    <input type="number" id="exp-other" value="2000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none focus:border-[#00d1b2]">
-                </div>
+                <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400">Rent</label><input type="number" id="exp-rent" value="15000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none"></div>
+                <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400">Wages</label><input type="number" id="exp-wages" value="25000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none"></div>
+                <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400">Power</label><input type="number" id="exp-power" value="3000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none"></div>
+                <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400">Water</label><input type="number" id="exp-water" value="500" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none"></div>
+                <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400">Advertising</label><input type="number" id="exp-ads" value="5000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none"></div>
+                <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400">Other</label><input type="number" id="exp-other" value="2000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none"></div>
             </div>
             <div class="bg-blue-50/50 p-3 rounded-xl space-y-2">
-                <p class="text-[8px] font-black uppercase text-blue-400 tracking-widest">Calculated Monthly</p>
-                <div class="flex justify-between text-[10px] font-bold text-blue-600">
-                    <span>Extra Wages (10%):</span>
-                    <span id="calc-extra-wages">₱0</span>
-                </div>
-                <div class="flex justify-between text-[10px] font-bold text-blue-600">
-                    <span>Royalties (8%):</span>
-                    <span id="calc-royalties">₱0</span>
-                </div>
+                <p class="text-[8px] font-black uppercase text-blue-400 tracking-widest">Auto-Calculations</p>
+                <div class="flex justify-between text-[10px] font-bold text-blue-600"><span>Extra Wages (10%):</span><span id="calc-extra-wages">₱0</span></div>
+                <div class="flex justify-between text-[10px] font-bold text-blue-600"><span>Royalties (8%):</span><span id="calc-royalties">₱0</span></div>
             </div>
         </div>
-        <div class="p-4 bg-slate-50 border-t border-slate-100">
-            <button onclick="calculateROI(); document.getElementById('expense-modal').classList.add('hidden')" class="w-full bg-[#00d1b2] text-white font-black py-3 rounded-xl uppercase text-[11px] tracking-widest">Apply Expenses</button>
-        </div>
+        <div class="p-4 bg-slate-50 rounded-b-3xl"><button onclick="calculateROI(); document.getElementById('expense-modal').classList.add('hidden')" class="w-full bg-[#00d1b2] text-white font-black py-3 rounded-xl uppercase text-[11px] tracking-widest">Update ROI Data</button></div>
     </div>
 </div>
 
@@ -263,52 +233,42 @@
             document.getElementById('rev-daily').innerText = Math.round(dailyRev).toLocaleString();
 
             window.calculateROI = () => {
-                // Investment Variables
                 const fee = parseFloat(document.getElementById('inv-fee').value) || 350000;
-                const rDep = parseFloat(document.getElementById('inv-rent-dep').value) || 0;
-                const uDep = parseFloat(document.getElementById('inv-util-dep').value) || 0;
-                const totalCash = fee + rDep + uDep;
-
-                // Monthly Expenses
-                const rent = parseFloat(document.getElementById('exp-rent').value) || 0;
                 const wages = parseFloat(document.getElementById('exp-wages').value) || 0;
-                const power = parseFloat(document.getElementById('exp-power').value) || 0;
-                const water = parseFloat(document.getElementById('exp-water').value) || 0;
-                const ads = parseFloat(document.getElementById('exp-ads').value) || 0;
-                const other = parseFloat(document.getElementById('exp-other').value) || 0;
                 
                 const extraWages = wages * 0.10;
                 const royalties = monthlyRev * 0.08;
-                const totalMonthlyOpex = rent + wages + power + water + ads + other + extraWages + royalties;
-                const dailyOpex = totalMonthlyOpex / 30;
+                
+                const totalMonthlyOpex = (parseFloat(document.getElementById('exp-rent').value) || 0) + 
+                                       wages + 
+                                       (parseFloat(document.getElementById('exp-power').value) || 0) + 
+                                       (parseFloat(document.getElementById('exp-water').value) || 0) + 
+                                       (parseFloat(document.getElementById('exp-ads').value) || 0) + 
+                                       (parseFloat(document.getElementById('exp-other').value) || 0) + 
+                                       extraWages + royalties;
 
-                // ROI Calcs
+                const dailyOpex = totalMonthlyOpex / 30;
                 const netMonthly = monthlyRev - totalMonthlyOpex;
                 const netDaily = dailyRev - dailyOpex;
                 const monthsToPayback = netMonthly > 0 ? (fee / netMonthly).toFixed(1) : "0.0";
-
-                // Progress Calculation (Daily Recovery vs Investment)
                 const recoveryPercent = fee > 0 ? Math.min((netDaily / fee) * 100, 100).toFixed(4) : 0;
 
-                // Update UI
+                // Update UI Elements
                 document.getElementById('calc-extra-wages').innerText = "₱" + Math.round(extraWages).toLocaleString();
                 document.getElementById('calc-royalties').innerText = "₱" + Math.round(royalties).toLocaleString();
-                document.getElementById('display-total-cash').innerText = "₱" + totalCash.toLocaleString();
-                
                 document.getElementById('perf-roi').innerText = monthsToPayback;
-                document.getElementById('display-franchise-price').innerText = "₱" + fee.toLocaleString();
+                document.getElementById('perf-gross-display').innerText = "₱" + monthlyRev.toLocaleString();
                 document.getElementById('perf-opex-display').innerText = "₱" + Math.round(totalMonthlyOpex).toLocaleString();
+                document.getElementById('perf-net-display').innerText = "₱" + Math.round(netMonthly).toLocaleString();
                 document.getElementById('perf-daily-net').innerText = "₱" + Math.round(netDaily).toLocaleString();
                 
-                // Real-time Bar update
                 document.getElementById('recovery-text').innerText = `Recovered ₱${Math.round(netDaily).toLocaleString()} of ₱${fee.toLocaleString()} Today`;
                 document.getElementById('recovery-percent').innerText = recoveryPercent + "%";
-                document.getElementById('recovery-bar').style.width = Math.max(recoveryPercent * 10, 0.5) + "%"; // Scaled for visibility
+                document.getElementById('recovery-bar').style.width = Math.max(recoveryPercent * 10, 0.5) + "%";
             };
 
             window.calculateROI();
             
-            // Build Sessions Table (Existing)
             const tbody = document.getElementById('perf-sessions-body');
             tbody.innerHTML = '';
             sessions.forEach(session => {
@@ -318,15 +278,15 @@
                 const barColor = percent >= 100 ? 'bg-red-500' : (percent > 80 ? 'bg-orange-400' : 'bg-[#00d1b2]');
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-6 py-3">
+                        <td class="px-6 py-4">
                             <p class="text-[11px] font-black text-slate-700 uppercase leading-none">${session.name}</p>
                             <p class="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-tighter italic">${session.start_time_text || '--:--'} - ${session.end_time_text || '--:--'}</p>
                         </td>
-                        <td class="px-6 py-3 text-center">
+                        <td class="px-6 py-4 text-center">
                             <span class="text-xs font-black text-slate-800">${count}</span>
                             <span class="text-[9px] font-bold text-slate-300">/ ${max}</span>
                         </td>
-                        <td class="px-6 py-3">
+                        <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="flex-grow h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full ${barColor} transition-all duration-500" style="width: ${percent}%"></div></div>
                                 <span class="text-[9px] font-black text-slate-400 w-6 text-right">${Math.round(percent)}%</span>
@@ -334,7 +294,6 @@
                         </td>
                     </tr>`;
             });
-
         } catch (e) { console.error("Sync Failure:", e); }
     }
     initPerformance();
