@@ -126,41 +126,35 @@
         const fid = localStorage.getItem('locked_franchise_id');
         if (!fid) return;
 
-        // Workspace API
-        const API_ROOT = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx";
+        // References the global NEST_ENDPOINTS object from your api_config.js
+        const sessionUrl = `${NEST_ENDPOINTS.session.list}?franchise_id=${fid}`;
+        const studentUrl = `${NEST_ENDPOINTS.student.list}?franchise_id=${fid}`;
 
         try {
-            // Fetch Sessions and Students
             const [sessionRes, studentRes] = await Promise.all([
-                fetch(`${API_ROOT}/session?franchise_id=${fid}`),
-                fetch(`${API_ROOT}/student?franchise_id=${fid}`)
+                fetch(sessionUrl),
+                fetch(studentUrl)
             ]);
 
             let sessions = await sessionRes.json();
             let students = await studentRes.json();
 
-            // Safety check for Array return
             if (!Array.isArray(sessions)) sessions = [];
             if (!Array.isArray(students)) students = [];
 
-            // Calculate Active Students
             const activeStudents = students.filter(s => s.is_active === true);
             const totalActive = activeStudents.length;
             document.getElementById('perf-total-active').innerText = totalActive;
 
-            // Map Students to Session IDs using field 'session_id'
             const sessionCounts = {};
             activeStudents.forEach(s => {
-                const sid = s.session_id; 
-                if (sid) sessionCounts[sid] = (sessionCounts[sid] || 0) + 1;
+                if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1;
             });
 
-            // Revenue
             const monthlyRev = totalActive * 3500;
             document.getElementById('rev-monthly').innerText = monthlyRev.toLocaleString();
             document.getElementById('rev-daily').innerText = Math.round(monthlyRev / 30).toLocaleString();
 
-            // ROI logic
             window.calculateROI = () => {
                 const investment = 350000;
                 const opex = document.getElementById('perf-opex-input').value || 15000;
@@ -173,7 +167,6 @@
             };
             window.calculateROI();
 
-            // Populate Table with your Table Fields
             const tbody = document.getElementById('perf-sessions-body');
             tbody.innerHTML = '';
             
@@ -183,7 +176,7 @@
 
             sessions.forEach(session => {
                 const count = sessionCounts[session.id] || 0;
-                const max = session.max_students || 15; // Uses your max_students field
+                const max = session.max_students || 15;
                 const percent = Math.min((count / max) * 100, 100);
                 const barColor = percent >= 100 ? 'bg-red-500' : (percent > 80 ? 'bg-orange-400' : 'bg-[#00d1b2]');
 
@@ -211,7 +204,9 @@
                 `;
             });
 
-        } catch (e) { console.error("Sync Failure:", e); }
+        } catch (e) { 
+            console.error("Sync Failure:", e); 
+        }
     }
     initPerformance();
 </script>
