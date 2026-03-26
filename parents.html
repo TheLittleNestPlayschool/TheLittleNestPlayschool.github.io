@@ -1,20 +1,20 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
         <h1 class="text-2xl font-bold text-emerald-500 uppercase tracking-tight">Parent Directory</h1>
-        <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Franchise Management System • Sariaya</p>
+        <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Full Guardian Records • Sariaya Branch</p>
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="parent-search" placeholder="Search guardians..." 
+        <input type="text" id="parent-search" placeholder="Search names, phones, or emails..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-slate-500 shadow-sm w-full md:w-64">
         
         <button id="add-parent-btn" class="bg-[#1e293b] hover:bg-slate-900 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
-            + ADD PARENT
+            + REGISTER NEW PARENT
         </button>
     </div>
 </div>
 
-<div id="parent-list-container" class="space-y-4">
+<div id="parent-list-container" class="space-y-6">
     <div class="p-10 text-center text-slate-400 text-xs italic font-medium uppercase tracking-widest animate-pulse">
         Synchronizing NestMind Database...
     </div>
@@ -25,7 +25,7 @@
         <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
             <div>
                 <h2 id="p-modal-title" class="text-sm font-bold text-slate-800 uppercase">Parent Profile</h2>
-                <p class="text-[9px] text-slate-400 uppercase tracking-tighter">Database Schema Version 1.2</p>
+                <p class="text-[9px] text-slate-400 uppercase tracking-tighter">Schema Version 1.2 • Full Field Access</p>
             </div>
             <button id="close-modal-x" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
         </div>
@@ -39,7 +39,7 @@
             <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
                 <button type="button" id="cancel-modal-btn" class="px-6 py-2.5 bg-slate-100 text-slate-500 rounded-lg font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Cancel</button>
                 <button type="submit" class="flex-1 py-2.5 bg-[#1e293b] text-white rounded-lg font-bold text-[10px] uppercase shadow-lg hover:bg-black transition-all">
-                    Save Guardian Record
+                    Save Record to Xano
                 </button>
             </div>
         </form>
@@ -53,30 +53,25 @@
         schema: null,
 
         async init() {
-            // 1. Ensure Configs are Loaded
             if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
             if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
             
             this.schema = window.NEST_SCHEMA.parent;
-            
-            // 2. Build the UI components
             this.buildFormUI(); 
             
             const fid = localStorage.getItem('locked_franchise_id');
             if (!fid) return;
 
-            // 3. Fetch Data
             try {
                 const response = await fetch(`${window.NEST_ENDPOINTS.parent.list}?franchise_id=${fid}`);
                 this.data = await response.json();
                 this.render();
                 this.setupListeners();
             } catch (err) {
-                console.error("Sync Error:", err);
+                console.error("Database Sync Error:", err);
             }
         },
 
-        // This builds the fields INSIDE the popup modal
         buildFormUI() {
             const grid = document.getElementById('dynamic-fields-grid');
             grid.innerHTML = '';
@@ -97,10 +92,10 @@
                 const spanClass = f.width === 'full' || f.type === 'textarea' ? 'col-span-full' : 'col-span-1';
                 const inputHTML = f.type === 'textarea' 
                     ? `<textarea id="${f.id}" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500"></textarea>`
-                    : f.type === 'bool' || f.type === 'checkbox'
+                    : (f.type === 'bool' || f.type === 'checkbox')
                     ? `<div class="flex items-center gap-3 mt-2 bg-slate-50 p-2.5 rounded border border-slate-100">
                         <input type="checkbox" id="${f.id}" class="w-4 h-4 text-emerald-500 rounded border-slate-300">
-                        <span class="text-[10px] font-bold text-slate-600 uppercase">Enable Status</span>
+                        <span class="text-[10px] font-bold text-slate-600 uppercase">Active Status</span>
                        </div>`
                     : `<input type="${f.type}" id="${f.id}" ${f.required ? 'required' : ''} class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500">`;
 
@@ -113,13 +108,12 @@
             });
         },
 
-        // This builds the "Cards" on the main screen
         render() {
             const container = document.getElementById('parent-list-container');
             const search = (document.getElementById('parent-search')?.value || '').toLowerCase();
             
             let filtered = this.data.filter(p => 
-                `${p.first_name} ${p.last_name} ${p.email}`.toLowerCase().includes(search)
+                `${p.first_name} ${p.last_name} ${p.email} ${p.phone} ${p.emergency_contact_1_name}`.toLowerCase().includes(search)
             );
 
             container.innerHTML = '';
@@ -127,42 +121,63 @@
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden hover:border-emerald-400 transition-all">
                         <div class="bg-slate-50 p-4 flex flex-wrap items-center justify-between gap-4 border-b border-slate-100">
-                            <div class="min-w-[150px]">
-                                <span class="text-[9px] text-slate-400 font-bold uppercase block">Guardian</span>
-                                <span class="text-sm font-bold text-slate-800">${p.first_name} ${p.last_name}</span>
-                            </div>
-                            <div class="min-w-[150px]">
-                                <span class="text-[9px] text-slate-400 font-bold uppercase block">Contact</span>
-                                <span class="text-xs text-slate-600 font-medium">${p.email || '---'}</span>
-                                <span class="text-[10px] text-slate-400 block font-mono">${p.phone || ''}</span>
-                            </div>
                             <div class="flex-1 min-w-[200px]">
-                                <span class="text-[9px] text-slate-400 font-bold uppercase block">Home Address</span>
-                                <span class="text-xs text-slate-500">${p.address || '---'}</span>
+                                <span class="text-[9px] text-slate-400 font-bold uppercase block tracking-tighter">Primary Guardian</span>
+                                <span class="text-sm font-black text-slate-800">${p.first_name} ${p.last_name}</span>
+                                <div class="text-[11px] text-slate-500 font-medium">${p.email || 'No Email'} • <span class="font-mono text-slate-400">${p.phone || ''}</span></div>
+                            </div>
+                            <div class="flex-1 min-w-[300px]">
+                                <span class="text-[9px] text-slate-400 font-bold uppercase block tracking-tighter">Home Address</span>
+                                <span class="text-xs text-slate-600 leading-tight">${p.address || '---'}</span>
                             </div>
                             <div class="flex items-center gap-4">
-                                <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase ${p.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}">
+                                <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase ${p.is_active ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-600 border border-red-100'}">
                                     ${p.is_active ? 'Active' : 'Archived'}
                                 </span>
-                                <button data-id="${p.id}" class="parent-edit-btn px-4 py-1.5 bg-white border border-slate-300 rounded text-[10px] font-black hover:text-emerald-600 transition-all uppercase">Edit</button>
+                                <button data-id="${p.id}" class="parent-edit-btn px-4 py-2 bg-white border border-slate-300 rounded shadow-sm text-[10px] font-black hover:bg-emerald-50 hover:text-emerald-600 transition-all uppercase">Edit Record</button>
                             </div>
                         </div>
 
-                        <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-[11px]">
-                            <div class="space-y-1">
-                                <span class="text-[9px] font-black text-emerald-600 uppercase tracking-widest block mb-1 border-b border-emerald-50 pb-1">Secondary Guardian</span>
-                                <div class="font-bold text-slate-700">${p.second_parent_full_name || 'NONE'}</div>
-                                <div class="text-slate-500">${p.second_parent_phone_number || ''}</div>
+                        <div class="p-5 grid grid-cols-1 md:grid-cols-4 gap-8 text-[11px] bg-white">
+                            
+                            <div class="space-y-2 border-r border-slate-50 pr-4">
+                                <span class="text-[9px] font-black text-emerald-600 uppercase tracking-widest block border-b border-emerald-50 pb-1">Secondary Guardian</span>
+                                <div>
+                                    <div class="font-bold text-slate-800 uppercase text-[10px]">${p.second_parent_full_name || 'NONE LISTED'}</div>
+                                    <div class="text-slate-500 font-medium italic">${p.second_parent_relationship || 'No relation'}</div>
+                                </div>
+                                <div class="text-slate-600 font-mono">${p.second_parent_phone_number || ''}</div>
+                                <div class="text-slate-400 truncate">${p.second_parent_email_address || ''}</div>
+                                <div class="text-[9px] text-slate-400 italic">${p.second_parent_home_address || 'Same as primary'}</div>
                             </div>
-                            <div class="space-y-1">
-                                <span class="text-[9px] font-black text-orange-500 uppercase tracking-widest block mb-1 border-b border-orange-50 pb-1">Emergency 1</span>
-                                <div class="font-bold text-slate-700">${p.emergency_contact_1_name || '---'}</div>
-                                <div class="text-slate-500">${p.emergency_contact_1_phone_number || ''}</div>
+
+                            <div class="space-y-2 border-r border-slate-50 pr-4">
+                                <span class="text-[9px] font-black text-orange-500 uppercase tracking-widest block border-b border-orange-50 pb-1">Emergency 1</span>
+                                <div>
+                                    <div class="font-bold text-slate-800 uppercase text-[10px]">${p.emergency_contact_1_name || '---'}</div>
+                                    <div class="text-slate-500 italic">${p.emergency_contact_1_relationship || ''}</div>
+                                </div>
+                                <div class="text-slate-600 font-mono font-bold">${p.emergency_contact_1_phone_number || ''}</div>
                             </div>
-                            <div class="space-y-1">
-                                <span class="text-[9px] font-black text-orange-500 uppercase tracking-widest block mb-1 border-b border-orange-50 pb-1">Emergency 2</span>
-                                <div class="font-bold text-slate-700">${p.emergency_contact_2_name || '---'}</div>
-                                <div class="text-slate-500">${p.emergency_contact_2_phone_number || ''}</div>
+
+                            <div class="space-y-2 border-r border-slate-50 pr-4">
+                                <span class="text-[9px] font-black text-orange-500 uppercase tracking-widest block border-b border-orange-50 pb-1">Emergency 2</span>
+                                <div>
+                                    <div class="font-bold text-slate-800 uppercase text-[10px]">${p.emergency_contact_2_name || '---'}</div>
+                                    <div class="text-slate-500 italic">${p.emergency_contact_2_relationship || ''}</div>
+                                </div>
+                                <div class="text-slate-600 font-mono font-bold">${p.emergency_contact_2_phone_number || ''}</div>
+                            </div>
+
+                            <div class="space-y-2 bg-slate-50/50 p-3 rounded-lg border border-slate-100">
+                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block border-b border-slate-200 pb-1">Internal Notes</span>
+                                <div class="text-[10px] text-slate-600 leading-normal italic">
+                                    ${p.inactivation_reason_comments || 'No administrative notes.'}
+                                </div>
+                                <div class="pt-2 mt-2 border-t border-slate-200 flex justify-between">
+                                    <span class="text-[8px] text-slate-400 uppercase font-bold">Created</span>
+                                    <span class="text-[9px] text-slate-500 font-mono">${p.created_at ? new Date(p.created_at).toLocaleDateString() : '---'}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -178,7 +193,7 @@
             document.getElementById('parent-modal').classList.remove('hidden');
             document.getElementById('parent-form').reset();
             document.getElementById('p-edit-id').value = p ? p.id : '';
-            document.getElementById('p-modal-title').innerText = p ? 'Update Guardian Record' : 'Register New Guardian';
+            document.getElementById('p-modal-title').innerText = p ? 'Update Guardian Profile' : 'Register New Guardian';
 
             this.schema.fields.forEach(f => {
                 const el = document.getElementById(f.id);
