@@ -1,102 +1,128 @@
 <script src="api_config.js"></script>
 <script src="schema_config.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-family: 'Inter', sans-serif;">
-    <h1 style="margin:0; font-weight: 800; tracking-tighter; color: #0f172a;">Session Catalog</h1>
-    <div style="background: #f1f5f9; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; tracking-widest;">
-        View Only Mode
+<div class="bg-transparent p-4 font-['Inter',_sans-serif]">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-black tracking-tighter text-slate-900">Session Catalog</h1>
+        <div class="bg-slate-100 px-3 py-1.5 rounded-lg text-[10px] font-extrabold text-slate-500 uppercase tracking-widest border border-slate-200">
+            View Only Mode
+        </div>
     </div>
-</div>
 
-<div id="session-container" style="display: flex; flex-direction: column; gap: 12px; font-family: 'Inter', sans-serif;">
-    <div style="text-align:center; padding:60px; color: #94a3b8; font-style: italic; background:#fff; border: 1px dashed #e2e8f0; border-radius: 12px;">
-        Synchronizing session data...
+    <div id="session-container" class="space-y-3">
+        <div class="text-center py-20 bg-white border-2 border-dashed border-slate-200 rounded-2xl">
+            <div class="animate-spin inline-block w-6 h-6 border-[3px] border-current border-t-transparent text-teal-500 rounded-full mb-4" role="status"></div>
+            <p class="text-slate-400 font-bold italic tracking-tight">Synchronizing session data...</p>
+        </div>
     </div>
 </div>
 
 <script>
 (function() {
-    // We now use NEST_API.sessions from api_config.js
-    const SESSION_ENDPOINT = NEST_API.sessions;
+    // ERROR LOGGER HELPER
+    const logError = (msg) => {
+        const container = document.getElementById('session-container');
+        if(!container) return;
+        container.innerHTML = `
+            <div class="bg-red-50 border-2 border-red-100 p-8 rounded-2xl text-center">
+                <div class="text-3xl mb-2">⚠️</div>
+                <p class="text-red-600 font-black uppercase text-xs tracking-widest mb-1">Sync Failed</p>
+                <p class="text-red-500 font-medium text-sm">${msg}</p>
+                <button onclick="window.loadSessions()" class="mt-4 px-4 py-2 bg-red-600 text-white text-[10px] font-black rounded-lg uppercase transition-transform active:scale-95">Retry Connection</button>
+            </div>`;
+    };
 
     window.loadSessions = async () => {
         const container = document.getElementById('session-container');
+        if(!container) return;
         
-        // Retrieve the locked branch ID from the Identity Lock
+        // 1. Check if Config is loaded
+        if (typeof window.NEST_API === 'undefined') {
+            logError("Configuration file (api_config.js) not found or failed to load.");
+            return;
+        }
+
+        // 2. Check Identity Lock
         const lockedId = localStorage.getItem('locked_franchise_id');
         const lockedName = localStorage.getItem('locked_franchise_name') || "this branch";
         
         if (!lockedId) {
             container.innerHTML = `
-                <div style="text-align:center; padding:40px; color:#ef4444; background:#fef2f2; border:1px solid #fee2e2; border-radius:12px;">
-                    <p style="font-weight:bold; margin:0;">Identity Lock Required</p>
-                    <p style="font-size:0.75rem; margin-top:5px;">Please select a branch in the sidebar to view sessions.</p>
+                <div class="bg-amber-50 border-2 border-amber-100 p-8 rounded-2xl text-center">
+                    <p class="text-amber-700 font-black uppercase text-xs tracking-widest mb-1">Identity Lock Required</p>
+                    <p class="text-amber-600 font-medium text-sm">Please select a branch in the sidebar to view local sessions.</p>
                 </div>`;
             return;
         }
         
         try {
-            // Fetch sessions with a cache-buster
-            const res = await fetch(`${SESSION_ENDPOINT}?t=${Date.now()}`);
-            const data = await res.json();
+            // 3. Attempt Fetch
+            const response = await fetch(`${window.NEST_API.sessions}?t=${Date.now()}`);
+            
+            if (!response.ok) throw new Error(`Xano responded with ${response.status}: ${response.statusText}`);
+            
+            const data = await response.json();
             let list = Array.isArray(data) ? data : (data.items || []);
             
-            // Strictly filter by the branch currently "Locked" in the session
+            // 4. Filter by Franchise
             list = list.filter(s => s.franchise_id.toString() === lockedId);
 
             if (list.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align:center; padding:40px; color:#94a3b8; font-size:0.85rem; background:#fff; border: 1px dashed #e2e8f0; border-radius: 12px;">
-                        No active sessions found for <strong>${lockedName}</strong>.
+                    <div class="bg-white border-2 border-dashed border-slate-200 p-12 rounded-2xl text-center">
+                        <p class="text-slate-400 font-bold italic text-sm">No active sessions found for ${lockedName}.</p>
                     </div>`;
                 return;
             }
 
+            // 5. Render
             container.innerHTML = list.map(s => {
-                // Parse days from the schema (assuming comma-separated or array per schema_config)
-                const days = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : (s.scheduled_days || 'TBD');
-                const statusColor = s.is_active ? '#00d1b2' : '#94a3b8';
+                const statusColor = s.is_active ? 'text-teal-500' : 'text-slate-400';
+                const statusBg = s.is_active ? 'bg-teal-500' : 'bg-slate-400';
+                const days = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : s.scheduled_days;
 
                 return `
-                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:16px 20px; display:flex; align-items:center; transition: transform 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-                    
-                    <div style="flex: 1; min-width: 180px;">
-                        <h3 style="margin:0; font-size:1rem; font-weight: 700; color:#1e293b;">${s.name}</h3>
-                        <p style="margin:4px 0 0; font-size:0.75rem; color:#64748b; line-height: 1.4; max-width: 400px; white-space: normal;">
-                            ${s.description || 'No description provided.'}
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center hover:border-teal-400 transition-all shadow-sm group">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-extrabold text-slate-800 group-hover:text-teal-600 transition-colors">${s.name}</h3>
+                        <p class="text-xs text-slate-500 font-medium mt-1 leading-relaxed max-w-md">
+                            ${s.description || 'No course description provided for this session.'}
                         </p>
                     </div>
 
-                    <div style="display:flex; align-items:center; gap:30px; margin-left: auto;">
-                        <div style="text-align:right;">
-                            <p style="margin:0; font-size:0.6rem; font-weight: 800; color:#94a3b8; text-transform:uppercase; tracking-wider;">Schedule</p>
-                            <p style="margin:0; font-size:0.8rem; font-weight: 600; color:#334155;">${days}</p>
+                    <div class="flex items-center gap-8 ml-auto">
+                        <div class="text-right">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Schedule</p>
+                            <p class="text-xs font-bold text-slate-700">${days || 'TBD'}</p>
                         </div>
-                        <div style="text-align:right;">
-                            <p style="margin:0; font-size:0.6rem; font-weight: 800; color:#94a3b8; text-transform:uppercase; tracking-wider;">Time</p>
-                            <p style="margin:0; font-size:0.8rem; font-weight: 600; color:#334155;">${s.start_time_text} - ${s.end_time_text}</p>
+                        <div class="text-right">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Time</p>
+                            <p class="text-xs font-bold text-slate-700">${s.start_time_text} - ${s.end_time_text}</p>
                         </div>
-                        <div style="text-align:right; width: 80px;">
-                            <p style="margin:0; font-size:0.6rem; font-weight: 800; color:#94a3b8; text-transform:uppercase; tracking-wider;">Capacity</p>
-                            <p style="margin:0; font-size:0.8rem; font-weight: 600; color:#334155;">${s.max_students} Slots</p>
+                        <div class="text-right w-16">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Capacity</p>
+                            <p class="text-xs font-bold text-slate-700">${s.max_students} Slots</p>
                         </div>
                         
-                        <div style="display:flex; align-items:center; gap:8px; width: 80px; justify-content: flex-end; border-left: 1px solid #f1f5f9; padding-left: 15px;">
-                            <div style="width: 8px; height: 8px; border-radius: 50%; background: ${statusColor};"></div>
-                            <span style="font-size: 10px; font-weight: 800; color: ${statusColor}; text-transform: uppercase; tracking-tighter;">
+                        <div class="flex items-center gap-2 pl-6 border-l border-slate-100 min-w-[90px] justify-end">
+                            <div class="w-2 h-2 rounded-full ${statusBg} ${s.is_active ? 'animate-pulse' : ''}"></div>
+                            <span class="text-[10px] font-black uppercase tracking-tighter ${statusColor}">
                                 ${s.is_active ? 'Active' : 'Paused'}
                             </span>
                         </div>
                     </div>
                 </div>`;
             }).join('');
+
         } catch(e) { 
-            console.error("Data Synchronization Error:", e);
-            container.innerHTML = `<div style="text-align:center; padding:40px; color:#ef4444;">Failed to sync with NestMind Cloud.</div>`;
+            console.error("Sync Error:", e);
+            logError(e.message);
         }
     };
 
-    // Initial load
+    // Initialize
     window.loadSessions();
 })();
 </script>
