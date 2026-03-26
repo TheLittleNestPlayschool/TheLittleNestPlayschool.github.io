@@ -5,7 +5,7 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
             <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Session Catalog</h1>
-            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Active Academic Schedules • Sariaya Branch</p>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Active Academic Schedules</p>
         </div>
         <div class="bg-slate-100 px-3 py-1.5 rounded-lg text-[10px] font-extrabold text-slate-500 uppercase tracking-widest border border-slate-200">
             View Only Mode
@@ -25,29 +25,31 @@
         data: [],
 
         async init() {
-            // Match the script loading logic from parents.html
-            if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
-            if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
+            // Load scripts exactly like parents.html
+            if (!window.NEST_SCHEMA) await this.loadScript('schema_config.js');
+            if (!window.NEST_ENDPOINTS) await this.loadScript('api_config.js');
             
             const fid = localStorage.getItem('locked_franchise_id');
-            if (!fid) {
-                document.getElementById('session-list-container').innerHTML = `
-                    <div class="p-8 text-center bg-amber-50 text-amber-700 rounded-xl font-bold italic text-xs uppercase tracking-widest">
-                        Identity Lock Required • Select a Branch
-                    </div>`;
+            
+            // Double-check endpoints exist before fetching to avoid the "undefined" fetch error
+            if (!window.NEST_ENDPOINTS || !window.NEST_ENDPOINTS.sessions) {
+                console.error("Endpoints not found. Retrying...");
+                setTimeout(() => this.init(), 500);
                 return;
             }
 
             try {
-                // Using the specific endpoint structure found in your api_config.js
+                // Fetch using the exact key from your api_config.js
                 const response = await fetch(`${window.NEST_ENDPOINTS.sessions}?t=${Date.now()}`);
-                const rawData = await response.json();
+                if (!response.ok) throw new Error("Sync Failed");
                 
-                // Handle both array and object responses
+                const rawData = await response.json();
                 this.data = Array.isArray(rawData) ? rawData : (rawData.items || []);
                 
-                // Filter by franchise
-                this.data = this.data.filter(s => s.franchise_id.toString() === fid);
+                // Filter by local branch ID
+                if (fid) {
+                    this.data = this.data.filter(s => s.franchise_id.toString() === fid);
+                }
                 
                 this.render();
             } catch (err) {
@@ -61,70 +63,45 @@
 
         render() {
             const container = document.getElementById('session-list-container');
-            
             if (this.data.length === 0) {
-                container.innerHTML = `
-                    <div class="p-20 text-center text-slate-400 text-xs font-bold uppercase border-2 border-dashed border-slate-100 rounded-2xl">
-                        No active sessions for this location
-                    </div>`;
+                container.innerHTML = `<div class="p-20 text-center text-slate-400 text-xs font-bold uppercase border-2 border-dashed border-slate-100 rounded-2xl">No sessions found</div>`;
                 return;
             }
 
-            container.innerHTML = '';
-            this.data.forEach(s => {
-                const statusColor = s.is_active ? 'text-teal-500' : 'text-slate-400';
-                const statusBg = s.is_active ? 'bg-teal-500' : 'bg-slate-300';
-                const days = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : (s.scheduled_days || 'TBD');
-
-                container.insertAdjacentHTML('beforeend', `
-                    <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center hover:border-teal-400 transition-all shadow-sm group">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-3 mb-1">
-                                <span class="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-widest border border-slate-200">Session</span>
-                                <h3 class="text-sm font-black text-slate-800 uppercase tracking-tight">${s.name}</h3>
-                            </div>
-                            <p class="text-[11px] text-slate-500 font-medium leading-relaxed max-w-md">
-                                ${s.description || 'No specific course description provided for this session block.'}
-                            </p>
+            container.innerHTML = this.data.map(s => `
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center hover:border-teal-400 transition-all shadow-sm">
+                    <div class="flex-1">
+                        <h3 class="text-sm font-black text-slate-800 uppercase tracking-tight">${s.name}</h3>
+                        <p class="text-[11px] text-slate-500 font-medium leading-relaxed">${s.description || 'NestMind verified session.'}</p>
+                    </div>
+                    <div class="flex items-center gap-10 ml-auto text-right">
+                        <div>
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Time Slot</p>
+                            <p class="text-[10px] font-bold text-slate-700 uppercase">${s.start_time_text} - ${s.end_time_text}</p>
                         </div>
-
-                        <div class="flex items-center gap-10 ml-auto">
-                            <div class="text-right">
-                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Schedule</p>
-                                <p class="text-[10px] font-bold text-slate-700 uppercase">${days}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Time Slot</p>
-                                <p class="text-[10px] font-bold text-slate-700 uppercase">${s.start_time_text} - ${s.end_time_text}</p>
-                            </div>
-                            <div class="text-right w-16">
-                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Capacity</p>
-                                <p class="text-[10px] font-bold text-slate-700 uppercase">${s.max_students} Seats</p>
-                            </div>
-                            
-                            <div class="flex items-center gap-2 pl-6 border-l border-slate-100 min-w-[90px] justify-end">
-                                <div class="w-1.5 h-1.5 rounded-full ${statusBg}"></div>
-                                <span class="text-[9px] font-black uppercase tracking-widest ${statusColor}">
-                                    ${s.is_active ? 'Active' : 'Closed'}
-                                </span>
-                            </div>
+                        <div class="flex items-center gap-2 pl-6 border-l border-slate-100 min-w-[90px] justify-end">
+                            <div class="w-1.5 h-1.5 rounded-full ${s.is_active ? 'bg-teal-500' : 'bg-slate-300'}"></div>
+                            <span class="text-[9px] font-black uppercase tracking-widest ${s.is_active ? 'text-teal-500' : 'text-slate-400'}">
+                                ${s.is_active ? 'Active' : 'Closed'}
+                            </span>
                         </div>
                     </div>
-                `);
-            });
+                </div>
+            `).join('');
         },
 
         async loadScript(src) {
             return new Promise(resolve => {
                 const s = document.createElement('script'); 
-                s.src = src; 
+                // Using relative pathing to ensure root access
+                s.src = src.startsWith('/') ? src : '/' + src; 
                 s.onload = resolve;
-                // Fallback for relative paths if in a subfolder
-                s.onerror = () => { 
-                    const fallback = document.createElement('script');
-                    fallback.src = src.replace('/', ''); 
-                    fallback.onload = resolve;
-                    document.head.appendChild(fallback);
+                s.onerror = () => {
+                    // Try without leading slash if root fails
+                    const s2 = document.createElement('script');
+                    s2.src = src.replace('/', '');
+                    s2.onload = resolve;
+                    document.head.appendChild(s2);
                 };
                 document.head.appendChild(s);
             });
