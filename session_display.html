@@ -1,3 +1,6 @@
+<script src="api_config.js"></script>
+<script src="schema_config.js"></script>
+
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-family: 'Inter', sans-serif;">
     <h1 style="margin:0; font-weight: 800; tracking-tighter; color: #0f172a;">Session Catalog</h1>
     <div style="background: #f1f5f9; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; tracking-widest;">
@@ -5,7 +8,7 @@
     </div>
 </div>
 
-<div id="session-container" style="display: flex; flex-direction: column; gap: 12px;">
+<div id="session-container" style="display: flex; flex-direction: column; gap: 12px; font-family: 'Inter', sans-serif;">
     <div style="text-align:center; padding:60px; color: #94a3b8; font-style: italic; background:#fff; border: 1px dashed #e2e8f0; border-radius: 12px;">
         Synchronizing session data...
     </div>
@@ -13,69 +16,87 @@
 
 <script>
 (function() {
-    const S_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session';
+    // We now use NEST_API.sessions from api_config.js
+    const SESSION_ENDPOINT = NEST_API.sessions;
 
     window.loadSessions = async () => {
         const container = document.getElementById('session-container');
         
-        // Use Identity Lock to determine the branch
+        // Retrieve the locked branch ID from the Identity Lock
         const lockedId = localStorage.getItem('locked_franchise_id');
+        const lockedName = localStorage.getItem('locked_franchise_name') || "this branch";
         
         if (!lockedId) {
-            container.innerHTML = `<div style="text-align:center; padding:40px; color:#ef4444; font-size:0.85rem; font-weight:bold;">No branch selected. Please use the Identity Lock to continue.</div>`;
+            container.innerHTML = `
+                <div style="text-align:center; padding:40px; color:#ef4444; background:#fef2f2; border:1px solid #fee2e2; border-radius:12px;">
+                    <p style="font-weight:bold; margin:0;">Identity Lock Required</p>
+                    <p style="font-size:0.75rem; margin-top:5px;">Please select a branch in the sidebar to view sessions.</p>
+                </div>`;
             return;
         }
         
         try {
-            const res = await fetch(S_API + '?t=' + Date.now());
+            // Fetch sessions with a cache-buster
+            const res = await fetch(`${SESSION_ENDPOINT}?t=${Date.now()}`);
             const data = await res.json();
             let list = Array.isArray(data) ? data : (data.items || []);
             
-            // Filter strictly by the locked branch
+            // Strictly filter by the branch currently "Locked" in the session
             list = list.filter(s => s.franchise_id.toString() === lockedId);
 
             if (list.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:40px; color:#94a3b8; font-size:0.85rem;">No active sessions found for this location.</div>`;
+                container.innerHTML = `
+                    <div style="text-align:center; padding:40px; color:#94a3b8; font-size:0.85rem; background:#fff; border: 1px dashed #e2e8f0; border-radius: 12px;">
+                        No active sessions found for <strong>${lockedName}</strong>.
+                    </div>`;
                 return;
             }
 
             container.innerHTML = list.map(s => {
-                const days = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : (s.scheduled_days || '');
+                // Parse days from the schema (assuming comma-separated or array per schema_config)
+                const days = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : (s.scheduled_days || 'TBD');
                 const statusColor = s.is_active ? '#00d1b2' : '#94a3b8';
 
                 return `
-                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:16px 20px; display:flex; align-items:center; transition: transform 0.2s ease;">
+                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:16px 20px; display:flex; align-items:center; transition: transform 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
                     
                     <div style="flex: 1; min-width: 180px;">
                         <h3 style="margin:0; font-size:1rem; font-weight: 700; color:#1e293b;">${s.name}</h3>
-                        <p style="margin:4px 0 0; font-size:0.75rem; color:#64748b; line-height: 1.4;">${s.description || 'No description provided.'}</p>
+                        <p style="margin:4px 0 0; font-size:0.75rem; color:#64748b; line-height: 1.4; max-width: 400px; white-space: normal;">
+                            ${s.description || 'No description provided.'}
+                        </p>
                     </div>
 
                     <div style="display:flex; align-items:center; gap:30px; margin-left: auto;">
                         <div style="text-align:right;">
-                            <p style="margin:0; font-size:0.65rem; font-weight: 800; color:#94a3b8; text-transform:uppercase;">Schedule</p>
+                            <p style="margin:0; font-size:0.6rem; font-weight: 800; color:#94a3b8; text-transform:uppercase; tracking-wider;">Schedule</p>
                             <p style="margin:0; font-size:0.8rem; font-weight: 600; color:#334155;">${days}</p>
                         </div>
                         <div style="text-align:right;">
-                            <p style="margin:0; font-size:0.65rem; font-weight: 800; color:#94a3b8; text-transform:uppercase;">Time</p>
+                            <p style="margin:0; font-size:0.6rem; font-weight: 800; color:#94a3b8; text-transform:uppercase; tracking-wider;">Time</p>
                             <p style="margin:0; font-size:0.8rem; font-weight: 600; color:#334155;">${s.start_time_text} - ${s.end_time_text}</p>
                         </div>
                         <div style="text-align:right; width: 80px;">
-                            <p style="margin:0; font-size:0.65rem; font-weight: 800; color:#94a3b8; text-transform:uppercase;">Capacity</p>
-                            <p style="margin:0; font-size:0.8rem; font-weight: 600; color:#334155;">${s.max_students} Students</p>
+                            <p style="margin:0; font-size:0.6rem; font-weight: 800; color:#94a3b8; text-transform:uppercase; tracking-wider;">Capacity</p>
+                            <p style="margin:0; font-size:0.8rem; font-weight: 600; color:#334155;">${s.max_students} Slots</p>
                         </div>
                         
-                        <div style="display:flex; align-items:center; gap:6px; width: 70px; justify-content: flex-end;">
+                        <div style="display:flex; align-items:center; gap:8px; width: 80px; justify-content: flex-end; border-left: 1px solid #f1f5f9; padding-left: 15px;">
                             <div style="width: 8px; height: 8px; border-radius: 50%; background: ${statusColor};"></div>
-                            <span style="font-size: 10px; font-weight: 800; color: ${statusColor}; text-transform: uppercase;">${s.is_active ? 'Active' : 'Closed'}</span>
+                            <span style="font-size: 10px; font-weight: 800; color: ${statusColor}; text-transform: uppercase; tracking-tighter;">
+                                ${s.is_active ? 'Active' : 'Paused'}
+                            </span>
                         </div>
                     </div>
                 </div>`;
             }).join('');
-        } catch(e) { console.error("Load Error:", e); }
+        } catch(e) { 
+            console.error("Data Synchronization Error:", e);
+            container.innerHTML = `<div style="text-align:center; padding:40px; color:#ef4444;">Failed to sync with NestMind Cloud.</div>`;
+        }
     };
 
-    // Auto-load on entry
+    // Initial load
     window.loadSessions();
 })();
 </script>
