@@ -1,5 +1,13 @@
 <div class="flex flex-col items-center justify-start w-full max-w-6xl mx-auto space-y-4 animate-in fade-in duration-500 pb-20">
     
+    <div class="w-full px-2 mb-2">
+        <div class="inline-flex items-center gap-2 bg-slate-800 px-4 py-1.5 rounded-full border border-slate-700 shadow-lg">
+            <div class="w-1.5 h-1.5 rounded-full bg-[#00d1b2] animate-pulse"></div>
+            <span class="text-[9px] font-black text-white uppercase tracking-widest">System Path:</span>
+            <span id="breadcrumb-text" class="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Analytics / Performance Pulse</span>
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
         
         <div onclick="loadModule('students.html', 'Students')" class="group cursor-pointer bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-[#00d1b2] transition-all">
@@ -38,7 +46,6 @@
                         <span class="text-[8px] font-black text-[#00d1b2] uppercase block tracking-widest">Active Total</span>
                         <span id="perf-total-active" class="text-3xl font-black text-slate-800 tracking-tighter">0</span>
                     </div>
-                    <span class="text-[8px] font-bold text-slate-300 uppercase italic">Live Sync</span>
                 </div>
             </div>
         </div>
@@ -74,7 +81,7 @@
                     </div>
                 </div>
                 <div class="pt-3 border-t border-slate-50 flex justify-end">
-                    <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest italic">Audited Figures</span>
+                    <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest italic">Live Records</span>
                 </div>
             </div>
         </div>
@@ -87,7 +94,7 @@
         <div class="max-h-32 overflow-y-auto">
             <table class="w-full text-left divide-y divide-slate-50">
                 <tbody id="perf-sessions-body">
-                    <tr><td class="p-4 text-center text-slate-300 text-[9px] font-bold uppercase tracking-widest italic">Fetching local records...</td></tr>
+                    <tr><td class="p-4 text-center text-slate-300 text-[9px] font-bold uppercase tracking-widest italic">Updating...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -116,7 +123,7 @@
                         <span id="perf-opex-display" class="text-xs font-black text-red-500">₱0</span>
                     </div>
                     <button onclick="loadModule('expense_manager.html', 'Expense Manager')" class="w-full mt-1 py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all">
-                        Edit Operational Costs
+                        Update Expense Ledger
                     </button>
                 </div>
             </div>
@@ -129,80 +136,8 @@
                 <input type="number" id="perf-opex-input" value="15000" oninput="calculateROI()" class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-sm font-bold text-center outline-none focus:border-[#00d1b2]">
             </div>
             <div class="pt-4 border-t border-slate-50 mt-4">
-                <p class="text-[8px] text-slate-400 italic leading-tight text-center">Target ROI: 7-10 Months.</p>
+                <p class="text-[8px] text-slate-400 italic leading-tight text-center">Standard Target: 7-10 Months</p>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-    async function initPerformance() {
-        const fid = localStorage.getItem('locked_franchise_id');
-        if (!fid) return;
-
-        try {
-            const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?franchise_id=${fid}`);
-            const students = await res.json();
-            
-            const now = new Date();
-            const startOfToday = new Date(now.setHours(0,0,0,0)).getTime();
-            const startOfPrevDay = startOfToday - 86400000;
-            const startOfThisWeek = new Date(now.setDate(now.getDate() - now.getDay())).getTime();
-            const startOfPrevWeek = startOfThisWeek - (86400000 * 7);
-            const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-            const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
-
-            const getStats = (s, e = Infinity) => ({
-                active: students.filter(x => x.is_active && x.created_at >= s && x.created_at < e).length,
-                left: students.filter(x => !x.is_active && x.created_at >= s && x.created_at < e).length
-            });
-
-            const t = getStats(startOfToday);
-            const pt = getStats(startOfPrevDay, startOfToday);
-            const w = getStats(startOfThisWeek);
-            const pw = getStats(startOfPrevWeek, startOfThisWeek);
-            const m = getStats(startOfThisMonth);
-            const pm = getStats(startOfPrevMonth, startOfThisMonth);
-
-            document.getElementById('perf-today-active').innerText = t.active;
-            document.getElementById('perf-today-left').innerText = `(-${t.left})`;
-            document.getElementById('perf-prev-day-active').innerText = pt.active;
-            document.getElementById('perf-week-active').innerText = w.active;
-            document.getElementById('perf-week-left').innerText = `(-${w.left})`;
-            document.getElementById('perf-prev-week-active').innerText = pw.active;
-            document.getElementById('perf-month-active').innerText = m.active;
-            document.getElementById('perf-month-left').innerText = `(-${m.left})`;
-            document.getElementById('perf-prev-month-active').innerText = pm.active;
-
-            const activeTotalCount = students.filter(s => s.is_active).length;
-            document.getElementById('perf-total-active').innerText = activeTotalCount;
-            
-            const sessions = {};
-            students.filter(s => s.is_active).forEach(s => {
-                const name = s.session_enrolled || 'Unassigned';
-                sessions[name] = (sessions[name] || 0) + 1;
-            });
-            const tbody = document.getElementById('perf-sessions-body');
-            tbody.innerHTML = '';
-            Object.entries(sessions).forEach(([name, count]) => {
-                tbody.innerHTML += `<tr><td class="px-5 py-2.5 text-[11px] font-bold text-slate-700 uppercase">${name}</td><td class="px-5 py-2.5 text-right font-black text-slate-800 text-xs">${count} Students</td></tr>`;
-            });
-
-            calculateROI();
-        } catch (e) { console.error("Sync Error", e); }
-    }
-
-    function calculateROI() {
-        const activeCount = parseInt(document.getElementById('perf-total-active').innerText) || 0;
-        const opex = parseFloat(document.getElementById('perf-opex-input').value) || 15000;
-        const gross = activeCount * 4500;
-        const net = gross - opex;
-        const months = net > 0 ? (350000 / net).toFixed(1) : "---";
-
-        document.getElementById('perf-gross').innerText = "₱" + gross.toLocaleString();
-        document.getElementById('perf-opex-display').innerText = "₱" + opex.toLocaleString();
-        document.getElementById('perf-roi').innerText = months;
-    }
-
-    initPerformance();
-</script>
