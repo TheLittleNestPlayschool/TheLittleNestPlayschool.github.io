@@ -126,12 +126,18 @@
         const fid = localStorage.getItem('locked_franchise_id');
         if (!fid) return;
 
-        // Ensure api_config is loaded into the window scope
+        // Ensure api_config is loaded from the root directory
         if (!window.NEST_ENDPOINTS) {
             await new Promise((resolve) => {
                 const script = document.createElement('script');
-                script.src = 'api_config.js';
+                // The leading slash / ensures it looks at the root domain, not the subfolder
+                script.src = '/api_config.js';
                 script.onload = resolve;
+                script.onerror = () => {
+                    // Fallback to current dir if root slash fails
+                    script.src = 'api_config.js';
+                    script.onload = resolve;
+                };
                 document.head.appendChild(script);
             });
         }
