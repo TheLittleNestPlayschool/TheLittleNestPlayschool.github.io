@@ -1,107 +1,212 @@
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<div class="space-y-8 animate-in fade-in duration-500">
+    <div class="flex justify-between items-end mb-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800 tracking-tight uppercase">Performance Analytics</h1>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Live Branch Intelligence</p>
+        </div>
+        <div class="text-right">
+            <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-widest">Identity Lock: Active</span>
+        </div>
+    </div>
 
-<div class="flex h-screen w-full bg-[#f8fafc] overflow-hidden font-['Inter',_sans-serif]">
-    <aside class="w-[260px] bg-[#0f172a] flex-shrink-0 flex flex-col border-r border-[#1e293b] z-50">
-        <div class="p-8">
-            <h1 class="text-[#00d1b2] text-2xl font-black tracking-tighter">NestMind</h1>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div onclick="loadModule('students.html', 'Students')" class="group cursor-pointer bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-500 transition-all duration-300">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-emerald-500">Total Enrollment</p>
+            <h3 id="stat-total-enrolled" class="text-3xl font-black text-slate-800">...</h3>
+            <p class="text-[9px] text-emerald-500 font-bold mt-2">View Student Roster →</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Daily Revenue</p>
+            <h3 id="stat-daily-rev" class="text-3xl font-black text-slate-800">₱0</h3>
+            <p class="text-[9px] text-slate-400 font-bold mt-2 italic uppercase">Today</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Weekly Revenue</p>
+            <h3 id="stat-weekly-rev" class="text-3xl font-black text-slate-800">₱0</h3>
+            <p class="text-[9px] text-slate-400 font-bold mt-2 italic uppercase">Current Week</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Monthly Revenue</p>
+            <h3 id="stat-monthly-rev" class="text-3xl font-black text-slate-800">₱0</h3>
+            <p class="text-[9px] text-emerald-500 font-bold mt-2 uppercase">Target: Healthy</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-2 bg-[#0f172a] p-8 rounded-3xl text-white shadow-xl relative overflow-hidden border border-slate-800">
+            <div class="relative z-10">
+                <h2 class="text-lg font-black uppercase tracking-tight text-emerald-400 mb-8 flex items-center gap-2">
+                    <span>💎</span> ROI Intelligence
+                </h2>
+                <div class="grid grid-cols-2 gap-12">
+                    <div>
+                        <p class="text-[10px] text-slate-400 uppercase font-black mb-2 tracking-widest">Projected Payback Period</p>
+                        <div class="flex items-end gap-3">
+                            <span id="roi-months" class="text-6xl font-black text-white tracking-tighter">0.0</span>
+                            <span class="text-emerald-500 font-black pb-2 uppercase text-xs tracking-widest">Months</span>
+                        </div>
+                        <p id="roi-status" class="text-[10px] text-slate-500 font-medium mt-4 italic">Calculating based on ₱350,000 baseline investment...</p>
+                    </div>
+                    <div class="space-y-5 pt-2">
+                        <div class="flex justify-between border-b border-slate-700/50 pb-3">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Est. Gross Profit</span>
+                            <span id="roi-gross" class="text-xs font-bold font-mono">₱0</span>
+                        </div>
+                        <div class="flex justify-between border-b border-slate-700/50 pb-3">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Operating Expenses</span>
+                            <span id="roi-costs" class="text-xs font-bold text-red-400 font-mono">₱0</span>
+                        </div>
+                        <div class="flex justify-between pt-1">
+                            <span class="text-[10px] text-emerald-400 uppercase font-black tracking-widest">Monthly Net</span>
+                            <span id="roi-net" class="text-sm font-black text-emerald-400 font-mono">₱0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         
-        <div class="px-4 mb-6">
-            <div class="bg-[#1e293b] p-5 rounded-2xl border border-slate-700 text-center shadow-xl">
-                <p class="text-[10px] font-black text-[#2dd4bf] uppercase mb-3 tracking-widest">Identity Lock</p>
-                <select id="branch-select" onchange="unlockDashboard()" class="w-full bg-[#0f172a] text-white p-2.5 rounded-lg border border-slate-600 text-xs focus:ring-2 focus:ring-[#00d1b2] outline-none cursor-pointer">
-                    <option value="">-- Select Branch --</option>
-                </select>
-                <div id="active-branch-name" class="hidden text-white font-extrabold text-base tracking-tight py-1"></div>
+        <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center">
+            <h2 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6 text-center">ROI Adjustments</h2>
+            <div class="space-y-5">
+                <div>
+                    <label class="text-[9px] font-black text-slate-500 uppercase block mb-2 tracking-widest">Monthly OpEx (₱)</label>
+                    <input type="number" id="input-opex" value="15000" step="500" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all">
+                </div>
+                <div>
+                    <label class="text-[9px] font-black text-slate-500 uppercase block mb-2 tracking-widest">Baseline Investment (₱)</label>
+                    <input type="number" id="input-investment" value="350000" step="5000" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all">
+                </div>
+                <button onclick="PerformanceModule.calculateROI()" class="w-full py-4 bg-[#0f172a] text-[#2dd4bf] rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black hover:shadow-lg transition-all active:scale-95">
+                    Refresh Calculations
+                </button>
             </div>
         </div>
+    </div>
 
-        <nav id="nav-menu" class="hidden px-3 overflow-y-auto space-y-1">
-            <div class="text-[0.65rem] font-800 text-[#475569] uppercase tracking-widest px-4 py-3">Management</div>
-            
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('franchise_performance.html', 'Performance')">
-                <span>📈</span> Performance
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div>
+                <h2 class="text-sm font-black text-slate-800 uppercase tracking-tight">Session Distribution</h2>
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Who is in what session</p>
             </div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('parents.html', 'Parents')">
-                <span>👨‍👩‍👧</span> Parents
-            </div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('students.html', 'Students')">
-                <span>🏫</span> Students
-            </div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('teacher_dashboard.html', 'Teachers')">
-                <span>🧑‍🏫</span> Teachers
-            </div>
-            
-            <div class="text-[0.65rem] font-800 text-[#475569] uppercase tracking-widest px-4 py-3">Academic DNA</div>
-            
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('student_assessment.html', 'Assessments')">
-                <span>📝</span> Assessments
-            </div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('session.html', 'Sessions')">
-                <span>🗓️</span> Sessions
-            </div>
-        </nav>
-    </aside>
-
-    <main id="main-workspace" class="flex-grow overflow-y-auto relative bg-[#f8fafc]">
-        <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full">
-            <h1 class="text-8xl font-black text-slate-800 tracking-tighter mb-4">NestMind</h1>
-            <p id="status-text" class="text-slate-400 font-medium text-lg italic">Please select a branch to initialize portal.</p>
+            <span class="px-3 py-1 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">Live Enrollment Data</span>
         </div>
-    </main>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-white border-b border-slate-100">
+                        <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Session / Class</th>
+                        <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Capacity</th>
+                        <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Enrolled Count</th>
+                        <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Utilization</th>
+                    </tr>
+                </thead>
+                <tbody id="session-roster-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script>
-    const GITHUB_ROOT = "https://thelittlenestplayschool.github.io/";
-    const XANO_FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
-
-    async function init() {
-        try {
-            const res = await fetch(XANO_FRANCHISE_API);
-            const data = await res.json();
-            const select = document.getElementById('branch-select');
-            data.forEach(f => {
-                let opt = document.createElement('option');
-                opt.value = f.id; opt.innerText = f.name;
-                select.appendChild(opt);
-            });
-        } catch (e) { console.error("Identity Lock failed", e); }
-    }
-
-    function unlockDashboard() {
-        const select = document.getElementById('branch-select');
-        const branchDisplay = document.getElementById('active-branch-name');
-        const fid = select.value;
-        const fname = select.options[select.selectedIndex].text;
-        if(!fid) return;
+(function() {
+    const PerformanceModule = {
+        API_STUDENTS: "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student",
         
-        localStorage.setItem('locked_franchise_id', fid);
-        localStorage.setItem('locked_franchise_name', fname);
-        
-        select.classList.add('hidden');
-        branchDisplay.innerText = fname;
-        branchDisplay.classList.remove('hidden');
-        document.getElementById('nav-menu').classList.remove('hidden');
-        document.getElementById('status-text').innerText = "Identity Verified.";
-    }
-
-    async function loadModule(file, title) {
-        const workspace = document.getElementById('main-workspace');
-        workspace.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic">Synchronizing ${title}...</div>`;
-        try {
-            const res = await fetch(GITHUB_ROOT + file + '?v=' + Date.now());
-            const html = await res.text();
-            workspace.innerHTML = `<div class="p-12">${html}</div>`;
+        async init() {
+            const fid = localStorage.getItem('locked_franchise_id');
+            if (!fid) return;
             
-            const scripts = workspace.querySelectorAll('script');
-            scripts.forEach(oldScript => {
-                const newScript = document.createElement('script');
-                if (oldScript.src) newScript.src = oldScript.src;
-                else newScript.text = oldScript.text;
-                document.head.appendChild(newScript).parentNode.removeChild(newScript);
+            await this.fetchPerformanceData(fid);
+        },
+
+        async fetchPerformanceData(fid) {
+            try {
+                // Fetch Student Data
+                const res = await fetch(`${this.API_STUDENTS}?franchise_id=${fid}`);
+                const students = await res.json();
+                
+                const activeStudents = students.filter(s => s.is_active);
+                document.getElementById('stat-total-enrolled').innerText = activeStudents.length;
+
+                // Basic Session Logic
+                this.renderSessions(activeStudents);
+                
+                // Initial ROI Calculation
+                this.calculateROI();
+                
+            } catch (e) {
+                console.error("Performance Sync Error:", e);
+                document.getElementById('stat-total-enrolled').innerText = "ERR";
+            }
+        },
+
+        renderSessions(students) {
+            const tbody = document.getElementById('session-roster-body');
+            // Mocking session groupings based on your student table field 'session_enrolled'
+            const sessionMap = {};
+            students.forEach(s => {
+                const sName = s.session_enrolled || 'Unassigned';
+                sessionMap[sName] = (sessionMap[sName] || 0) + 1;
             });
-        } catch (e) { workspace.innerHTML = `<div class="p-20 text-red-500 font-bold">${e.message}</div>`; }
-    }
-    init();
+
+            tbody.innerHTML = '';
+            Object.keys(sessionMap).forEach(sessionName => {
+                const count = sessionMap[sessionName];
+                const pct = Math.min((count / 15) * 100, 100).toFixed(0); // Assuming 15 cap
+                
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-all group">
+                        <td class="p-4">
+                            <div class="font-bold text-slate-800 text-xs uppercase">${sessionName}</div>
+                        </td>
+                        <td class="p-4 text-center text-[10px] font-bold text-slate-400">15</td>
+                        <td class="p-4 text-center">
+                            <span class="text-xs font-black text-slate-800">${count}</span>
+                        </td>
+                        <td class="p-4">
+                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-emerald-500 h-full transition-all duration-1000" style="width: ${pct}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                `);
+            });
+        },
+
+        calculateROI() {
+            const totalStudents = parseInt(document.getElementById('stat-total-enrolled').innerText) || 0;
+            const opex = parseFloat(document.getElementById('input-opex').value) || 0;
+            const investment = parseFloat(document.getElementById('input-investment').value) || 350000;
+            
+            // Baseline Tuition (Replace with your actual monthly average)
+            const avgMonthlyTuition = 4500; 
+            
+            const gross = totalStudents * avgMonthlyTuition;
+            const net = gross - opex;
+            const months = net > 0 ? (investment / net).toFixed(1) : "---";
+
+            // Update UI
+            document.getElementById('roi-gross').innerText = "₱" + gross.toLocaleString();
+            document.getElementById('roi-costs').innerText = "₱" + opex.toLocaleString();
+            document.getElementById('roi-net').innerText = "₱" + (net > 0 ? net : 0).toLocaleString();
+            document.getElementById('roi-months').innerText = months;
+
+            const status = document.getElementById('roi-status');
+            if(months <= 10 && months > 0) {
+                status.innerText = "Target ROI achieved (7-10 month window).";
+                status.className = "text-[10px] text-emerald-500 font-black mt-4 uppercase italic";
+            } else {
+                status.innerText = "Below optimal enrollment for target ROI.";
+                status.className = "text-[10px] text-red-400 font-black mt-4 uppercase italic";
+            }
+        }
+    };
+
+    window.PerformanceModule = PerformanceModule;
+    PerformanceModule.init();
+})();
 </script>
