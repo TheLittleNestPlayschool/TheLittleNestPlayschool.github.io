@@ -72,7 +72,6 @@
             if (!fid) return;
 
             try {
-                // Fetch Students, Parents, and Sessions simultaneously
                 const [sRes, pRes, sessRes] = await Promise.all([
                     fetch(`${window.NEST_ENDPOINTS.student.list}?franchise_id=${fid}`),
                     fetch(`${window.NEST_ENDPOINTS.parent.list}?franchise_id=${fid}`),
@@ -119,7 +118,7 @@
                             <span class="text-[10px] font-bold text-slate-500 uppercase">Active Status</span>
                         </div>`;
                 } else {
-                    inputHTML = `<input type="${f.type === 'epochms' ? 'text' : f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 outline-none transition-all">`;
+                    inputHTML = `<input type="${f.type === 'epochms' ? 'text' : f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 outline-none transition-all font-bold">`;
                 }
 
                 grid.insertAdjacentHTML('beforeend', `
@@ -146,7 +145,6 @@
             filtered.forEach((s, idx) => {
                 const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40';
                 
-                // DATA LOOKUPS
                 const parent = this.parents.find(p => p.id === s.parent_id);
                 const parentDisplay = parent ? `${parent.first_name} ${parent.last_name}` : `Guardian ID: ${s.parent_id}`;
 
@@ -168,15 +166,15 @@
                                     <div class="grid grid-cols-2 gap-y-3 gap-x-4">
                                         <div class="col-span-2">
                                             <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Primary Guardian</p>
-                                            <p class="text-[11px] text-slate-700 uppercase">${parentDisplay}</p>
+                                            <p class="text-[11px] text-slate-800 uppercase font-black">${parentDisplay}</p>
                                         </div>
                                         <div>
                                             <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Preferred Name</p>
-                                            <p class="text-[11px] font-bold text-slate-700 uppercase">${s.preferred_name || '---'}</p>
+                                            <p class="text-[11px] font-black text-slate-800 uppercase">${s.preferred_name || '---'}</p>
                                         </div>
                                         <div>
                                             <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Birth Date</p>
-                                            <p class="text-[11px] font-mono text-slate-600">${s.date_of_birth || '---'}</p>
+                                            <p class="text-[11px] font-mono font-black text-slate-800">${s.date_of_birth || '---'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -185,19 +183,19 @@
                                     <div class="grid grid-cols-2 gap-y-3 gap-x-4">
                                         <div class="col-span-2">
                                             <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Assigned Class / Session</p>
-                                            <p class="text-[11px] text-slate-700 uppercase tracking-tight">${sessionDisplay}</p>
+                                            <p class="text-[11px] text-slate-800 uppercase tracking-tight font-black">${sessionDisplay}</p>
                                         </div>
                                         <div>
                                             <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Start Date</p>
-                                            <p class="text-[11px] font-bold text-slate-700 uppercase">${s.start_date || '---'}</p>
+                                            <p class="text-[11px] font-black text-slate-800 uppercase">${s.start_date || '---'}</p>
                                         </div>
                                         <div>
                                             <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Nationality</p>
-                                            <p class="text-[11px] font-bold text-slate-700 uppercase">${s.nationality || '---'}</p>
+                                            <p class="text-[11px] font-black text-slate-800 uppercase">${s.nationality || '---'}</p>
                                         </div>
                                         <div class="col-span-2">
                                             <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Home Address</p>
-                                            <p class="text-[11px] font-bold text-slate-700 uppercase leading-tight">${s.home_address || '---'}</p>
+                                            <p class="text-[11px] font-black text-slate-800 uppercase leading-tight">${s.home_address || '---'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -206,17 +204,17 @@
                                     <div class="grid grid-cols-1 gap-y-3">
                                         <div>
                                             <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Primary Language</p>
-                                            <p class="text-[11px] font-bold text-slate-700 uppercase">${s.primary_language || '---'}</p>
+                                            <p class="text-[11px] font-black text-slate-800 uppercase">${s.primary_language || '---'}</p>
                                         </div>
                                         <div>
                                             <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Gender</p>
-                                            <p class="text-[11px] font-bold text-slate-700 uppercase">${s.gender || '---'}</p>
+                                            <p class="text-[11px] font-black text-slate-800 uppercase">${s.gender || '---'}</p>
                                         </div>
                                     </div>
                                     
-                                    <div class="flex flex-col gap-2 mt-6">
-                                        <button data-id="${s.id}" class="student-edit-btn w-full py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:text-teal-600 hover:border-teal-300 hover:shadow-sm transition-all uppercase font-black text-[9px]">Edit Profile</button>
-                                        <button data-id="${s.id}" class="student-delete-btn w-full py-2.5 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white rounded-xl transition-all uppercase font-black text-[9px]">Remove</button>
+                                    <div class="flex gap-2 mt-6">
+                                        <button data-id="${s.id}" class="student-edit-btn flex-1 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:text-teal-600 hover:border-teal-300 hover:shadow-sm transition-all uppercase font-black text-[9px]">Edit</button>
+                                        <button data-id="${s.id}" class="student-delete-btn flex-1 py-2 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition-all uppercase font-black text-[9px]">Delete</button>
                                     </div>
                                 </div>
 
