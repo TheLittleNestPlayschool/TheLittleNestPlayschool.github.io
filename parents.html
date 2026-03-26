@@ -1,7 +1,7 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
         <h1 class="text-2xl font-bold text-emerald-500 uppercase tracking-tight">Parent Directory</h1>
-        <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Franchise Management System</p>
+        <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Franchise Management System • Sariaya</p>
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
@@ -14,21 +14,10 @@
     </div>
 </div>
 
-<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-    <table class="w-full text-left border-collapse">
-        <thead>
-            <tr class="bg-slate-100 border-b border-slate-200">
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/4">Guardian Name</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/4">Contact Info</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/4">Physical Address</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-1/8">Status</th>
-                <th class="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right w-1/8">Actions</th>
-            </tr>
-        </thead>
-        <tbody id="parent-table-body">
-            <tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic font-medium uppercase tracking-widest animate-pulse">Synchronizing NestMind Database...</td></tr>
-        </tbody>
-    </table>
+<div id="parent-list-container" class="space-y-4">
+    <div class="p-10 text-center text-slate-400 text-xs italic font-medium uppercase tracking-widest animate-pulse">
+        Synchronizing NestMind Database...
+    </div>
 </div>
 
 <div id="parent-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
@@ -44,7 +33,7 @@
         <form id="parent-form" class="p-6">
             <input type="hidden" id="p-edit-id">
             
-            <div id="dynamic-fields-grid" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 max-h-[65vh] overflow-y-auto pr-2 custom-scrollbar">
+            <div id="dynamic-fields-grid" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                 </div>
 
             <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
@@ -64,16 +53,19 @@
         schema: null,
 
         async init() {
-            // Load required configs if missing
+            // 1. Ensure Configs are Loaded
             if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
             if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
             
             this.schema = window.NEST_SCHEMA.parent;
+            
+            // 2. Build the UI components
             this.buildFormUI(); 
             
             const fid = localStorage.getItem('locked_franchise_id');
             if (!fid) return;
 
+            // 3. Fetch Data
             try {
                 const response = await fetch(`${window.NEST_ENDPOINTS.parent.list}?franchise_id=${fid}`);
                 this.data = await response.json();
@@ -84,6 +76,7 @@
             }
         },
 
+        // This builds the fields INSIDE the popup modal
         buildFormUI() {
             const grid = document.getElementById('dynamic-fields-grid');
             grid.innerHTML = '';
@@ -92,7 +85,6 @@
             this.schema.fields.forEach(f => {
                 if (f.hidden) return;
 
-                // Inject Section Headers
                 if (f.section && f.section !== currentSection) {
                     currentSection = f.section;
                     grid.insertAdjacentHTML('beforeend', `
@@ -105,10 +97,10 @@
                 const spanClass = f.width === 'full' || f.type === 'textarea' ? 'col-span-full' : 'col-span-1';
                 const inputHTML = f.type === 'textarea' 
                     ? `<textarea id="${f.id}" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500"></textarea>`
-                    : f.type === 'checkbox'
+                    : f.type === 'bool' || f.type === 'checkbox'
                     ? `<div class="flex items-center gap-3 mt-2 bg-slate-50 p-2.5 rounded border border-slate-100">
                         <input type="checkbox" id="${f.id}" class="w-4 h-4 text-emerald-500 rounded border-slate-300">
-                        <span class="text-[10px] font-bold text-slate-600 uppercase">Enable / Active</span>
+                        <span class="text-[10px] font-bold text-slate-600 uppercase">Enable Status</span>
                        </div>`
                     : `<input type="${f.type}" id="${f.id}" ${f.required ? 'required' : ''} class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500">`;
 
@@ -121,67 +113,113 @@
             });
         },
 
+        // This builds the "Cards" on the main screen
         render() {
-            const tbody = document.getElementById('parent-table-body');
+            const container = document.getElementById('parent-list-container');
             const search = (document.getElementById('parent-search')?.value || '').toLowerCase();
             
             let filtered = this.data.filter(p => 
-                `${p.first_name} ${p.last_name}`.toLowerCase().includes(search) || 
-                (p.email && p.email.toLowerCase().includes(search))
+                `${p.first_name} ${p.last_name} ${p.email}`.toLowerCase().includes(search)
             );
 
-            tbody.innerHTML = '';
-            filtered.forEach((p, idx) => {
-                const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40';
-                tbody.insertAdjacentHTML('beforeend', `
-                    <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50 transition-all group">
-                        <td class="p-4">
-                            <div class="font-bold text-slate-900 text-sm group-hover:text-emerald-600">${p.first_name} ${p.last_name}</div>
-                            <div class="text-[9px] text-slate-400 mt-0.5 uppercase tracking-tighter">ID: #PN-${p.id}</div>
-                        </td>
-                        <td class="p-4">
-                            <div class="font-semibold text-slate-700">${p.email || '---'}</div>
-                            <div class="text-[10px] text-slate-400 mt-1 font-mono">${p.phone || ''}</div>
-                        </td>
-                        <td class="p-4 text-[10px] text-slate-500 uppercase max-w-[200px] truncate">${p.address || '---'}</td>
-                        <td class="p-4">
-                            <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase ${p.is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-400 border border-slate-200'}">
-                                ${p.is_active ? 'Active' : 'Archived'}
-                            </span>
-                        </td>
-                        <td class="p-4 text-right">
-                            <button data-id="${p.id}" class="parent-edit-btn px-3 py-1.5 bg-white border border-slate-200 rounded text-slate-500 hover:text-emerald-600 transition-all uppercase font-bold text-[9px]">Edit</button>
-                        </td>
-                    </tr>
+            container.innerHTML = '';
+            filtered.forEach(p => {
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden hover:border-emerald-400 transition-all">
+                        <div class="bg-slate-50 p-4 flex flex-wrap items-center justify-between gap-4 border-b border-slate-100">
+                            <div class="min-w-[150px]">
+                                <span class="text-[9px] text-slate-400 font-bold uppercase block">Guardian</span>
+                                <span class="text-sm font-bold text-slate-800">${p.first_name} ${p.last_name}</span>
+                            </div>
+                            <div class="min-w-[150px]">
+                                <span class="text-[9px] text-slate-400 font-bold uppercase block">Contact</span>
+                                <span class="text-xs text-slate-600 font-medium">${p.email || '---'}</span>
+                                <span class="text-[10px] text-slate-400 block font-mono">${p.phone || ''}</span>
+                            </div>
+                            <div class="flex-1 min-w-[200px]">
+                                <span class="text-[9px] text-slate-400 font-bold uppercase block">Home Address</span>
+                                <span class="text-xs text-slate-500">${p.address || '---'}</span>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase ${p.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}">
+                                    ${p.is_active ? 'Active' : 'Archived'}
+                                </span>
+                                <button data-id="${p.id}" class="parent-edit-btn px-4 py-1.5 bg-white border border-slate-300 rounded text-[10px] font-black hover:text-emerald-600 transition-all uppercase">Edit</button>
+                            </div>
+                        </div>
+
+                        <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-[11px]">
+                            <div class="space-y-1">
+                                <span class="text-[9px] font-black text-emerald-600 uppercase tracking-widest block mb-1 border-b border-emerald-50 pb-1">Secondary Guardian</span>
+                                <div class="font-bold text-slate-700">${p.second_parent_full_name || 'NONE'}</div>
+                                <div class="text-slate-500">${p.second_parent_phone_number || ''}</div>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="text-[9px] font-black text-orange-500 uppercase tracking-widest block mb-1 border-b border-orange-50 pb-1">Emergency 1</span>
+                                <div class="font-bold text-slate-700">${p.emergency_contact_1_name || '---'}</div>
+                                <div class="text-slate-500">${p.emergency_contact_1_phone_number || ''}</div>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="text-[9px] font-black text-orange-500 uppercase tracking-widest block mb-1 border-b border-orange-50 pb-1">Emergency 2</span>
+                                <div class="font-bold text-slate-700">${p.emergency_contact_2_name || '---'}</div>
+                                <div class="text-slate-500">${p.emergency_contact_2_phone_number || ''}</div>
+                            </div>
+                        </div>
+                    </div>
                 `);
             });
 
-            tbody.querySelectorAll('.parent-edit-btn').forEach(b => b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id)));
+            container.querySelectorAll('.parent-edit-btn').forEach(b => {
+                b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id));
+            });
         },
 
         openModal(p = null) {
             document.getElementById('parent-modal').classList.remove('hidden');
             document.getElementById('parent-form').reset();
             document.getElementById('p-edit-id').value = p ? p.id : '';
-            document.getElementById('p-modal-title').innerText = p ? 'Update Guardian Profile' : 'Register New Guardian';
+            document.getElementById('p-modal-title').innerText = p ? 'Update Guardian Record' : 'Register New Guardian';
 
             this.schema.fields.forEach(f => {
                 const el = document.getElementById(f.id);
                 if (el) {
-                    if (f.type === 'checkbox') el.checked = p ? !!p[f.id] : (f.default ?? false);
+                    if (f.type === 'bool' || f.type === 'checkbox') el.checked = p ? !!p[f.id] : (f.default ?? true);
                     else el.value = p ? (p[f.id] || '') : '';
                 }
             });
         },
+
+        closeModal() { document.getElementById('parent-modal').classList.add('hidden'); },
 
         setupListeners() {
             document.getElementById('parent-search').oninput = () => this.render();
             document.getElementById('add-parent-btn').onclick = () => this.openModal();
             document.getElementById('close-modal-x').onclick = () => this.closeModal();
             document.getElementById('cancel-modal-btn').onclick = () => this.closeModal();
-        },
 
-        closeModal() { document.getElementById('parent-modal').classList.add('hidden'); },
+            document.getElementById('parent-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('p-edit-id').value;
+                const payload = { franchise_id: parseInt(localStorage.getItem('locked_franchise_id')) };
+                
+                this.schema.fields.forEach(f => {
+                    const el = document.getElementById(f.id);
+                    if (el && !f.hidden) payload[f.id] = (f.type === 'bool' || f.type === 'checkbox') ? el.checked : el.value;
+                });
+
+                const url = id ? `${window.NEST_ENDPOINTS.parent.list}/${id}` : window.NEST_ENDPOINTS.parent.list;
+                const res = await fetch(url, { 
+                    method: id ? 'PATCH' : 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
+                
+                if (res.ok) {
+                    this.closeModal();
+                    this.init();
+                }
+            };
+        },
 
         async loadScript(src) {
             return new Promise(resolve => {
@@ -189,29 +227,6 @@
                 s.onerror = () => { s.src = src.replace('/', ''); s.onload = resolve; };
                 document.head.appendChild(s);
             });
-        }
-    };
-
-    document.getElementById('parent-form').onsubmit = async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('p-edit-id').value;
-        const payload = { franchise_id: parseInt(localStorage.getItem('locked_franchise_id')) };
-        
-        ParentModule.schema.fields.forEach(f => {
-            const el = document.getElementById(f.id);
-            if (el && !f.hidden) payload[f.id] = f.type === 'checkbox' ? el.checked : el.value;
-        });
-
-        const url = id ? `${window.NEST_ENDPOINTS.parent.list}/${id}` : window.NEST_ENDPOINTS.parent.list;
-        const res = await fetch(url, { 
-            method: id ? 'PATCH' : 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify(payload) 
-        });
-        
-        if (res.ok) {
-            ParentModule.closeModal();
-            ParentModule.init();
         }
     };
 
