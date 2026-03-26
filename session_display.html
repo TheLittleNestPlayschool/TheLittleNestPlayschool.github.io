@@ -1,7 +1,8 @@
-<script src="api_config.js"></script>
-<script src="schema_config.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+<script src="api_config.js"></script>
+<script src="schema_config.js"></script>
 
 <div class="bg-transparent p-4 font-['Inter',_sans-serif]">
     <div class="flex justify-between items-center mb-6">
@@ -12,117 +13,80 @@
     </div>
 
     <div id="session-container" class="space-y-3">
-        <div class="text-center py-20 bg-white border-2 border-dashed border-slate-200 rounded-2xl">
-            <div class="animate-spin inline-block w-6 h-6 border-[3px] border-current border-t-transparent text-teal-500 rounded-full mb-4" role="status"></div>
-            <p class="text-slate-400 font-bold italic tracking-tight">Synchronizing session data...</p>
+        <div id="sync-status" class="text-center py-20 bg-white border-2 border-dashed border-slate-200 rounded-2xl">
+            <div class="animate-spin inline-block w-6 h-6 border-[3px] border-current border-t-transparent text-teal-500 rounded-full mb-4"></div>
+            <p class="text-slate-400 font-bold italic tracking-tight">Initializing NestMind Engine...</p>
         </div>
     </div>
 </div>
 
 <script>
 (function() {
-    // ERROR LOGGER HELPER
-    const logError = (msg) => {
-        const container = document.getElementById('session-container');
-        if(!container) return;
-        container.innerHTML = `
-            <div class="bg-red-50 border-2 border-red-100 p-8 rounded-2xl text-center">
-                <div class="text-3xl mb-2">⚠️</div>
-                <p class="text-red-600 font-black uppercase text-xs tracking-widest mb-1">Sync Failed</p>
-                <p class="text-red-500 font-medium text-sm">${msg}</p>
-                <button onclick="window.loadSessions()" class="mt-4 px-4 py-2 bg-red-600 text-white text-[10px] font-black rounded-lg uppercase transition-transform active:scale-95">Retry Connection</button>
-            </div>`;
-    };
+    let retryCount = 0;
 
     window.loadSessions = async () => {
         const container = document.getElementById('session-container');
-        if(!container) return;
+        const statusText = document.getElementById('sync-status');
         
-        // 1. Check if Config is loaded
-        if (typeof window.NEST_API === 'undefined') {
-            logError("Configuration file (api_config.js) not found or failed to load.");
-            return;
+        // 1. RECURSIVE CHECK: If api_config isn't ready yet, wait 100ms and try again
+        if (typeof window.NEST_API === 'undefined' || !window.NEST_API.sessions) {
+            if (retryCount < 50) { // Try for 5 seconds total
+                retryCount++;
+                setTimeout(window.loadSessions, 100);
+                return;
+            } else {
+                container.innerHTML = `<div class="p-8 text-center bg-red-50 text-red-500 rounded-xl font-bold">CRITICAL: api_config.js failed to initialize.</div>`;
+                return;
+            }
         }
 
-        // 2. Check Identity Lock
         const lockedId = localStorage.getItem('locked_franchise_id');
-        const lockedName = localStorage.getItem('locked_franchise_name') || "this branch";
-        
         if (!lockedId) {
-            container.innerHTML = `
-                <div class="bg-amber-50 border-2 border-amber-100 p-8 rounded-2xl text-center">
-                    <p class="text-amber-700 font-black uppercase text-xs tracking-widest mb-1">Identity Lock Required</p>
-                    <p class="text-amber-600 font-medium text-sm">Please select a branch in the sidebar to view local sessions.</p>
-                </div>`;
+            container.innerHTML = `<div class="p-8 text-center bg-amber-50 text-amber-700 rounded-xl font-bold italic">Identity Lock Required: Please select a branch.</div>`;
             return;
         }
         
         try {
-            // 3. Attempt Fetch
             const response = await fetch(`${window.NEST_API.sessions}?t=${Date.now()}`);
-            
-            if (!response.ok) throw new Error(`Xano responded with ${response.status}: ${response.statusText}`);
+            if (!response.ok) throw new Error("Connection Refused");
             
             const data = await response.json();
             let list = Array.isArray(data) ? data : (data.items || []);
             
-            // 4. Filter by Franchise
+            // Filter by the Locked Branch
             list = list.filter(s => s.franchise_id.toString() === lockedId);
 
             if (list.length === 0) {
-                container.innerHTML = `
-                    <div class="bg-white border-2 border-dashed border-slate-200 p-12 rounded-2xl text-center">
-                        <p class="text-slate-400 font-bold italic text-sm">No active sessions found for ${lockedName}.</p>
-                    </div>`;
+                container.innerHTML = `<div class="p-12 text-center text-slate-400 font-bold border-2 border-dashed border-slate-100 rounded-2xl">No sessions found for this branch.</div>`;
                 return;
             }
 
-            // 5. Render
-            container.innerHTML = list.map(s => {
-                const statusColor = s.is_active ? 'text-teal-500' : 'text-slate-400';
-                const statusBg = s.is_active ? 'bg-teal-500' : 'bg-slate-400';
-                const days = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : s.scheduled_days;
-
-                return `
-                <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center hover:border-teal-400 transition-all shadow-sm group">
+            container.innerHTML = list.map(s => `
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center hover:shadow-md transition-shadow">
                     <div class="flex-1">
-                        <h3 class="text-lg font-extrabold text-slate-800 group-hover:text-teal-600 transition-colors">${s.name}</h3>
-                        <p class="text-xs text-slate-500 font-medium mt-1 leading-relaxed max-w-md">
-                            ${s.description || 'No course description provided for this session.'}
-                        </p>
+                        <h3 class="text-lg font-black text-slate-800">${s.name}</h3>
+                        <p class="text-xs text-slate-500 mt-1">${s.description || 'NestMind Session Record'}</p>
                     </div>
-
                     <div class="flex items-center gap-8 ml-auto">
                         <div class="text-right">
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Schedule</p>
-                            <p class="text-xs font-bold text-slate-700">${days || 'TBD'}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Time</p>
+                            <p class="text-[9px] font-black text-slate-400 uppercase">Schedule</p>
                             <p class="text-xs font-bold text-slate-700">${s.start_time_text} - ${s.end_time_text}</p>
                         </div>
-                        <div class="text-right w-16">
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Capacity</p>
-                            <p class="text-xs font-bold text-slate-700">${s.max_students} Slots</p>
-                        </div>
-                        
-                        <div class="flex items-center gap-2 pl-6 border-l border-slate-100 min-w-[90px] justify-end">
-                            <div class="w-2 h-2 rounded-full ${statusBg} ${s.is_active ? 'animate-pulse' : ''}"></div>
-                            <span class="text-[10px] font-black uppercase tracking-tighter ${statusColor}">
-                                ${s.is_active ? 'Active' : 'Paused'}
+                        <div class="flex items-center gap-2 pl-6 border-l border-slate-100">
+                            <div class="w-2 h-2 rounded-full ${s.is_active ? 'bg-teal-500' : 'bg-slate-300'}"></div>
+                            <span class="text-[10px] font-black uppercase ${s.is_active ? 'text-teal-500' : 'text-slate-400'}">
+                                ${s.is_active ? 'Active' : 'Closed'}
                             </span>
                         </div>
                     </div>
-                </div>`;
-            }).join('');
+                </div>`).join('');
 
         } catch(e) { 
-            console.error("Sync Error:", e);
-            logError(e.message);
+            container.innerHTML = `<div class="p-8 text-center bg-red-50 text-red-500 rounded-xl font-bold">Sync Failed: Cloud Connection Error</div>`;
         }
     };
 
-    // Initialize
+    // Kick off the smart loader
     window.loadSessions();
 })();
 </script>
