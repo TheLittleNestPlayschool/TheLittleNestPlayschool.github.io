@@ -68,13 +68,13 @@
     <div class="bg-white w-full rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="px-6 py-3 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
             <h2 class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Session Capacity Monitor</h2>
-            <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Cap: 15/Class</span>
+            <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest italic">Live Distribution</span>
         </div>
         <div class="max-h-48 overflow-y-auto">
             <table class="w-full text-left">
                 <thead class="bg-white border-b border-slate-100 sticky top-0">
                     <tr>
-                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Session Name</th>
+                        <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Session Name / Time</th>
                         <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase text-center tracking-widest">Enrollment</th>
                         <th class="px-6 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Utilization</th>
                     </tr>
@@ -126,6 +126,7 @@
         const fid = localStorage.getItem('locked_franchise_id');
         if (!fid) return;
 
+        // Workspace API
         const API_ROOT = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx";
 
         try {
@@ -135,26 +136,31 @@
                 fetch(`${API_ROOT}/student?franchise_id=${fid}`)
             ]);
 
-            const sessions = await sessionRes.json();
-            const students = await studentRes.json();
+            let sessions = await sessionRes.json();
+            let students = await studentRes.json();
 
-            // Calculate Active Pulse
+            // Safety check for Array return
+            if (!Array.isArray(sessions)) sessions = [];
+            if (!Array.isArray(students)) students = [];
+
+            // Calculate Active Students
             const activeStudents = students.filter(s => s.is_active === true);
             const totalActive = activeStudents.length;
             document.getElementById('perf-total-active').innerText = totalActive;
 
-            // Map Students to Sessions
+            // Map Students to Session IDs using field 'session_id'
             const sessionCounts = {};
             activeStudents.forEach(s => {
-                if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1;
+                const sid = s.session_id; 
+                if (sid) sessionCounts[sid] = (sessionCounts[sid] || 0) + 1;
             });
 
-            // Revenue Calculations
+            // Revenue
             const monthlyRev = totalActive * 3500;
             document.getElementById('rev-monthly').innerText = monthlyRev.toLocaleString();
             document.getElementById('rev-daily').innerText = Math.round(monthlyRev / 30).toLocaleString();
 
-            // ROI Update
+            // ROI logic
             window.calculateROI = () => {
                 const investment = 350000;
                 const opex = document.getElementById('perf-opex-input').value || 15000;
@@ -167,20 +173,31 @@
             };
             window.calculateROI();
 
-            // Populate Session Table
+            // Populate Table with your Table Fields
             const tbody = document.getElementById('perf-sessions-body');
             tbody.innerHTML = '';
+            
+            if (sessions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-[10px] font-bold text-slate-300 uppercase italic">No active sessions found</td></tr>';
+            }
+
             sessions.forEach(session => {
                 const count = sessionCounts[session.id] || 0;
-                const percent = Math.min((count / 15) * 100, 100);
+                const max = session.max_students || 15; // Uses your max_students field
+                const percent = Math.min((count / max) * 100, 100);
                 const barColor = percent >= 100 ? 'bg-red-500' : (percent > 80 ? 'bg-orange-400' : 'bg-[#00d1b2]');
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-6 py-3 text-[11px] font-black text-slate-700 uppercase">${session.name}</td>
+                        <td class="px-6 py-3">
+                            <p class="text-[11px] font-black text-slate-700 uppercase leading-none">${session.name}</p>
+                            <p class="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-tighter italic">
+                                ${session.start_time_text || '--:--'} - ${session.end_time_text || '--:--'}
+                            </p>
+                        </td>
                         <td class="px-6 py-3 text-center">
                             <span class="text-xs font-black text-slate-800">${count}</span>
-                            <span class="text-[9px] font-bold text-slate-300">/ 15</span>
+                            <span class="text-[9px] font-bold text-slate-300">/ ${max}</span>
                         </td>
                         <td class="px-6 py-3">
                             <div class="flex items-center gap-3">
