@@ -39,7 +39,7 @@
                         <span id="perf-total-active" class="text-5xl font-black text-slate-800 tracking-tighter">0</span>
                     </div>
                     <div class="text-right pb-1">
-                        <span class="text-[9px] font-black text-slate-400 uppercase block tracking-widest">Total Attrition (Left)</span>
+                        <span class="text-[9px] font-black text-slate-400 uppercase block tracking-widest">Total Attrition</span>
                         <span id="perf-total-left" class="text-xl font-black text-red-400">0</span>
                     </div>
                 </div>
@@ -72,13 +72,22 @@
                     </div>
                 </div>
 
-                <div class="pt-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Monthly Gross</span>
-                        <span class="text-[9px] font-black text-slate-300 uppercase">Last Month: ₱<span id="rev-prev-monthly">0</span></span>
+                <div class="flex justify-between items-center border-b border-slate-50 pb-2">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Monthly</span>
+                    <div class="flex gap-8 items-center">
+                        <span class="text-sm font-black text-slate-800">₱<span id="rev-monthly">0</span></span>
+                        <span class="text-[11px] font-bold text-slate-300">₱<span id="rev-prev-monthly">0</span></span>
                     </div>
-                    <div class="text-5xl font-black text-slate-800 tracking-tighter mt-1">
-                        ₱<span id="rev-monthly">0</span>
+                </div>
+
+                <div class="pt-4 flex justify-between items-end">
+                    <div>
+                        <span class="text-[10px] font-black text-emerald-500 uppercase block tracking-widest">Financial Health</span>
+                        <span class="text-3xl font-black text-slate-800 tracking-tighter uppercase">Healthy</span>
+                    </div>
+                    <div class="text-right pb-1">
+                        <span class="text-[9px] font-black text-slate-400 uppercase block tracking-widest text-right">Last Sync</span>
+                        <span class="text-[10px] font-bold text-slate-600">Real-Time</span>
                     </div>
                 </div>
             </div>
@@ -157,7 +166,6 @@
             const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())).getTime();
             const startOfPrevWeek = startOfWeek - (86400000 * 7);
 
-            // Filtering for UI Columns
             const activeToday = students.filter(s => s.is_active && s.created_at >= startOfDay).length;
             const prevToday = students.filter(s => s.is_active && s.created_at >= startOfPrevDay && s.created_at < startOfDay).length;
             
@@ -167,7 +175,6 @@
             const activeTotal = students.filter(s => s.is_active);
             const leftTotal = students.filter(s => !s.is_active).length;
 
-            // Update UI
             document.getElementById('perf-today-active').innerText = activeToday;
             document.getElementById('perf-prev-day-active').innerText = prevToday;
             document.getElementById('perf-week-active').innerText = activeWeek;
@@ -175,7 +182,6 @@
             document.getElementById('perf-total-active').innerText = activeTotal.length;
             document.getElementById('perf-total-left').innerText = leftTotal;
             
-            // Render Table
             const sessions = {};
             activeTotal.forEach(s => {
                 const name = s.session_enrolled || 'Unassigned';
