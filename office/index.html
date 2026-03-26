@@ -52,14 +52,14 @@
 
         <nav id="sidebar-menu-links" class="flex-1 px-2 hidden-until-locked">
             <div class="section-label">MANAGEMENT</div>
-            <div onclick="loadPage('performance.html', 'Performance')" class="sidebar-link">📊 Performance</div>
+            <div onclick="loadPage('franchise_performance.html', 'Performance')" class="sidebar-link">📊 Performance</div>
             <div onclick="loadPage('parents.html', 'Parents')" class="sidebar-link">👨‍👩‍👧 Parents</div>
             <div onclick="loadPage('teachers.html', 'Teachers')" class="sidebar-link">👩‍🏫 Teachers</div>
 
             <div class="section-label">ACADEMIC DNA</div>
             <div onclick="loadPage('new_enrollment.html', 'New Enrollment')" class="sidebar-link">✨ New Enrollment</div>
             <div onclick="loadPage('students.html', 'Students')" class="sidebar-link">🏫 Students</div>
-            <div onclick="loadPage('sessions.html', 'Sessions')" class="sidebar-link">🗓️ Sessions</div>
+            <div onclick="loadPage('session_display.html', 'Sessions')" class="sidebar-link">🗓️ Sessions</div>
 
             <div class="section-label">LOGISTICS</div>
             <div onclick="loadPage('session_vault.html', 'Session Vault')" class="sidebar-link">📁 Session Vault</div>
@@ -84,7 +84,8 @@
                 
                 data.forEach(f => {
                     let opt = document.createElement('option');
-                    opt.value = f.id; opt.innerText = f.name;
+                    opt.value = f.id; 
+                    opt.innerText = f.name;
                     select.appendChild(opt);
                 });
 
@@ -98,24 +99,30 @@
         function confirmFranchiseSelection() {
             const select = document.getElementById('sidebar-franchise-select');
             if (!select.value) return;
+
             const branchName = select.options[select.selectedIndex].text;
             window.currentFranchiseId = select.value;
             localStorage.setItem('locked_franchise_id', select.value);
             localStorage.setItem('locked_franchise_name', branchName);
+            
             document.getElementById('sidebar-profile').classList.remove('hidden-until-locked');
             document.getElementById('sidebar-menu-links').classList.remove('hidden-until-locked');
             document.getElementById('current-screen-name').innerText = "SELECT MODULE";
         }
 
         function loadPage(url, title) {
-            if (!localStorage.getItem('locked_franchise_id')) return; 
+            const isLocked = localStorage.getItem('locked_franchise_id');
+            if (!isLocked) return; 
+
             document.getElementById('content-frame').src = url;
             document.getElementById('current-screen-name').innerText = title;
+            
             document.querySelectorAll('.sidebar-link').forEach(l => {
                 l.classList.remove('active');
                 if(l.innerText.toUpperCase().includes(title.toUpperCase())) l.classList.add('active');
             });
         }
+
         window.onload = init;
     </script>
 </body>
