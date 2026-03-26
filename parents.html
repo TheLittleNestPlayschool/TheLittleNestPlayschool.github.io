@@ -1,4 +1,3 @@
-
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
         <h1 class="text-2xl font-bold text-emerald-500 uppercase tracking-tight">Parent Directory</h1>
@@ -6,13 +5,8 @@
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="parent-search" placeholder="Search parents or emails..." 
+        <input type="text" id="parent-search" placeholder="Search guardians..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-slate-500 shadow-sm w-full md:w-64">
-
-        <select id="parent-sort" class="bg-white border border-slate-300 px-3 py-2 rounded-lg text-[10px] font-medium text-slate-600 outline-none">
-            <option value="newest">Newest First</option>
-            <option value="name_asc">Name: A-Z</option>
-        </select>
         
         <button id="add-parent-btn" class="bg-[#1e293b] hover:bg-slate-900 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
             + ADD PARENT
@@ -38,57 +32,22 @@
 </div>
 
 <div id="parent-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-300">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-300">
         <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
             <div>
                 <h2 id="p-modal-title" class="text-sm font-bold text-slate-800 uppercase">Parent Profile</h2>
-                <p class="text-[9px] text-slate-400 uppercase tracking-tighter">Enter legal guardian details</p>
+                <p class="text-[9px] text-slate-400 uppercase tracking-tighter">Database Schema Version 1.2</p>
             </div>
             <button id="close-modal-x" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
         </div>
         
-        <form id="parent-form" class="p-6 space-y-4">
+        <form id="parent-form" class="p-6">
             <input type="hidden" id="p-edit-id">
-            <input type="hidden" id="p-franchise-id">
             
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">First Name</label>
-                    <input type="text" id="first_name" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
+            <div id="dynamic-fields-grid" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 max-h-[65vh] overflow-y-auto pr-2 custom-scrollbar">
                 </div>
-                <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Last Name</label>
-                    <input type="text" id="last_name" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
-                </div>
-            </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Email Address</label>
-                    <input type="email" id="email" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
-                </div>
-                <div>
-                    <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Phone Number</label>
-                    <input type="text" id="phone" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 outline-none">
-                </div>
-            </div>
-
-            <div>
-                <label class="text-[9px] text-slate-500 block uppercase font-bold mb-1">Physical Address</label>
-                <textarea id="address" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 outline-none"></textarea>
-            </div>
-
-            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" id="is_active" class="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500">
-                    <div>
-                        <span class="text-[10px] font-bold text-slate-700 uppercase block">Active Guardian Status</span>
-                        <span class="text-[9px] text-slate-400 block">Record remains visible in active branch views.</span>
-                    </div>
-                </label>
-            </div>
-
-            <div class="flex gap-3 pt-6 border-t border-slate-100">
+            <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
                 <button type="button" id="cancel-modal-btn" class="px-6 py-2.5 bg-slate-100 text-slate-500 rounded-lg font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Cancel</button>
                 <button type="submit" class="flex-1 py-2.5 bg-[#1e293b] text-white rounded-lg font-bold text-[10px] uppercase shadow-lg hover:bg-black transition-all">
                     Save Guardian Record
@@ -102,140 +61,145 @@
 (function() {
     const ParentModule = {
         data: [],
-        fields: ['first_name', 'last_name', 'email', 'phone', 'address', 'is_active'],
+        schema: null,
 
         async init() {
-            // Ensure API config is loaded
-            if (!window.NEST_ENDPOINTS) {
-                await new Promise((resolve) => {
-                    const script = document.createElement('script');
-                    script.src = '/api_config.js';
-                    script.onload = resolve;
-                    script.onerror = () => { script.src = 'api_config.js'; script.onload = resolve; };
-                    document.head.appendChild(script);
-                });
-            }
-
+            // Load required configs if missing
+            if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
+            if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
+            
+            this.schema = window.NEST_SCHEMA.parent;
+            this.buildFormUI(); 
+            
             const fid = localStorage.getItem('locked_franchise_id');
-            const tbody = document.getElementById('parent-table-body');
-            this.data = []; 
-            if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">Syncing Parents...</td></tr>';
             if (!fid) return;
 
             try {
                 const response = await fetch(`${window.NEST_ENDPOINTS.parent.list}?franchise_id=${fid}`);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 this.data = await response.json();
                 this.render();
                 this.setupListeners();
-            } catch (error) {
-                console.error("Parent Sync Error:", error);
-                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest">Connection Error</td></tr>';
+            } catch (err) {
+                console.error("Sync Error:", err);
             }
+        },
+
+        buildFormUI() {
+            const grid = document.getElementById('dynamic-fields-grid');
+            grid.innerHTML = '';
+            let currentSection = "";
+
+            this.schema.fields.forEach(f => {
+                if (f.hidden) return;
+
+                // Inject Section Headers
+                if (f.section && f.section !== currentSection) {
+                    currentSection = f.section;
+                    grid.insertAdjacentHTML('beforeend', `
+                        <div class="col-span-full mt-4 mb-2 border-b border-slate-100 pb-1">
+                            <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">${currentSection}</span>
+                        </div>
+                    `);
+                }
+
+                const spanClass = f.width === 'full' || f.type === 'textarea' ? 'col-span-full' : 'col-span-1';
+                const inputHTML = f.type === 'textarea' 
+                    ? `<textarea id="${f.id}" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500"></textarea>`
+                    : f.type === 'checkbox'
+                    ? `<div class="flex items-center gap-3 mt-2 bg-slate-50 p-2.5 rounded border border-slate-100">
+                        <input type="checkbox" id="${f.id}" class="w-4 h-4 text-emerald-500 rounded border-slate-300">
+                        <span class="text-[10px] font-bold text-slate-600 uppercase">Enable / Active</span>
+                       </div>`
+                    : `<input type="${f.type}" id="${f.id}" ${f.required ? 'required' : ''} class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-xs outline-none focus:ring-1 focus:ring-emerald-500">`;
+
+                grid.insertAdjacentHTML('beforeend', `
+                    <div class="${spanClass}">
+                        <label class="text-[9px] text-slate-400 block uppercase font-bold mb-1 ml-1">${f.label}</label>
+                        ${inputHTML}
+                    </div>
+                `);
+            });
         },
 
         render() {
             const tbody = document.getElementById('parent-table-body');
-            if (!tbody) return;
-            const searchTerm = (document.getElementById('parent-search')?.value || '').toLowerCase();
-            const sortVal = document.getElementById('parent-sort')?.value || 'newest';
-
+            const search = (document.getElementById('parent-search')?.value || '').toLowerCase();
+            
             let filtered = this.data.filter(p => 
-                (p.first_name && p.first_name.toLowerCase().includes(searchTerm)) || 
-                (p.last_name && p.last_name.toLowerCase().includes(searchTerm)) ||
-                (p.email && p.email.toLowerCase().includes(searchTerm))
+                `${p.first_name} ${p.last_name}`.toLowerCase().includes(search) || 
+                (p.email && p.email.toLowerCase().includes(search))
             );
 
-            if (sortVal === 'name_asc') filtered.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || ''));
-            else filtered.sort((a,b) => (b.id || 0) - (a.id || 0));
-
             tbody.innerHTML = '';
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-300 text-[10px] font-bold uppercase tracking-widest">No matching guardian records.</td></tr>';
-                return;
-            }
-
             filtered.forEach((p, idx) => {
                 const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40';
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="${bg} border-b border-slate-100 text-xs text-slate-600 hover:bg-slate-50 transition-all group">
                         <td class="p-4">
-                            <div class="font-bold text-slate-900 text-sm group-hover:text-emerald-600 transition-colors">${p.first_name} ${p.last_name}</div>
+                            <div class="font-bold text-slate-900 text-sm group-hover:text-emerald-600">${p.first_name} ${p.last_name}</div>
                             <div class="text-[9px] text-slate-400 mt-0.5 uppercase tracking-tighter">ID: #PN-${p.id}</div>
                         </td>
                         <td class="p-4">
-                            <div class="font-semibold text-slate-700">${p.email || 'NO EMAIL'}</div>
-                            <div class="text-[10px] text-slate-400 mt-1 font-mono">${p.phone || 'NO PHONE'}</div>
+                            <div class="font-semibold text-slate-700">${p.email || '---'}</div>
+                            <div class="text-[10px] text-slate-400 mt-1 font-mono">${p.phone || ''}</div>
                         </td>
+                        <td class="p-4 text-[10px] text-slate-500 uppercase max-w-[200px] truncate">${p.address || '---'}</td>
                         <td class="p-4">
-                            <div class="text-[10px] text-slate-500 uppercase leading-relaxed max-w-[240px] truncate">${p.address || '---'}</div>
-                        </td>
-                        <td class="p-4">
-                            <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${p.is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-400 border border-slate-200'}">
+                            <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase ${p.is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-400 border border-slate-200'}">
                                 ${p.is_active ? 'Active' : 'Archived'}
                             </span>
                         </td>
                         <td class="p-4 text-right">
-                            <div class="flex justify-end gap-1.5">
-                                <button data-id="${p.id}" class="parent-edit-btn px-3 py-1.5 bg-white border border-slate-200 rounded text-slate-500 hover:text-emerald-600 transition-all uppercase font-bold text-[9px]">Edit</button>
-                                <button data-id="${p.id}" class="parent-delete-btn px-3 py-1.5 bg-white border border-slate-200 rounded text-slate-300 hover:text-red-500 transition-all uppercase font-bold text-[9px]">Del</button>
-                            </div>
+                            <button data-id="${p.id}" class="parent-edit-btn px-3 py-1.5 bg-white border border-slate-200 rounded text-slate-500 hover:text-emerald-600 transition-all uppercase font-bold text-[9px]">Edit</button>
                         </td>
                     </tr>
                 `);
             });
 
             tbody.querySelectorAll('.parent-edit-btn').forEach(b => b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id)));
-            tbody.querySelectorAll('.parent-delete-btn').forEach(b => b.onclick = () => this.delete(b.dataset.id));
+        },
+
+        openModal(p = null) {
+            document.getElementById('parent-modal').classList.remove('hidden');
+            document.getElementById('parent-form').reset();
+            document.getElementById('p-edit-id').value = p ? p.id : '';
+            document.getElementById('p-modal-title').innerText = p ? 'Update Guardian Profile' : 'Register New Guardian';
+
+            this.schema.fields.forEach(f => {
+                const el = document.getElementById(f.id);
+                if (el) {
+                    if (f.type === 'checkbox') el.checked = p ? !!p[f.id] : (f.default ?? false);
+                    else el.value = p ? (p[f.id] || '') : '';
+                }
+            });
         },
 
         setupListeners() {
             document.getElementById('parent-search').oninput = () => this.render();
-            document.getElementById('parent-sort').onchange = () => this.render();
             document.getElementById('add-parent-btn').onclick = () => this.openModal();
             document.getElementById('close-modal-x').onclick = () => this.closeModal();
             document.getElementById('cancel-modal-btn').onclick = () => this.closeModal();
         },
 
-        openModal(p = null) {
-            const modal = document.getElementById('parent-modal');
-            modal.classList.remove('hidden');
-            document.getElementById('parent-form').reset();
-            document.getElementById('p-edit-id').value = p ? p.id : '';
-            document.getElementById('p-franchise-id').value = localStorage.getItem('locked_franchise_id');
-            document.getElementById('p-modal-title').innerText = p ? 'Update Guardian Profile' : 'Register New Guardian';
-
-            if(p) {
-                this.fields.forEach(f => {
-                    const el = document.getElementById(f);
-                    if (el) {
-                        if (el.type === 'checkbox') el.checked = p[f];
-                        else el.value = p[f] || '';
-                    }
-                });
-            } else {
-                document.getElementById('is_active').checked = true;
-            }
-        },
-
         closeModal() { document.getElementById('parent-modal').classList.add('hidden'); },
 
-        async delete(id) {
-            if(confirm("Confirm: Delete this guardian?")) {
-                const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}/${id}`, { method: 'DELETE' });
-                if (res.ok) this.init();
-            }
+        async loadScript(src) {
+            return new Promise(resolve => {
+                const s = document.createElement('script'); s.src = src; s.onload = resolve;
+                s.onerror = () => { s.src = src.replace('/', ''); s.onload = resolve; };
+                document.head.appendChild(s);
+            });
         }
     };
 
     document.getElementById('parent-form').onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('p-edit-id').value;
-        const fid = document.getElementById('p-franchise-id').value;
-        const payload = { franchise_id: parseInt(fid) };
-        ParentModule.fields.forEach(f => {
-            const el = document.getElementById(f);
-            if (el) payload[f] = el.type === 'checkbox' ? el.checked : el.value;
+        const payload = { franchise_id: parseInt(localStorage.getItem('locked_franchise_id')) };
+        
+        ParentModule.schema.fields.forEach(f => {
+            const el = document.getElementById(f.id);
+            if (el && !f.hidden) payload[f.id] = f.type === 'checkbox' ? el.checked : el.value;
         });
 
         const url = id ? `${window.NEST_ENDPOINTS.parent.list}/${id}` : window.NEST_ENDPOINTS.parent.list;
@@ -244,11 +208,19 @@
             headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify(payload) 
         });
+        
         if (res.ok) {
             ParentModule.closeModal();
             ParentModule.init();
         }
     };
+
     ParentModule.init();
 })();
 </script>
+
+<style>
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+</style>
