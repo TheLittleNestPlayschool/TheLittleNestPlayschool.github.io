@@ -76,10 +76,19 @@
 <script>
 (function() {
     const StudentModule = {
-        API: "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student",
         data: [],
 
         async init() {
+            if (!window.NEST_ENDPOINTS) {
+                await new Promise((resolve) => {
+                    const script = document.createElement('script');
+                    script.src = '/api_config.js';
+                    script.onload = resolve;
+                    script.onerror = () => { script.src = 'api_config.js'; script.onload = resolve; };
+                    document.head.appendChild(script);
+                });
+            }
+
             const fid = localStorage.getItem('locked_franchise_id');
             const tbody = document.getElementById('student-table-body');
             this.data = [];
@@ -87,14 +96,14 @@
             if (!fid) return;
 
             try {
-                const response = await fetch(`${this.API}?franchise_id=${fid}`);
+                const response = await fetch(`${window.NEST_ENDPOINTS.student.list}?franchise_id=${fid}`);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 this.data = await response.json();
                 this.render();
                 this.setupListeners();
             } catch (error) {
                 console.error("Student Sync Error:", error);
-                if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest font-black">SYNC FAILED: Verify API Group iEHfqd-N</td></tr>';
+                if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 text-xs font-bold uppercase tracking-widest font-black">SYNC FAILED: Check API Configuration</td></tr>';
             }
         },
 
@@ -172,7 +181,8 @@
             is_active: document.getElementById('student_active').checked
         };
 
-        const res = await fetch(id ? `${StudentModule.API}/${id}` : StudentModule.API, { 
+        const url = id ? `${window.NEST_ENDPOINTS.student.list}/${id}` : window.NEST_ENDPOINTS.student.list;
+        const res = await fetch(url, { 
             method: id ? 'PATCH' : 'POST', 
             headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify(payload) 
