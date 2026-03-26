@@ -5,13 +5,6 @@
     </div>
 </div>
 
-<div style="background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #e2e8f0; shadow: 0 1px 2px rgba(0,0,0,0.05);">
-    <span style="font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; tracking-wider;">Location Filter:</span>
-    <select id="franchise-filter" onchange="loadSessions()" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; min-width: 220px; font-size: 0.85rem; font-weight: 600; color: #334155; outline: none;">
-        <option value="all">Global View (All Franchises)</option>
-    </select>
-</div>
-
 <div id="session-container" style="display: flex; flex-direction: column; gap: 12px;">
     <div style="text-align:center; padding:60px; color: #94a3b8; font-style: italic; background:#fff; border: 1px dashed #e2e8f0; border-radius: 12px;">
         Synchronizing session data...
@@ -21,57 +14,38 @@
 <script>
 (function() {
     const S_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session';
-    const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
-    let franchiseList = [];
-
-    const fetchFranchises = async () => {
-        try {
-            const res = await fetch(F_API);
-            const data = await res.json();
-            franchiseList = Array.isArray(data) ? data : (data.items || []);
-            const filterSelect = document.getElementById('franchise-filter');
-            
-            const optionsHtml = franchiseList.map(f => `<option value="${f.id}">${f.location_name || f.name || 'Franchise ' + f.id}</option>`).join('');
-            filterSelect.innerHTML = '<option value="all">Global View (All Franchises)</option>' + optionsHtml;
-
-            // Auto-set filter to the locked franchise if it exists
-            const lockedId = localStorage.getItem('locked_franchise_id');
-            if(lockedId) {
-                filterSelect.value = lockedId;
-            }
-        } catch (e) { console.error("Sync Error:", e); }
-    };
 
     window.loadSessions = async () => {
         const container = document.getElementById('session-container');
-        const filterVal = document.getElementById('franchise-filter').value;
+        
+        // Use Identity Lock to determine the branch
+        const lockedId = localStorage.getItem('locked_franchise_id');
+        
+        if (!lockedId) {
+            container.innerHTML = `<div style="text-align:center; padding:40px; color:#ef4444; font-size:0.85rem; font-weight:bold;">No branch selected. Please use the Identity Lock to continue.</div>`;
+            return;
+        }
         
         try {
             const res = await fetch(S_API + '?t=' + Date.now());
             const data = await res.json();
             let list = Array.isArray(data) ? data : (data.items || []);
             
-            list.sort((a, b) => a.franchise_id - b.franchise_id);
-            if (filterVal !== 'all') list = list.filter(s => s.franchise_id.toString() === filterVal);
+            // Filter strictly by the locked branch
+            list = list.filter(s => s.franchise_id.toString() === lockedId);
 
             if (list.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:40px; color:#94a3b8; font-size:0.85rem;">No active sessions found for this selection.</div>`;
+                container.innerHTML = `<div style="text-align:center; padding:40px; color:#94a3b8; font-size:0.85rem;">No active sessions found for this location.</div>`;
                 return;
             }
 
             container.innerHTML = list.map(s => {
                 const days = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : (s.scheduled_days || '');
-                const franchise = franchiseList.find(f => f.id === s.franchise_id);
-                const franchiseDisplay = franchise ? (franchise.location_name || franchise.name) : `ID: ${s.franchise_id}`;
                 const statusColor = s.is_active ? '#00d1b2' : '#94a3b8';
 
                 return `
                 <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:16px 20px; display:flex; align-items:center; transition: transform 0.2s ease;">
                     
-                    <div style="width:120px; flex-shrink:0;">
-                        <span style="font-size:0.6rem; background:#f1f5f9; color:#475569; padding:4px 10px; border-radius:6px; font-weight: 800; text-transform:uppercase; tracking-wider;">${franchiseDisplay}</span>
-                    </div>
-
                     <div style="flex: 1; min-width: 180px;">
                         <h3 style="margin:0; font-size:1rem; font-weight: 700; color:#1e293b;">${s.name}</h3>
                         <p style="margin:4px 0 0; font-size:0.75rem; color:#64748b; line-height: 1.4;">${s.description || 'No description provided.'}</p>
@@ -98,9 +72,10 @@
                     </div>
                 </div>`;
             }).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error("Load Error:", e); }
     };
 
-    (async () => { await fetchFranchises(); loadSessions(); })();
+    // Auto-load on entry
+    window.loadSessions();
 })();
 </script>
