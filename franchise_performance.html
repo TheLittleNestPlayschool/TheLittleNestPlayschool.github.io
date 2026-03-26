@@ -43,21 +43,78 @@
             </div>
             <div class="space-y-3">
                 <div class="flex justify-between items-center">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase">Daily</span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Daily Average</span>
                     <div class="flex gap-10">
                         <span class="text-sm font-black text-slate-800 w-16 text-right">₱<span id="rev-daily">0</span></span>
-                        <span class="text-xs font-bold text-slate-300 w-16 text-right">₱<span id="rev-prev-daily">0</span></span>
+                        <span class="text-xs font-bold text-slate-300 w-16 text-right">₱0</span>
                     </div>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase">Monthly</span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Monthly Total</span>
                     <div class="flex gap-10">
                         <span class="text-sm font-black text-slate-800 w-16 text-right">₱<span id="rev-monthly">0</span></span>
-                        <span class="text-xs font-bold text-slate-300 w-16 text-right">₱<span id="rev-prev-monthly">0</span></span>
+                        <span class="text-xs font-bold text-slate-300 w-16 text-right">₱0</span>
                     </div>
                 </div>
                 <div class="pt-3 border-t border-slate-50 flex justify-end">
                     <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest italic tracking-widest">Live Records</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h2 class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <span>💎</span> Payback Intelligence
+                </h2>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter italic">Real-time recovery based on active enrollment</p>
+            </div>
+            <div class="flex gap-2 w-full md:w-auto">
+                <button onclick="document.getElementById('investment-modal').classList.remove('hidden')" class="flex-1 md:flex-none text-[9px] font-black uppercase tracking-widest bg-slate-50 text-slate-500 border border-slate-100 px-4 py-2.5 rounded-xl hover:bg-slate-100 transition-all">
+                    Investment
+                </button>
+                <button onclick="document.getElementById('expense-modal').classList.remove('hidden')" class="flex-1 md:flex-none text-[9px] font-black uppercase tracking-widest bg-[#00d1b2]/10 text-[#00d1b2] px-4 py-2.5 rounded-xl hover:bg-[#00d1b2] hover:text-white transition-all">
+                    Expenses
+                </button>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-10 items-center">
+            <div class="md:col-span-3 border-r border-slate-50 pr-4">
+                <p class="text-[9px] text-slate-400 uppercase font-black mb-1 tracking-widest leading-none">Monthly Outlook</p>
+                <div class="flex items-end gap-1">
+                    <span id="perf-roi" class="text-5xl font-black text-slate-800 tracking-tighter">0.0</span>
+                    <span class="text-[#00d1b2] font-black pb-1.5 uppercase text-[10px]">Months</span>
+                </div>
+                <p class="text-[8px] font-bold text-slate-300 uppercase mt-2">To Full Payback</p>
+            </div>
+
+            <div class="md:col-span-9 space-y-6">
+                <div class="space-y-2">
+                    <div class="flex justify-between items-end">
+                        <p id="recovery-text" class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Recovered ₱0 of ₱350,000 Today</p>
+                        <span id="recovery-percent" class="text-[10px] font-black text-[#00d1b2]">0%</span>
+                    </div>
+                    <div class="h-4 bg-slate-50 border border-slate-100 rounded-full overflow-hidden p-0.5">
+                        <div id="recovery-bar" class="h-full bg-gradient-to-r from-[#00d1b2] to-[#00b89c] rounded-full transition-all duration-1000 shadow-sm" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-slate-50/50 p-3 rounded-xl border border-slate-50">
+                        <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">Daily Net Profit</span>
+                        <span id="perf-daily-net" class="text-sm font-black text-[#00d1b2]">₱0</span>
+                    </div>
+                    <div class="bg-slate-50/50 p-3 rounded-xl border border-slate-50">
+                        <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">Monthly OpEx</span>
+                        <span id="perf-opex-display" class="text-sm font-black text-red-400">₱0</span>
+                    </div>
+                    <div class="bg-slate-50/50 p-3 rounded-xl border border-slate-50">
+                        <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">Franchise Fee</span>
+                        <span id="display-franchise-price" class="text-sm font-black text-slate-800">₱350,000</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -81,42 +138,36 @@
             </table>
         </div>
     </div>
+</div>
 
-    <div class="w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <div class="flex justify-between items-start mb-6">
-            <h2 class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                <span>💎</span> ROI Intelligence
-            </h2>
-            <button onclick="document.getElementById('expense-modal').classList.remove('hidden')" class="text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 px-4 py-2 rounded-xl hover:bg-[#00d1b2] hover:text-white transition-all">
-                Update Expenses
-            </button>
+<div id="investment-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+        <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+            <h3 class="text-xs font-black uppercase tracking-widest text-slate-500">Initial Investment</h3>
+            <button onclick="document.getElementById('investment-modal').classList.add('hidden')" class="text-slate-400 hover:text-red-500">✕</button>
         </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="flex flex-col justify-center border-r border-slate-50">
-                <p class="text-[9px] text-slate-400 uppercase font-black mb-1 tracking-widest leading-none">Projected Payback</p>
-                <div class="flex items-end gap-1">
-                    <span id="perf-roi" class="text-6xl font-black text-slate-800 tracking-tighter">0.0</span>
-                    <span class="text-[#00d1b2] font-black pb-2 uppercase text-[10px]">Months</span>
+        <div class="p-6 space-y-4">
+            <div class="space-y-1">
+                <label class="text-[9px] font-black uppercase text-slate-400">Franchise Fee (ROI Basis)</label>
+                <input type="number" id="inv-fee" value="350000" class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-sm font-black outline-none focus:border-[#00d1b2]">
+            </div>
+            <div class="space-y-1">
+                <label class="text-[9px] font-black uppercase text-slate-400">Rent Deposits (Refundable)</label>
+                <input type="number" id="inv-rent-dep" value="45000" class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-sm font-bold outline-none focus:border-[#00d1b2]">
+            </div>
+            <div class="space-y-1">
+                <label class="text-[9px] font-black uppercase text-slate-400">Utility Deposits (Refundable)</label>
+                <input type="number" id="inv-util-dep" value="10000" class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-sm font-bold outline-none focus:border-[#00d1b2]">
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl">
+                <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase">
+                    <span>Total Cash Required:</span>
+                    <span id="display-total-cash" class="text-slate-800">₱0</span>
                 </div>
             </div>
-            
-            <div class="space-y-4 py-2 col-span-2">
-                <div class="grid grid-cols-2 gap-8">
-                    <div>
-                        <span class="text-[9px] text-slate-400 uppercase font-bold tracking-widest block mb-1">Monthly Gross</span>
-                        <span id="perf-gross" class="text-2xl font-black text-slate-800">₱0</span>
-                    </div>
-                    <div>
-                        <span class="text-[9px] font-black text-red-400 uppercase tracking-widest block mb-1">Total Monthly OpEx</span>
-                        <span id="perf-opex-display" class="text-2xl font-black text-red-500">₱0</span>
-                    </div>
-                </div>
-                <div class="pt-4 border-t border-slate-50 flex gap-6">
-                    <div class="text-[10px] font-bold text-slate-400 uppercase">Franchise Price: <span id="display-franchise-price" class="text-slate-800">₱350,000</span></div>
-                    <div class="text-[10px] font-bold text-slate-400 uppercase">Net Monthly: <span id="perf-net" class="text-[#00d1b2]">₱0</span></div>
-                </div>
-            </div>
+        </div>
+        <div class="p-4">
+            <button onclick="calculateROI(); document.getElementById('investment-modal').classList.add('hidden')" class="w-full bg-slate-800 text-white font-black py-3 rounded-xl uppercase text-[11px] tracking-widest">Save Investment</button>
         </div>
     </div>
 </div>
@@ -124,7 +175,7 @@
 <div id="expense-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
         <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-            <h3 class="text-xs font-black uppercase tracking-widest text-slate-500">Expense Configuration</h3>
+            <h3 class="text-xs font-black uppercase tracking-widest text-slate-500">Monthly Expenses</h3>
             <button onclick="document.getElementById('expense-modal').classList.add('hidden')" class="text-slate-400 hover:text-red-500">✕</button>
         </div>
         <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
@@ -154,12 +205,8 @@
                     <input type="number" id="exp-other" value="2000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-bold outline-none focus:border-[#00d1b2]">
                 </div>
             </div>
-            <div class="space-y-1 pt-2 border-t border-slate-50">
-                <label class="text-[9px] font-black uppercase text-slate-400">Franchise Price (Investment)</label>
-                <input type="number" id="exp-fprice" value="350000" class="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm font-black outline-none focus:border-[#00d1b2]">
-            </div>
             <div class="bg-blue-50/50 p-3 rounded-xl space-y-2">
-                <p class="text-[8px] font-black uppercase text-blue-400 tracking-widest">Auto-Calculations</p>
+                <p class="text-[8px] font-black uppercase text-blue-400 tracking-widest">Calculated Monthly</p>
                 <div class="flex justify-between text-[10px] font-bold text-blue-600">
                     <span>Extra Wages (10%):</span>
                     <span id="calc-extra-wages">₱0</span>
@@ -171,7 +218,7 @@
             </div>
         </div>
         <div class="p-4 bg-slate-50 border-t border-slate-100">
-            <button onclick="calculateROI(); document.getElementById('expense-modal').classList.add('hidden')" class="w-full bg-[#00d1b2] text-white font-black py-3 rounded-xl uppercase text-[11px] tracking-widest shadow-lg shadow-[#00d1b2]/20">Update Intelligence</button>
+            <button onclick="calculateROI(); document.getElementById('expense-modal').classList.add('hidden')" class="w-full bg-[#00d1b2] text-white font-black py-3 rounded-xl uppercase text-[11px] tracking-widest">Apply Expenses</button>
         </div>
     </div>
 </div>
@@ -186,96 +233,94 @@
                 const script = document.createElement('script');
                 script.src = '/api_config.js';
                 script.onload = resolve;
-                script.onerror = () => {
-                    script.src = 'api_config.js';
-                    script.onload = resolve;
-                };
+                script.onerror = () => { script.src = 'api_config.js'; script.onload = resolve; };
                 document.head.appendChild(script);
             });
         }
 
-        const endpoints = window.NEST_ENDPOINTS;
-
         try {
-            const sessionUrl = `${endpoints.session.list}?franchise_id=${fid}`;
-            const studentUrl = `${endpoints.student.list}?franchise_id=${fid}`;
-
+            const endpoints = window.NEST_ENDPOINTS;
             const [sessionRes, studentRes] = await Promise.all([
-                fetch(sessionUrl),
-                fetch(studentUrl)
+                fetch(`${endpoints.session.list}?franchise_id=${fid}`),
+                fetch(`${endpoints.student.list}?franchise_id=${fid}`)
             ]);
 
             let sessions = await sessionRes.json();
             let students = await studentRes.json();
-
             if (!Array.isArray(sessions)) sessions = [];
             if (!Array.isArray(students)) students = [];
 
             const activeStudents = students.filter(s => s.is_active === true);
             const totalActive = activeStudents.length;
-            document.getElementById('perf-total-active').innerText = totalActive;
-
             const sessionCounts = {};
-            activeStudents.forEach(s => {
-                if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1;
-            });
+            activeStudents.forEach(s => { if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1; });
 
+            document.getElementById('perf-total-active').innerText = totalActive;
             const monthlyRev = totalActive * 3500;
+            const dailyRev = monthlyRev / 30;
+            
             document.getElementById('rev-monthly').innerText = monthlyRev.toLocaleString();
-            document.getElementById('rev-daily').innerText = Math.round(monthlyRev / 30).toLocaleString();
+            document.getElementById('rev-daily').innerText = Math.round(dailyRev).toLocaleString();
 
             window.calculateROI = () => {
-                // Get inputs
+                // Investment Variables
+                const fee = parseFloat(document.getElementById('inv-fee').value) || 350000;
+                const rDep = parseFloat(document.getElementById('inv-rent-dep').value) || 0;
+                const uDep = parseFloat(document.getElementById('inv-util-dep').value) || 0;
+                const totalCash = fee + rDep + uDep;
+
+                // Monthly Expenses
                 const rent = parseFloat(document.getElementById('exp-rent').value) || 0;
                 const wages = parseFloat(document.getElementById('exp-wages').value) || 0;
                 const power = parseFloat(document.getElementById('exp-power').value) || 0;
                 const water = parseFloat(document.getElementById('exp-water').value) || 0;
                 const ads = parseFloat(document.getElementById('exp-ads').value) || 0;
                 const other = parseFloat(document.getElementById('exp-other').value) || 0;
-                const fPrice = parseFloat(document.getElementById('exp-fprice').value) || 350000;
-
-                // Calcs
+                
                 const extraWages = wages * 0.10;
                 const royalties = monthlyRev * 0.08;
-                const totalOpex = rent + wages + power + water + ads + other + extraWages + royalties;
-                const netMonthly = monthlyRev - totalOpex;
-                const roi = netMonthly > 0 ? (fPrice / netMonthly).toFixed(1) : "0.0";
+                const totalMonthlyOpex = rent + wages + power + water + ads + other + extraWages + royalties;
+                const dailyOpex = totalMonthlyOpex / 30;
 
-                // Update Modal Displays
-                document.getElementById('calc-extra-wages').innerText = "₱" + extraWages.toLocaleString();
-                document.getElementById('calc-royalties').innerText = "₱" + royalties.toLocaleString();
+                // ROI Calcs
+                const netMonthly = monthlyRev - totalMonthlyOpex;
+                const netDaily = dailyRev - dailyOpex;
+                const monthsToPayback = netMonthly > 0 ? (fee / netMonthly).toFixed(1) : "0.0";
 
-                // Update Main Displays
-                document.getElementById('perf-roi').innerText = roi;
-                document.getElementById('perf-gross').innerText = "₱" + monthlyRev.toLocaleString();
-                document.getElementById('perf-opex-display').innerText = "₱" + Math.round(totalOpex).toLocaleString();
-                document.getElementById('perf-net').innerText = "₱" + Math.round(netMonthly).toLocaleString();
-                document.getElementById('display-franchise-price').innerText = "₱" + fPrice.toLocaleString();
+                // Progress Calculation (Daily Recovery vs Investment)
+                const recoveryPercent = fee > 0 ? Math.min((netDaily / fee) * 100, 100).toFixed(4) : 0;
+
+                // Update UI
+                document.getElementById('calc-extra-wages').innerText = "₱" + Math.round(extraWages).toLocaleString();
+                document.getElementById('calc-royalties').innerText = "₱" + Math.round(royalties).toLocaleString();
+                document.getElementById('display-total-cash').innerText = "₱" + totalCash.toLocaleString();
+                
+                document.getElementById('perf-roi').innerText = monthsToPayback;
+                document.getElementById('display-franchise-price').innerText = "₱" + fee.toLocaleString();
+                document.getElementById('perf-opex-display').innerText = "₱" + Math.round(totalMonthlyOpex).toLocaleString();
+                document.getElementById('perf-daily-net').innerText = "₱" + Math.round(netDaily).toLocaleString();
+                
+                // Real-time Bar update
+                document.getElementById('recovery-text').innerText = `Recovered ₱${Math.round(netDaily).toLocaleString()} of ₱${fee.toLocaleString()} Today`;
+                document.getElementById('recovery-percent').innerText = recoveryPercent + "%";
+                document.getElementById('recovery-bar').style.width = Math.max(recoveryPercent * 10, 0.5) + "%"; // Scaled for visibility
             };
-            
-            // Initial run
-            window.calculateROI();
 
+            window.calculateROI();
+            
+            // Build Sessions Table (Existing)
             const tbody = document.getElementById('perf-sessions-body');
             tbody.innerHTML = '';
-            
-            if (sessions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-[10px] font-bold text-slate-300 uppercase italic">No active sessions found</td></tr>';
-            }
-
             sessions.forEach(session => {
                 const count = sessionCounts[session.id] || 0;
                 const max = session.max_students || 15;
                 const percent = Math.min((count / max) * 100, 100);
                 const barColor = percent >= 100 ? 'bg-red-500' : (percent > 80 ? 'bg-orange-400' : 'bg-[#00d1b2]');
-
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50/50 transition-colors">
                         <td class="px-6 py-3">
                             <p class="text-[11px] font-black text-slate-700 uppercase leading-none">${session.name}</p>
-                            <p class="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-tighter italic">
-                                ${session.start_time_text || '--:--'} - ${session.end_time_text || '--:--'}
-                            </p>
+                            <p class="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-tighter italic">${session.start_time_text || '--:--'} - ${session.end_time_text || '--:--'}</p>
                         </td>
                         <td class="px-6 py-3 text-center">
                             <span class="text-xs font-black text-slate-800">${count}</span>
@@ -283,19 +328,14 @@
                         </td>
                         <td class="px-6 py-3">
                             <div class="flex items-center gap-3">
-                                <div class="flex-grow h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                    <div class="h-full ${barColor} transition-all duration-500" style="width: ${percent}%"></div>
-                                </div>
+                                <div class="flex-grow h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full ${barColor} transition-all duration-500" style="width: ${percent}%"></div></div>
                                 <span class="text-[9px] font-black text-slate-400 w-6 text-right">${Math.round(percent)}%</span>
                             </div>
                         </td>
-                    </tr>
-                `;
+                    </tr>`;
             });
 
-        } catch (e) { 
-            console.error("Sync Failure:", e); 
-        }
+        } catch (e) { console.error("Sync Failure:", e); }
     }
     initPerformance();
 </script>
