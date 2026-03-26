@@ -53,14 +53,21 @@
                     <span class="text-[10px] font-bold text-slate-500 uppercase">Daily Average</span>
                     <div class="flex gap-10">
                         <span class="text-sm font-black text-slate-800 w-16 text-right">₱<span id="rev-daily">0</span></span>
-                        <span class="text-xs font-bold text-slate-300 w-16 text-right">₱0</span>
+                        <span class="text-xs font-bold text-slate-300 w-16 text-right">₱<span id="rev-prev-daily">0</span></span>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Weekly Total</span>
+                    <div class="flex gap-10">
+                        <span class="text-sm font-black text-slate-800 w-16 text-right">₱<span id="rev-weekly">0</span></span>
+                        <span class="text-xs font-bold text-slate-300 w-16 text-right">₱<span id="rev-prev-weekly">0</span></span>
                     </div>
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-[10px] font-bold text-slate-500 uppercase">Monthly Total</span>
                     <div class="flex gap-10">
                         <span class="text-sm font-black text-slate-800 w-16 text-right">₱<span id="rev-monthly">0</span></span>
-                        <span class="text-xs font-bold text-slate-300 w-16 text-right">₱0</span>
+                        <span class="text-xs font-bold text-slate-300 w-16 text-right">₱<span id="rev-prev-monthly">0</span></span>
                     </div>
                 </div>
                 <div class="pt-3 border-t border-slate-50 flex justify-end">
@@ -257,17 +264,29 @@
             document.getElementById('perf-prev-month-active').innerText = prevMonthEnroll;
             document.getElementById('perf-total-active').innerText = totalActiveCount;
 
-            const monthlyRev = totalActiveCount * 3500;
-            const dailyRev = monthlyRev / 30;
+            // REVENUE CALCULATION LOGIC
+            const TUITION = 3500;
+            const currentWeeklyRev = weekEnroll * TUITION;
+            const prevWeeklyRev = prevWeekEnroll * TUITION;
+            const currentMonthlyRev = monthEnroll * TUITION;
+            const prevMonthlyRev = prevMonthEnroll * TUITION;
             
-            document.getElementById('rev-monthly').innerText = monthlyRev.toLocaleString();
-            document.getElementById('rev-daily').innerText = Math.round(dailyRev).toLocaleString();
+            const currentDailyAvg = currentMonthlyRev / 30;
+            const prevDailyAvg = prevMonthlyRev / 30;
+            
+            document.getElementById('rev-daily').innerText = Math.round(currentDailyAvg).toLocaleString();
+            document.getElementById('rev-prev-daily').innerText = Math.round(prevDailyAvg).toLocaleString();
+            document.getElementById('rev-weekly').innerText = currentWeeklyRev.toLocaleString();
+            document.getElementById('rev-prev-weekly').innerText = prevWeeklyRev.toLocaleString();
+            document.getElementById('rev-monthly').innerText = currentMonthlyRev.toLocaleString();
+            document.getElementById('rev-prev-monthly').innerText = prevMonthlyRev.toLocaleString();
 
             window.calculateROI = () => {
                 const fee = parseFloat(document.getElementById('inv-fee').value) || 350000;
                 const wages = parseFloat(document.getElementById('exp-wages').value) || 0;
                 const extraWages = wages * 0.10;
-                const royalties = monthlyRev * 0.08;
+                const totalMonthlyRev = totalActiveCount * TUITION;
+                const royalties = totalMonthlyRev * 0.08;
                 
                 const totalMonthlyOpex = (parseFloat(document.getElementById('exp-rent').value) || 0) + 
                                        wages + 
@@ -278,7 +297,8 @@
                                        extraWages + royalties;
 
                 const dailyOpex = totalMonthlyOpex / 30;
-                const netDaily = dailyRev - dailyOpex;
+                const totalDailyRev = totalMonthlyRev / 30;
+                const netDaily = totalDailyRev - dailyOpex;
                 const recoveryPercent = fee > 0 ? Math.min((netDaily / fee) * 100, 100).toFixed(4) : 0;
 
                 document.getElementById('calc-extra-wages').innerText = "₱" + Math.round(extraWages).toLocaleString();
