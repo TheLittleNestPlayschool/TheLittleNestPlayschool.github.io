@@ -9,12 +9,11 @@
         
         <div class="px-4 mb-6">
             <div class="bg-[#1e293b] p-5 rounded-2xl border border-slate-700 text-center shadow-xl">
-                <p class="text-[10px] font-black text-[#2dd4bf] uppercase mb-3 tracking-widest">Identity Lock</p>
+                <p class="text-[10px] font-black text-[#2dd4bf] uppercase mb-3 tracking-widest">Your Location</p>
                 <select id="branch-select" onchange="unlockDashboard()" class="w-full bg-[#0f172a] text-white p-2.5 rounded-lg border border-slate-600 text-xs focus:ring-2 focus:ring-[#00d1b2] outline-none cursor-pointer">
                     <option value="">-- Select Branch --</option>
                 </select>
                 <div id="active-branch-name" class="hidden text-white font-extrabold text-base tracking-tight py-1"></div>
-                
                 <div id="breadcrumb-container" class="hidden mt-3 pt-3 border-t border-slate-700/50">
                     <div class="flex items-center justify-center gap-2">
                         <div class="w-1 h-1 rounded-full bg-[#00d1b2] animate-pulse"></div>
@@ -26,25 +25,23 @@
 
         <nav id="nav-menu" class="hidden px-3 overflow-y-auto space-y-1">
             <div class="text-[0.65rem] font-800 text-[#475569] uppercase tracking-widest px-4 py-3">Management</div>
-            
             <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('franchise_performance.html', 'Performance')">
                 <span>📈</span> Performance
             </div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('new_enrollment.html', 'New Enrollment')">
-                <span>✨</span> New Enrollment
-            </div>
             <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('parents.html', 'Parents')">
                 <span>👨‍👩‍👧</span> Parents
-            </div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('students.html', 'Students')">
-                <span>🏫</span> Students
             </div>
             <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('teacher_dashboard.html', 'Teachers')">
                 <span>🧑‍🏫</span> Teachers
             </div>
             
             <div class="text-[0.65rem] font-800 text-[#475569] uppercase tracking-widest px-4 py-3">Academic DNA</div>
-            
+            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('new_enrollment.html', 'New Enrollment')">
+                <span>✨</span> New Enrollment
+            </div>
+            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('students.html', 'Students')">
+                <span>🏫</span> Students
+            </div>
             <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('student_assessment.html', 'Assessments')">
                 <span>📝</span> Assessments
             </div>
@@ -53,7 +50,6 @@
             </div>
 
             <div class="text-[0.65rem] font-800 text-[#475569] uppercase tracking-widest px-4 py-3">Logistics</div>
-
             <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('session_vault.html', 'Session Vault')">
                 <span>📁</span> Session Vault
             </div>
@@ -95,10 +91,8 @@
         const fid = select.value;
         const fname = select.options[select.selectedIndex].text;
         if(!fid) return;
-        
         localStorage.setItem('locked_franchise_id', fid);
         localStorage.setItem('locked_franchise_name', fname);
-        
         select.classList.add('hidden');
         branchDisplay.innerText = fname;
         branchDisplay.classList.remove('hidden');
@@ -110,16 +104,12 @@
     async function loadModule(file, title) {
         const workspace = document.getElementById('main-workspace');
         const breadcrumbText = document.getElementById('breadcrumb-text');
-        
         workspace.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic">Synchronizing ${title}...</div>`;
-        
         if(breadcrumbText) breadcrumbText.innerText = title;
-
         try {
             const res = await fetch(GITHUB_ROOT + file + '?v=' + Date.now());
             const html = await res.text();
             workspace.innerHTML = `<div class="p-12">${html}</div>`;
-            
             const scripts = workspace.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
