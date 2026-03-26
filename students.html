@@ -6,10 +6,6 @@
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
         <input type="text" id="student-search" placeholder="Search students..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all font-bold">
-
-        <button id="add-student-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
-            + ENROLL STUDENT
-        </button>
     </div>
 </div>
 
@@ -30,8 +26,8 @@
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-200">
         <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
             <div>
-                <h2 id="s-modal-title" class="text-sm font-black text-slate-800 uppercase tracking-tight">Student Profile</h2>
-                <p class="text-[9px] text-teal-600 font-bold uppercase tracking-widest">Enrollment Details</p>
+                <h2 class="text-sm font-black text-slate-800 uppercase tracking-tight">Update Student Profile</h2>
+                <p class="text-[9px] text-teal-600 font-bold uppercase tracking-widest">Database Record Revision</p>
             </div>
             <button id="close-s-modal-x" class="text-slate-400 hover:text-slate-900 text-3xl font-light">&times;</button>
         </div>
@@ -45,7 +41,7 @@
             <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
                 <button type="button" id="cancel-s-modal-btn" class="px-8 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Discard</button>
                 <button type="submit" class="flex-1 py-3 bg-teal-500 text-white rounded-xl font-bold text-[10px] uppercase shadow-lg hover:bg-teal-600 transition-all">
-                    Save Record
+                    Update Record
                 </button>
             </div>
         </form>
@@ -65,7 +61,6 @@
             if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
             
             this.schema = window.NEST_SCHEMA.student;
-
             const fid = localStorage.getItem('locked_franchise_id');
             if (!fid) return;
 
@@ -80,7 +75,6 @@
                 this.parents = await pRes.json();
                 this.sessions = await sessRes.json();
                 
-                // Build UI after data is fetched so dropdowns are populated
                 this.buildFormUI(); 
                 this.render();
                 this.setupListeners();
@@ -101,7 +95,6 @@
             let currentSection = "";
 
             this.schema.fields.forEach(f => {
-                // Remove Franchise ID and Hidden fields
                 if (f.id === 'id' || f.id === 'franchise_id' || f.hidden) return;
 
                 if (f.section && f.section !== currentSection) {
@@ -116,7 +109,6 @@
                 const spanClass = f.width === 'full' ? 'col-span-full' : 'col-span-1';
                 let inputHTML = '';
 
-                // Handle Dynamic Dropdowns
                 if (f.id === 'parent_id') {
                     inputHTML = `<select id="parent_id" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500 font-bold uppercase">
                         <option value="">Select Parent</option>
@@ -162,17 +154,15 @@
 
             filtered.forEach((s, idx) => {
                 const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40';
-                
                 const parent = this.parents.find(p => p.id === s.parent_id);
                 const parentDisplay = parent ? `${parent.first_name} ${parent.last_name}` : `Guardian ID: ${s.parent_id}`;
-
                 const session = this.sessions.find(sess => sess.id === s.session_enrolled);
                 const sessionDisplay = session ? session.name : `${s.session_enrolled || 'Not Assigned'}`;
 
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="${bg} border-b border-slate-100 group hover:bg-slate-50 transition-all">
-                        <td colspan="4" class="p-6">
-                            <div class="flex flex-col lg:flex-row justify-between gap-8 text-left">
+                        <td colspan="4" class="p-6 text-left">
+                            <div class="flex flex-col lg:flex-row justify-between gap-8">
                                 <div class="flex-1 min-w-[280px]">
                                     <div class="flex items-center gap-3 mb-3">
                                         <h3 class="font-black text-slate-900 text-base uppercase tracking-tight">${s.name}</h3>
@@ -200,35 +190,19 @@
                                     <div class="grid grid-cols-2 gap-y-3 gap-x-4">
                                         <div class="col-span-2">
                                             <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Session</p>
-                                            <p class="text-[11px] text-slate-800 uppercase tracking-tight font-black">${sessionDisplay}</p>
+                                            <p class="text-[11px] text-slate-800 uppercase font-black">${sessionDisplay}</p>
                                         </div>
-                                        <div>
-                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Start Date</p>
-                                            <p class="text-[11px] font-black text-slate-800 uppercase">${s.start_date || '---'}</p>
-                                        </div>
-                                        <div>
-                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Nationality</p>
-                                            <p class="text-[11px] font-black text-slate-800 uppercase">${s.nationality || '---'}</p>
-                                        </div>
-                                        <div class="col-span-2">
-                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Home Address</p>
-                                            <p class="text-[11px] font-black text-slate-800 uppercase leading-tight">${s.home_address || '---'}</p>
-                                        </div>
+                                        <div><p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Start Date</p><p class="text-[11px] font-black text-slate-800 uppercase">${s.start_date || '---'}</p></div>
+                                        <div><p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Nationality</p><p class="text-[11px] font-black text-slate-800 uppercase">${s.nationality || '---'}</p></div>
+                                        <div class="col-span-2"><p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Home Address</p><p class="text-[11px] font-black text-slate-800 uppercase leading-tight">${s.home_address || '---'}</p></div>
                                     </div>
                                 </div>
 
                                 <div class="flex-none w-52 border-l border-slate-100 pl-8 flex flex-col justify-between">
                                     <div class="grid grid-cols-1 gap-y-3">
-                                        <div>
-                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Primary Language</p>
-                                            <p class="text-[11px] font-black text-slate-800 uppercase">${s.primary_language || '---'}</p>
-                                        </div>
-                                        <div>
-                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Gender</p>
-                                            <p class="text-[11px] font-black text-slate-800 uppercase">${s.gender || '---'}</p>
-                                        </div>
+                                        <div><p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Primary Language</p><p class="text-[11px] font-black text-slate-800 uppercase">${s.primary_language || '---'}</p></div>
+                                        <div><p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Gender</p><p class="text-[11px] font-black text-slate-800 uppercase">${s.gender || '---'}</p></div>
                                     </div>
-                                    
                                     <div class="flex gap-2 mt-6">
                                         <button data-id="${s.id}" class="student-edit-btn flex-1 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:text-teal-600 hover:border-teal-300 hover:shadow-sm transition-all uppercase font-black text-[9px]">Edit</button>
                                         <button data-id="${s.id}" class="student-delete-btn flex-1 py-2 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition-all uppercase font-black text-[9px]">Delete</button>
@@ -245,29 +219,24 @@
         },
 
         async deleteRecord(id) {
-            if (!confirm("Permanently remove this student?")) return;
+            if (!confirm("Permanently remove this student record?")) return;
             try {
                 const res = await fetch(`${window.NEST_ENDPOINTS.student.list}/${id}`, { method: 'DELETE' });
                 if (res.ok) this.init();
             } catch (err) { console.error("Delete Error:", err); }
         },
 
-        openModal(s = null) {
+        openModal(s) {
             document.getElementById('student-modal').classList.remove('hidden');
             document.getElementById('student-form').reset();
-            document.getElementById('s-edit-id').value = s ? s.id : '';
-            document.getElementById('s-modal-title').innerText = s ? 'Update Student Record' : 'Enroll New Student';
+            document.getElementById('s-edit-id').value = s.id;
 
             this.schema.fields.forEach(f => {
                 const el = document.getElementById(f.id);
                 if (el) {
-                    if (f.id === 'created_at') {
-                        el.value = s ? this.formatEpoch(s.created_at) : this.formatEpoch(Date.now());
-                    } else if (f.type === 'bool') {
-                        el.checked = s ? !!s[f.id] : (f.default ?? true);
-                    } else {
-                        el.value = s ? (s[f.id] || '') : '';
-                    }
+                    if (f.id === 'created_at') el.value = this.formatEpoch(s.created_at);
+                    else if (f.type === 'bool') el.checked = !!s[f.id];
+                    else el.value = s[f.id] || '';
                 }
             });
         },
@@ -276,14 +245,13 @@
 
         setupListeners() {
             document.getElementById('student-search').oninput = () => this.render();
-            document.getElementById('add-student-btn').onclick = () => this.openModal();
             document.getElementById('close-s-modal-x').onclick = () => this.closeModal();
             document.getElementById('cancel-s-modal-btn').onclick = () => this.closeModal();
 
             document.getElementById('student-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('s-edit-id').value;
-                const payload = { franchise_id: parseInt(localStorage.getItem('locked_franchise_id')) };
+                const payload = {};
                 
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
@@ -293,9 +261,8 @@
                     }
                 });
 
-                const url = id ? `${window.NEST_ENDPOINTS.student.list}/${id}` : window.NEST_ENDPOINTS.student.list;
-                const res = await fetch(url, { 
-                    method: id ? 'PATCH' : 'POST', 
+                const res = await fetch(`${window.NEST_ENDPOINTS.student.list}/${id}`, { 
+                    method: 'PATCH', 
                     headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify(payload) 
                 });
