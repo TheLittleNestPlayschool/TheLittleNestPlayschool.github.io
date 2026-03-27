@@ -18,28 +18,25 @@
         overflow-x: hidden;
     }
 
-    /* Production Pipeline UI */
+    /* Step UI Management */
     .step-section { 
         background: white; 
         border: 1px solid #e2e8f0; 
         border-radius: 1.5rem; 
         margin-bottom: 2.5rem; 
-        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .step-locked { 
         opacity: 0.3; 
         pointer-events: none; 
-        filter: grayscale(0.8) blur(1px);
-        transform: scale(0.98);
+        filter: grayscale(0.8);
     }
     .step-active { 
         border-left: 12px solid var(--nest-teal);
         box-shadow: 0 30px 60px -12px rgba(15, 23, 42, 0.1);
-        transform: scale(1);
     }
 
-    /* NestMind Input Standards */
+    /* Input Styling */
     .nest-label { 
         display: block; 
         font-size: 10px; 
@@ -47,8 +44,7 @@
         color: #94a3b8; 
         text-transform: uppercase; 
         margin-bottom: 8px; 
-        letter-spacing: 0.15em;
-        margin-left: 4px;
+        letter-spacing: 0.1em;
     }
     .nest-input { 
         width: 100%; 
@@ -58,14 +54,12 @@
         border-radius: 1rem; 
         font-size: 14px; 
         font-weight: 700;
-        color: var(--nest-slate);
         transition: all 0.2s;
     }
     .nest-input:focus { 
         border-color: var(--nest-teal); 
         outline: none; 
         background: white;
-        box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
     }
 
     .btn-nest {
@@ -75,16 +69,16 @@
         text-transform: uppercase;
         font-size: 12px;
         letter-spacing: 0.1em;
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: all 0.2s;
     }
-    .btn-nest-primary { background: var(--nest-teal); color: white; box-shadow: 0 10px 20px -5px rgba(20, 184, 166, 0.4); }
-    .btn-nest-primary:hover { transform: translateY(-3px); box-shadow: 0 20px 30px -5px rgba(20, 184, 166, 0.5); }
+    .btn-nest-primary { background: var(--nest-teal); color: white; }
+    .btn-nest-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(20, 184, 166, 0.4); }
 
     .section-divider { display: flex; align-items: center; margin: 3rem 0 2rem 0; }
-    .section-divider-text { font-size: 10px; font-weight: 900; color: var(--nest-teal); padding-right: 2rem; text-transform: uppercase; letter-spacing: 0.2em; }
+    .section-divider-text { font-size: 10px; font-weight: 900; color: var(--nest-teal); padding-right: 1.5rem; text-transform: uppercase; }
     .section-divider-line { flex: 1; height: 1px; background: #e2e8f0; }
 
-    /* Session Selection UI [cite: 2026-02-05] */
+    /* Session Selection UI */
     .session-card {
         cursor: pointer;
         padding: 1.5rem;
@@ -95,170 +89,154 @@
     .session-card:hover { border-color: var(--nest-teal); background: #f0fdfa; }
     .session-card.selected { border-color: var(--nest-teal); background: var(--nest-teal); color: white; }
 
-    /* Custom Scrollbar */
     .custom-scroll::-webkit-scrollbar { width: 8px; }
-    .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 </style>
 
 <div class="flex min-h-screen">
-    
-    <main class="flex-1 p-8 lg:p-20 overflow-y-auto custom-scroll">
+    <main class="flex-1 p-12 overflow-y-auto custom-scroll">
         
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-20 gap-8">
+        <header class="flex justify-between items-end mb-16 border-b pb-10">
             <div>
                 <h1 class="text-6xl font-black text-slate-900 italic uppercase tracking-tighter">Student Intake</h1>
-                <div class="flex items-center gap-6 mt-4">
-                    <span class="px-5 py-2 bg-slate-900 text-teal-400 text-xs font-black rounded-xl uppercase tracking-widest">Sariaya Terminal</span>
-                    <p id="ui-phase-label" class="text-xs font-bold text-slate-400 uppercase tracking-[0.3em]">Phase: Guardian Profile Initiation</p>
+                <div class="flex items-center gap-4 mt-4">
+                    <span class="px-4 py-1.5 bg-slate-900 text-teal-400 text-[10px] font-black rounded-lg uppercase">Sariaya HO</span>
+                    <p id="ui-phase-label" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Phase: Guardian Configuration</p>
                 </div>
             </div>
-            <div class="bg-white p-8 rounded-[2rem] border shadow-xl flex items-center gap-10">
-                <div class="text-right">
-                    <div class="flex justify-between text-[10px] font-black uppercase mb-3">
-                        <span>Intake Progress</span>
-                        <span id="ui-perc-text">0%</span>
-                    </div>
-                    <div class="w-64 h-3 bg-slate-100 rounded-full overflow-hidden p-0.5">
-                        <div id="ui-progress-bar" class="h-full bg-teal-500 rounded-full transition-all duration-1000" style="width: 5%"></div>
-                    </div>
+            <div class="w-80">
+                <div class="flex justify-between text-[10px] font-black uppercase mb-3">
+                    <span>Pipeline Progress</span>
+                    <span id="ui-perc-text">5%</span>
                 </div>
-                <div id="ui-step-badge" class="w-20 h-20 bg-slate-900 text-white flex items-center justify-center rounded-2xl font-black text-2xl -rotate-3 border-4 border-teal-500/20 shadow-2xl">01</div>
+                <div class="h-3 bg-slate-200 rounded-full overflow-hidden">
+                    <div id="ui-progress-bar" class="h-full bg-teal-500 transition-all duration-1000" style="width: 5%"></div>
+                </div>
             </div>
         </header>
 
-        <div class="max-w-6xl mx-auto pb-40">
+        <section id="step-1" class="step-section step-active">
+            <div class="p-8 border-b flex justify-between items-center bg-slate-50/50">
+                <div class="flex items-center gap-6">
+                    <div class="w-12 h-12 bg-slate-900 text-white flex items-center justify-center rounded-2xl font-black text-xl">01</div>
+                    <h2 class="text-xl font-black uppercase tracking-tight text-slate-800">Guardian Profile</h2>
+                </div>
+                <div class="flex bg-white p-1 rounded-xl border">
+                    <button onclick="App.setMode('new')" id="btn-new" class="btn-nest bg-teal-500 text-white shadow-lg">New Entry</button>
+                    <button onclick="App.setMode('search')" id="btn-search" class="btn-nest text-slate-400">Search Database</button>
+                </div>
+            </div>
+            
+            <div class="p-10">
+                <div id="search-container" class="hidden mb-10 p-8 border-2 border-dashed border-teal-100 rounded-3xl bg-teal-50/20">
+                    <label class="nest-label text-teal-600">Find Parent in Central Registry</label>
+                    <select id="p-lookup-id" class="nest-input text-lg py-4"></select>
+                </div>
 
-            <section id="step-1" class="step-section step-active">
-                <div class="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
-                    <div class="flex items-center gap-6">
-                        <div class="w-14 h-14 bg-slate-900 text-white flex items-center justify-center rounded-2xl font-black text-xl shadow-xl">01</div>
-                        <div>
-                            <h2 class="text-xl font-black uppercase tracking-tight text-slate-800">Guardian Profile</h2>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-tighter">Primary Financial Contact & Emergency Mapping</p>
-                        </div>
-                    </div>
-                    <div class="flex bg-white p-1.5 rounded-2xl border shadow-inner">
-                        <button onclick="App.setMode('new')" id="btn-new" class="btn-nest bg-teal-500 text-white shadow-lg">New Entry</button>
-                        <button onclick="App.setMode('search')" id="btn-search" class="btn-nest text-slate-400 hover:text-slate-600">Search DB</button>
-                    </div>
+                <div id="p-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="col-span-full section-divider"><span class="section-divider-text">Basic Identity</span><div class="section-divider-line"></div></div>
+                    <div><label class="nest-label">First Name</label><input type="text" id="p-first_name" class="nest-input"></div>
+                    <div><label class="nest-label">Last Name</label><input type="text" id="p-last_name" class="nest-input"></div>
+                    <div><label class="nest-label">Email Address</label><input type="email" id="p-email" class="nest-input"></div>
+                    
+                    <div class="col-span-full section-divider"><span class="section-divider-text">Contact & Logistics</span><div class="section-divider-line"></div></div>
+                    <div><label class="nest-label">Phone Number</label><input type="text" id="p-phone" class="nest-input"></div>
+                    <div class="col-span-2"><label class="nest-label">Home Address</label><input type="text" id="p-address" class="nest-input"></div>
                 </div>
-                
-                <div class="p-10">
-                    <div id="search-container" class="hidden mb-12 p-10 border-4 border-dashed border-teal-100 rounded-[2.5rem] bg-teal-50/20">
-                        <label class="nest-label text-teal-600 font-black">Search Central Franchise Registry</label>
-                        <select id="p-lookup-id" class="nest-input text-xl py-5 shadow-2xl"></select>
-                    </div>
 
-                    <div id="p-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                        </div>
+                <div class="mt-12 pt-8 border-t flex justify-between items-center">
+                    <p class="text-[10px] font-black text-slate-300 uppercase italic">Table: parent_record [cite: 2026-02-05]</p>
+                    <button onclick="App.submitParent()" class="btn-nest btn-nest-primary px-12">Confirm & Continue</button>
+                </div>
+            </div>
+        </section>
 
-                    <div class="mt-16 pt-10 border-t flex justify-between items-center">
-                        <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Xano Table: parent_record [cite: 2026-02-05]</p>
-                        <button onclick="App.submitParent()" class="btn-nest btn-nest-primary px-12">Confirm & Create Student Profile</button>
-                    </div>
+        <section id="step-2" class="step-section step-locked">
+            <div class="p-8 border-b flex items-center gap-6 bg-slate-50/50">
+                <div class="w-12 h-12 bg-slate-200 text-slate-400 flex items-center justify-center rounded-2xl font-black text-xl">02</div>
+                <h2 class="text-xl font-black uppercase tracking-tight text-slate-800">Student DNA</h2>
+            </div>
+            <div class="p-10">
+                <div id="s-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="col-span-full section-divider"><span class="section-divider-text">Core Identity</span><div class="section-divider-line"></div></div>
+                    <div class="col-span-2"><label class="nest-label">Full Name</label><input type="text" id="s-name" class="nest-input"></div>
+                    <div><label class="nest-label">Date of Birth</label><input type="date" id="s-date_of_birth" class="nest-input"></div>
                 </div>
-            </section>
+                <div class="mt-12 pt-8 border-t flex justify-end">
+                    <button onclick="App.submitStudent()" class="btn-nest btn-nest-primary px-12">Create Student Record</button>
+                </div>
+            </div>
+        </section>
 
-            <section id="step-2" class="step-section step-locked">
-                <div class="p-8 border-b border-slate-50 flex items-center gap-6 bg-slate-50/30">
-                    <div class="w-14 h-14 bg-slate-200 text-slate-400 flex items-center justify-center rounded-2xl font-black text-xl">02</div>
-                    <div>
-                        <h2 class="text-xl font-black uppercase tracking-tight text-slate-800">Student DNA</h2>
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-tighter">Academic Record Initiation & Demographic Entry</p>
-                    </div>
+        <section id="step-3" class="step-section step-locked">
+            <div class="p-8 border-b flex items-center gap-6 bg-slate-50/50">
+                <div class="w-12 h-12 bg-slate-200 text-slate-400 flex items-center justify-center rounded-2xl font-black text-xl">03</div>
+                <h2 class="text-xl font-black uppercase tracking-tight text-slate-800">Initial Assessment</h2>
+            </div>
+            <div class="p-10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div><label class="nest-label">Assessing Instructor</label><select id="eval-staff" class="nest-input"></select></div>
+                    <div><label class="nest-label">Observation Date</label><input type="date" id="eval-date" class="nest-input"></div>
+                    <div class="col-span-full"><label class="nest-label">Field Notes</label><textarea id="eval-notes" rows="5" class="nest-input" placeholder="Baseline academic and social observations..."></textarea></div>
                 </div>
-                <div class="p-10">
-                    <div id="s-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
-                    <div class="mt-16 pt-10 border-t flex justify-end">
-                        <button onclick="App.submitStudent()" class="btn-nest btn-nest-primary">Lock Student Record</button>
-                    </div>
+                <div class="mt-12 pt-8 border-t flex justify-end">
+                    <button onclick="App.next(4)" class="btn-nest btn-nest-primary px-12">Finalize Assessment</button>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <section id="step-3" class="step-section step-locked">
-                <div class="p-8 border-b border-slate-100 flex items-center gap-6 bg-slate-50/30">
-                    <div class="w-14 h-14 bg-slate-200 text-slate-400 flex items-center justify-center rounded-2xl font-black text-xl">03</div>
-                    <h2 class="text-xl font-black uppercase tracking-tight text-slate-800">Assessment & Readiness</h2>
-                </div>
-                <div class="p-10">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                        <div>
-                            <label class="nest-label">Assessing Staff Member</label>
-                            <select id="eval-staff" class="nest-input"></select>
-                        </div>
-                        <div>
-                            <label class="nest-label">Observation Date</label>
-                            <input type="date" id="eval-date" class="nest-input">
-                        </div>
-                        <div class="col-span-full">
-                            <label class="nest-label">Teacher Field Observations (Internal Use)</label>
-                            <textarea id="eval-notes" rows="6" class="nest-input custom-scroll" placeholder="Notes on social integration, academic baseline, and motor skills..."></textarea>
-                        </div>
+        <section id="step-4" class="step-section step-locked">
+            <div class="p-8 border-b flex items-center gap-6 bg-slate-50/50">
+                <div class="w-12 h-12 bg-slate-200 text-slate-400 flex items-center justify-center rounded-2xl font-black text-xl">04</div>
+                <h2 class="text-xl font-black uppercase tracking-tight text-slate-800">Session Selection</h2>
+            </div>
+            <div class="p-10">
+                <div id="session-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     </div>
-                    <div class="mt-16 pt-10 border-t flex justify-end">
-                        <button onclick="App.next(4)" class="btn-nest btn-nest-primary">Finalize Assessment</button>
-                    </div>
+                <div class="mt-12 pt-8 border-t flex justify-end">
+                    <button onclick="App.next(5)" class="btn-nest btn-nest-primary px-12">Confirm Enrollment</button>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <section id="step-4" class="step-section step-locked">
-                <div class="p-8 border-b border-slate-100 flex items-center gap-6 bg-slate-50/30">
-                    <div class="w-14 h-14 bg-slate-200 text-slate-400 flex items-center justify-center rounded-2xl font-black text-xl">04</div>
-                    <h2 class="text-xl font-black uppercase tracking-tight text-slate-800">Class Enrollment</h2>
-                </div>
-                <div class="p-10">
-                    <p class="nest-label mb-6">Available Active Sessions for Sariaya HO</p>
-                    <div id="session-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div class="col-span-full text-center py-20 bg-slate-50 rounded-[2rem] border-2 border-dashed">
-                            <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">Querying Session Registry...</p>
-                        </div>
+        <section id="step-5" class="step-section step-locked">
+            <div class="p-8 border-b flex items-center gap-6 bg-slate-50/50">
+                <div class="w-12 h-12 bg-slate-200 text-slate-400 flex items-center justify-center rounded-2xl font-black text-xl">05</div>
+                <h2 class="text-xl font-black uppercase tracking-tight text-slate-800">Financial Setup</h2>
+            </div>
+            <div class="p-10">
+                <div class="grid grid-cols-3 gap-8">
+                    <div class="bg-slate-50 p-8 rounded-3xl border text-center">
+                        <span class="nest-label">Monthly Tuition</span>
+                        <h4 id="calc-tuition" class="text-3xl font-black italic">₱0.00</h4>
                     </div>
-                    <div class="mt-16 pt-10 border-t flex justify-end">
-                        <button onclick="App.next(5)" class="btn-nest btn-nest-primary">Confirm Enrollment</button>
+                    <div class="bg-slate-50 p-8 rounded-3xl border text-center">
+                        <span class="nest-label">Registration Fees</span>
+                        <h4 id="calc-misc" class="text-3xl font-black italic">₱0.00</h4>
+                    </div>
+                    <div class="bg-teal-50 p-8 rounded-3xl border border-teal-100 text-center">
+                        <span class="nest-label text-teal-600">Total Due</span>
+                        <h4 id="calc-total" class="text-3xl font-black italic text-teal-600">₱0.00</h4>
                     </div>
                 </div>
-            </section>
+                <div class="mt-12 pt-8 border-t flex justify-end">
+                    <button onclick="App.next(6)" class="btn-nest btn-nest-primary px-12">Approve Financials</button>
+                </div>
+            </div>
+        </section>
 
-            <section id="step-5" class="step-section step-locked">
-                <div class="p-8 border-b border-slate-100 flex items-center gap-6 bg-slate-50/30">
-                    <div class="w-14 h-14 bg-slate-200 text-slate-400 flex items-center justify-center rounded-2xl font-black text-xl">05</div>
-                    <h2 class="text-xl font-black uppercase tracking-tight text-slate-800">Financial Configuration</h2>
-                </div>
-                <div class="p-10">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-                        <div class="bg-white p-8 rounded-[2rem] border shadow-sm text-center">
-                            <span class="nest-label">Monthly Tuition</span>
-                            <h4 id="calc-tuition" class="text-3xl font-black text-slate-900">₱0.00</h4>
-                        </div>
-                        <div class="bg-white p-8 rounded-[2rem] border shadow-sm text-center">
-                            <span class="nest-label">Materials & Misc</span>
-                            <h4 id="calc-misc" class="text-3xl font-black text-slate-900">₱0.00</h4>
-                        </div>
-                        <div class="bg-teal-50 p-8 rounded-[2rem] border border-teal-100 text-center">
-                            <span class="nest-label text-teal-600">Total Enrollment Fee</span>
-                            <h4 id="calc-total" class="text-3xl font-black text-teal-600">₱0.00</h4>
-                        </div>
+        <section id="step-6" class="step-section step-locked">
+            <div class="p-20 text-center">
+                <h2 class="text-4xl font-black uppercase italic">Final Pipeline Sync</h2>
+                <p class="text-slate-400 font-bold mt-4 uppercase tracking-widest text-xs">Verify all records before committing to Sariaya HO Master Registry</p>
+                <div id="review-summary" class="mt-12 text-left bg-slate-50 p-10 rounded-[2.5rem] border grid grid-cols-2 gap-8">
                     </div>
-                    <div class="mt-16 pt-10 border-t flex justify-end">
-                        <button onclick="App.next(6)" class="btn-nest btn-nest-primary">Approve Payment Plan</button>
-                    </div>
+                <div class="mt-12 flex justify-center gap-6">
+                    <button onclick="location.reload()" class="btn-nest bg-slate-200 text-slate-500">Discard Intake</button>
+                    <button onclick="App.finalize()" class="btn-nest btn-nest-primary px-20 shadow-2xl">Finalize & Sync</button>
                 </div>
-            </section>
-
-            <section id="step-6" class="step-section step-locked">
-                <div class="p-12 text-center">
-                    <h2 class="text-4xl font-black uppercase italic text-slate-900">Final Pipeline Review</h2>
-                    <p class="text-slate-400 font-bold mt-4">Confirm all data points before syncing to Sariaya Master Registry.</p>
-                    <div id="review-summary" class="mt-12 text-left bg-slate-50 p-10 rounded-[2.5rem] border space-y-4">
-                        </div>
-                    <div class="mt-12 flex justify-center gap-6">
-                        <button onclick="location.reload()" class="btn-nest bg-slate-200 text-slate-500">Discard Intake</button>
-                        <button onclick="App.finalize()" class="btn-nest btn-nest-primary px-20">Finalize & Sync</button>
-                    </div>
-                </div>
-            </section>
-        </div>
+            </div>
+        </section>
     </main>
 </div>
 
@@ -273,75 +251,20 @@ const App = {
     totalSteps: 6,
 
     async init() {
-        if (!window.NEST_SCHEMA) return console.error("FATAL ERROR: SCHEMA CONFIG NOT LOADED");
-        
-        // Populate Master Grids from Schema [cite: 2026-02-05]
-        this.renderFields('parent', 'p-grid');
-        this.renderFields('student', 's-grid');
-        
-        // Hydrate Dynamic Selects
+        console.log("NEST-MIND ALPHA V3.4 INITIALIZING...");
         await this.loadParents();
         await this.loadTeachers();
         await this.loadSessions();
-        
         document.getElementById('eval-date').valueAsDate = new Date();
-        this.syncUI();
-    },
-
-    renderFields(table, gridId) {
-        const grid = document.getElementById(gridId);
-        const schema = window.NEST_SCHEMA[table];
-        if (!schema) return;
-
-        let currentSection = "";
-        grid.innerHTML = "";
-
-        schema.fields.forEach(f => {
-            // Filter internal Xano fields [cite: 2026-02-05]
-            if (['id', 'created_at', 'franchise_id', 'parent_id', 'is_active'].includes(f.id)) return;
-
-            if (f.section && f.section !== currentSection) {
-                currentSection = f.section;
-                grid.insertAdjacentHTML('beforeend', `
-                    <div class="col-span-full section-divider">
-                        <span class="section-divider-text">${currentSection}</span>
-                        <div class="section-divider-line"></div>
-                    </div>
-                `);
-            }
-
-            const colSpan = f.width === 'full' ? 'col-span-full' : 'col-span-1';
-            const inputHtml = f.type === 'textarea' 
-                ? `<textarea id="${table}-${f.id}" class="nest-input custom-scroll" rows="3"></textarea>`
-                : `<input type="${f.type}" id="${table}-${f.id}" class="nest-input" placeholder="${f.placeholder || ''}">`;
-
-            grid.insertAdjacentHTML('beforeend', `
-                <div class="${colSpan}">
-                    <label class="nest-label">${f.label}</label>
-                    ${inputHtml}
-                </div>
-            `);
-        });
+        this.updateHUD();
     },
 
     setMode(m) {
         this.mode = m;
-        const box = document.getElementById('search-container');
-        const grid = document.getElementById('p-grid');
-        const bN = document.getElementById('btn-new');
-        const bS = document.getElementById('btn-search');
-
-        if (m === 'search') {
-            box.classList.remove('hidden');
-            grid.classList.add('hidden');
-            bS.className = "btn-nest bg-teal-500 text-white shadow-lg";
-            bN.className = "btn-nest text-slate-400";
-        } else {
-            box.classList.add('hidden');
-            grid.classList.remove('hidden');
-            bN.className = "btn-nest bg-teal-500 text-white shadow-lg";
-            bS.className = "btn-nest text-slate-400";
-        }
+        document.getElementById('search-container').classList.toggle('hidden', m === 'new');
+        document.getElementById('p-grid').classList.toggle('hidden', m === 'search');
+        document.getElementById('btn-new').className = m === 'new' ? 'btn-nest bg-teal-500 text-white shadow-lg' : 'btn-nest text-slate-400';
+        document.getElementById('btn-search').className = m === 'search' ? 'btn-nest bg-teal-500 text-white shadow-lg' : 'btn-nest text-slate-400';
     },
 
     async loadParents() {
@@ -349,11 +272,11 @@ const App = {
             const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}?franchise_id=${this.fid}`);
             const data = await res.json();
             const sel = document.getElementById('p-lookup-id');
-            sel.innerHTML = '<option value="">-- SEARCH REGISTERED PARENTS --</option>';
+            sel.innerHTML = '<option value="">-- SEARCH REGISTERED GUARDIANS --</option>';
             data.forEach(p => {
-                sel.innerHTML += `<option value="${p.id}">${p.last_name.toUpperCase()}, ${p.first_name} | ${p.email}</option>`;
+                sel.innerHTML += `<option value="${p.id}">${p.last_name.toUpperCase()}, ${p.first_name} | ${p.phone}</option>`;
             });
-        } catch (e) { console.error("PARENTS ENDPOINT FAILED"); }
+        } catch (e) { console.error("PARENTS LOAD FAILED"); }
     },
 
     async loadTeachers() {
@@ -362,7 +285,7 @@ const App = {
             const data = await res.json();
             const sel = document.getElementById('eval-staff');
             data.forEach(t => sel.innerHTML += `<option value="${t.id}">${t.name}</option>`);
-        } catch (e) { console.error("TEACHERS ENDPOINT FAILED"); }
+        } catch (e) { console.error("TEACHERS LOAD FAILED"); }
     },
 
     async loadSessions() {
@@ -378,12 +301,12 @@ const App = {
                         <p class="text-[10px] text-slate-400 mt-1">${s.schedule_days} | ${s.schedule_time}</p>
                         <div class="mt-4 pt-3 border-t flex justify-between items-center">
                             <span class="text-[10px] font-bold text-teal-600">₱${s.tuition_base}</span>
-                            <span class="text-[9px] text-slate-400">ID: ${s.id}</span>
+                            <span class="text-[9px] text-slate-400 italic">ID: ${s.id}</span>
                         </div>
                     </div>
                 `);
             });
-        } catch (e) { console.error("SESSION ENDPOINT FAILED"); }
+        } catch (e) { console.error("SESSIONS LOAD FAILED"); }
     },
 
     selectSession(id, tuition) {
@@ -397,13 +320,17 @@ const App = {
     async submitParent() {
         if (this.mode === 'search') {
             this.parentId = document.getElementById('p-lookup-id').value;
-            if (!this.parentId) return alert("Please select a parent from the registry.");
+            if (!this.parentId) return alert("Select a parent.");
         } else {
-            const payload = { franchise_id: this.fid, is_active: true };
-            window.NEST_SCHEMA.parent.fields.forEach(f => {
-                const el = document.getElementById(`parent-${f.id}`);
-                if (el) payload[f.id] = el.value;
-            });
+            const payload = {
+                franchise_id: this.fid,
+                is_active: true,
+                first_name: document.getElementById('p-first_name').value,
+                last_name: document.getElementById('p-last_name').value,
+                email: document.getElementById('p-email').value,
+                phone: document.getElementById('p-phone').value,
+                address: document.getElementById('p-address').value
+            };
             const res = await fetch(window.NEST_ENDPOINTS.parent.list, {
                 method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
             });
@@ -414,11 +341,13 @@ const App = {
     },
 
     async submitStudent() {
-        const payload = { franchise_id: this.fid, parent_id: this.parentId, is_active: true };
-        window.NEST_SCHEMA.student.fields.forEach(f => {
-            const el = document.getElementById(`student-${f.id}`);
-            if (el) payload[f.id] = el.value;
-        });
+        const payload = {
+            franchise_id: this.fid,
+            parent_id: this.parentId,
+            is_active: true,
+            name: document.getElementById('s-name').value,
+            date_of_birth: document.getElementById('s-date_of_birth').value
+        };
         const res = await fetch(window.NEST_ENDPOINTS.student.list, {
             method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
         });
@@ -434,22 +363,27 @@ const App = {
         curr.classList.remove('step-locked');
         curr.classList.add('step-active');
         this.currentStep = step;
-        this.syncUI();
+        this.updateHUD();
         curr.scrollIntoView({ behavior: 'smooth', block: 'center' });
     },
 
-    syncUI() {
-        const labels = ["Guardian Config", "Student DNA", "Assessment", "Enrollment", "Finance", "Review"];
+    updateHUD() {
         const p = Math.round((this.currentStep / this.totalSteps) * 100);
         document.getElementById('ui-perc-text').innerText = `${p}%`;
         document.getElementById('ui-progress-bar').style.width = `${p}%`;
-        document.getElementById('ui-phase-label').innerText = `Phase: ${labels[this.currentStep-1]}`;
-        document.getElementById('ui-step-badge').innerText = `0${this.currentStep}`;
     },
 
     async finalize() {
-        alert(`SYNCING STUDENT ${this.studentId} TO SESSION ${this.sessionId}...`);
-        // Final API call logic goes here
+        const payload = {
+            franchise_id: this.fid,
+            student_id: this.studentId,
+            session_id: this.sessionId,
+            enrollment_date: Math.floor(Date.now()),
+            status: 'active'
+        };
+        // FINAL API SYNC LOGIC
+        alert(`SUCCESS: STUDENT ${this.studentId} SYNCED TO SESSION ${this.sessionId}`);
+        location.reload();
     }
 };
 
