@@ -32,7 +32,20 @@
         
         <form id="teacher-form" class="p-6">
             <input type="hidden" id="t-edit-id">
-            <div id="dynamic-fields-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
+            
+            <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-black text-slate-800 uppercase block">Employment Status</span>
+                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wide">Toggle to activate or suspend access</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="is_active" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+                    <span id="status-label" class="ml-3 text-[10px] font-black text-teal-600 uppercase">Active</span>
+                </label>
+            </div>
+
+            <div id="dynamic-fields-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 max-h-[50vh] overflow-y-auto pr-4 custom-scrollbar">
                 </div>
 
             <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
@@ -51,7 +64,6 @@
         schema: null,
         isHO: false,
         currentFid: null,
-        // Full Admin Type Mapping from My Type Table [cite: 2026-02-05]
         adminTypeMap: { 1: 'Head Office Admin', 2: 'Franchise Owner', 3: 'Branch Manager', 4: 'Teacher' },
 
         async init() {
@@ -61,19 +73,15 @@
             
             this.currentFid = parseInt(localStorage.getItem('locked_franchise_id'));
             const currentFname = localStorage.getItem('locked_franchise_name') || '';
-            
-            // Check for Head Office permissions [cite: 2025-12-29]
             this.isHO = (this.currentFid === 1 || currentFname.toLowerCase().includes('head office'));
             
             document.getElementById('branch-display').innerText = `Faculty Records • ${currentFname}`;
 
             try {
-                // Fetch Logic: HO sees all, Branches see theirs [cite: 2025-12-29]
                 const url = this.isHO ? window.NEST_ENDPOINTS.teacher.list : `${window.NEST_ENDPOINTS.teacher.list}?franchise_id=${this.currentFid}`;
                 const response = await fetch(url);
                 const rawData = await response.json();
                 
-                // Force filter safety
                 this.data = this.isHO ? rawData : rawData.filter(t => parseInt(t.franchise_id) === this.currentFid);
                 
                 if (this.isHO) {
@@ -91,7 +99,6 @@
             const grid = document.getElementById('dynamic-fields-grid');
             grid.innerHTML = '';
 
-            // 1. Franchise Selector for HO Users [cite: 2025-12-29]
             if (this.isHO) {
                 let options = this.franchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
                 grid.insertAdjacentHTML('beforeend', `
@@ -103,21 +110,14 @@
                 grid.insertAdjacentHTML('beforeend', `<input type="hidden" id="franchise_id" value="${this.currentFid}">`);
             }
 
-            // 2. Dynamic Schema Fields
             this.schema.fields.forEach(f => {
-                // Filter out unwanted IDs
-                if (['id', 'franchise_id', 'user_id', 'teacher_id'].includes(f.id) || f.hidden) return;
+                // Remove ID displays
+                if (['id', 'franchise_id', 'user_id', 'teacher_id', 'is_active'].includes(f.id) || f.hidden) return;
                 
                 const spanClass = (f.width === 'full' || f.type === 'textarea') ? 'col-span-full' : 'col-span-1';
-                let inputHTML = '';
-                
-                if (f.type === 'textarea') {
-                    inputHTML = `<textarea id="${f.id}" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500"></textarea>`;
-                } else if (f.type === 'date') {
-                    inputHTML = `<input type="date" id="${f.id}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
-                } else {
-                    inputHTML = `<input type="${f.type}" id="${f.id}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
-                }
+                let inputHTML = (f.type === 'textarea') 
+                    ? `<textarea id="${f.id}" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500"></textarea>`
+                    : `<input type="${f.type}" id="${f.id}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
 
                 grid.insertAdjacentHTML('beforeend', `
                     <div class="${spanClass}">
@@ -151,7 +151,6 @@
                                 ${this.isHO ? `<button data-id="${t.id}" class="t-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-red-500 text-[9px] font-black hover:bg-red-500 transition-all uppercase">Delete</button>` : ''}
                             </div>
                         </div>
-
                         <div class="px-4 py-2 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-1 bg-white">
                             <div class="space-y-1 border-r border-slate-50 pr-4">
                                 <div><span class="text-[7px] font-black text-slate-300 uppercase block">Phone Contact</span><span class="text-[10px] font-bold text-slate-700">${t.phone || '---'}</span></div>
@@ -161,57 +160,60 @@
                             <div class="space-y-1 border-r border-slate-50 pr-4">
                                 <div><span class="text-[7px] font-black text-slate-300 uppercase block">Daily Pay</span><span class="text-[10px] font-black text-teal-600">₱${t.daily_pay || '0'}</span></div>
                                 <div><span class="text-[7px] font-black text-slate-300 uppercase block">TIN Number</span><span class="text-[10px] font-bold text-slate-700">${t.tin_number || '---'}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">System Registration</span><span class="text-[10px] font-bold text-slate-700">${new Date(t.created_at).toLocaleDateString()}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Registration</span><span class="text-[10px] font-bold text-slate-700">${new Date(t.created_at).toLocaleDateString()}</span></div>
                             </div>
                             <div class="space-y-1">
                                 <div><span class="text-[7px] font-black text-slate-300 uppercase block">Start Date</span><span class="text-[10px] font-bold text-slate-700">${t.start_date || '---'}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Last Day</span><span class="text-[10px] font-bold text-slate-700">${t.last_day || '---'}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Inactivation History</span><span class="text-[10px] italic text-slate-500 truncate block">${t.inactivation_notes || 'No history recorded.'}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Inactivation History</span><span class="text-[10px] italic text-slate-500 truncate block">${t.inactivation_notes || 'No history.'}</span></div>
                             </div>
                         </div>
                     </div>
                 `);
             });
-
             container.querySelectorAll('.t-edit-btn').forEach(b => b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id)));
             if (this.isHO) container.querySelectorAll('.t-delete-btn').forEach(b => b.onclick = () => this.deleteRecord(b.dataset.id));
         },
 
         openModal(t = null) {
             const modal = document.getElementById('teacher-modal');
+            const toggle = document.getElementById('is_active');
+            const label = document.getElementById('status-label');
+            
             modal.classList.remove('hidden');
             document.getElementById('teacher-form').reset();
-            
             document.getElementById('t-edit-id').value = t ? t.id : '';
-            document.getElementById('t-modal-title').innerText = t ? 'Update Faculty Profile' : 'New Faculty Registration';
             
+            // Set Toggle State
+            toggle.checked = t ? !!t.is_active : true;
+            this.updateToggleLabel(toggle.checked);
+
             if (t) {
-                // 1. Epoch to Readable Date conversion
                 if (t.created_at && document.getElementById('created_at')) {
                     document.getElementById('created_at').value = new Date(t.created_at).toISOString().split('T')[0];
                 }
-
-                // 2. Map schema fields, skipping IDs
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
-                    if (el && !['id', 'franchise_id', 'created_at', 'user_id', 'teacher_id'].includes(f.id)) {
+                    if (el && !['id', 'franchise_id', 'created_at', 'is_active'].includes(f.id)) {
                         el.value = t[f.id] || '';
                     }
                 });
-
-                if (this.isHO && document.getElementById('franchise_id')) {
-                    document.getElementById('franchise_id').value = t.franchise_id;
-                }
-            } else if (!this.isHO) {
-                document.getElementById('franchise_id').value = this.currentFid;
+                if (this.isHO) document.getElementById('franchise_id').value = t.franchise_id;
             }
         },
 
+        updateToggleLabel(isActive) {
+            const label = document.getElementById('status-label');
+            label.innerText = isActive ? 'Active' : 'Inactive';
+            label.className = isActive ? 'ml-3 text-[10px] font-black text-teal-600 uppercase' : 'ml-3 text-[10px] font-black text-red-500 uppercase';
+        },
+
         setupListeners() {
-            // FIX: Reliable Discard and Close actions
-            const closeActions = () => document.getElementById('teacher-modal').classList.add('hidden');
-            document.getElementById('cancel-modal-btn').onclick = closeActions;
-            document.getElementById('close-modal-x').onclick = closeActions;
+            const close = () => document.getElementById('teacher-modal').classList.add('hidden');
+            document.getElementById('cancel-modal-btn').onclick = close;
+            document.getElementById('close-modal-x').onclick = close;
+
+            // Toggle Visual Update
+            document.getElementById('is_active').onchange = (e) => this.updateToggleLabel(e.target.checked);
 
             document.getElementById('teacher-search').oninput = () => this.render();
             document.getElementById('add-teacher-btn').onclick = () => this.openModal();
@@ -219,40 +221,31 @@
             document.getElementById('teacher-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('t-edit-id').value;
-                const method = id ? 'PATCH' : 'POST';
-                const url = id ? `${window.NEST_ENDPOINTS.teacher.list}/${id}` : window.NEST_ENDPOINTS.teacher.list;
-
                 const payload = { 
-                    franchise_id: parseInt(document.getElementById('franchise_id').value) 
+                    franchise_id: parseInt(document.getElementById('franchise_id').value),
+                    is_active: document.getElementById('is_active').checked 
                 };
                 
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
-                    if (el && !['id', 'franchise_id', 'user_id'].includes(f.id)) {
-                        payload[f.id] = el.value;
-                    }
+                    if (el && !['id', 'franchise_id', 'is_active'].includes(f.id)) payload[f.id] = el.value;
                 });
 
-                try {
-                    const res = await fetch(url, { 
-                        method, 
-                        headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify(payload) 
-                    });
-                    if (res.ok) {
-                        closeActions();
-                        this.init();
-                    }
-                } catch (err) { console.error("Save Error:", err); }
+                await fetch(id ? `${window.NEST_ENDPOINTS.teacher.list}/${id}` : window.NEST_ENDPOINTS.teacher.list, {
+                    method: id ? 'PATCH' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                close();
+                this.init();
             };
         },
 
         async deleteRecord(id) {
-            if (!confirm("Permanently delete this faculty record?")) return;
-            try {
+            if (confirm("Delete this record permanently?")) {
                 await fetch(`${window.NEST_ENDPOINTS.teacher.list}/${id}`, { method: 'DELETE' });
                 this.init();
-            } catch (err) { console.error(err); }
+            }
         },
 
         async loadScript(src) {
