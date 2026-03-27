@@ -370,5 +370,48 @@ window.NEST_SCHEMA = {
             { id: 'map_icon_url', label: 'Map Icon URL', type: 'text', section: 'Visuals', width: 'half' },
             { id: 'full_lesson_plan', label: 'Full Lesson Plan', type: 'textarea', section: 'Visuals', width: 'full' }
         ]
+    },
+
+    enrollment: {
+        fields: [
+            // SYSTEM
+            { id: 'id', label: 'ID', type: 'int', hidden: true },
+            { id: 'created_at', label: 'Created At', type: 'epochms', readonly: true },
+            // CORE ENROLLMENT INFO
+            { id: 'status', label: 'Status', type: 'enum', list: ["active", "pending", "completed"], width: 'full' },
+            { id: 'enrollment_date', label: 'Enrollment Date', type: 'date', width: 'half' },
+            { id: 'start_date', label: 'Start Date', type: 'date', width: 'half' },
+            { id: 'enrolled_date', label: 'Enrolled Date', type: 'date', width: 'full' },
+            // DATABASE LINKS
+            { id: 'student_id', label: 'Student ID', type: 'int', section: 'Database Links', width: 'half' },
+            { id: 'franchise_id', label: 'Franchise ID', type: 'int', section: 'Database Links', width: 'half' },
+            { id: 'teacher_id', label: 'Teacher ID', type: 'int', section: 'Database Links', width: 'full' }
+        ]
+    },
+
+    student_assessment: {
+        fields: [
+            // SYSTEM
+            { id: 'id', label: 'ID', type: 'int', hidden: true },
+            { id: 'created_at', label: 'Created At', type: 'epochms', readonly: true },
+            // ASSESSMENT INFO
+            { id: 'assessment_date', label: 'Assessment Date', type: 'date', width: 'half' },
+            { id: 'assessment_type', label: 'Assessment Type', type: 'text', width: 'half' },
+            { id: 'comments', label: 'Comments', type: 'textarea', width: 'full' },
+            // DATABASE LINKS
+            { id: 'student_id', label: 'Student ID', type: 'int', section: 'Database Links', width: 'half' },
+            { id: 'teacher_id', label: 'Teacher ID', type: 'int', section: 'Database Links', width: 'half' },
+            { id: 'franchise_id', label: 'Franchise ID', type: 'int', section: 'Database Links', width: 'full' }
+        ]
+    },
+
+    admin_type: {
+        fields: [
+            // SYSTEM
+            { id: 'id', label: 'ID', type: 'int', hidden: true },
+            { id: 'created_at', label: 'Created At', type: 'epochms', readonly: true },
+            // CORE TYPE INFO
+            { id: 'my_Type', label: 'Admin Type Name', type: 'text', width: 'full' }
+        ]
     }
 };
