@@ -56,7 +56,7 @@
                     <div><label>Email</label><input type="email" id="p_email"></div>
                     <div><label>Phone</label><input type="text" id="p_phone"></div>
                     <div style="grid-column: span 2;"><label>Home Address</label><input type="text" id="p_address"></div>
-                    <div style="grid-column: span 2;"><label>Assign Franchise</label><select id="p_fran_id"></select></div>
+                    <div style="grid-column: span 2;"><label>Branch Franchise ID</label><input type="text" id="p_fran_id" readonly style="background:#f1f5f9; cursor:not-allowed;"></div>
                 </div>
             </div>
             <div style="display: flex; gap: 10px;">
@@ -152,7 +152,7 @@
     let state = {
         currentParentId: null,
         currentStudentId: null,
-        currentFranchiseId: null,
+        currentFranchiseId: 3, // Set Sariaya Local ID [cite: 2025-12-29]
         currentTeacherId: null,
         selectedSessionId: null,
         pickupContacts: [],
@@ -172,6 +172,9 @@
 
     // INITIAL LOAD
     async function init() {
+        // Apply the local franchise ID to the hidden/readonly field immediately [cite: 2026-02-05]
+        document.getElementById('p_fran_id').value = state.currentFranchiseId;
+
         const [pRes, fRes, tRes, qRes, sRes] = await Promise.all([
             fetch(PARENT_API).then(r => r.json()),
             fetch(FRANCHISE_API).then(r => r.json()),
@@ -185,9 +188,6 @@
 
         const pSel = document.getElementById('p_select_id');
         pRes.forEach(p => pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
-
-        const fSel = document.getElementById('p_fran_id');
-        fRes.forEach(f => fSel.innerHTML += `<option value="${f.id}">${f.name}</option>`);
 
         const tSel = document.getElementById('a_teacher_id');
         tRes.forEach(t => tSel.innerHTML += `<option value="${t.id}">${t.first_name}</option>`);
@@ -227,13 +227,12 @@
                     email: document.getElementById('p_email').value,
                     phone: document.getElementById('p_phone').value,
                     address: document.getElementById('p_address').value,
-                    franchise_id: parseInt(document.getElementById('p_fran_id').value),
+                    franchise_id: state.currentFranchiseId, // Always use local ID [cite: 2026-02-05]
                     is_active: true
                 };
                 const res = await fetch(PARENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)});
                 const data = await res.json();
                 state.currentParentId = data.id;
-                state.currentFranchiseId = data.franchise_id;
             } else {
                 state.currentParentId = parseInt(document.getElementById('p_select_id').value);
                 const p = state.allParents.find(x => x.id === state.currentParentId);
@@ -303,7 +302,6 @@
 
     window.submitFinalEnrollment = async () => {
         try {
-            // 1. Enrollment Record
             await fetch(ENROLLMENT_API, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -315,7 +313,6 @@
                 })
             });
 
-            // 2. Pickup Records
             for (let contact of state.pickupContacts) {
                 await fetch(PICKUP_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(contact)});
             }
