@@ -1,34 +1,144 @@
-<style>
-    .enrollment-wrapper { width: 100%; margin: 0; padding: 20px; box-sizing: border-box; background: #f8fafc; min-height: 100vh; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-    .nest-header { color: #334155; font-weight: 700; margin-bottom: 5px; }
-    
-    .profile-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; background: #fff; padding: 18px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 10px; width: 100%; }
-    .profile-item { display: flex; flex-direction: column; }
-    .profile-label { font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
-    .profile-value { font-size: 0.85rem; color: #334155; font-weight: 600; }
+<script src="api_config.js"></script>
+<script src="schema_config.js"></script>
 
-    .step-container { background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 25px; margin-bottom: 20px; transition: all 0.2s ease; position: relative; }
+<style>
+    :root {
+        --nest-teal: #00d1b2;
+        --nest-slate: #334155;
+        --nest-light-slate: #64748b;
+        --nest-border: #e2e8f0;
+        --nest-bg: #f8fafc;
+    }
+
+    .enrollment-wrapper { 
+        width: 100%; 
+        margin: 0; 
+        padding: 20px; 
+        box-sizing: border-box; 
+        background: var(--nest-bg); 
+        min-height: 100vh; 
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+    }
+
+    .nest-header { 
+        color: var(--nest-slate); 
+        font-weight: 700; 
+        margin-bottom: 5px; 
+        font-size: 1.1rem;
+    }
+    
+    .profile-display { 
+        display: grid; 
+        grid-template-columns: repeat(4, 1fr); 
+        gap: 15px; 
+        background: #fff; 
+        padding: 18px; 
+        border-radius: 4px; 
+        border: 1px solid var(--nest-border); 
+        margin-top: 10px; 
+        width: 100%; 
+    }
+    
+    .profile-item { display: flex; flex-direction: column; }
+    
+    .profile-label { 
+        font-size: 0.55rem; 
+        font-weight: 800; 
+        color: #94a3b8; 
+        text-transform: uppercase; 
+        margin-bottom: 2px; 
+        letter-spacing: 0.5px; 
+    }
+    
+    .profile-value { font-size: 0.85rem; color: var(--nest-slate); font-weight: 600; }
+
+    .step-container { 
+        background: white; 
+        border: 1px solid var(--nest-border); 
+        border-radius: 4px; 
+        padding: 25px; 
+        margin-bottom: 20px; 
+        transition: all 0.2s ease; 
+        position: relative; 
+    }
+    
     .step-locked { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
-    .step-active { border-left: 6px solid #00d1b2; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .step-active { border-left: 6px solid var(--nest-teal); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
     .step-saved { border-left: 6px solid #cbd5e1; background: #ffffff; }
     .step-saved .step-content { display: none; }
     
-    label { display: block; font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
-    input, select, textarea { width: 100%; border: 1px solid #e2e8f0; padding: 12px; border-radius: 4px; font-size: 0.9rem; background: #fff; color: #334155; box-sizing: border-box; transition: border-color 0.2s; }
-    input:focus, select:focus { border-color: #00d1b2; outline: none; }
+    label { 
+        display: block; 
+        font-size: 0.65rem; 
+        font-weight: 800; 
+        color: var(--nest-light-slate); 
+        text-transform: uppercase; 
+        margin-bottom: 6px; 
+    }
     
-    .btn-teal { background-color: #00d1b2; color: #ffffff !important; padding: 14px 28px; border-radius: 4px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; margin-top: 15px; transition: all 0.2s; }
+    input, select, textarea { 
+        width: 100%; 
+        border: 1px solid var(--nest-border); 
+        padding: 12px; 
+        border-radius: 4px; 
+        font-size: 0.9rem; 
+        background: #fff; 
+        color: var(--nest-slate); 
+        box-sizing: border-box; 
+        transition: border-color 0.2s; 
+    }
+    
+    input:focus, select:focus { border-color: var(--nest-teal); outline: none; }
+    
+    .btn-teal { 
+        background-color: var(--nest-teal); 
+        color: #ffffff !important; 
+        padding: 14px 28px; 
+        border-radius: 4px; 
+        font-weight: 700; 
+        border: none; 
+        cursor: pointer; 
+        font-size: 0.8rem; 
+        text-transform: uppercase; 
+        margin-top: 15px; 
+        transition: all 0.2s; 
+    }
+    
     .btn-teal:hover { background-color: #00b89c; transform: translateY(-1px); }
     .btn-teal:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+    .btn-secondary { background-color: var(--nest-light-slate); }
     
-    .badge-step { background: #334155; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; font-weight: bold; }
+    .badge-step { 
+        background: var(--nest-slate); 
+        color: white; 
+        width: 24px; 
+        height: 24px; 
+        display: inline-flex; 
+        align-items: center; 
+        justify-content: center; 
+        border-radius: 50%; 
+        font-size: 0.8rem; 
+        margin-right: 12px; 
+        font-weight: bold; 
+    }
     
     .review-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
     .review-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
-    .review-table .rev-label { font-weight: 800; color: #64748b; width: 40%; text-transform: uppercase; font-size: 0.6rem; }
-    .review-table .rev-val { color: #334155; font-weight: 600; }
+    .review-table .rev-label { font-weight: 800; color: var(--nest-light-slate); width: 40%; text-transform: uppercase; font-size: 0.6rem; }
+    .review-table .rev-val { color: var(--nest-slate); font-weight: 600; }
     
-    .loading-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 10; justify-content: center; align-items: center; font-size: 0.7rem; font-weight: 800; color: #00d1b2; }
+    .loading-overlay { 
+        display: none; 
+        position: absolute; 
+        top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(255,255,255,0.7); 
+        z-index: 10; 
+        justify-content: center; 
+        align-items: center; 
+        font-size: 0.7rem; 
+        font-weight: 800; 
+        color: var(--nest-teal); 
+    }
 </style>
 
 <div id="enrollment-ui" class="enrollment-wrapper">
@@ -59,7 +169,7 @@
                 </div>
             </div>
             <div style="display: flex; gap: 10px;">
-                <button class="btn-teal" style="background:#64748b;" onclick="toggleParentMode()">New / Existing Toggle</button>
+                <button class="btn-teal btn-secondary" onclick="toggleParentMode()">New / Existing Toggle</button>
                 <button id="btn-p-confirm" onclick="processParentStep()" class="btn-teal">Confirm Parent Details</button>
             </div>
         </div>
@@ -86,7 +196,7 @@
                 </div>
             </div>
             <div style="display: flex; gap: 10px;">
-                <button class="btn-teal" style="background:#64748b;" onclick="toggleStudentMode()">New / Existing Toggle</button>
+                <button class="btn-teal btn-secondary" onclick="toggleStudentMode()">New / Existing Toggle</button>
                 <button onclick="processStudentStep()" class="btn-teal">Confirm Student Profile</button>
             </div>
         </div>
@@ -126,7 +236,7 @@
                     <div><label>Relationship</label><input type="text" id="pu_rel"></div>
                     <div><label>Phone Number</label><input type="text" id="pu_phone"></div>
                 </div>
-                <button onclick="addPickupLocal()" class="btn-teal" style="background:#334155; margin-top:10px;">+ Add To List</button>
+                <button onclick="addPickupLocal()" class="btn-teal" style="background:var(--nest-slate); margin-top:10px;">+ Add To List</button>
             </div>
             <button onclick="finalizePickups()" class="btn-teal">Confirm All Contacts</button>
         </div>
@@ -141,7 +251,7 @@
                 <div><label>Target Start Date</label><input type="date" id="final_start_date" onchange="renderReviewStep()"></div>
             </div>
             <div id="review-container" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 25px; border-radius: 4px; display:none;">
-                <h3 class="nest-header" style="font-size: 0.9rem; margin-top:0; color: #00d1b2;">MASTER ENROLLMENT SUMMARY</h3>
+                <h3 class="nest-header" style="font-size: 0.9rem; margin-top:0; color: var(--nest-teal);">MASTER ENROLLMENT SUMMARY</h3>
                 <div id="review-content"></div>
                 <div style="text-align: center; margin-top: 30px;">
                     <button id="btn-submit-final" onclick="submitFinalEnrollment()" class="btn-teal" style="width: 320px; background: #0f766e;">GENERATE RECORDS & CLOSE</button>
@@ -153,23 +263,14 @@
 
 <div id="completion-screen" style="display:none; text-align: center; padding: 100px 20px;">
     <h1 class="nest-header" style="font-size: 2.5rem;">✓ Enrollment Successful</h1>
-    <p style="color: #64748b; margin-bottom: 30px;">Parent, Student, Assessment, and Session records have been updated.</p>
+    <p style="color: var(--nest-light-slate); margin-bottom: 30px;">Parent, Student, Assessment, and Session records have been updated.</p>
     <button class="btn-teal" onclick="window.location.reload()">Process Another Enrollment</button>
 </div>
 
 <script>
 (function() {
-    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
-    const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
-    const STUDENT_UPDATE_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student/";
-    const FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
-    const TEACHER_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
-    const QUESTIONS_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions";
-    const SINGLE_QUESTION_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions/";
-    const ASSESSMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:e7P6emQg/student_assessment_filled";
-    const PICKUP_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_authorized_pickup";
-    const ENROLLMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:IwtDgUwD/session_enrollment";
-    const SESSION_API = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session";
+    const API = window.NEST_ENDPOINTS;
+    const SCHEMA = window.NEST_SCHEMA;
 
     let currentParentId, currentStudentId, currentFranchiseId, selectedSessionId, currentTeacherId, assessmentPayload, pickupContacts = [], allSessions = [], allTeachers = [], allParents = [], allStudents = [], allFranchises = [];
 
@@ -193,7 +294,7 @@
         const ansDropdown = document.getElementById(`a_ans_${index}`);
         if (!qId) return;
         try {
-            const res = await fetch(SINGLE_QUESTION_API + qId);
+            const res = await fetch(API.student_assessment_questions + "/" + qId);
             const data = await res.json();
             const q = data.result1 || data;
             ansDropdown.innerHTML = '<option value="">-- Answer --</option>';
@@ -218,7 +319,7 @@
                     is_active: true 
                 };
                 if(!payload.first_name || !currentFranchiseId) throw new Error("Missing Name/Franchise");
-                const res = await fetch(PARENT_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+                const res = await fetch(API.parent, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
                 const data = await res.json();
                 currentParentId = data.id;
                 allParents.push(data);
@@ -261,7 +362,7 @@
                     is_active: true 
                 };
                 if(!payload.name) throw new Error("Missing Student Name");
-                const res = await fetch(STUDENT_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+                const res = await fetch(API.student, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
                 const data = await res.json(); 
                 currentStudentId = data.id;
                 allStudents.push(data);
@@ -315,7 +416,7 @@
         if(!n) return;
         const c = { name: n, relationship: document.getElementById('pu_rel').value, phone: document.getElementById('pu_phone').value };
         pickupContacts.push(c);
-        document.getElementById('pickup-entry-list').innerHTML += `<div style="padding:6px 12px; background:#f0fdfa; border:1px solid #00d1b2; border-radius:15px; font-size:0.7rem; font-weight:700; color:#0f766e;">${c.name}</div>`;
+        document.getElementById('pickup-entry-list').innerHTML += `<div style="padding:6px 12px; background:#f0fdfa; border:1px solid var(--nest-teal); border-radius:15px; font-size:0.7rem; font-weight:700; color:#0f766e;">${c.name}</div>`;
         document.getElementById('pu_name').value = ''; document.getElementById('pu_rel').value = ''; document.getElementById('pu_phone').value = '';
     };
 
@@ -365,21 +466,21 @@
         const sD = document.getElementById('final_start_date').value;
         
         try {
-            await fetch(STUDENT_UPDATE_API + currentStudentId, { 
+            await fetch(API.student + "/" + currentStudentId, { 
                 method: 'PATCH', 
                 headers: {'Content-Type': 'application/json'}, 
                 body: JSON.stringify({ session_enrolled: parseInt(selectedSessionId), enrolled_date: eD, start_date: sD, is_active: true }) 
             });
 
-            await fetch(ASSESSMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(assessmentPayload) });
+            await fetch(API.student_assessment_filled, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(assessmentPayload) });
 
-            const eLog = await fetch(ENROLLMENT_API, { 
+            const eLog = await fetch(API.session_enrollment, { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
                 body: JSON.stringify({ student_id: parseInt(currentStudentId), session_id: parseInt(selectedSessionId), enrollment_date: eD, status: "active" }) 
             });
 
-            const pPromises = pickupContacts.map(c => fetch(PICKUP_API, { 
+            const pPromises = pickupContacts.map(c => fetch(API.student_authorized_pickup, { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
                 body: JSON.stringify({ student_id: parseInt(currentStudentId), name: c.name, relationship: c.relationship, phone: c.phone, is_active: true }) 
@@ -397,7 +498,7 @@
     async function init() {
         try {
             const [fR, pR, sR, tR, qR, sessR] = await Promise.all([
-                fetch(FRANCHISE_API), fetch(PARENT_API), fetch(STUDENT_API), fetch(TEACHER_API), fetch(QUESTIONS_API), fetch(SESSION_API)
+                fetch(API.franchise), fetch(API.parent), fetch(API.student), fetch(API.teacher), fetch(API.student_assessment_questions), fetch(API.session)
             ]);
             allFranchises = unwrap(await fR.json()); 
             allParents = unwrap(await pR.json()); 
