@@ -107,51 +107,15 @@
 
 <div id="enrollment-root" class="flex min-h-screen">
     
-    <aside class="hidden lg:flex flex-col w-80 p-8 bg-[#0f172a] flex-shrink-0 sticky top-0 h-screen shadow-2xl">
-        <div class="mb-12">
-            <h1 class="text-2xl font-black tracking-tighter text-teal-400 uppercase italic">NestMind</h1>
-            <p class="text-[8px] text-slate-500 font-bold tracking-[0.4em] uppercase mt-1">Admin Intelligence</p>
-        </div>
-        
-        <div class="p-6 mb-10 border border-slate-700 bg-slate-800/40 rounded-2xl">
-            <span class="block mb-2 text-[8px] font-black tracking-[0.2em] text-slate-500 uppercase">Terminal Identity</span>
-            <span class="block text-sm font-black text-white uppercase tracking-tight">Sariaya HO</span>
-            <div class="flex items-center gap-2 mt-4 pt-4 border-t border-slate-700/50">
-                <span class="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></span>
-                <span class="text-[10px] font-black text-teal-400 uppercase">Enrollment Mode</span>
-            </div>
-        </div>
-
-        <nav class="flex-1 space-y-3">
-            <div class="pb-2 text-[9px] font-black text-slate-600 uppercase tracking-widest border-b border-slate-800 mb-4">Management</div>
-            <a href="performance.html" class="flex items-center gap-4 p-4 text-slate-400 hover:text-white transition-all rounded-xl hover:bg-slate-800 group">
-                <span class="text-[10px] font-bold uppercase tracking-widest">Performance</span>
-            </a>
-            <a href="parents.html" class="flex items-center gap-4 p-4 text-slate-400 hover:text-white transition-all rounded-xl hover:bg-slate-800 group">
-                <span class="text-[10px] font-bold uppercase tracking-widest">Parents</span>
-            </a>
-            <a href="#" class="flex items-center justify-between p-4 bg-teal-500/10 border border-teal-500/20 rounded-xl">
-                <span class="text-[10px] font-black uppercase tracking-widest text-teal-400">New Enrollment</span>
-                <div class="w-1.5 h-1.5 bg-teal-400 rounded-full shadow-[0_0_8px_rgba(20,184,166,0.6)]"></div>
-            </a>
-            <a href="students.html" class="flex items-center gap-4 p-4 text-slate-400 hover:text-white transition-all rounded-xl hover:bg-slate-800 group">
-                <span class="text-[10px] font-bold uppercase tracking-widest">Students</span>
-            </a>
-        </nav>
-
-        <div class="pt-8 border-t border-slate-800">
-            <p class="text-[8px] text-slate-600 font-bold uppercase leading-relaxed tracking-widest">
-                System: 2.4.0-PRO<br>Status: Ready<br>Region: Quezon Province
-            </p>
-        </div>
-    </aside>
-
     <main class="flex-1 p-6 lg:p-16 overflow-y-auto custom-scrollbar">
         
         <header class="flex flex-col md:flex-row items-start md:items-center justify-between mb-16 gap-8">
             <div>
                 <h2 class="text-4xl font-black tracking-tighter text-slate-900 uppercase leading-none">Student Intake</h2>
-                <p class="text-[12px] font-bold tracking-[0.2em] text-slate-400 uppercase mt-3">Lifecycle Phase: Registration & Assessment</p>
+                <div class="flex items-center gap-4 mt-4">
+                    <span class="px-3 py-1 bg-slate-800 text-teal-400 text-[9px] font-black rounded-lg uppercase">Sariaya HO Terminal</span>
+                    <p class="text-[12px] font-bold tracking-[0.2em] text-slate-400 uppercase">Phase: Registration & Assessment</p>
+                </div>
             </div>
             
             <div class="flex items-center gap-8 bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-100">
@@ -278,7 +242,7 @@ const App = {
         this.config.endpoints = window.NEST_ENDPOINTS;
         this.config.schema = window.NEST_SCHEMA;
 
-        // 1. Dynamic Injection logic for both tables [cite: 2026-02-05]
+        // 1. Dynamic Injection logic for both tables
         this.injectUI('parent', 'p-grid');
         this.injectUI('student', 's-grid');
 
@@ -292,7 +256,7 @@ const App = {
     },
 
     /**
-     * INJECT UI: Renders fields based on Xano schema definitions [cite: 2026-02-05]
+     * INJECT UI: Renders fields based on Xano schema definitions
      */
     injectUI(table, containerId) {
         const grid = document.getElementById(containerId);
@@ -302,7 +266,7 @@ const App = {
         let lastSection = "";
 
         tableSchema.fields.forEach(field => {
-            // Internal Filter for FKs and Metadata [cite: 2026-02-05]
+            // Internal Filter for FKs and Metadata
             if (['id', 'created_at', 'franchise_id', 'parent_id'].includes(field.id)) return;
 
             // Render Ukrainian Style Section Dividers
@@ -402,7 +366,7 @@ const App = {
     async submitStudentPhase() {
         const payload = { 
             franchise_id: this.config.fid, 
-            parent_id: this.state.parentId, // Automated Relationship Link [cite: 2026-02-05]
+            parent_id: this.state.parentId, // Automated Relationship Link
             is_active: true 
         };
         this.config.schema.student.fields.forEach(f => {
