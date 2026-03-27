@@ -1,11 +1,11 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
         <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Teacher Management</h1>
-        <p id="branch-display" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Faculty Records • Loading Branch...</p>
+        <p id="branch-display" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Faculty Records • Loading...</p>
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="teacher-search" placeholder="Search any field..." 
+        <input type="text" id="teacher-search" placeholder="Search faculty..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all">
         
         <button id="add-teacher-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
@@ -16,7 +16,7 @@
 
 <div id="teacher-list-container" class="space-y-6">
     <div class="p-20 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
-        Loading Records...
+        Syncing Faculty Records...
     </div>
 </div>
 
@@ -32,11 +32,15 @@
         
         <form id="teacher-form" class="p-6">
             <input type="hidden" id="t-edit-id">
-            <div id="dynamic-fields-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar"></div>
+            
+            <div id="dynamic-fields-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
+                </div>
 
             <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
                 <button type="button" id="cancel-modal-btn" class="px-8 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Discard</button>
-                <button type="submit" class="flex-1 py-3 bg-teal-500 text-white rounded-xl font-bold text-[10px] uppercase shadow-lg hover:bg-teal-600 transition-all">Save</button>
+                <button type="submit" class="flex-1 py-3 bg-teal-500 text-white rounded-xl font-bold text-[10px] uppercase shadow-lg hover:bg-teal-600 transition-all">
+                    Save Record
+                </button>
             </div>
         </form>
     </div>
@@ -49,28 +53,33 @@
         schema: null,
 
         async init() {
+            // Logic mirrored from parents.html [cite: 2026-02-05]
             if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
             if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
             
             this.schema = window.NEST_SCHEMA.teacher;
             this.buildFormUI(); 
             
-            // FILTER: Pulling franchise_id directly from local storage [cite: 2026-02-05]
             const fid = localStorage.getItem('locked_franchise_id');
-            const fname = localStorage.getItem('locked_franchise_name') || 'Active Branch';
+            const fname = localStorage.getItem('locked_franchise_name') || 'Sariaya';
             
-            document.getElementById('branch-display').innerText = `Faculty Records • ${fname}`;
+            document.getElementById('branch-display').innerText = `Faculty Records • ${fname} Branch`;
             document.getElementById('modal-branch-title').innerText = `${fname} Branch`;
 
-            if (!fid) return;
+            if (!fid) {
+                document.getElementById('teacher-list-container').innerHTML = `<div class="p-20 text-center text-red-500 font-black uppercase text-xs">No Franchise Locked</div>`;
+                return;
+            }
 
             try {
-                // API Call filtered by locked franchise [cite: 2025-12-29]
+                // Filtered fetch exactly like parents.html [cite: 2026-02-05]
                 const response = await fetch(`${window.NEST_ENDPOINTS.teacher.list}?franchise_id=${fid}`);
                 this.data = await response.json();
                 this.render();
                 this.setupListeners();
-            } catch (err) { console.error("Fetch Error:", err); }
+            } catch (err) {
+                console.error("Fetch Error:", err);
+            }
         },
 
         buildFormUI() {
@@ -79,18 +88,40 @@
             let currentSection = "";
 
             this.schema.fields.forEach(f => {
-                if (f.id === 'id') return;
+                if (f.id === 'id' || f.id === 'franchise_id') return;
+
                 if (f.section && f.section !== currentSection) {
                     currentSection = f.section;
-                    grid.insertAdjacentHTML('beforeend', `<div class="col-span-full mt-6 mb-2 border-b border-slate-100 pb-1"><span class="text-[10px] font-black text-teal-600 uppercase tracking-widest">${currentSection}</span></div>`);
+                    grid.insertAdjacentHTML('beforeend', `
+                        <div class="col-span-full mt-6 mb-2 border-b border-slate-100 pb-1">
+                            <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest">${currentSection}</span>
+                        </div>
+                    `);
                 }
+
                 const spanClass = f.width === 'full' || f.type === 'textarea' ? 'col-span-full' : 'col-span-1';
                 const readonly = f.readonly ? 'readonly' : '';
                 const bgClass = f.readonly ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-50';
-                let inputHTML = f.type === 'textarea' ? `<textarea id="${f.id}" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500"></textarea>` : 
-                                (f.type === 'bool' || f.type === 'checkbox') ? `<div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg"><input type="checkbox" id="${f.id}" class="w-4 h-4 accent-teal-500"><span class="text-[10px] font-bold text-slate-500 uppercase">${f.label}</span></div>` :
-                                `<input type="${f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
-                grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[9px] text-slate-400 block uppercase font-black mb-1.5 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
+
+                let inputHTML = '';
+                if (f.type === 'textarea') {
+                    inputHTML = `<textarea id="${f.id}" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500 transition-all"></textarea>`;
+                } else if (f.type === 'bool' || f.type === 'checkbox') {
+                    inputHTML = `
+                        <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                            <input type="checkbox" id="${f.id}" class="w-4 h-4 accent-teal-500">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">${f.label}</span>
+                        </div>`;
+                } else {
+                    inputHTML = `<input type="${f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500 transition-all">`;
+                }
+
+                grid.insertAdjacentHTML('beforeend', `
+                    <div class="${spanClass}">
+                        <label class="text-[9px] text-slate-400 block uppercase font-black mb-1.5 ml-1 tracking-wider">${f.label}</label>
+                        ${inputHTML}
+                    </div>
+                `);
             });
         },
 
@@ -98,61 +129,78 @@
             const container = document.getElementById('teacher-list-container');
             const search = (document.getElementById('teacher-search')?.value || '').toLowerCase();
             
+            // Filter data based on search and current state
             let filtered = this.data.filter(t => 
                 Object.values(t).some(val => String(val).toLowerCase().includes(search))
             );
 
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="p-20 text-center text-slate-300 font-bold uppercase text-[10px]">No Teachers Found</div>`;
+                return;
+            }
+
             container.innerHTML = '';
             filtered.forEach(t => {
-                // This block builds a "Data Grid" of ALL fields in the schema [cite: 2026-02-05]
-                let allFieldsHTML = this.schema.fields
-                    .filter(f => f.id !== 'id' && t[f.id] !== undefined)
-                    .map(f => `
-                        <div class="space-y-1">
-                            <span class="text-[8px] font-black text-slate-400 uppercase tracking-tighter block">${f.label}</span>
-                            <span class="text-[10px] font-bold text-slate-700">${f.type === 'bool' ? (t[f.id] ? 'YES' : 'NO') : (t[f.id] || '---')}</span>
-                        </div>
-                    `).join('');
+                // Build dynamic "All Fields" grid for the card [cite: 2026-02-05]
+                const fieldDisplay = this.schema.fields
+                    .filter(f => f.id !== 'id' && f.id !== 'franchise_id')
+                    .map(f => {
+                        let val = t[f.id];
+                        if (f.type === 'bool') val = val ? 'YES' : 'NO';
+                        if (f.id === 'daily_pay') val = `₱${val || 0}`;
+                        return `
+                            <div class="space-y-1">
+                                <span class="text-[8px] font-black text-slate-400 uppercase tracking-tighter block">${f.label}</span>
+                                <span class="text-[10px] font-bold text-slate-700 truncate block">${val || '---'}</span>
+                            </div>
+                        `;
+                    }).join('');
 
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:border-teal-400 transition-all">
                         <div class="bg-slate-50/80 p-5 flex flex-wrap items-center justify-between gap-6 border-b border-slate-100">
                             <div>
                                 <span class="text-[9px] text-slate-400 font-black uppercase block tracking-tighter">Faculty Member</span>
-                                <span class="text-sm font-black text-slate-900">${t.name || 'Unnamed Teacher'}</span>
+                                <span class="text-sm font-black text-slate-900">${t.name || 'Unnamed Record'}</span>
                             </div>
                             <div class="flex items-center gap-3">
                                 <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${t.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">
                                     ${t.is_active ? 'Active' : 'Inactive'}
                                 </span>
                                 <button data-id="${t.id}" class="t-edit-btn px-4 py-2 bg-white border border-slate-300 rounded-lg text-[10px] font-black hover:text-teal-600 transition-all uppercase">Edit</button>
-                                <button data-id="${t.id}" class="t-delete-btn px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-red-500 text-[10px] font-black hover:bg-red-500 hover:text-white transition-all uppercase">Delete</button>
+                                <button data-id="${t.id}" class="t-delete-btn px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-red-500 text-[10px] font-black hover:bg-red-500 transition-all uppercase">Delete</button>
                             </div>
                         </div>
                         <div class="p-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 bg-white">
-                            ${allFieldsHTML}
+                            ${fieldDisplay}
                         </div>
                     </div>
                 `);
             });
 
-            container.querySelectorAll('.t-edit-btn').forEach(b => b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id)));
-            container.querySelectorAll('.t-delete-btn').forEach(b => b.onclick = () => this.deleteRecord(b.dataset.id));
+            // Re-bind actions
+            container.querySelectorAll('.t-edit-btn').forEach(b => {
+                b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id));
+            });
+            container.querySelectorAll('.t-delete-btn').forEach(b => {
+                b.onclick = () => this.deleteRecord(b.dataset.id);
+            });
         },
 
         async deleteRecord(id) {
-            if (!confirm("Confirm removal?")) return;
+            if (!confirm("Confirm permanent removal of this faculty record?")) return;
             try {
                 const res = await fetch(`${window.NEST_ENDPOINTS.teacher.list}/${id}`, { method: 'DELETE' });
                 if (res.ok) this.init();
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error("Delete Error:", err); }
         },
 
         openModal(t = null) {
             document.getElementById('teacher-modal').classList.remove('hidden');
             document.getElementById('teacher-form').reset();
             document.getElementById('t-edit-id').value = t ? t.id : '';
-            document.getElementById('t-modal-title').innerText = t ? 'Edit Profile' : 'Register Faculty';
+            document.getElementById('t-modal-title').innerText = t ? 'Edit Faculty Member' : 'Register New Faculty';
+
             this.schema.fields.forEach(f => {
                 const el = document.getElementById(f.id);
                 if (el) {
@@ -169,28 +217,62 @@
             document.getElementById('add-teacher-btn').onclick = () => this.openModal();
             document.getElementById('close-modal-x').onclick = () => this.closeModal();
             document.getElementById('cancel-modal-btn').onclick = () => this.closeModal();
+
             document.getElementById('teacher-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('t-edit-id').value;
-                const payload = { franchise_id: parseInt(localStorage.getItem('locked_franchise_id')) };
+                
+                // Inject franchise_id from local storage [cite: 2026-02-05]
+                const payload = { 
+                    franchise_id: parseInt(localStorage.getItem('locked_franchise_id'))
+                };
+                
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
-                    if (el && f.id !== 'id' && !f.readonly) payload[f.id] = (f.type === 'bool' || f.type === 'checkbox') ? el.checked : el.value;
+                    if (el && f.id !== 'id' && !f.readonly) {
+                        payload[f.id] = (f.type === 'bool' || f.type === 'checkbox') ? el.checked : el.value;
+                    }
                 });
+
                 const url = id ? `${window.NEST_ENDPOINTS.teacher.list}/${id}` : window.NEST_ENDPOINTS.teacher.list;
-                const res = await fetch(url, { method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                if (res.ok) { this.closeModal(); this.init(); }
+                const method = id ? 'PATCH' : 'POST';
+
+                try {
+                    const res = await fetch(url, { 
+                        method: method, 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(payload) 
+                    });
+                    
+                    if (res.ok) { 
+                        this.closeModal(); 
+                        this.init(); 
+                    } else {
+                        alert("Error saving record. Check Xano API.");
+                    }
+                } catch (err) {
+                    console.error("Save Error:", err);
+                }
             };
         },
 
         async loadScript(src) {
-            return new Promise(resolve => {
-                const s = document.createElement('script'); s.src = src; s.onload = resolve;
-                s.onerror = () => { s.src = src.replace('/', ''); s.onload = resolve; };
+            return new Promise((resolve) => {
+                const s = document.createElement('script');
+                s.src = src;
+                s.onload = resolve;
+                s.onerror = () => {
+                    // Fallback to relative path if absolute fails
+                    const s2 = document.createElement('script');
+                    s2.src = src.replace(/^\//, '');
+                    s2.onload = resolve;
+                    document.head.appendChild(s2);
+                };
                 document.head.appendChild(s);
             });
         }
     };
+
     TeacherModule.init();
 })();
 </script>
