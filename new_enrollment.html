@@ -56,7 +56,7 @@
                     <div><label>Email</label><input type="email" id="p_email"></div>
                     <div><label>Phone</label><input type="text" id="p_phone"></div>
                     <div style="grid-column: span 2;"><label>Home Address</label><input type="text" id="p_address"></div>
-                    <div style="grid-column: span 2;"><label>Branch Franchise ID</label><input type="text" id="p_fran_id" readonly style="background:#f1f5f9; cursor:not-allowed;"></div>
+                    <div style="grid-column: span 2;"><label>Branch Franchise</label><input type="text" id="p_fran_name" readonly style="background:#f1f5f9; cursor:not-allowed;"></div>
                 </div>
             </div>
             <div style="display: flex; gap: 10px;">
@@ -171,8 +171,6 @@
     }
 
     async function init() {
-        document.getElementById('p_fran_id').value = state.currentFranchiseId;
-
         const [pRes, fRes, tRes, qRes, sRes] = await Promise.all([
             fetch(PARENT_API).then(r => r.json()),
             fetch(FRANCHISE_API).then(r => r.json()),
@@ -183,6 +181,10 @@
 
         state.allParents = pRes;
         state.allFranchises = fRes;
+
+        // MATCH FRANCHISE NAME FOR THE DISPLAY FIELD [cite: 2026-02-05]
+        const franchise = state.allFranchises.find(f => f.id === state.currentFranchiseId);
+        if (franchise) document.getElementById('p_fran_name').value = franchise.name;
 
         const pSel = document.getElementById('p_select_id');
         pRes.forEach(p => pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
@@ -237,7 +239,6 @@
                 state.currentFranchiseId = p.franchise_id;
             }
 
-            // POPULATE PROFILE VIEW WITH FRANCHISE NAME INSTEAD OF ID [cite: 2026-02-05]
             const franchise = state.allFranchises.find(f => f.id === state.currentFranchiseId);
             document.getElementById('disp-p-fran').innerText = franchise ? franchise.name : state.currentFranchiseId;
             document.getElementById('parent-profile-view').style.display = 'grid';
