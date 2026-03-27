@@ -1,537 +1,507 @@
+<script src="https://cdn.tailwindcss.com"></script>
 <script src="api_config.js"></script>
 <script src="schema_config.js"></script>
 
 <style>
-    :root {
-        --nest-teal: #00d1b2;
-        --nest-slate: #334155;
-        --nest-light-slate: #64748b;
-        --nest-border: #e2e8f0;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+    
+    :root { 
+        --nest-teal: #14b8a6; 
+        --nest-slate-dark: #0f172a; 
         --nest-bg: #f8fafc;
     }
 
-    .enrollment-wrapper { 
-        width: 100%; 
-        margin: 0; 
-        padding: 20px; 
-        box-sizing: border-box; 
-        background: var(--nest-bg); 
-        min-height: 100vh; 
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
-    }
+    body { font-family: 'Inter', sans-serif; background-color: var(--nest-bg); }
 
-    .nest-header { 
-        color: var(--nest-slate); 
-        font-weight: 700; 
-        margin-bottom: 5px; 
-        font-size: 1.1rem;
-    }
-    
-    .profile-display { 
-        display: grid; 
-        grid-template-columns: repeat(4, 1fr); 
-        gap: 15px; 
-        background: #fff; 
-        padding: 18px; 
-        border-radius: 4px; 
-        border: 1px solid var(--nest-border); 
-        margin-top: 10px; 
-        width: 100%; 
-    }
-    
-    .profile-item { display: flex; flex-direction: column; }
-    
-    .profile-label { 
-        font-size: 0.55rem; 
-        font-weight: 800; 
-        color: #94a3b8; 
-        text-transform: uppercase; 
-        margin-bottom: 2px; 
-        letter-spacing: 0.5px; 
-    }
-    
-    .profile-value { font-size: 0.85rem; color: var(--nest-slate); font-weight: 600; }
+    /* Custom Scrollbar for NestMind Dashboard */
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+    /* Step Transition Logic */
     .step-container { 
-        background: white; 
-        border: 1px solid var(--nest-border); 
-        border-radius: 4px; 
-        padding: 25px; 
-        margin-bottom: 20px; 
-        transition: all 0.2s ease; 
-        position: relative; 
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
+        transform-origin: top center;
     }
-    
-    .step-locked { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
-    .step-active { border-left: 6px solid var(--nest-teal); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-    .step-saved { border-left: 6px solid #cbd5e1; background: #ffffff; }
-    .step-saved .step-content { display: none; }
-    
-    label { 
-        display: block; 
-        font-size: 0.65rem; 
-        font-weight: 800; 
-        color: var(--nest-light-slate); 
-        text-transform: uppercase; 
-        margin-bottom: 6px; 
+    .step-locked { 
+        opacity: 0.35; 
+        pointer-events: none; 
+        filter: grayscale(0.8) blur(0.5px); 
+        transform: scale(0.98); 
     }
-    
-    input, select, textarea { 
+    .step-active { 
+        opacity: 1; 
+        pointer-events: auto; 
+        filter: none; 
+        transform: scale(1); 
+        border-left-width: 8px !important;
+        border-left-color: var(--nest-teal) !important;
+    }
+
+    /* UI Components: Inputs & Labels */
+    .nest-input { 
         width: 100%; 
-        border: 1px solid var(--nest-border); 
-        padding: 12px; 
-        border-radius: 4px; 
-        font-size: 0.9rem; 
-        background: #fff; 
-        color: var(--nest-slate); 
-        box-sizing: border-box; 
-        transition: border-color 0.2s; 
-    }
-    
-    input:focus, select:focus { border-color: var(--nest-teal); outline: none; }
-    input:disabled { background-color: #f1f5f9; cursor: not-allowed; color: #94a3b8; }
-    
-    .btn-teal { 
-        background-color: var(--nest-teal); 
-        color: #ffffff !important; 
-        padding: 14px 28px; 
-        border-radius: 4px; 
+        padding: 0.875rem 1rem; 
+        background-color: #f8fafc; 
+        border: 1px solid #e2e8f0; 
+        border-radius: 0.75rem; 
+        font-size: 0.75rem; 
         font-weight: 700; 
-        border: none; 
-        cursor: pointer; 
-        font-size: 0.8rem; 
-        text-transform: uppercase; 
-        margin-top: 15px; 
-        transition: all 0.2s; 
+        color: #1e293b;
+        outline: none; 
+        transition: all 0.2s ease;
+    }
+    .nest-input:focus { 
+        border-color: var(--nest-teal); 
+        box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1); 
+        background-color: #ffffff;
+    }
+    .nest-label { 
+        display: block; 
+        margin-left: 0.25rem; 
+        margin-bottom: 0.5rem; 
+        text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]; 
     }
     
-    .btn-teal:hover { background-color: #00b89c; transform: translateY(-1px); }
-    .btn-teal:disabled { background-color: #cbd5e1; cursor: not-allowed; }
-    .btn-secondary { background-color: var(--nest-light-slate); }
-    
-    .badge-step { 
-        background: var(--nest-slate); 
+    /* Buttons */
+    .btn-action { 
+        padding: 1.125rem 2.5rem; 
+        background-color: var(--nest-teal); 
         color: white; 
-        width: 24px; 
-        height: 24px; 
-        display: inline-flex; 
-        align-items: center; 
-        justify-content: center; 
-        border-radius: 50%; 
-        font-size: 0.8rem; 
-        margin-right: 12px; 
-        font-weight: bold; 
+        border-radius: 0.875rem; 
+        font-size: 10px; 
+        font-weight: 900; 
+        text-transform: uppercase; 
+        letter-spacing: 0.1em;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 15px -3px rgba(20, 184, 166, 0.2);
     }
-    
-    .review-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
-    .review-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
-    .review-table .rev-label { font-weight: 800; color: var(--nest-light-slate); width: 40%; text-transform: uppercase; font-size: 0.6rem; }
-    .review-table .rev-val { color: var(--nest-slate); font-weight: 600; }
-    
-    .loading-overlay { 
-        display: none; 
-        position: absolute; 
-        top: 0; left: 0; width: 100%; height: 100%; 
-        background: rgba(255,255,255,0.7); 
-        z-index: 10; 
-        justify-content: center; 
-        align-items: center; 
-        font-size: 0.7rem; 
-        font-weight: 800; 
-        color: var(--nest-teal); 
+    .btn-action:hover { 
+        background-color: #0d9488; 
+        transform: translateY(-2px); 
+        box-shadow: 0 20px 25px -5px rgba(20, 184, 166, 0.3); 
     }
+    .btn-action:active { transform: translateY(0); }
+
+    /* Utility: Fade Animations */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-in { animation: fadeIn 0.4s ease-out forwards; }
 </style>
 
-<div id="enrollment-ui" class="enrollment-wrapper">
-    <div id="enrollment-progress" style="text-align: right; font-size: 0.7rem; font-weight: 800; color: #94a3b8; margin-bottom: 15px;">PROGRESS: STEP 1 OF 6</div>
-
-    <div id="step-parent" class="step-container step-active">
-        <div class="loading-overlay" id="loader-parent" style="display:flex;">INITIALIZING BRANCH DATA...</div>
-        <h2 class="nest-header"><span class="badge-step">1</span> Parent Profile</h2>
-        <div id="parent-profile-view" style="display:none;" class="profile-display">
-            <div class="profile-item"><div class="profile-label">Primary Parent</div><div id="disp-p-name" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Email</div><div id="disp-p-email" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Phone</div><div id="disp-p-phone" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Franchise</div><div id="disp-p-fran" class="profile-value"></div></div>
+<div id="nestmind-layout" class="flex min-h-screen">
+    
+    <aside class="hidden lg:flex flex-col w-72 p-8 bg-[#0f172a] flex-shrink-0 sticky top-0 h-screen shadow-2xl z-50">
+        <div class="mb-12">
+            <h1 class="text-2xl font-black tracking-tighter text-teal-400 uppercase italic">NestMind</h1>
+            <p class="text-[8px] text-slate-500 font-bold tracking-[0.3em] uppercase mt-1">Sariaya Administrative Intelligence</p>
         </div>
-        <div class="step-content" style="margin-top:20px;">
-            <div id="parent-select-mode">
-                <label>Search Existing Database</label>
-                <select id="p_select_id"></select>
+        
+        <div class="p-5 mb-10 border border-slate-700 bg-slate-800/40 rounded-2xl backdrop-blur-md">
+            <span class="block mb-1 text-[8px] font-black tracking-[0.2em] text-slate-500 uppercase">Active Terminal</span>
+            <span id="display-branch" class="block text-sm font-black text-white uppercase tracking-tight">Sariaya Branch (HO)</span>
+            <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/50">
+                <span class="w-2 h-2 bg-teal-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.8)]"></span>
+                <span class="text-[10px] font-black text-teal-400 uppercase tracking-tighter">Enrollment Pipeline</span>
             </div>
-            <div id="parent-create-mode" style="display:none;">
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                    <div><label>First Name</label><input type="text" id="p_fn"></div>
-                    <div><label>Last Name</label><input type="text" id="p_ln"></div>
-                    <div><label>Email</label><input type="email" id="p_email"></div>
-                    <div><label>Phone</label><input type="text" id="p_phone"></div>
-                    <div style="grid-column: span 2;"><label>Home Address</label><input type="text" id="p_address"></div>
-                    <div style="grid-column: span 2;">
-                        <label>Assigned Branch (Locked)</label>
-                        <input type="text" id="p_fran_display" value="Sariaya" disabled>
+        </div>
+
+        <nav class="flex-1 space-y-2">
+            <div class="pb-3 text-[9px] font-black text-slate-600 uppercase tracking-widest border-b border-slate-800 mb-4 ml-2">Main Navigation</div>
+            <a href="parents.html" class="flex items-center justify-between p-4 transition-all rounded-xl hover:bg-slate-800 group">
+                <span class="text-[10px] font-bold tracking-widest text-slate-400 group-hover:text-white uppercase">Directory</span>
+                <span class="text-slate-600 group-hover:text-teal-400 transition-colors">→</span>
+            </a>
+            <a href="#" class="flex items-center justify-between p-4 border border-teal-500/20 bg-teal-500/10 rounded-xl group">
+                <span class="text-[10px] font-black tracking-widest text-teal-400 uppercase">New Intake</span>
+                <div class="w-1.5 h-1.5 bg-teal-400 rounded-full shadow-[0_0_5px_rgba(20,184,166,0.5)]"></div>
+            </a>
+            <a href="#" class="flex items-center justify-between p-4 transition-all rounded-xl hover:bg-slate-800 group opacity-50">
+                <span class="text-[10px] font-bold tracking-widest text-slate-400 group-hover:text-white uppercase">Schedules</span>
+                <span class="text-slate-600">→</span>
+            </a>
+        </nav>
+
+        <div class="pt-6 border-t border-slate-800">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[8px] text-slate-600 font-bold uppercase">System Status</span>
+                <span class="text-[8px] text-teal-500 font-bold uppercase">Ready</span>
+            </div>
+            <p class="text-[8px] text-slate-600 font-medium uppercase leading-relaxed tracking-tighter">Xano DB Connection: Active<br>Sariaya, Quezon Province Terminal</p>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-6 lg:p-12 overflow-y-auto custom-scrollbar bg-[#f8fafc]">
+        
+        <header class="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6">
+            <div>
+                <h2 class="text-3xl font-black tracking-tighter text-slate-800 uppercase leading-none">Student Onboarding</h2>
+                <div class="flex items-center gap-3 mt-3">
+                    <span class="px-2 py-0.5 bg-slate-200 text-slate-600 text-[8px] font-black uppercase rounded">ID: NEST-2026-AUTO</span>
+                    <p class="text-[11px] font-bold tracking-[0.1em] text-slate-400 uppercase">Phase 01: Profile Initiation</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-6 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60">
+                <div class="text-right">
+                    <div id="progress-phase-label" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Phase: <span class="text-teal-600">Parent Entry</span></div>
+                    <div class="w-56 h-2 bg-slate-100 rounded-full mt-2.5 overflow-hidden">
+                        <div id="progress-bar-fill" class="w-1/6 h-full transition-all duration-1000 ease-in-out bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.4)]"></div>
                     </div>
                 </div>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-teal btn-secondary" onclick="toggleParentMode()">New / Existing Toggle</button>
-                <button id="btn-p-confirm" onclick="processParentStep()" class="btn-teal">Confirm Parent Details</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="step-student" class="step-container step-locked">
-        <div class="loading-overlay" id="loader-student">CHECKING RECORDS...</div>
-        <h2 class="nest-header"><span class="badge-step">2</span> Student Profile</h2>
-        <div id="student-profile-view" style="display:none;" class="profile-display">
-            <div class="profile-item"><div class="profile-label">Student Name</div><div id="disp-s-name" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Birthday</div><div id="disp-s-dob" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Gender</div><div id="disp-s-gen" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Preferred Name</div><div id="disp-s-pref" class="profile-value"></div></div>
-        </div>
-        <div class="step-content" style="margin-top:20px;">
-            <div id="student-select-mode"><label>Registered Children</label><select id="s_select_id"></select></div>
-            <div id="student-create-mode" style="display:none;">
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                    <div style="grid-column: span 2;"><label>Full Name</label><input type="text" id="s_name_new"></div>
-                    <div><label>Preferred Name</label><input type="text" id="s_pref_new"></div>
-                    <div><label>Gender</label><select id="s_gen_new"><option value="Male">Male</option><option value="Female">Female</option></select></div>
-                    <div><label>Date of Birth</label><input type="date" id="s_dob_new"></div>
-                    <div style="grid-column: span 2;"><label>Residential Address</label><input type="text" id="s_addr_new"></div>
+                <div class="h-10 w-[1px] bg-slate-100"></div>
+                <div class="flex flex-col items-center">
+                    <span id="step-number-badge" class="px-3 py-1.5 bg-slate-900 text-white rounded-lg font-black text-[11px] uppercase tracking-tighter">Step 01</span>
                 </div>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-teal btn-secondary" onclick="toggleStudentMode()">New / Existing Toggle</button>
-                <button onclick="processStudentStep()" class="btn-teal">Confirm Student Profile</button>
-            </div>
-        </div>
-    </div>
+        </header>
 
-    <div id="step-assessment" class="step-container step-locked">
-        <h2 class="nest-header"><span class="badge-step">3</span> Initial Assessment</h2>
-        <div class="step-content" style="margin-top:20px;">
-            <form id="assessmentForm">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
-                    <div><label>Assessing Teacher</label><select id="a_teacher_id" required></select></div>
-                    <div><label>Assessment Date</label><input type="date" id="a_assessment_date" required></div>
-                    <div><label>Assessment Type</label><input type="text" id="a_assessment_type" value="Initial Assessment"></div>
+        <div id="workflow-stack" class="max-w-6xl space-y-10 pb-32">
+
+            <section id="step-1" class="step-container step-active bg-white border border-slate-200 shadow-xl rounded-[2rem] overflow-hidden border-l-[8px] border-l-teal-500">
+                <div class="flex items-center justify-between p-8 bg-slate-50/80 border-b border-slate-100">
+                    <div class="flex items-center gap-5">
+                        <div class="flex items-center justify-center w-12 h-12 text-base font-black text-white bg-slate-900 rounded-2xl rotate-3 shadow-xl">01</div>
+                        <div>
+                            <h3 class="text-sm font-black tracking-widest text-slate-800 uppercase">Guardian Profile</h3>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Register Primary Financial Contact & Emergencies</p>
+                        </div>
+                    </div>
+                    <div class="flex bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
+                        <button onclick="App.setParentMode('new')" id="mode-new-btn" class="px-5 py-2 text-[10px] font-black uppercase rounded-lg bg-teal-500 text-white shadow-md transition-all">New Entry</button>
+                        <button onclick="App.setParentMode('search')" id="mode-search-btn" class="px-5 py-2 text-[10px] font-black uppercase rounded-lg text-slate-400 hover:text-slate-600 transition-all">Search Database</button>
+                    </div>
                 </div>
-                <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px 25px; border-top: 1px solid #eee; padding-top: 20px;"></div>
-                <button type="submit" class="btn-teal">Save Assessment & Continue</button>
-            </form>
-        </div>
-    </div>
 
-    <div id="step-session" class="step-container step-locked">
-        <h2 class="nest-header"><span class="badge-step">4</span> Select Session</h2>
-        <div class="step-content" style="margin-top:20px;">
-            <label>Available Branch Sessions</label>
-            <select id="enrollment_session_id"></select>
-            <button onclick="processSessionStep()" class="btn-teal">Confirm Session</button>
-        </div>
-    </div>
+                <div class="p-10">
+                    <div id="parent-search-ui" class="hidden p-8 mb-10 border-2 border-dashed bg-teal-50/40 border-teal-100 rounded-[1.5rem] animate-in">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-2 h-2 bg-teal-500 rounded-full"></div>
+                            <label class="text-[10px] font-black text-teal-700 uppercase tracking-widest">Existing Parent Lookup (Sariaya Terminal)</label>
+                        </div>
+                        <select id="p-search-select" class="w-full p-5 text-xs font-black bg-white border-2 border-slate-100 rounded-2xl text-slate-700 focus:border-teal-500 outline-none shadow-sm"></select>
+                    </div>
 
-    <div id="step-pickup" class="step-container step-locked">
-        <h2 class="nest-header"><span class="badge-step">5</span> Authorized Pickup</h2>
-        <div class="step-content" style="margin-top:20px;">
-            <div id="pickup-entry-list" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px;"></div>
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 4px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-                    <div><label>Contact Name</label><input type="text" id="pu_name"></div>
-                    <div><label>Relationship</label><input type="text" id="pu_rel"></div>
-                    <div><label>Phone Number</label><input type="text" id="pu_phone"></div>
+                    <div id="p-form-grid" class="grid grid-cols-1 gap-x-12 gap-y-8 md:grid-cols-2 lg:grid-cols-3">
+                        </div>
+
+                    <div class="pt-10 mt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div class="flex items-center gap-3 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="id-card-icon-path" /></svg>
+                            <span class="text-[9px] font-bold uppercase tracking-tighter italic">Required for Student Linking</span>
+                        </div>
+                        <button onclick="App.processParentPhase()" class="btn-action w-full md:w-auto">Confirm Guardian & Next Step</button>
+                    </div>
                 </div>
-                <button onclick="addPickupLocal()" class="btn-teal" style="background:var(--nest-slate); margin-top:10px;">+ Add To List</button>
-            </div>
-            <button onclick="finalizePickups()" class="btn-teal">Confirm All Contacts</button>
-        </div>
-    </div>
+            </section>
 
-    <div id="step-final" class="step-container step-locked">
-        <div class="loading-overlay" id="loader-final">FINALIZING ALL RECORDS...</div>
-        <h2 class="nest-header"><span class="badge-step">6</span> Finalize Enrollment</h2>
-        <div class="step-content" style="margin-top:20px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
-                <div><label>Official Enrollment Date</label><input type="date" id="final_enrolled_date" onchange="renderReviewStep()"></div>
-                <div><label>Target Start Date</label><input type="date" id="final_start_date" onchange="renderReviewStep()"></div>
-            </div>
-            <div id="review-container" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 25px; border-radius: 4px; display:none;">
-                <h3 class="nest-header" style="font-size: 0.9rem; margin-top:0; color: var(--nest-teal);">MASTER ENROLLMENT SUMMARY</h3>
-                <div id="review-content"></div>
-                <div style="text-align: center; margin-top: 30px;">
-                    <button id="btn-submit-final" onclick="submitFinalEnrollment()" class="btn-teal" style="width: 320px; background: #0f766e;">GENERATE RECORDS & CLOSE</button>
+            <section id="step-2" class="step-container step-locked bg-white border border-slate-200 shadow-sm rounded-[2rem] overflow-hidden">
+                <div class="flex items-center gap-5 p-8 border-b border-slate-50 bg-slate-50/30">
+                    <div class="flex items-center justify-center w-12 h-12 text-base font-black bg-slate-200 text-slate-400 rounded-2xl">02</div>
+                    <div>
+                        <h3 class="text-sm font-black tracking-widest text-slate-800 uppercase">Student Profile</h3>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Academic & Personal DNA for Enrollment</p>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
+                <div class="p-10">
+                    <div id="s-form-grid" class="grid grid-cols-1 gap-x-12 gap-y-8 md:grid-cols-2 lg:grid-cols-3">
+                        </div>
+                    
+                    <div class="pt-10 mt-12 border-t border-slate-100 flex justify-end">
+                        <button onclick="App.processStudentPhase()" class="btn-action">Create Student Record</button>
+                    </div>
+                </div>
+            </section>
 
-<div id="completion-screen" style="display:none; text-align: center; padding: 100px 20px;">
-    <h1 class="nest-header" style="font-size: 2.5rem;">✓ Enrollment Successful</h1>
-    <p style="color: var(--nest-light-slate); margin-bottom: 30px;">Parent, Student, Assessment, and Session records have been updated.</p>
-    <button class="btn-teal" onclick="window.location.reload()">Process Another Enrollment</button>
+            <section id="step-3" class="step-container step-locked bg-white border border-slate-200 shadow-sm rounded-[2rem] overflow-hidden">
+                <div class="flex items-center gap-5 p-8 border-b border-slate-50 bg-slate-50/30">
+                    <div class="flex items-center justify-center w-12 h-12 text-base font-black bg-slate-200 text-slate-400 rounded-2xl">03</div>
+                    <div>
+                        <h3 class="text-sm font-black tracking-widest text-slate-800 uppercase">Intake Assessment</h3>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Teacher Observation & Enrollment Readiness</p>
+                    </div>
+                </div>
+                <div class="p-10">
+                    <div class="grid grid-cols-1 gap-12 md:grid-cols-2">
+                        <div class="space-y-3">
+                            <label class="nest-label">Evaluating Lead Teacher</label>
+                            <select id="eval-teacher-id" class="nest-input"></select>
+                        </div>
+                        <div class="space-y-3">
+                            <label class="nest-label">Date of Evaluation</label>
+                            <input type="date" id="eval-date" class="nest-input">
+                        </div>
+                        <div class="col-span-full space-y-3">
+                            <label class="nest-label">Preliminary Observations (Internal Admin Only)</label>
+                            <textarea id="eval-notes" rows="5" class="nest-input custom-scrollbar" placeholder="Detail student readiness, social triggers, and specific developmental notes..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-10 mt-12 border-t border-slate-100 flex justify-between items-center">
+                        <div class="hidden md:block">
+                            <span class="text-[9px] font-black text-slate-400 uppercase">Status: Initializing Assessment Table</span>
+                        </div>
+                        <button onclick="location.reload()" class="px-12 py-5 text-[10px] font-black tracking-widest text-white uppercase bg-slate-900 rounded-2xl hover:bg-black transition-all shadow-2xl">Save Evaluation & Close</button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
 </div>
 
 <script>
-(function() {
-    // Check if configuration exists before proceeding
-    if (!window.NEST_ENDPOINTS) {
-        alert("Configuration Error: API Endpoints not found. Ensure api_config.js is loaded.");
-        return;
-    }
+const App = {
+    // Identity Lock: Sariaya Franchise
+    config: {
+        franchiseId: 1, 
+        endpoints: null,
+        schema: null
+    },
+    
+    // Application State
+    state: {
+        parentId: null,
+        studentId: null,
+        activeStep: 1,
+        totalSteps: 6,
+        inputMode: 'new' // 'new' | 'search'
+    },
 
-    const API = window.NEST_ENDPOINTS;
-    const SCHEMA = window.NEST_SCHEMA;
-
-    // Hardcoded for Sariaya as per Identity Lock
-    const LOCKED_FRANCHISE_ID = 1; 
-
-    let currentParentId, currentStudentId, currentFranchiseId = LOCKED_FRANCHISE_ID, selectedSessionId, currentTeacherId, assessmentPayload, pickupContacts = [], allSessions = [], allTeachers = [], allParents = [], allStudents = [], allFranchises = [];
-
-    function unwrap(d) { return Array.isArray(d) ? d : (d.result1 || d.items || []); }
-    function showLoader(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
-
-    window.toggleParentMode = () => {
-        const mode = document.getElementById('parent-select-mode').style.display === 'none' ? 'select' : 'create';
-        document.getElementById('parent-select-mode').style.display = mode === 'select' ? 'block' : 'none';
-        document.getElementById('parent-create-mode').style.display = mode === 'create' ? 'block' : 'none';
+    /**
+     * INIT: Hydrates the Dashboard with Schema and Lookups
+     */
+    async init() {
+        console.log("NestMind Engine: Booting Sariaya Enrollment Terminal...");
         
-        const f = allFranchises.find(f => f.id === LOCKED_FRANCHISE_ID);
-        if(f) document.getElementById('p_fran_display').value = f.name;
-    };
+        if (!window.NEST_SCHEMA || !window.NEST_ENDPOINTS) {
+            alert("CRITICAL ERROR: Configuration files (api_config.js / schema_config.js) not found.");
+            return;
+        }
 
-    window.toggleStudentMode = () => {
-        const mode = document.getElementById('student-select-mode').style.display === 'none' ? 'select' : 'create';
-        document.getElementById('student-select-mode').style.display = mode === 'select' ? 'block' : 'none';
-        document.getElementById('student-create-mode').style.display = mode === 'create' ? 'block' : 'none';
-    };
+        this.config.endpoints = window.NEST_ENDPOINTS;
+        this.config.schema = window.NEST_SCHEMA;
 
-    window.handleQuestionChange = async (index) => {
-        const qId = document.getElementById(`q_select_${index}`).value;
-        const ansDropdown = document.getElementById(`a_ans_${index}`);
-        if (!qId) return;
+        // 1. Inject UI from Schema definitions [cite: 2026-02-05]
+        this.buildFormFromSchema('parent', 'p-form-grid');
+        this.buildFormFromSchema('student', 's-form-grid');
+
+        // 2. Hydrate Foreign Key Selects
+        this.fetchExistingParentDirectory();
+        this.fetchLeadTeacherList();
+
+        // 3. Set Lifecycle Defaults
+        document.getElementById('eval-date').valueAsDate = new Date();
+        this.syncProgressUI();
+    },
+
+    /**
+     * DYNAMIC GENERATOR: Maps Xano Schema to HTML Components
+     * Replicates the "Directory Style" Ukrainian Sectioning
+     */
+    buildFormFromSchema(table, gridId) {
+        const grid = document.getElementById(gridId);
+        const schema = this.config.schema[table];
+        if (!schema) return;
+
+        let currentSectionName = "";
+
+        schema.fields.forEach(field => {
+            // Filter system-level fields handled by Xano backend [cite: 2026-02-05]
+            if (['id', 'created_at', 'franchise_id', 'parent_id'].includes(field.id)) return;
+
+            // SECTION HEADER LOGIC
+            if (field.section && field.section !== currentSectionName) {
+                currentSectionName = field.section;
+                grid.insertAdjacentHTML('beforeend', `
+                    <div class="col-span-full mt-8 mb-3 border-b border-slate-100 pb-2 flex items-center justify-between">
+                        <span class="text-[10px] font-black text-teal-600 uppercase tracking-[0.25em]">${currentSectionName}</span>
+                        <div class="h-[1px] bg-slate-50 flex-1 ml-6"></div>
+                    </div>
+                `);
+            }
+
+            // COMPONENT RENDERING
+            const colSpan = field.width === 'full' ? 'col-span-full' : 'col-span-1';
+            const elementId = `${table}-${field.id}`;
+            
+            let fieldHtml = '';
+            if (field.type === 'textarea') {
+                fieldHtml = `<textarea id="${elementId}" rows="3" class="nest-input custom-scrollbar" placeholder="Enter ${field.label}..."></textarea>`;
+            } else if (field.type === 'bool' || field.type === 'checkbox') {
+                fieldHtml = `
+                    <div class="flex items-center gap-4 p-4 bg-slate-50/50 border border-slate-200/50 rounded-xl">
+                        <input type="checkbox" id="${elementId}" class="w-5 h-5 accent-teal-500 rounded-lg cursor-pointer">
+                        <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Active Status</span>
+                    </div>`;
+            } else {
+                fieldHtml = `<input type="${field.type}" id="${elementId}" class="nest-input" placeholder="${field.placeholder || ''}" ${field.required ? 'required' : ''}>`;
+            }
+
+            grid.insertAdjacentHTML('beforeend', `
+                <div class="${colSpan} group animate-in">
+                    <label class="nest-label group-focus-within:text-teal-600 transition-colors">${field.label}</label>
+                    ${fieldHtml}
+                </div>
+            `);
+        });
+    },
+
+    /**
+     * DATA FETCH: Local Franchise Database Lookups
+     */
+    async fetchExistingParentDirectory() {
         try {
-            const res = await fetch(API.student_assessment_questions + "/" + qId);
+            const res = await fetch(`${this.config.endpoints.parent.list}?franchise_id=${this.config.franchiseId}`);
             const data = await res.json();
-            const q = data.result1 || data;
-            ansDropdown.innerHTML = '<option value="">-- Answer --</option>';
-            for(let i=1; i<=6; i++) { if(q[`answer_${i}`]) ansDropdown.innerHTML += `<option value="${q[`answer_${i}`]}">${q[`answer_${i}`]}</option>`; }
-        } catch(e) { console.error("Question load error", e); }
-    };
+            const select = document.getElementById('p-search-select');
+            select.innerHTML = '<option value="">-- SEARCH EXISTING SARIAYA GUARDIANS --</option>';
+            data.forEach(p => {
+                select.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name} [${p.email || 'No Email'}]</option>`;
+            });
+        } catch (err) { console.error("Identity Lookup Failed:", err); }
+    },
 
-    window.processParentStep = async () => {
-        const isCreateMode = document.getElementById('parent-create-mode').style.display === 'block';
-        showLoader('loader-parent', true);
-        
+    async fetchLeadTeacherList() {
         try {
-            if(isCreateMode) {
-                const payload = { 
-                    first_name: document.getElementById('p_fn').value, 
-                    last_name: document.getElementById('p_ln').value, 
-                    email: document.getElementById('p_email').value, 
-                    phone: document.getElementById('p_phone').value, 
-                    address: document.getElementById('p_address').value, 
-                    franchise_id: LOCKED_FRANCHISE_ID,
-                    is_active: true 
-                };
-                if(!payload.first_name) throw new Error("Missing Name");
-                const res = await fetch(API.parent, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+            const res = await fetch(`${this.config.endpoints.teacher.list}?franchise_id=${this.config.franchiseId}`);
+            const data = await res.json();
+            const select = document.getElementById('eval-teacher-id');
+            data.forEach(t => select.innerHTML += `<option value="${t.id}">${t.name} (Sariaya Staff)</option>`);
+        } catch (err) { console.error("Staff Lookup Failed:", err); }
+    },
+
+    /**
+     * UI LOGIC: Toggle New vs Search Mode
+     */
+    setParentMode(mode) {
+        this.state.inputMode = mode;
+        const searchUI = document.getElementById('parent-search-ui');
+        const formGrid = document.getElementById('p-form-grid');
+        const btnNew = document.getElementById('mode-new-btn');
+        const btnSearch = document.getElementById('mode-search-btn');
+
+        if (mode === 'search') {
+            searchUI.classList.remove('hidden');
+            formGrid.classList.add('hidden');
+            btnSearch.classList.add('bg-teal-500', 'text-white', 'shadow-md');
+            btnSearch.classList.remove('text-slate-400');
+            btnNew.classList.remove('bg-teal-500', 'text-white', 'shadow-md');
+            btnNew.classList.add('text-slate-400');
+        } else {
+            searchUI.classList.add('hidden');
+            formGrid.classList.remove('hidden');
+            btnNew.classList.add('bg-teal-500', 'text-white', 'shadow-md');
+            btnNew.classList.remove('text-slate-400');
+            btnSearch.classList.remove('bg-teal-500', 'text-white', 'shadow-md');
+            btnSearch.classList.add('text-slate-400');
+        }
+    },
+
+    /**
+     * PHASE 01: Process Parent Data
+     * Links existing ID or POSTS a new record to Xano
+     */
+    async processParentPhase() {
+        if (this.state.inputMode === 'search') {
+            this.state.parentId = document.getElementById('p-search-select').value;
+            if (!this.state.parentId) return alert("Select a valid Guardian to link Student.");
+        } else {
+            // SCRAPE FORM FOR PAYLOAD
+            const payload = { 
+                franchise_id: this.config.franchiseId, 
+                is_active: true 
+            };
+            
+            this.config.schema.parent.fields.forEach(f => {
+                const el = document.getElementById(`parent-${f.id}`);
+                if (el) payload[f.id] = (f.type === 'bool') ? el.checked : el.value;
+            });
+
+            try {
+                const res = await fetch(this.config.endpoints.parent.list, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
                 const data = await res.json();
-                currentParentId = data.id;
-                allParents.push(data);
-            } else {
-                currentParentId = parseInt(document.getElementById('p_select_id').value);
-                if(!currentParentId) throw new Error("Select a parent");
-            }
-
-            const pInfo = allParents.find(p => p.id === currentParentId);
-            document.getElementById('disp-p-name').innerText = pInfo.first_name + ' ' + pInfo.last_name;
-            document.getElementById('disp-p-email').innerText = pInfo.email || "---";
-            document.getElementById('disp-p-phone').innerText = pInfo.phone || "---";
-            document.getElementById('disp-p-fran').innerText = (allFranchises.find(f => f.id === LOCKED_FRANCHISE_ID) || {}).name || "Sariaya";
-            
-            document.getElementById('parent-profile-view').style.display = 'grid';
-            document.getElementById('step-parent').className = 'step-container step-saved';
-            document.getElementById('s_select_id').innerHTML = '<option value="">-- Select Child --</option>' + allStudents.filter(s => s.parent_id === currentParentId).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-            document.getElementById('step-student').className = 'step-container step-active';
-            document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 2 OF 6";
-        } catch (err) { alert(err.message); }
-        showLoader('loader-parent', false);
-    };
-
-    window.processStudentStep = async () => {
-        const isCreateMode = document.getElementById('student-create-mode').style.display === 'block';
-        showLoader('loader-student', true);
+                this.state.parentId = data.id;
+            } catch (err) { return alert("Xano Post Error: Parent Record failed."); }
+        }
         
-        try {
-            if(isCreateMode) {
-                const payload = { 
-                    parent_id: currentParentId, 
-                    name: document.getElementById('s_name_new').value, 
-                    preferred_name: document.getElementById('s_pref_new').value, 
-                    gender: document.getElementById('s_gen_new').value, 
-                    date_of_birth: document.getElementById('s_dob_new').value, 
-                    home_address: document.getElementById('s_addr_new').value, 
-                    franchise_id: LOCKED_FRANCHISE_ID, 
-                    is_active: true 
-                };
-                if(!payload.name) throw new Error("Missing Student Name");
-                const res = await fetch(API.student, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-                const data = await res.json(); 
-                currentStudentId = data.id;
-                allStudents.push(data);
-            } else {
-                currentStudentId = parseInt(document.getElementById('s_select_id').value);
-                if(!currentStudentId) throw new Error("Select a student");
-            }
-            const sInfo = allStudents.find(s => s.id === currentStudentId);
-            document.getElementById('disp-s-name').innerText = sInfo.name;
-            document.getElementById('disp-s-dob').innerText = sInfo.date_of_birth || "---";
-            document.getElementById('disp-s-gen').innerText = sInfo.gender || "---";
-            document.getElementById('disp-s-pref').innerText = sInfo.preferred_name || "---";
-            document.getElementById('student-profile-view').style.display = 'grid';
-            document.getElementById('step-student').className = 'step-container step-saved';
-            document.getElementById('a_teacher_id').innerHTML = '<option value="">-- Teacher --</option>' + allTeachers.filter(t => t.franchise_id === LOCKED_FRANCHISE_ID).map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
-            document.getElementById('step-assessment').className = 'step-container step-active';
-            document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 3 OF 6";
-        } catch (err) { alert(err.message); }
-        showLoader('loader-student', false);
-    };
+        console.log("Parent Processed: ID " + this.state.parentId);
+        this.advanceWorkflow(2);
+    },
 
-    document.getElementById('assessmentForm').onsubmit = (e) => {
-        e.preventDefault();
-        currentTeacherId = parseInt(document.getElementById('a_teacher_id').value);
-        assessmentPayload = { 
-            student_id: currentStudentId,
-            teacher_id: currentTeacherId,
-            assessment_date: document.getElementById('a_assessment_date').value,
-            assessment_type: document.getElementById('a_assessment_type').value
+    /**
+     * PHASE 02: Process Student Data
+     * CRITICAL: Uses parentId from Phase 01 to build the Relationship [cite: 2026-02-05]
+     */
+    async processStudentPhase() {
+        const payload = { 
+            franchise_id: this.config.franchiseId, 
+            parent_id: this.state.parentId, // Automated Linking
+            is_active: true 
         };
-        for(let i=1; i<=10; i++) {
-            assessmentPayload[`question_${i}_id`] = parseInt(document.getElementById(`q_select_${i}`).value) || null;
-            assessmentPayload[`answer_${i}`] = document.getElementById(`a_ans_${i}`).value || "";
-        }
-        document.getElementById('step-assessment').className = 'step-container step-saved';
-        document.getElementById('enrollment_session_id').innerHTML = '<option value="">-- Select Available Session --</option>' + allSessions.filter(s => s.franchise_id === LOCKED_FRANCHISE_ID && s.is_active).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-        document.getElementById('step-session').className = 'step-container step-active';
-        document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 4 OF 6";
-    };
-
-    window.processSessionStep = () => {
-        selectedSessionId = parseInt(document.getElementById('enrollment_session_id').value);
-        if(!selectedSessionId) { alert("Please select a session"); return; }
-        document.getElementById('step-session').className = 'step-container step-saved';
-        document.getElementById('step-pickup').className = 'step-container step-active';
-        document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 5 OF 6";
-    };
-
-    window.addPickupLocal = () => {
-        const n = document.getElementById('pu_name').value;
-        if(!n) return;
-        const c = { name: n, relationship: document.getElementById('pu_rel').value, phone: document.getElementById('pu_phone').value };
-        pickupContacts.push(c);
-        document.getElementById('pickup-entry-list').innerHTML += `<div style="padding:6px 12px; background:#f0fdfa; border:1px solid var(--nest-teal); border-radius:15px; font-size:0.7rem; font-weight:700; color:#0f766e;">${c.name}</div>`;
-        document.getElementById('pu_name').value = ''; document.getElementById('pu_rel').value = ''; document.getElementById('pu_phone').value = '';
-    };
-
-    window.finalizePickups = () => {
-        document.getElementById('step-pickup').className = 'step-container step-saved';
-        document.getElementById('step-final').className = 'step-container step-active';
-        document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 6 OF 6";
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('final_enrolled_date').value = today;
-        document.getElementById('final_start_date').value = today;
-        renderReviewStep();
-    };
-
-    window.renderReviewStep = () => {
-        const eD = document.getElementById('final_enrolled_date').value, sD = document.getElementById('final_start_date').value;
-        const tSel = document.getElementById('a_teacher_id');
-        const teacherName = tSel.options[tSel.selectedIndex] ? tSel.options[tSel.selectedIndex].text : "---";
-        const sSel = document.getElementById('enrollment_session_id');
-        const sessionName = sSel.options[sSel.selectedIndex] ? sSel.options[sSel.selectedIndex].text : "---";
-
-        document.getElementById('review-content').innerHTML = `
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div>
-                    <h4 style="font-size:0.6rem; color:#94a3b8; text-transform:uppercase; margin-bottom:5px;">Profile Details</h4>
-                    <table class="review-table">
-                        <tr><td class="rev-label">Student</td><td class="rev-val">${document.getElementById('disp-s-name').innerText}</td></tr>
-                        <tr><td class="rev-label">Parent</td><td class="rev-val">${document.getElementById('disp-p-name').innerText}</td></tr>
-                        <tr><td class="rev-label">Session</td><td class="rev-val">${sessionName}</td></tr>
-                    </table>
-                </div>
-                <div>
-                    <h4 style="font-size:0.6rem; color:#94a3b8; text-transform:uppercase; margin-bottom:5px;">Dates & Staff</h4>
-                    <table class="review-table">
-                        <tr><td class="rev-label">Assessor</td><td class="rev-val">${teacherName}</td></tr>
-                        <tr><td class="rev-label">Enroll Date</td><td class="rev-val">${eD}</td></tr>
-                        <tr><td class="rev-label">Start Date</td><td class="rev-val">${sD}</td></tr>
-                    </table>
-                </div>
-            </div>
-        `;
-        document.getElementById('review-container').style.display = 'block';
-    };
-
-    window.submitFinalEnrollment = async () => {
-        showLoader('loader-final', true);
-        const eD = document.getElementById('final_enrolled_date').value;
-        const sD = document.getElementById('final_start_date').value;
         
+        this.config.schema.student.fields.forEach(f => {
+            const el = document.getElementById(`student-${f.id}`);
+            if (el) payload[f.id] = (f.type === 'bool') ? el.checked : el.value;
+        });
+
         try {
-            await fetch(API.student + "/" + currentStudentId, { 
-                method: 'PATCH', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ session_enrolled: parseInt(selectedSessionId), enrolled_date: eD, start_date: sD, is_active: true }) 
+            const res = await fetch(this.config.endpoints.student.list, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
-
-            await fetch(API.student_assessment_filled, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(assessmentPayload) });
-
-            const eLog = await fetch(API.session_enrollment, { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ student_id: parseInt(currentStudentId), session_id: parseInt(selectedSessionId), enrollment_date: eD, status: "active" }) 
-            });
-
-            const pPromises = pickupContacts.map(c => fetch(API.student_authorized_pickup, { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ student_id: parseInt(currentStudentId), name: c.name, relationship: c.relationship, phone: c.phone, is_active: true }) 
-            }));
-            await Promise.all(pPromises);
-
-            if(eLog.ok) {
-                document.getElementById('enrollment-ui').style.display = 'none'; 
-                document.getElementById('completion-screen').style.display = 'block';
-            } else { throw new Error("Log Creation Failed"); }
-        } catch (e) { alert("Sync Error: " + e.message); }
-        showLoader('loader-final', false);
-    };
-
-    async function init() {
-        try {
-            const [fR, pR, sR, tR, qR, sessR] = await Promise.all([
-                fetch(API.franchise), fetch(API.parent), fetch(API.student), fetch(API.teacher), fetch(API.student_assessment_questions), fetch(API.session)
-            ]);
-            allFranchises = unwrap(await fR.json()); 
-            allParents = unwrap(await pR.json()); 
-            allStudents = unwrap(await sR.json()); 
-            allTeachers = unwrap(await tR.json()); 
-            allSessions = unwrap(await sessR.json());
+            const data = await res.json();
+            this.state.studentId = data.id;
             
-            const localParents = allParents.filter(p => p.franchise_id === LOCKED_FRANCHISE_ID);
-            document.getElementById('p_select_id').innerHTML = '<option value="">-- Search Parent Name --</option>' + localParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
-            
-            const qu = unwrap(await qR.json()), grid = document.getElementById('assessment-qa-grid');
-            for(let i=1; i<=10; i++) {
-                grid.innerHTML += `<div><select id="q_select_${i}" onchange="handleQuestionChange(${i})"><option value="">-- Select Question ${i} --</option>${qu.map(q => `<option value="${q.id}">${q.the_question}</option>`).join('')}</select></div><div><select id="a_ans_${i}"><option value="">-- Answer --</option></select></div>`;
-            }
-            showLoader('loader-parent', false);
-        } catch (e) { 
-            console.error("Initialization failure", e); 
-            alert("Error loading branch data. Please check your connection to Xano.");
-        }
+            console.log("Student Processed: ID " + this.state.studentId);
+            this.advanceWorkflow(3);
+        } catch (err) { alert("Xano Post Error: Student Record failed."); }
+    },
+
+    /**
+     * WORKFLOW ENGINE: Handles visual transitions and progress tracking
+     */
+    advanceWorkflow(stepNumber) {
+        // Lock Previous
+        const prev = document.getElementById(`step-${stepNumber - 1}`);
+        prev.classList.remove('step-active');
+        prev.classList.add('step-locked');
+        
+        // Activate Next
+        const current = document.getElementById(`step-${stepNumber}`);
+        current.classList.remove('step-locked');
+        current.classList.add('step-active');
+        
+        // Sync State
+        this.state.activeStep = stepNumber;
+        this.syncProgressUI();
+
+        // Scroll Logic
+        current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    },
+
+    syncProgressUI() {
+        const bar = document.getElementById('progress-bar-fill');
+        const phaseLabel = document.getElementById('progress-phase-label');
+        const stepBadge = document.getElementById('step-number-badge');
+        
+        const phases = [
+            "Guardian Profile", "Student Profile", "Diagnostic Phase", 
+            "Enrollment Config", "Financial Setup", "Final Verification"
+        ];
+        
+        const percent = (this.state.activeStep / this.state.totalSteps) * 100;
+        bar.style.width = `${percent}%`;
+        phaseLabel.innerHTML = `Active Phase: <span class="text-teal-600">${phases[this.state.activeStep - 1]}</span>`;
+        stepBadge.innerText = `Step 0${this.state.activeStep}`;
     }
-    init();
-})();
+};
+
+// INITIALIZE ON LOAD
+document.addEventListener('DOMContentLoaded', () => App.init());
 </script>
