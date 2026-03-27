@@ -3,31 +3,35 @@
 <script src="schema_config.js"></script>
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
     
     :root { 
         --nest-teal: #14b8a6; 
-        --nest-slate-dark: #0f172a; 
+        --nest-slate: #0f172a; 
         --nest-bg: #f8fafc;
     }
 
-    body { font-family: 'Inter', sans-serif; background-color: var(--nest-bg); }
+    body { 
+        font-family: 'Inter', sans-serif; 
+        background-color: var(--nest-bg); 
+        color: var(--nest-slate);
+    }
 
-    /* Custom Scrollbar for NestMind Dashboard */
+    /* Custom Scrollbar for NestMind Dashboards */
     .custom-scrollbar::-webkit-scrollbar { width: 5px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-    /* Step Transition Logic */
+    /* Step Transition Animations */
     .step-container { 
         transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
         transform-origin: top center;
     }
     .step-locked { 
-        opacity: 0.35; 
+        opacity: 0.3; 
         pointer-events: none; 
-        filter: grayscale(0.8) blur(0.5px); 
+        filter: grayscale(1) blur(1px); 
         transform: scale(0.98); 
     }
     .step-active { 
@@ -35,11 +39,9 @@
         pointer-events: auto; 
         filter: none; 
         transform: scale(1); 
-        border-left-width: 8px !important;
-        border-left-color: var(--nest-teal) !important;
     }
 
-    /* UI Components: Inputs & Labels */
+    /* NestMind Input System */
     .nest-input { 
         width: 100%; 
         padding: 0.875rem 1rem; 
@@ -55,17 +57,17 @@
     .nest-input:focus { 
         border-color: var(--nest-teal); 
         box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1); 
-        background-color: #ffffff;
+        background-color: #fff; 
     }
     .nest-label { 
         display: block; 
         margin-left: 0.25rem; 
         margin-bottom: 0.5rem; 
-        text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]; 
+        text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]; 
     }
     
-    /* Buttons */
-    .btn-action { 
+    /* Interactive Buttons */
+    .btn-nest-primary { 
         padding: 1.125rem 2.5rem; 
         background-color: var(--nest-teal); 
         color: white; 
@@ -73,435 +75,373 @@
         font-size: 10px; 
         font-weight: 900; 
         text-transform: uppercase; 
-        letter-spacing: 0.1em;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        letter-spacing: 0.15em;
+        transition: all 0.3s;
         box-shadow: 0 10px 15px -3px rgba(20, 184, 166, 0.2);
     }
-    .btn-action:hover { 
+    .btn-nest-primary:hover { 
         background-color: #0d9488; 
         transform: translateY(-2px); 
         box-shadow: 0 20px 25px -5px rgba(20, 184, 166, 0.3); 
     }
-    .btn-action:active { transform: translateY(0); }
 
-    /* Utility: Fade Animations */
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-in { animation: fadeIn 0.4s ease-out forwards; }
+    .section-divider {
+        display: flex;
+        align-items: center;
+        margin: 2rem 0 1.5rem 0;
+    }
+    .section-divider-text {
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.3em;
+        color: var(--nest-teal);
+        padding-right: 1.5rem;
+    }
+    .section-divider-line {
+        flex: 1;
+        height: 1px;
+        background-color: #e2e8f0;
+    }
 </style>
 
-<div id="nestmind-layout" class="flex min-h-screen">
+<div id="enrollment-root" class="flex min-h-screen">
     
-    <aside class="hidden lg:flex flex-col w-72 p-8 bg-[#0f172a] flex-shrink-0 sticky top-0 h-screen shadow-2xl z-50">
+    <aside class="hidden lg:flex flex-col w-80 p-8 bg-[#0f172a] flex-shrink-0 sticky top-0 h-screen shadow-2xl">
         <div class="mb-12">
             <h1 class="text-2xl font-black tracking-tighter text-teal-400 uppercase italic">NestMind</h1>
-            <p class="text-[8px] text-slate-500 font-bold tracking-[0.3em] uppercase mt-1">Sariaya Administrative Intelligence</p>
+            <p class="text-[8px] text-slate-500 font-bold tracking-[0.4em] uppercase mt-1">Admin Intelligence</p>
         </div>
         
-        <div class="p-5 mb-10 border border-slate-700 bg-slate-800/40 rounded-2xl backdrop-blur-md">
-            <span class="block mb-1 text-[8px] font-black tracking-[0.2em] text-slate-500 uppercase">Active Terminal</span>
-            <span id="display-branch" class="block text-sm font-black text-white uppercase tracking-tight">Sariaya Branch (HO)</span>
-            <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/50">
-                <span class="w-2 h-2 bg-teal-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.8)]"></span>
-                <span class="text-[10px] font-black text-teal-400 uppercase tracking-tighter">Enrollment Pipeline</span>
+        <div class="p-6 mb-10 border border-slate-700 bg-slate-800/40 rounded-2xl">
+            <span class="block mb-2 text-[8px] font-black tracking-[0.2em] text-slate-500 uppercase">Terminal Identity</span>
+            <span class="block text-sm font-black text-white uppercase tracking-tight">Sariaya HO</span>
+            <div class="flex items-center gap-2 mt-4 pt-4 border-t border-slate-700/50">
+                <span class="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></span>
+                <span class="text-[10px] font-black text-teal-400 uppercase">Enrollment Mode</span>
             </div>
         </div>
 
-        <nav class="flex-1 space-y-2">
-            <div class="pb-3 text-[9px] font-black text-slate-600 uppercase tracking-widest border-b border-slate-800 mb-4 ml-2">Main Navigation</div>
-            <a href="parents.html" class="flex items-center justify-between p-4 transition-all rounded-xl hover:bg-slate-800 group">
-                <span class="text-[10px] font-bold tracking-widest text-slate-400 group-hover:text-white uppercase">Directory</span>
-                <span class="text-slate-600 group-hover:text-teal-400 transition-colors">→</span>
+        <nav class="flex-1 space-y-3">
+            <div class="pb-2 text-[9px] font-black text-slate-600 uppercase tracking-widest border-b border-slate-800 mb-4">Management</div>
+            <a href="performance.html" class="flex items-center gap-4 p-4 text-slate-400 hover:text-white transition-all rounded-xl hover:bg-slate-800 group">
+                <span class="text-[10px] font-bold uppercase tracking-widest">Performance</span>
             </a>
-            <a href="#" class="flex items-center justify-between p-4 border border-teal-500/20 bg-teal-500/10 rounded-xl group">
-                <span class="text-[10px] font-black tracking-widest text-teal-400 uppercase">New Intake</span>
-                <div class="w-1.5 h-1.5 bg-teal-400 rounded-full shadow-[0_0_5px_rgba(20,184,166,0.5)]"></div>
+            <a href="parents.html" class="flex items-center gap-4 p-4 text-slate-400 hover:text-white transition-all rounded-xl hover:bg-slate-800 group">
+                <span class="text-[10px] font-bold uppercase tracking-widest">Parents</span>
             </a>
-            <a href="#" class="flex items-center justify-between p-4 transition-all rounded-xl hover:bg-slate-800 group opacity-50">
-                <span class="text-[10px] font-bold tracking-widest text-slate-400 group-hover:text-white uppercase">Schedules</span>
-                <span class="text-slate-600">→</span>
+            <a href="#" class="flex items-center justify-between p-4 bg-teal-500/10 border border-teal-500/20 rounded-xl">
+                <span class="text-[10px] font-black uppercase tracking-widest text-teal-400">New Enrollment</span>
+                <div class="w-1.5 h-1.5 bg-teal-400 rounded-full shadow-[0_0_8px_rgba(20,184,166,0.6)]"></div>
+            </a>
+            <a href="students.html" class="flex items-center gap-4 p-4 text-slate-400 hover:text-white transition-all rounded-xl hover:bg-slate-800 group">
+                <span class="text-[10px] font-bold uppercase tracking-widest">Students</span>
             </a>
         </nav>
 
-        <div class="pt-6 border-t border-slate-800">
-            <div class="flex justify-between items-center mb-2">
-                <span class="text-[8px] text-slate-600 font-bold uppercase">System Status</span>
-                <span class="text-[8px] text-teal-500 font-bold uppercase">Ready</span>
-            </div>
-            <p class="text-[8px] text-slate-600 font-medium uppercase leading-relaxed tracking-tighter">Xano DB Connection: Active<br>Sariaya, Quezon Province Terminal</p>
+        <div class="pt-8 border-t border-slate-800">
+            <p class="text-[8px] text-slate-600 font-bold uppercase leading-relaxed tracking-widest">
+                System: 2.4.0-PRO<br>Status: Ready<br>Region: Quezon Province
+            </p>
         </div>
     </aside>
 
-    <main class="flex-1 p-6 lg:p-12 overflow-y-auto custom-scrollbar bg-[#f8fafc]">
+    <main class="flex-1 p-6 lg:p-16 overflow-y-auto custom-scrollbar">
         
-        <header class="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6">
+        <header class="flex flex-col md:flex-row items-start md:items-center justify-between mb-16 gap-8">
             <div>
-                <h2 class="text-3xl font-black tracking-tighter text-slate-800 uppercase leading-none">Student Onboarding</h2>
-                <div class="flex items-center gap-3 mt-3">
-                    <span class="px-2 py-0.5 bg-slate-200 text-slate-600 text-[8px] font-black uppercase rounded">ID: NEST-2026-AUTO</span>
-                    <p class="text-[11px] font-bold tracking-[0.1em] text-slate-400 uppercase">Phase 01: Profile Initiation</p>
-                </div>
+                <h2 class="text-4xl font-black tracking-tighter text-slate-900 uppercase leading-none">Student Intake</h2>
+                <p class="text-[12px] font-bold tracking-[0.2em] text-slate-400 uppercase mt-3">Lifecycle Phase: Registration & Assessment</p>
             </div>
             
-            <div class="flex items-center gap-6 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60">
+            <div class="flex items-center gap-8 bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-100">
                 <div class="text-right">
-                    <div id="progress-phase-label" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Phase: <span class="text-teal-600">Parent Entry</span></div>
-                    <div class="w-56 h-2 bg-slate-100 rounded-full mt-2.5 overflow-hidden">
-                        <div id="progress-bar-fill" class="w-1/6 h-full transition-all duration-1000 ease-in-out bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.4)]"></div>
+                    <div id="status-label" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Step: <span class="text-teal-600">Guardian Config</span></div>
+                    <div class="w-64 h-2.5 bg-slate-100 rounded-full mt-3 overflow-hidden">
+                        <div id="ui-progress-bar" class="w-1/6 h-full transition-all duration-1000 bg-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.4)]"></div>
                     </div>
                 </div>
-                <div class="h-10 w-[1px] bg-slate-100"></div>
-                <div class="flex flex-col items-center">
-                    <span id="step-number-badge" class="px-3 py-1.5 bg-slate-900 text-white rounded-lg font-black text-[11px] uppercase tracking-tighter">Step 01</span>
-                </div>
+                <div class="h-12 w-[1px] bg-slate-100"></div>
+                <div id="ui-step-badge" class="px-5 py-3 bg-slate-900 text-white rounded-xl font-black text-[12px] uppercase">Step 01</div>
             </div>
         </header>
 
-        <div id="workflow-stack" class="max-w-6xl space-y-10 pb-32">
+        <div class="max-w-6xl space-y-12 pb-32">
 
-            <section id="step-1" class="step-container step-active bg-white border border-slate-200 shadow-xl rounded-[2rem] overflow-hidden border-l-[8px] border-l-teal-500">
-                <div class="flex items-center justify-between p-8 bg-slate-50/80 border-b border-slate-100">
-                    <div class="flex items-center gap-5">
-                        <div class="flex items-center justify-center w-12 h-12 text-base font-black text-white bg-slate-900 rounded-2xl rotate-3 shadow-xl">01</div>
+            <section id="step-1" class="step-container step-active bg-white border border-slate-200 shadow-xl rounded-[2.5rem] overflow-hidden border-l-[10px] border-l-teal-500">
+                <div class="flex items-center justify-between p-10 bg-slate-50/50 border-b border-slate-100">
+                    <div class="flex items-center gap-6">
+                        <div class="flex items-center justify-center w-14 h-14 text-lg font-black text-white bg-slate-900 rounded-2xl rotate-3 shadow-2xl">01</div>
                         <div>
-                            <h3 class="text-sm font-black tracking-widest text-slate-800 uppercase">Guardian Profile</h3>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Register Primary Financial Contact & Emergencies</p>
+                            <h3 class="text-base font-black tracking-widest text-slate-800 uppercase">Guardian Profile</h3>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-tighter">Primary Financial & Emergency Contact Mapping</p>
                         </div>
                     </div>
-                    <div class="flex bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
-                        <button onclick="App.setParentMode('new')" id="mode-new-btn" class="px-5 py-2 text-[10px] font-black uppercase rounded-lg bg-teal-500 text-white shadow-md transition-all">New Entry</button>
-                        <button onclick="App.setParentMode('search')" id="mode-search-btn" class="px-5 py-2 text-[10px] font-black uppercase rounded-lg text-slate-400 hover:text-slate-600 transition-all">Search Database</button>
+                    <div class="flex bg-white p-1.5 rounded-2xl border border-slate-200 shadow-inner">
+                        <button onclick="App.setMode('new')" id="btn-new" class="px-6 py-2.5 text-[10px] font-black uppercase rounded-xl bg-teal-500 text-white shadow-lg transition-all">New Entry</button>
+                        <button onclick="App.setMode('search')" id="btn-search" class="px-6 py-2.5 text-[10px] font-black uppercase rounded-xl text-slate-400 hover:bg-slate-50 transition-all">Search DB</button>
                     </div>
                 </div>
 
-                <div class="p-10">
-                    <div id="parent-search-ui" class="hidden p-8 mb-10 border-2 border-dashed bg-teal-50/40 border-teal-100 rounded-[1.5rem] animate-in">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-2 h-2 bg-teal-500 rounded-full"></div>
-                            <label class="text-[10px] font-black text-teal-700 uppercase tracking-widest">Existing Parent Lookup (Sariaya Terminal)</label>
-                        </div>
-                        <select id="p-search-select" class="w-full p-5 text-xs font-black bg-white border-2 border-slate-100 rounded-2xl text-slate-700 focus:border-teal-500 outline-none shadow-sm"></select>
+                <div class="p-12">
+                    <div id="search-container" class="hidden p-10 mb-12 border-2 border-dashed bg-teal-50/30 border-teal-100 rounded-[2rem] animate-in slide-in-from-top-4 duration-500">
+                        <label class="nest-label text-teal-600">Global Search: Existing Sariaya Guardians</label>
+                        <select id="p-lookup-id" class="w-full p-5 text-sm font-black bg-white border-2 border-slate-100 rounded-2xl text-slate-700 focus:border-teal-500 outline-none shadow-sm"></select>
                     </div>
 
-                    <div id="p-form-grid" class="grid grid-cols-1 gap-x-12 gap-y-8 md:grid-cols-2 lg:grid-cols-3">
+                    <div id="p-grid" class="grid grid-cols-1 gap-x-12 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
                         </div>
 
-                    <div class="pt-10 mt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div class="pt-12 mt-12 border-t border-slate-100 flex justify-between items-center">
                         <div class="flex items-center gap-3 text-slate-400">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="id-card-icon-path" /></svg>
-                            <span class="text-[9px] font-bold uppercase tracking-tighter italic">Required for Student Linking</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest italic">Xano Table: parent_record</span>
                         </div>
-                        <button onclick="App.processParentPhase()" class="btn-action w-full md:w-auto">Confirm Guardian & Next Step</button>
+                        <button onclick="App.submitParentPhase()" class="btn-nest-primary">Confirm & Create Student Profile</button>
                     </div>
                 </div>
             </section>
 
-            <section id="step-2" class="step-container step-locked bg-white border border-slate-200 shadow-sm rounded-[2rem] overflow-hidden">
-                <div class="flex items-center gap-5 p-8 border-b border-slate-50 bg-slate-50/30">
-                    <div class="flex items-center justify-center w-12 h-12 text-base font-black bg-slate-200 text-slate-400 rounded-2xl">02</div>
+            <section id="step-2" class="step-container step-locked bg-white border border-slate-200 shadow-sm rounded-[2.5rem] overflow-hidden">
+                <div class="flex items-center gap-6 p-10 border-b border-slate-50 bg-slate-50/20">
+                    <div class="flex items-center justify-center w-14 h-14 text-lg font-black bg-slate-200 text-slate-400 rounded-2xl">02</div>
                     <div>
-                        <h3 class="text-sm font-black tracking-widest text-slate-800 uppercase">Student Profile</h3>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Academic & Personal DNA for Enrollment</p>
+                        <h3 class="text-base font-black tracking-widest text-slate-800 uppercase">Student DNA</h3>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-tighter">Academic Record Initiation & Demographic Entry</p>
                     </div>
                 </div>
-                <div class="p-10">
-                    <div id="s-form-grid" class="grid grid-cols-1 gap-x-12 gap-y-8 md:grid-cols-2 lg:grid-cols-3">
+                <div class="p-12">
+                    <div id="s-grid" class="grid grid-cols-1 gap-x-12 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
                         </div>
-                    
-                    <div class="pt-10 mt-12 border-t border-slate-100 flex justify-end">
-                        <button onclick="App.processStudentPhase()" class="btn-action">Create Student Record</button>
+                    <div class="pt-12 mt-12 border-t border-slate-100 flex justify-end">
+                        <button onclick="App.submitStudentPhase()" class="btn-nest-primary">Lock Student & Start Assessment</button>
                     </div>
                 </div>
             </section>
 
-            <section id="step-3" class="step-container step-locked bg-white border border-slate-200 shadow-sm rounded-[2rem] overflow-hidden">
-                <div class="flex items-center gap-5 p-8 border-b border-slate-50 bg-slate-50/30">
-                    <div class="flex items-center justify-center w-12 h-12 text-base font-black bg-slate-200 text-slate-400 rounded-2xl">03</div>
+            <section id="step-3" class="step-container step-locked bg-white border border-slate-200 shadow-sm rounded-[2.5rem] overflow-hidden">
+                <div class="flex items-center gap-6 p-10 border-b border-slate-50 bg-slate-50/20">
+                    <div class="flex items-center justify-center w-14 h-14 text-lg font-black bg-slate-200 text-slate-400 rounded-2xl">03</div>
                     <div>
-                        <h3 class="text-sm font-black tracking-widest text-slate-800 uppercase">Intake Assessment</h3>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Teacher Observation & Enrollment Readiness</p>
+                        <h3 class="text-base font-black tracking-widest text-slate-800 uppercase">Diagnostic Phase</h3>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-tighter">Teacher Observation & Enrollment Suitability</p>
                     </div>
                 </div>
-                <div class="p-10">
+                <div class="p-12">
                     <div class="grid grid-cols-1 gap-12 md:grid-cols-2">
-                        <div class="space-y-3">
-                            <label class="nest-label">Evaluating Lead Teacher</label>
-                            <select id="eval-teacher-id" class="nest-input"></select>
+                        <div class="space-y-4">
+                            <label class="nest-label">Lead Evaluator</label>
+                            <select id="eval-staff" class="nest-input"></select>
                         </div>
-                        <div class="space-y-3">
-                            <label class="nest-label">Date of Evaluation</label>
+                        <div class="space-y-4">
+                            <label class="nest-label">Evaluation Date</label>
                             <input type="date" id="eval-date" class="nest-input">
                         </div>
-                        <div class="col-span-full space-y-3">
-                            <label class="nest-label">Preliminary Observations (Internal Admin Only)</label>
-                            <textarea id="eval-notes" rows="5" class="nest-input custom-scrollbar" placeholder="Detail student readiness, social triggers, and specific developmental notes..."></textarea>
+                        <div class="col-span-full space-y-4">
+                            <label class="nest-label">Detailed Observations (Admin/Confidential)</label>
+                            <textarea id="eval-notes" rows="6" class="nest-input custom-scrollbar" placeholder="Describe social readiness, immediate needs, and developmental baseline..."></textarea>
                         </div>
                     </div>
-                    
-                    <div class="pt-10 mt-12 border-t border-slate-100 flex justify-between items-center">
-                        <div class="hidden md:block">
-                            <span class="text-[9px] font-black text-slate-400 uppercase">Status: Initializing Assessment Table</span>
-                        </div>
-                        <button onclick="location.reload()" class="px-12 py-5 text-[10px] font-black tracking-widest text-white uppercase bg-slate-900 rounded-2xl hover:bg-black transition-all shadow-2xl">Save Evaluation & Close</button>
+                    <div class="pt-12 mt-12 border-t border-slate-100 flex justify-between items-center">
+                        <p class="text-[10px] font-black text-slate-400 uppercase italic">Linked to Student ID: <span id="display-sid" class="text-teal-600 underline">Awaiting Submission</span></p>
+                        <button onclick="location.reload()" class="px-14 py-5 text-[11px] font-black tracking-[0.2em] text-white uppercase bg-slate-900 rounded-2xl hover:bg-black transition-all shadow-2xl">Finalize Intake</button>
                     </div>
                 </div>
             </section>
-
         </div>
     </main>
 </div>
 
 <script>
+/**
+ * NestMind Enrollment Core Application
+ * Full Production Engine: Sariaya HO Terminal
+ */
 const App = {
-    // Identity Lock: Sariaya Franchise
     config: {
-        franchiseId: 1, 
+        fid: 1, // Sariaya Hook
         endpoints: null,
         schema: null
     },
-    
-    // Application State
     state: {
         parentId: null,
         studentId: null,
-        activeStep: 1,
-        totalSteps: 6,
-        inputMode: 'new' // 'new' | 'search'
+        currentStep: 1,
+        maxSteps: 6,
+        mode: 'new' 
     },
 
-    /**
-     * INIT: Hydrates the Dashboard with Schema and Lookups
-     */
     async init() {
-        console.log("NestMind Engine: Booting Sariaya Enrollment Terminal...");
-        
         if (!window.NEST_SCHEMA || !window.NEST_ENDPOINTS) {
-            alert("CRITICAL ERROR: Configuration files (api_config.js / schema_config.js) not found.");
+            console.error("FATAL: External Config Load Failure.");
             return;
         }
-
         this.config.endpoints = window.NEST_ENDPOINTS;
         this.config.schema = window.NEST_SCHEMA;
 
-        // 1. Inject UI from Schema definitions [cite: 2026-02-05]
-        this.buildFormFromSchema('parent', 'p-form-grid');
-        this.buildFormFromSchema('student', 's-form-grid');
+        // 1. Dynamic Injection logic for both tables [cite: 2026-02-05]
+        this.injectUI('parent', 'p-grid');
+        this.injectUI('student', 's-grid');
 
-        // 2. Hydrate Foreign Key Selects
-        this.fetchExistingParentDirectory();
-        this.fetchLeadTeacherList();
+        // 2. Lookup Hydration
+        this.loadParentDirectory();
+        this.loadStaffDirectory();
 
-        // 3. Set Lifecycle Defaults
+        // 3. Defaults
         document.getElementById('eval-date').valueAsDate = new Date();
-        this.syncProgressUI();
+        this.syncUI();
     },
 
     /**
-     * DYNAMIC GENERATOR: Maps Xano Schema to HTML Components
-     * Replicates the "Directory Style" Ukrainian Sectioning
+     * INJECT UI: Renders fields based on Xano schema definitions [cite: 2026-02-05]
      */
-    buildFormFromSchema(table, gridId) {
-        const grid = document.getElementById(gridId);
-        const schema = this.config.schema[table];
-        if (!schema) return;
+    injectUI(table, containerId) {
+        const grid = document.getElementById(containerId);
+        const tableSchema = this.config.schema[table];
+        if (!tableSchema) return;
 
-        let currentSectionName = "";
+        let lastSection = "";
 
-        schema.fields.forEach(field => {
-            // Filter system-level fields handled by Xano backend [cite: 2026-02-05]
+        tableSchema.fields.forEach(field => {
+            // Internal Filter for FKs and Metadata [cite: 2026-02-05]
             if (['id', 'created_at', 'franchise_id', 'parent_id'].includes(field.id)) return;
 
-            // SECTION HEADER LOGIC
-            if (field.section && field.section !== currentSectionName) {
-                currentSectionName = field.section;
+            // Render Ukrainian Style Section Dividers
+            if (field.section && field.section !== lastSection) {
+                lastSection = field.section;
                 grid.insertAdjacentHTML('beforeend', `
-                    <div class="col-span-full mt-8 mb-3 border-b border-slate-100 pb-2 flex items-center justify-between">
-                        <span class="text-[10px] font-black text-teal-600 uppercase tracking-[0.25em]">${currentSectionName}</span>
-                        <div class="h-[1px] bg-slate-50 flex-1 ml-6"></div>
+                    <div class="col-span-full section-divider">
+                        <span class="section-divider-text">${lastSection}</span>
+                        <div class="section-divider-line"></div>
                     </div>
                 `);
             }
 
-            // COMPONENT RENDERING
-            const colSpan = field.width === 'full' ? 'col-span-full' : 'col-span-1';
+            const isFull = field.width === 'full' ? 'col-span-full' : 'col-span-1';
             const elementId = `${table}-${field.id}`;
             
-            let fieldHtml = '';
+            let html = '';
             if (field.type === 'textarea') {
-                fieldHtml = `<textarea id="${elementId}" rows="3" class="nest-input custom-scrollbar" placeholder="Enter ${field.label}..."></textarea>`;
+                html = `<textarea id="${elementId}" rows="3" class="nest-input custom-scrollbar" placeholder="Enter ${field.label}..."></textarea>`;
             } else if (field.type === 'bool' || field.type === 'checkbox') {
-                fieldHtml = `
-                    <div class="flex items-center gap-4 p-4 bg-slate-50/50 border border-slate-200/50 rounded-xl">
-                        <input type="checkbox" id="${elementId}" class="w-5 h-5 accent-teal-500 rounded-lg cursor-pointer">
-                        <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Active Status</span>
+                html = `
+                    <div class="flex items-center gap-4 p-4 bg-slate-50 border border-slate-200/60 rounded-xl">
+                        <input type="checkbox" id="${elementId}" class="w-5 h-5 accent-teal-500 rounded-lg shadow-sm">
+                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Record</span>
                     </div>`;
             } else {
-                fieldHtml = `<input type="${field.type}" id="${elementId}" class="nest-input" placeholder="${field.placeholder || ''}" ${field.required ? 'required' : ''}>`;
+                html = `<input type="${field.type}" id="${elementId}" class="nest-input" placeholder="${field.placeholder || ''}">`;
             }
 
             grid.insertAdjacentHTML('beforeend', `
-                <div class="${colSpan} group animate-in">
-                    <label class="nest-label group-focus-within:text-teal-600 transition-colors">${field.label}</label>
-                    ${fieldHtml}
+                <div class="${isFull} group">
+                    <label class="nest-label group-focus-within:text-teal-500 transition-colors">${field.label}</label>
+                    ${html}
                 </div>
             `);
         });
     },
 
-    /**
-     * DATA FETCH: Local Franchise Database Lookups
-     */
-    async fetchExistingParentDirectory() {
+    async loadParentDirectory() {
         try {
-            const res = await fetch(`${this.config.endpoints.parent.list}?franchise_id=${this.config.franchiseId}`);
+            const res = await fetch(`${this.config.endpoints.parent.list}?franchise_id=${this.config.fid}`);
             const data = await res.json();
-            const select = document.getElementById('p-search-select');
-            select.innerHTML = '<option value="">-- SEARCH EXISTING SARIAYA GUARDIANS --</option>';
-            data.forEach(p => {
-                select.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name} [${p.email || 'No Email'}]</option>`;
-            });
-        } catch (err) { console.error("Identity Lookup Failed:", err); }
+            const sel = document.getElementById('p-lookup-id');
+            sel.innerHTML = '<option value="">-- CHOOSE REGISTERED GUARDIAN --</option>';
+            data.forEach(p => sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name} | ${p.phone || 'NO PHONE'}</option>`);
+        } catch (e) { console.error("API LOAD ERROR: PARENT"); }
     },
 
-    async fetchLeadTeacherList() {
+    async loadStaffDirectory() {
         try {
-            const res = await fetch(`${this.config.endpoints.teacher.list}?franchise_id=${this.config.franchiseId}`);
+            const res = await fetch(`${this.config.endpoints.teacher.list}?franchise_id=${this.config.fid}`);
             const data = await res.json();
-            const select = document.getElementById('eval-teacher-id');
-            data.forEach(t => select.innerHTML += `<option value="${t.id}">${t.name} (Sariaya Staff)</option>`);
-        } catch (err) { console.error("Staff Lookup Failed:", err); }
+            const sel = document.getElementById('eval-staff');
+            data.forEach(t => sel.innerHTML += `<option value="${t.id}">${t.name} (Lead Teacher)</option>`);
+        } catch (e) { console.error("API LOAD ERROR: STAFF"); }
     },
 
-    /**
-     * UI LOGIC: Toggle New vs Search Mode
-     */
-    setParentMode(mode) {
-        this.state.inputMode = mode;
-        const searchUI = document.getElementById('parent-search-ui');
-        const formGrid = document.getElementById('p-form-grid');
-        const btnNew = document.getElementById('mode-new-btn');
-        const btnSearch = document.getElementById('mode-search-btn');
+    setMode(mode) {
+        this.state.mode = mode;
+        const box = document.getElementById('search-container');
+        const grid = document.getElementById('p-grid');
+        const bN = document.getElementById('btn-new');
+        const bS = document.getElementById('btn-search');
 
         if (mode === 'search') {
-            searchUI.classList.remove('hidden');
-            formGrid.classList.add('hidden');
-            btnSearch.classList.add('bg-teal-500', 'text-white', 'shadow-md');
-            btnSearch.classList.remove('text-slate-400');
-            btnNew.classList.remove('bg-teal-500', 'text-white', 'shadow-md');
-            btnNew.classList.add('text-slate-400');
+            box.classList.remove('hidden'); grid.classList.add('hidden');
+            bS.className = "px-6 py-2.5 text-[10px] font-black uppercase rounded-xl bg-teal-500 text-white shadow-lg";
+            bN.className = "px-6 py-2.5 text-[10px] font-black uppercase rounded-xl text-slate-400 hover:bg-slate-50";
         } else {
-            searchUI.classList.add('hidden');
-            formGrid.classList.remove('hidden');
-            btnNew.classList.add('bg-teal-500', 'text-white', 'shadow-md');
-            btnNew.classList.remove('text-slate-400');
-            btnSearch.classList.remove('bg-teal-500', 'text-white', 'shadow-md');
-            btnSearch.classList.add('text-slate-400');
+            box.classList.add('hidden'); grid.classList.remove('hidden');
+            bN.className = "px-6 py-2.5 text-[10px] font-black uppercase rounded-xl bg-teal-500 text-white shadow-lg";
+            bS.className = "px-6 py-2.5 text-[10px] font-black uppercase rounded-xl text-slate-400 hover:bg-slate-50";
         }
     },
 
-    /**
-     * PHASE 01: Process Parent Data
-     * Links existing ID or POSTS a new record to Xano
-     */
-    async processParentPhase() {
-        if (this.state.inputMode === 'search') {
-            this.state.parentId = document.getElementById('p-search-select').value;
-            if (!this.state.parentId) return alert("Select a valid Guardian to link Student.");
+    async submitParentPhase() {
+        if (this.state.mode === 'search') {
+            this.state.parentId = document.getElementById('p-lookup-id').value;
+            if (!this.state.parentId) return alert("System requires a valid Parent selection.");
         } else {
-            // SCRAPE FORM FOR PAYLOAD
-            const payload = { 
-                franchise_id: this.config.franchiseId, 
-                is_active: true 
-            };
-            
+            const payload = { franchise_id: this.config.fid, is_active: true };
             this.config.schema.parent.fields.forEach(f => {
                 const el = document.getElementById(`parent-${f.id}`);
                 if (el) payload[f.id] = (f.type === 'bool') ? el.checked : el.value;
             });
-
             try {
                 const res = await fetch(this.config.endpoints.parent.list, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
                 });
                 const data = await res.json();
                 this.state.parentId = data.id;
-            } catch (err) { return alert("Xano Post Error: Parent Record failed."); }
+            } catch (e) { return alert("Xano Parent POST failed."); }
         }
-        
-        console.log("Parent Processed: ID " + this.state.parentId);
-        this.advanceWorkflow(2);
+        this.advance(2);
     },
 
-    /**
-     * PHASE 02: Process Student Data
-     * CRITICAL: Uses parentId from Phase 01 to build the Relationship [cite: 2026-02-05]
-     */
-    async processStudentPhase() {
+    async submitStudentPhase() {
         const payload = { 
-            franchise_id: this.config.franchiseId, 
-            parent_id: this.state.parentId, // Automated Linking
+            franchise_id: this.config.fid, 
+            parent_id: this.state.parentId, // Automated Relationship Link [cite: 2026-02-05]
             is_active: true 
         };
-        
         this.config.schema.student.fields.forEach(f => {
             const el = document.getElementById(`student-${f.id}`);
             if (el) payload[f.id] = (f.type === 'bool') ? el.checked : el.value;
         });
-
         try {
             const res = await fetch(this.config.endpoints.student.list, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             const data = await res.json();
             this.state.studentId = data.id;
-            
-            console.log("Student Processed: ID " + this.state.studentId);
-            this.advanceWorkflow(3);
-        } catch (err) { alert("Xano Post Error: Student Record failed."); }
+            document.getElementById('display-sid').innerText = this.state.studentId;
+            this.advance(3);
+        } catch (e) { alert("Xano Student POST failed."); }
     },
 
-    /**
-     * WORKFLOW ENGINE: Handles visual transitions and progress tracking
-     */
-    advanceWorkflow(stepNumber) {
-        // Lock Previous
-        const prev = document.getElementById(`step-${stepNumber - 1}`);
-        prev.classList.remove('step-active');
+    advance(num) {
+        const prev = document.getElementById(`step-${num-1}`);
+        const curr = document.getElementById(`step-${num}`);
+        prev.classList.remove('step-active', 'border-l-teal-500');
         prev.classList.add('step-locked');
-        
-        // Activate Next
-        const current = document.getElementById(`step-${stepNumber}`);
-        current.classList.remove('step-locked');
-        current.classList.add('step-active');
-        
-        // Sync State
-        this.state.activeStep = stepNumber;
-        this.syncProgressUI();
-
-        // Scroll Logic
-        current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        curr.classList.remove('step-locked');
+        curr.classList.add('step-active', 'border-l-teal-500');
+        curr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        this.state.currentStep = num;
+        this.syncUI();
     },
 
-    syncProgressUI() {
-        const bar = document.getElementById('progress-bar-fill');
-        const phaseLabel = document.getElementById('progress-phase-label');
-        const stepBadge = document.getElementById('step-number-badge');
-        
-        const phases = [
-            "Guardian Profile", "Student Profile", "Diagnostic Phase", 
-            "Enrollment Config", "Financial Setup", "Final Verification"
-        ];
-        
-        const percent = (this.state.activeStep / this.state.totalSteps) * 100;
-        bar.style.width = `${percent}%`;
-        phaseLabel.innerHTML = `Active Phase: <span class="text-teal-600">${phases[this.state.activeStep - 1]}</span>`;
-        stepBadge.innerText = `Step 0${this.state.activeStep}`;
+    syncUI() {
+        const bar = document.getElementById('ui-progress-bar');
+        const label = document.getElementById('status-label');
+        const badge = document.getElementById('ui-step-badge');
+        const phases = ["Guardian Profile", "Student DNA", "Diagnostic Phase", "Enrollment", "Finance", "Verification"];
+        bar.style.width = `${(this.state.currentStep / this.state.maxSteps) * 100}%`;
+        label.innerHTML = `Active Step: <span class="text-teal-600">${phases[this.state.currentStep-1]}</span>`;
+        badge.innerText = `Step 0${this.state.currentStep}`;
     }
 };
 
-// INITIALIZE ON LOAD
 document.addEventListener('DOMContentLoaded', () => App.init());
 </script>
