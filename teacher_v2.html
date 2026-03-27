@@ -64,7 +64,7 @@
         schema: null,
         isHO: false,
         currentFid: null,
-        // Role mapping based on your "My Type Table" [cite: 2026-02-05]
+        // Role mapping from "My Type Table" [cite: 2026-02-05]
         adminTypeMap: { 1: 'Head Office Admin', 2: 'Franchise Owner', 3: 'Branch Manager', 4: 'Teacher' },
 
         async init() {
@@ -79,12 +79,11 @@
             document.getElementById('branch-display').innerText = `Faculty Records • ${currentFname}`;
 
             try {
-                // Fetch logic for Head Office vs Franchisees [cite: 2025-12-29]
+                // Fetch logic [cite: 2025-12-29]
                 const url = this.isHO ? window.NEST_ENDPOINTS.teacher.list : `${window.NEST_ENDPOINTS.teacher.list}?franchise_id=${this.currentFid}`;
                 const response = await fetch(url);
                 const rawData = await response.json();
                 
-                // Strictly filter data locally to prevent leakages
                 this.data = this.isHO ? rawData : rawData.filter(t => parseInt(t.franchise_id) === this.currentFid);
                 
                 if (this.isHO) {
@@ -102,32 +101,36 @@
             const grid = document.getElementById('dynamic-fields-grid');
             grid.innerHTML = '';
 
+            // 1. Franchise Assignment & Admin Type (HO ONLY)
             if (this.isHO) {
-                // Franchise Name only - ID number removed
-                let options = this.franchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+                let fOptions = this.franchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
                 grid.insertAdjacentHTML('beforeend', `
                     <div class="col-span-full mb-2">
                         <label class="text-[8px] text-teal-600 block uppercase font-black mb-1 ml-1 tracking-wider">Assign to Franchise</label>
-                        <select id="franchise_id" class="w-full p-2 bg-teal-50 border border-teal-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-teal-500">${options}</select>
+                        <select id="franchise_id" class="w-full p-2 bg-teal-50 border border-teal-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-teal-500">${fOptions}</select>
+                    </div>`);
+                
+                let typeOptions = Object.entries(this.adminTypeMap).map(([id, name]) => `<option value="${id}">${name}</option>`).join('');
+                grid.insertAdjacentHTML('beforeend', `
+                    <div class="col-span-1">
+                        <label class="text-[8px] text-slate-400 block uppercase font-black mb-1 ml-1 tracking-wider">Access Role (Admin Type)</label>
+                        <select id="admin_type_id" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-teal-500">${typeOptions}</select>
                     </div>`);
             } else {
                 grid.insertAdjacentHTML('beforeend', `<input type="hidden" id="franchise_id" value="${this.currentFid}">`);
+                grid.insertAdjacentHTML('beforeend', `<input type="hidden" id="admin_type_id" value="4">`);
             }
 
+            // 2. Map Schema Fields (excluding hidden/ID fields)
             this.schema.fields.forEach(f => {
-                // Teacher ID and Franchise ID explicitly excluded from display
-                if (['id', 'franchise_id', 'user_id', 'teacher_id', 'is_active'].includes(f.id) || f.hidden) return;
+                if (['id', 'franchise_id', 'user_id', 'teacher_id', 'is_active', 'admin_type_id'].includes(f.id) || f.hidden) return;
                 
                 const spanClass = (f.width === 'full' || f.type === 'textarea') ? 'col-span-full' : 'col-span-1';
                 let inputHTML = (f.type === 'textarea') 
                     ? `<textarea id="${f.id}" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500"></textarea>`
                     : `<input type="${f.type}" id="${f.id}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
 
-                grid.insertAdjacentHTML('beforeend', `
-                    <div class="${spanClass}">
-                        <label class="text-[8px] text-slate-400 block uppercase font-black mb-1 ml-1 tracking-wider">${f.label}</label>
-                        ${inputHTML}
-                    </div>`);
+                grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[8px] text-slate-400 block uppercase font-black mb-1 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
             });
         },
 
@@ -139,7 +142,7 @@
 
             filtered.forEach(t => {
                 const fName = this.isHO ? (this.franchises.find(f => f.id == t.franchise_id)?.name || 'Head Office') : localStorage.getItem('locked_franchise_name');
-                const roleTitle = this.adminTypeMap[t.admin_type_id] || 'Faculty';
+                const roleTitle = this.adminTypeMap[t.admin_type_id] || 'Staff';
 
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden hover:border-teal-400 transition-all">
@@ -152,52 +155,50 @@
                             <div class="flex items-center gap-2">
                                 <span class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase border ${t.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">${t.is_active ? 'Active' : 'Inactive'}</span>
                                 <button data-id="${t.id}" class="t-edit-btn px-3 py-1 bg-white border border-slate-300 rounded text-[9px] font-black hover:text-teal-600 transition-all uppercase">Edit</button>
-                                ${this.isHO ? `<button data-id="${t.id}" class="t-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-red-500 text-[9px] font-black hover:bg-red-500 transition-all uppercase">Delete</button>` : ''}
+                                <button data-id="${t.id}" class="t-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-red-500 text-[9px] font-black hover:bg-red-500 transition-all uppercase">Delete</button>
                             </div>
                         </div>
                         <div class="px-4 py-2 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-1 bg-white">
                             <div class="space-y-1 border-r border-slate-50 pr-4">
                                 <div><span class="text-[7px] font-black text-slate-300 uppercase block">Phone</span><span class="text-[10px] font-bold text-slate-700">${t.phone || '---'}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Email</span><span class="text-[10px] font-bold text-slate-700">${t.email || '---'}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Address</span><span class="text-[10px] font-bold text-slate-700 leading-tight block">${t.address || ''}, ${t.city || ''}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Registered</span><span class="text-[10px] font-bold text-slate-700">${new Date(t.created_at).toLocaleDateString()}</span></div>
                             </div>
                             <div class="space-y-1 border-r border-slate-50 pr-4">
                                 <div><span class="text-[7px] font-black text-slate-300 uppercase block">Daily Pay</span><span class="text-[10px] font-black text-teal-600">₱${t.daily_pay || '0'}</span></div>
                                 <div><span class="text-[7px] font-black text-slate-300 uppercase block">TIN</span><span class="text-[10px] font-bold text-slate-700">${t.tin_number || '---'}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Registered</span><span class="text-[10px] font-bold text-slate-700">${new Date(t.created_at).toLocaleDateString()}</span></div>
                             </div>
                             <div class="space-y-1">
                                 <div><span class="text-[7px] font-black text-slate-300 uppercase block">Start Date</span><span class="text-[10px] font-bold text-slate-700">${t.start_date || '---'}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">History Notes</span><span class="text-[10px] italic text-slate-500 truncate block">${t.inactivation_notes || 'No notes.'}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">History Notes</span><span class="text-[10px] italic text-slate-500 truncate block">${t.inactivation_notes || '---'}</span></div>
                             </div>
                         </div>
                     </div>
                 `);
             });
             container.querySelectorAll('.t-edit-btn').forEach(b => b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id)));
-            if (this.isHO) container.querySelectorAll('.t-delete-btn').forEach(b => b.onclick = () => this.deleteRecord(b.dataset.id));
+            container.querySelectorAll('.t-delete-btn').forEach(b => b.onclick = () => this.deleteRecord(b.dataset.id));
         },
 
         openModal(t = null) {
             const modal = document.getElementById('teacher-modal');
             const toggle = document.getElementById('is_active');
-            
             modal.classList.remove('hidden');
             document.getElementById('teacher-form').reset();
             document.getElementById('t-edit-id').value = t ? t.id : '';
             
-            // Toggle initialization
             toggle.checked = t ? !!t.is_active : true;
             this.updateToggleLabel(toggle.checked);
 
             if (t) {
-                // Epoch to Readable Date conversion
                 if (t.created_at && document.getElementById('created_at')) {
                     document.getElementById('created_at').value = new Date(t.created_at).toISOString().split('T')[0];
                 }
+                if (this.isHO && document.getElementById('admin_type_id')) {
+                    document.getElementById('admin_type_id').value = t.admin_type_id;
+                }
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
-                    if (el && !['id', 'franchise_id', 'created_at', 'is_active'].includes(f.id)) {
+                    if (el && !['id', 'franchise_id', 'created_at', 'is_active', 'admin_type_id'].includes(f.id)) {
                         el.value = t[f.id] || '';
                     }
                 });
@@ -212,14 +213,12 @@
         },
 
         setupListeners() {
-            // RELIABLE DISCARD logic: Explicitly close and clear
             const close = () => {
                 document.getElementById('teacher-modal').classList.add('hidden');
                 document.getElementById('teacher-form').reset();
             };
             document.getElementById('cancel-modal-btn').onclick = close;
             document.getElementById('close-modal-x').onclick = close;
-
             document.getElementById('is_active').onchange = (e) => this.updateToggleLabel(e.target.checked);
             document.getElementById('teacher-search').oninput = () => this.render();
             document.getElementById('add-teacher-btn').onclick = () => this.openModal();
@@ -229,12 +228,13 @@
                 const id = document.getElementById('t-edit-id').value;
                 const payload = { 
                     franchise_id: parseInt(document.getElementById('franchise_id').value),
-                    is_active: document.getElementById('is_active').checked 
+                    is_active: document.getElementById('is_active').checked,
+                    admin_type_id: parseInt(document.getElementById('admin_type_id').value)
                 };
                 
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
-                    if (el && !['id', 'franchise_id', 'is_active'].includes(f.id)) payload[f.id] = el.value;
+                    if (el && !['id', 'franchise_id', 'is_active', 'admin_type_id'].includes(f.id)) payload[f.id] = el.value;
                 });
 
                 await fetch(id ? `${window.NEST_ENDPOINTS.teacher.list}/${id}` : window.NEST_ENDPOINTS.teacher.list, {
@@ -248,7 +248,7 @@
         },
 
         async deleteRecord(id) {
-            if (confirm("Permanently delete faculty record?")) {
+            if (confirm("Permanently delete this faculty record?")) {
                 await fetch(`${window.NEST_ENDPOINTS.teacher.list}/${id}`, { method: 'DELETE' });
                 this.init();
             }
@@ -257,10 +257,7 @@
         async loadScript(src) {
             return new Promise(resolve => {
                 const s = document.createElement('script'); s.src = src; s.onload = resolve;
-                s.onerror = () => {
-                    const s2 = document.createElement('script'); s2.src = src.replace('/','');
-                    s2.onload = resolve; document.head.appendChild(s2);
-                };
+                s.onerror = () => { const s2 = document.createElement('script'); s2.src = src.replace('/',''); s2.onload = resolve; document.head.appendChild(s2); };
                 document.head.appendChild(s);
             });
         }
