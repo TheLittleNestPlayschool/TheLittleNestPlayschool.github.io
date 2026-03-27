@@ -226,25 +226,16 @@
         const fid = localStorage.getItem('locked_franchise_id');
         if (!fid) return;
 
-        if (!window.NEST_ENDPOINTS) {
-            await new Promise((resolve) => {
-                const script = document.createElement('script');
-                script.src = 'api_config.js';
-                script.onload = resolve;
-                script.onerror = resolve;
-                document.head.appendChild(script);
-            });
-        }
-
         try {
-            const endpoints = window.NEST_ENDPOINTS;
+            // DIRECT ENDPOINTS RESTORED
             const [sessionRes, studentRes] = await Promise.all([
-                fetch(`${endpoints.session.list}?franchise_id=${fid}`),
-                fetch(`${endpoints.student.list}?franchise_id=${fid}`)
+                fetch(`https://x8ki-letl-twmt.n7.xano.io/api:97_O_v_O/session?franchise_id=${fid}`),
+                fetch(`https://x8ki-letl-twmt.n7.xano.io/api:97_O_v_O/student?franchise_id=${fid}`)
             ]);
 
             let sessions = await sessionRes.json();
             let students = await studentRes.json();
+            
             if (!Array.isArray(sessions)) sessions = [];
             if (!Array.isArray(students)) students = [];
 
@@ -253,22 +244,21 @@
             const oneWeek = 7 * oneDay;
             const oneMonth = 30 * oneDay;
 
-            // Split into Active and Withdrawn groups
             const activeStudents = students.filter(s => s.is_active === true);
             const withdrawnStudents = students.filter(s => s.is_active === false);
             
             const totalActiveCount = activeStudents.length;
             const sessionCounts = {};
-            activeStudents.forEach(s => { if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1; });
+            activeStudents.forEach(s => { 
+                if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1; 
+            });
 
-            // Helper Logic for counts
             const calcGroup = (list, time) => list.filter(s => (now - s.created_at) < time).length;
             const calcPrev = (list, start, end) => list.filter(s => {
                 const age = now - s.created_at;
                 return age >= start && age < end;
             }).length;
 
-            // UI Update: Enrollments
             document.getElementById('perf-today-active').innerText = calcGroup(activeStudents, oneDay);
             document.getElementById('perf-prev-day-active').innerText = calcPrev(activeStudents, oneDay, oneDay * 2);
             document.getElementById('perf-week-active').innerText = calcGroup(activeStudents, oneWeek);
@@ -276,7 +266,6 @@
             document.getElementById('perf-month-active').innerText = calcGroup(activeStudents, oneMonth);
             document.getElementById('perf-prev-month-active').innerText = calcPrev(activeStudents, oneMonth, oneMonth * 2);
 
-            // UI Update: Withdrawals
             document.getElementById('withdraw-today').innerText = calcGroup(withdrawnStudents, oneDay);
             document.getElementById('withdraw-prev-day').innerText = calcPrev(withdrawnStudents, oneDay, oneDay * 2);
             document.getElementById('withdraw-week').innerText = calcGroup(withdrawnStudents, oneWeek);
@@ -286,53 +275,31 @@
 
             document.getElementById('perf-total-active').innerText = totalActiveCount;
 
-            // REVENUE ANALYTICS
             const TUITION = 3500;
-            const todayEnroll = calcGroup(activeStudents, oneDay);
-            const prevDayEnroll = calcPrev(activeStudents, oneDay, oneDay * 2);
-            const weekEnroll = calcGroup(activeStudents, oneWeek);
-            const prevWeekEnroll = calcPrev(activeStudents, oneWeek, oneWeek * 2);
-            const monthEnroll = calcGroup(activeStudents, oneMonth);
-            const prevMonthEnroll = calcPrev(activeStudents, oneMonth, oneMonth * 2);
+            document.getElementById('rev-daily').innerText = (calcGroup(activeStudents, oneDay) * TUITION).toLocaleString();
+            document.getElementById('rev-prev-daily').innerText = (calcPrev(activeStudents, oneDay, oneDay * 2) * TUITION).toLocaleString();
+            document.getElementById('rev-weekly').innerText = (calcGroup(activeStudents, oneWeek) * TUITION).toLocaleString();
+            document.getElementById('rev-prev-weekly').innerText = (calcPrev(activeStudents, oneWeek, oneWeek * 2) * TUITION).toLocaleString();
+            document.getElementById('rev-monthly').innerText = (calcGroup(activeStudents, oneMonth) * TUITION).toLocaleString();
+            document.getElementById('rev-prev-monthly').innerText = (calcPrev(activeStudents, oneMonth, oneMonth * 2) * TUITION).toLocaleString();
 
-            document.getElementById('rev-daily').innerText = (todayEnroll * TUITION).toLocaleString();
-            document.getElementById('rev-prev-daily').innerText = (prevDayEnroll * TUITION).toLocaleString();
-            document.getElementById('rev-weekly').innerText = (weekEnroll * TUITION).toLocaleString();
-            document.getElementById('rev-prev-weekly').innerText = (prevWeekEnroll * TUITION).toLocaleString();
-            document.getElementById('rev-monthly').innerText = (monthEnroll * TUITION).toLocaleString();
-            document.getElementById('rev-prev-monthly').innerText = (prevMonthEnroll * TUITION).toLocaleString();
-
-            // ROI CALCULATION (RESTORED FULL LOGIC)
             window.calculateROI = () => {
                 const fee = parseFloat(document.getElementById('inv-fee')?.value) || 350000;
                 const wages = parseFloat(document.getElementById('exp-wages')?.value) || 0;
                 const extraWages = wages * 0.10;
                 const totalMonthlyRev = totalActiveCount * TUITION;
                 const royalties = totalMonthlyRev * 0.08;
-                
-                const totalMonthlyOpex = (parseFloat(document.getElementById('exp-rent')?.value) || 0) + 
-                                       wages + 
-                                       (parseFloat(document.getElementById('exp-power')?.value) || 0) + 
-                                       (parseFloat(document.getElementById('exp-water')?.value) || 0) + 
-                                       (parseFloat(document.getElementById('exp-ads')?.value) || 0) + 
-                                       (parseFloat(document.getElementById('exp-other')?.value) || 0) + 
-                                       extraWages + royalties;
-
-                const dailyOpex = totalMonthlyOpex / 30;
-                const totalDailyRev = totalMonthlyRev / 30;
-                const netDaily = totalDailyRev - dailyOpex;
+                const totalMonthlyOpex = (parseFloat(document.getElementById('exp-rent')?.value) || 0) + wages + (parseFloat(document.getElementById('exp-power')?.value) || 0) + (parseFloat(document.getElementById('exp-water')?.value) || 0) + (parseFloat(document.getElementById('exp-ads')?.value) || 0) + (parseFloat(document.getElementById('exp-other')?.value) || 0) + extraWages + royalties;
+                const netDaily = (totalMonthlyRev - totalMonthlyOpex) / 30;
                 const recoveryPercent = fee > 0 ? Math.min((netDaily / fee) * 100, 100).toFixed(4) : 0;
-
                 if (document.getElementById('calc-extra-wages')) document.getElementById('calc-extra-wages').innerText = "₱" + Math.round(extraWages).toLocaleString();
                 if (document.getElementById('calc-royalties')) document.getElementById('calc-royalties').innerText = "₱" + Math.round(royalties).toLocaleString();
-                
                 document.getElementById('label-current-val').innerText = `₱${Math.round(netDaily).toLocaleString()}`;
                 document.getElementById('label-total-val').innerText = `₱${fee.toLocaleString()}`;
                 document.getElementById('recovery-bar').style.width = Math.max(recoveryPercent * 10, 0.5) + "%";
             };
             window.calculateROI();
             
-            // SESSION MONITOR RENDERING (RESTORED FULL LOGIC)
             const tbody = document.getElementById('perf-sessions-body');
             tbody.innerHTML = '';
             sessions.forEach(session => {
