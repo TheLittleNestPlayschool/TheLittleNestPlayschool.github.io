@@ -89,6 +89,7 @@
     }
     
     input:focus, select:focus { border-color: var(--nest-teal); outline: none; }
+    input:disabled { background-color: #f1f5f9; cursor: not-allowed; color: #94a3b8; }
     
     .btn-teal { 
         background-color: var(--nest-teal); 
@@ -165,7 +166,10 @@
                     <div><label>Email</label><input type="email" id="p_email"></div>
                     <div><label>Phone</label><input type="text" id="p_phone"></div>
                     <div style="grid-column: span 2;"><label>Home Address</label><input type="text" id="p_address"></div>
-                    <div style="grid-column: span 2;"><label>Assign Franchise</label><select id="p_fran_id"></select></div>
+                    <div style="grid-column: span 2;">
+                        <label>Assigned Branch (Locked)</label>
+                        <input type="text" id="p_fran_display" disabled>
+                    </div>
                 </div>
             </div>
             <div style="display: flex; gap: 10px;">
@@ -272,7 +276,10 @@
     const API = window.NEST_ENDPOINTS;
     const SCHEMA = window.NEST_SCHEMA;
 
-    let currentParentId, currentStudentId, currentFranchiseId, selectedSessionId, currentTeacherId, assessmentPayload, pickupContacts = [], allSessions = [], allTeachers = [], allParents = [], allStudents = [], allFranchises = [];
+    // LOCKED FRANCHISE ID - Pulled from local storage or config
+    const LOCKED_FRANCHISE_ID = parseInt(localStorage.getItem('current_franchise_id')) || 1; 
+
+    let currentParentId, currentStudentId, currentFranchiseId = LOCKED_FRANCHISE_ID, selectedSessionId, currentTeacherId, assessmentPayload, pickupContacts = [], allSessions = [], allTeachers = [], allParents = [], allStudents = [], allFranchises = [];
 
     function unwrap(d) { return Array.isArray(d) ? d : (d.result1 || d.items || []); }
     function showLoader(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
@@ -281,6 +288,10 @@
         const mode = document.getElementById('parent-select-mode').style.display === 'none' ? 'select' : 'create';
         document.getElementById('parent-select-mode').style.display = mode === 'select' ? 'block' : 'none';
         document.getElementById('parent-create-mode').style.display = mode === 'create' ? 'block' : 'none';
+        
+        // Update display name for locked franchise
+        const f = allFranchises.find(f => f.id === LOCKED_FRANCHISE_ID);
+        if(f) document.getElementById('p_fran_display').value = f.name;
     };
 
     window.toggleStudentMode = () => {
@@ -308,17 +319,16 @@
         
         try {
             if(isCreateMode) {
-                currentFranchiseId = parseInt(document.getElementById('p_fran_id').value);
                 const payload = { 
                     first_name: document.getElementById('p_fn').value, 
                     last_name: document.getElementById('p_ln').value, 
                     email: document.getElementById('p_email').value, 
                     phone: document.getElementById('p_phone').value, 
                     address: document.getElementById('p_address').value, 
-                    franchise_id: currentFranchiseId,
+                    franchise_id: LOCKED_FRANCHISE_ID,
                     is_active: true 
                 };
-                if(!payload.first_name || !currentFranchiseId) throw new Error("Missing Name/Franchise");
+                if(!payload.first_name) throw new Error("Missing Name");
                 const res = await fetch(API.parent, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
                 const data = await res.json();
                 currentParentId = data.id;
@@ -326,15 +336,13 @@
             } else {
                 currentParentId = parseInt(document.getElementById('p_select_id').value);
                 if(!currentParentId) throw new Error("Select a parent");
-                const p = allParents.find(p => p.id === currentParentId); 
-                currentFranchiseId = p.franchise_id;
             }
 
             const pInfo = allParents.find(p => p.id === currentParentId);
             document.getElementById('disp-p-name').innerText = pInfo.first_name + ' ' + pInfo.last_name;
             document.getElementById('disp-p-email').innerText = pInfo.email || "---";
             document.getElementById('disp-p-phone').innerText = pInfo.phone || "---";
-            document.getElementById('disp-p-fran').innerText = (allFranchises.find(f => f.id === currentFranchiseId) || {}).name || "---";
+            document.getElementById('disp-p-fran').innerText = (allFranchises.find(f => f.id === LOCKED_FRANCHISE_ID) || {}).name || "---";
             
             document.getElementById('parent-profile-view').style.display = 'grid';
             document.getElementById('step-parent').className = 'step-container step-saved';
@@ -358,7 +366,7 @@
                     gender: document.getElementById('s_gen_new').value, 
                     date_of_birth: document.getElementById('s_dob_new').value, 
                     home_address: document.getElementById('s_addr_new').value, 
-                    franchise_id: currentFranchiseId, 
+                    franchise_id: LOCKED_FRANCHISE_ID, 
                     is_active: true 
                 };
                 if(!payload.name) throw new Error("Missing Student Name");
@@ -377,7 +385,7 @@
             document.getElementById('disp-s-pref').innerText = sInfo.preferred_name || "---";
             document.getElementById('student-profile-view').style.display = 'grid';
             document.getElementById('step-student').className = 'step-container step-saved';
-            document.getElementById('a_teacher_id').innerHTML = '<option value="">-- Teacher --</option>' + allTeachers.filter(t => t.franchise_id === currentFranchiseId).map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
+            document.getElementById('a_teacher_id').innerHTML = '<option value="">-- Teacher --</option>' + allTeachers.filter(t => t.franchise_id === LOCKED_FRANCHISE_ID).map(t => `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
             document.getElementById('step-assessment').className = 'step-container step-active';
             document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 3 OF 6";
         } catch (err) { alert(err.message); }
@@ -398,7 +406,7 @@
             assessmentPayload[`answer_${i}`] = document.getElementById(`a_ans_${i}`).value || "";
         }
         document.getElementById('step-assessment').className = 'step-container step-saved';
-        document.getElementById('enrollment_session_id').innerHTML = '<option value="">-- Select Available Session --</option>' + allSessions.filter(s => s.franchise_id === currentFranchiseId && s.is_active).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        document.getElementById('enrollment_session_id').innerHTML = '<option value="">-- Select Available Session --</option>' + allSessions.filter(s => s.franchise_id === LOCKED_FRANCHISE_ID && s.is_active).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         document.getElementById('step-session').className = 'step-container step-active';
         document.getElementById('enrollment-progress').innerText = "PROGRESS: STEP 4 OF 6";
     };
@@ -506,8 +514,9 @@
             allTeachers = unwrap(await tR.json()); 
             allSessions = unwrap(await sessR.json());
             
-            document.getElementById('p_fran_id').innerHTML = '<option value="">-- Select Franchise --</option>' + allFranchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-            document.getElementById('p_select_id').innerHTML = '<option value="">-- Search Parent Name --</option>' + allParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
+            // Only show parents linked to this franchise in search
+            const localParents = allParents.filter(p => p.franchise_id === LOCKED_FRANCHISE_ID);
+            document.getElementById('p_select_id').innerHTML = '<option value="">-- Search Parent Name --</option>' + localParents.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
             
             const qu = unwrap(await qR.json()), grid = document.getElementById('assessment-qa-grid');
             for(let i=1; i<=10; i++) {
