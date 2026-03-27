@@ -5,7 +5,7 @@
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="teacher-search" placeholder="Search staff, roles, or phone..." 
+        <input type="text" id="teacher-search" placeholder="Search faculty..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all">
         
         <button id="add-teacher-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
@@ -53,7 +53,7 @@
         schema: null,
 
         async init() {
-            // Load required configurations [cite: 2026-02-05]
+            // Load Configurations [cite: 2026-02-05]
             if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
             if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
             
@@ -75,7 +75,7 @@
             }
 
             try {
-                // Fetching all records - filtering logic applied in render() [cite: 2026-02-05]
+                // Fetch data from Xano [cite: 2025-12-29]
                 const response = await fetch(`${window.NEST_ENDPOINTS.teacher.list}?franchise_id=${fid}`);
                 this.data = await response.json();
                 this.render(); 
@@ -85,13 +85,23 @@
             }
         },
 
+        formatDate(epoch) {
+            if (!epoch) return '---';
+            // Convert epochms to human-readable string [cite: 2026-02-05]
+            return new Date(epoch).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            });
+        },
+
         buildFormUI() {
             const grid = document.getElementById('dynamic-fields-grid');
             grid.innerHTML = '';
             let currentSection = "";
 
             this.schema.fields.forEach(f => {
-                if (f.id === 'id') return; // Allow franchise_id in form if needed for debugging
+                if (f.id === 'id' || f.hidden) return;
 
                 if (f.section && f.section !== currentSection) {
                     currentSection = f.section;
@@ -132,8 +142,9 @@
             const container = document.getElementById('teacher-list-container');
             const search = (document.getElementById('teacher-search')?.value || '').toLowerCase();
             const currentFid = parseInt(localStorage.getItem('locked_franchise_id'));
+            const currentFname = localStorage.getItem('locked_franchise_name');
 
-            // CORE VERIFICATION: Filter strictly by franchise_id [cite: 2026-02-05]
+            // HARD FILTER: Only show records for the current franchise ID [cite: 2026-02-05]
             let filtered = this.data.filter(t => {
                 const matchesFranchise = parseInt(t.franchise_id) === currentFid;
                 const matchesSearch = Object.values(t).some(val => String(val).toLowerCase().includes(search));
@@ -141,46 +152,86 @@
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="p-20 text-center text-slate-300 font-bold uppercase text-[10px]">No records found for branch ID: ${currentFid}</div>`;
+                container.innerHTML = `<div class="p-20 text-center text-slate-300 font-bold uppercase text-[10px]">No faculty records found for this branch.</div>`;
                 return;
             }
 
             container.innerHTML = '';
             filtered.forEach(t => {
-                // VERIFICATION: Show ALL fields including IDs
-                const allFieldsHTML = Object.keys(t).map(key => {
-                    let val = t[key];
-                    // Find label from schema or use key
-                    const fieldDef = this.schema.fields.find(f => f.id === key);
-                    const label = fieldDef ? fieldDef.label : key.replace(/_/g, ' ').toUpperCase();
-                    
-                    if (typeof val === 'boolean') val = val ? 'YES' : 'NO';
-                    
-                    return `
-                        <div class="space-y-1">
-                            <span class="text-[8px] font-black ${key === 'franchise_id' ? 'text-teal-600' : 'text-slate-400'} uppercase tracking-tighter block">${label}</span>
-                            <span class="text-[10px] font-bold ${key === 'franchise_id' ? 'text-teal-700' : 'text-slate-700'} truncate block">${val || '---'}</span>
-                        </div>
-                    `;
-                }).join('');
-
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:border-teal-400 transition-all">
                         <div class="bg-slate-50/80 p-5 flex flex-wrap items-center justify-between gap-6 border-b border-slate-100">
                             <div>
-                                <span class="text-[9px] text-slate-400 font-black uppercase block tracking-tighter">Faculty Member</span>
-                                <span class="text-sm font-black text-slate-900">${t.first_name || t.name || 'Unnamed Record'}</span>
+                                <span class="text-[9px] text-teal-600 font-black uppercase block tracking-tighter">${currentFname} Branch</span>
+                                <span class="text-sm font-black text-slate-900 uppercase">${t.first_name || ''} ${t.last_name || ''}</span>
                             </div>
                             <div class="flex items-center gap-3">
-                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${t.is_active || t.active_status === 'YES' ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">
-                                    ${t.is_active || t.active_status === 'YES' ? 'Active' : 'Inactive'}
+                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${t.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">
+                                    ${t.is_active ? 'Active' : 'Inactive'}
                                 </span>
                                 <button data-id="${t.id}" class="t-edit-btn px-4 py-2 bg-white border border-slate-300 rounded-lg text-[10px] font-black hover:text-teal-600 transition-all uppercase">Edit</button>
                                 <button data-id="${t.id}" class="t-delete-btn px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-red-500 text-[10px] font-black hover:bg-red-500 transition-all uppercase">Delete</button>
                             </div>
                         </div>
-                        <div class="p-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 bg-white">
-                            ${allFieldsHTML}
+
+                        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-8 bg-white">
+                            <div class="space-y-4">
+                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Location & Contact</h4>
+                                <div class="grid grid-cols-1 gap-3">
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Phone Contact</span>
+                                        <span class="text-[11px] font-bold text-slate-700">${t.phone || '---'}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Email Address</span>
+                                        <span class="text-[11px] font-bold text-slate-700">${t.email || '---'}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Full Address</span>
+                                        <span class="text-[11px] font-bold text-slate-700 leading-relaxed">${t.address || ''}, ${t.barangay || ''}, ${t.city || ''}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Financial & IDs</h4>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Daily Pay</span>
+                                        <span class="text-[11px] font-bold text-teal-600">₱${t.daily_pay || '0'}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase block">TIN Number</span>
+                                        <span class="text-[11px] font-bold text-slate-700">${t.tin_number || '---'}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Admin Type</span>
+                                        <span class="text-[11px] font-bold text-slate-700">Type #${t.my_type_id || t.admin_type_id || '---'}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase block">System Registration</span>
+                                        <span class="text-[11px] font-bold text-slate-700">${this.formatDate(t.created_at)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Service Lifecycle</h4>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Start Date</span>
+                                        <span class="text-[11px] font-bold text-slate-700">${t.start_date || '---'}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Last Day</span>
+                                        <span class="text-[11px] font-bold text-slate-700">${t.last_day || '---'}</span>
+                                    </div>
+                                    <div class="col-span-full">
+                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Inactivation History</span>
+                                        <span class="text-[11px] italic text-slate-500">${t.inactivation_notes || 'No notes recorded.'}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `);
@@ -195,24 +246,27 @@
         },
 
         async deleteRecord(id) {
-            if (!confirm("Confirm removal?")) return;
+            if (!confirm("Are you sure you want to remove this faculty record?")) return;
             try {
                 const res = await fetch(`${window.NEST_ENDPOINTS.teacher.list}/${id}`, { method: 'DELETE' });
                 if (res.ok) this.init();
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error("Delete Error:", err); }
         },
 
         openModal(t = null) {
             document.getElementById('teacher-modal').classList.remove('hidden');
             document.getElementById('teacher-form').reset();
             document.getElementById('t-edit-id').value = t ? t.id : '';
-            document.getElementById('t-modal-title').innerText = t ? 'Edit Profile' : 'Register Faculty';
+            document.getElementById('t-modal-title').innerText = t ? 'Update Profile' : 'Register Faculty';
 
             this.schema.fields.forEach(f => {
                 const el = document.getElementById(f.id);
                 if (el) {
-                    if (f.type === 'bool' || f.type === 'checkbox') el.checked = t ? (!!t[f.id] || t.active_status === 'YES') : (f.default ?? true);
-                    else el.value = t ? (t[f.id] || '') : '';
+                    if (f.type === 'bool' || f.type === 'checkbox') {
+                        el.checked = t ? !!t[f.id] : (f.default ?? true);
+                    } else {
+                        el.value = t ? (t[f.id] || '') : '';
+                    }
                 }
             });
         },
@@ -229,7 +283,7 @@
                 e.preventDefault();
                 const id = document.getElementById('t-edit-id').value;
                 const payload = { 
-                    franchise_id: parseInt(localStorage.getItem('locked_franchise_id'))
+                    franchise_id: parseInt(localStorage.getItem('locked_franchise_id')) 
                 };
                 
                 this.schema.fields.forEach(f => {
@@ -246,7 +300,10 @@
                     body: JSON.stringify(payload) 
                 });
                 
-                if (res.ok) { this.closeModal(); this.init(); }
+                if (res.ok) { 
+                    this.closeModal(); 
+                    this.init(); 
+                }
             };
         },
 
