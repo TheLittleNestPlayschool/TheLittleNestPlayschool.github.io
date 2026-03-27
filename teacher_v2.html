@@ -8,7 +8,7 @@
         <input type="text" id="teacher-search" placeholder="Search faculty..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all">
         
-        <button id="add-teacher-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
+        <button id="add-teacher-btn" class="bg-slate-100 hover:bg-slate-200 text-slate-500 px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-sm border border-slate-200">
             + REGISTER TEACHER
         </button>
     </div>
@@ -24,7 +24,7 @@
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-200">
         <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
             <div>
-                <h2 id="t-modal-title" class="text-sm font-black text-slate-800 uppercase">Faculty Profile</h2>
+                <h2 id="t-modal-title" class="text-sm font-black text-slate-800 uppercase">Update Faculty Profile</h2>
                 <p id="modal-branch-title" class="text-[9px] text-teal-600 font-bold uppercase tracking-widest"></p>
             </div>
             <button id="close-modal-x" class="text-slate-400 hover:text-slate-900 text-3xl font-light">&times;</button>
@@ -32,6 +32,8 @@
         
         <form id="teacher-form" class="p-6">
             <input type="hidden" id="t-edit-id">
+            <input type="hidden" id="franchise_id">
+            <input type="hidden" id="user_id">
             
             <div id="dynamic-fields-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
                 </div>
@@ -39,7 +41,7 @@
             <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
                 <button type="button" id="cancel-modal-btn" class="px-8 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Discard</button>
                 <button type="submit" class="flex-1 py-3 bg-teal-500 text-white rounded-xl font-bold text-[10px] uppercase shadow-lg hover:bg-teal-600 transition-all">
-                    Save Record
+                    Update Record
                 </button>
             </div>
         </form>
@@ -53,7 +55,6 @@
         schema: null,
 
         async init() {
-            // Load Configurations [cite: 2026-02-05]
             if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
             if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
             
@@ -67,32 +68,21 @@
             document.getElementById('modal-branch-title').innerText = `${fname} Branch`;
 
             if (!fid) {
-                document.getElementById('teacher-list-container').innerHTML = `
-                    <div class="p-20 text-center text-red-500 font-black uppercase text-xs">
-                        Critical Error: No Franchise Identity Lock Found
-                    </div>`;
+                document.getElementById('teacher-list-container').innerHTML = `<div class="p-20 text-center text-red-500 font-black uppercase text-xs">No Franchise Locked</div>`;
                 return;
             }
 
             try {
-                // Fetch data from Xano [cite: 2025-12-29]
                 const response = await fetch(`${window.NEST_ENDPOINTS.teacher.list}?franchise_id=${fid}`);
                 this.data = await response.json();
                 this.render(); 
                 this.setupListeners();
-            } catch (err) {
-                console.error("Fetch Error:", err);
-            }
+            } catch (err) { console.error("Fetch Error:", err); }
         },
 
         formatDate(epoch) {
             if (!epoch) return '---';
-            // Convert epochms to human-readable string [cite: 2026-02-05]
-            return new Date(epoch).toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric' 
-            });
+            return new Date(epoch).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         },
 
         buildFormUI() {
@@ -101,7 +91,7 @@
             let currentSection = "";
 
             this.schema.fields.forEach(f => {
-                if (f.id === 'id' || f.hidden) return;
+                if (['id', 'franchise_id', 'user_id'].includes(f.id) || f.hidden) return;
 
                 if (f.section && f.section !== currentSection) {
                     currentSection = f.section;
@@ -118,7 +108,7 @@
 
                 let inputHTML = '';
                 if (f.type === 'textarea') {
-                    inputHTML = `<textarea id="${f.id}" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500 transition-all"></textarea>`;
+                    inputHTML = `<textarea id="${f.id}" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500"></textarea>`;
                 } else if (f.type === 'bool' || f.type === 'checkbox') {
                     inputHTML = `
                         <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
@@ -126,15 +116,10 @@
                             <span class="text-[10px] font-bold text-slate-500 uppercase">${f.label}</span>
                         </div>`;
                 } else {
-                    inputHTML = `<input type="${f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500 transition-all">`;
+                    inputHTML = `<input type="${f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
                 }
 
-                grid.insertAdjacentHTML('beforeend', `
-                    <div class="${spanClass}">
-                        <label class="text-[9px] text-slate-400 block uppercase font-black mb-1.5 ml-1 tracking-wider">${f.label}</label>
-                        ${inputHTML}
-                    </div>
-                `);
+                grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[9px] text-slate-400 block uppercase font-black mb-1.5 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
             });
         },
 
@@ -144,15 +129,11 @@
             const currentFid = parseInt(localStorage.getItem('locked_franchise_id'));
             const currentFname = localStorage.getItem('locked_franchise_name');
 
-            // HARD FILTER: Only show records for the current franchise ID [cite: 2026-02-05]
-            let filtered = this.data.filter(t => {
-                const matchesFranchise = parseInt(t.franchise_id) === currentFid;
-                const matchesSearch = Object.values(t).some(val => String(val).toLowerCase().includes(search));
-                return matchesFranchise && matchesSearch;
-            });
+            let filtered = this.data.filter(t => parseInt(t.franchise_id) === currentFid && 
+                Object.values(t).some(val => String(val).toLowerCase().includes(search)));
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="p-20 text-center text-slate-300 font-bold uppercase text-[10px]">No faculty records found for this branch.</div>`;
+                container.innerHTML = `<div class="p-20 text-center text-slate-300 font-bold uppercase text-[10px]">No records found.</div>`;
                 return;
             }
 
@@ -178,58 +159,24 @@
                             <div class="space-y-4">
                                 <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Location & Contact</h4>
                                 <div class="grid grid-cols-1 gap-3">
-                                    <div>
-                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Phone Contact</span>
-                                        <span class="text-[11px] font-bold text-slate-700">${t.phone || '---'}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Email Address</span>
-                                        <span class="text-[11px] font-bold text-slate-700">${t.email || '---'}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Full Address</span>
-                                        <span class="text-[11px] font-bold text-slate-700 leading-relaxed">${t.address || ''}, ${t.barangay || ''}, ${t.city || ''}</span>
-                                    </div>
+                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Phone</span><span class="text-[11px] font-bold text-slate-700">${t.phone || '---'}</span></div>
+                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Address</span><span class="text-[11px] font-bold text-slate-700 leading-relaxed">${t.address || ''}, ${t.barangay || ''}, ${t.city || ''}</span></div>
                                 </div>
                             </div>
 
                             <div class="space-y-4">
-                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Financial & IDs</h4>
+                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Financial & ID</h4>
                                 <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Daily Pay</span>
-                                        <span class="text-[11px] font-bold text-teal-600">₱${t.daily_pay || '0'}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-[8px] font-black text-slate-400 uppercase block">TIN Number</span>
-                                        <span class="text-[11px] font-bold text-slate-700">${t.tin_number || '---'}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Admin Type</span>
-                                        <span class="text-[11px] font-bold text-slate-700">Type #${t.my_type_id || t.admin_type_id || '---'}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-[8px] font-black text-slate-400 uppercase block">System Registration</span>
-                                        <span class="text-[11px] font-bold text-slate-700">${this.formatDate(t.created_at)}</span>
-                                    </div>
+                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Daily Pay</span><span class="text-[11px] font-bold text-teal-600">₱${t.daily_pay || '0'}</span></div>
+                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">TIN</span><span class="text-[11px] font-bold text-slate-700">${t.tin_number || '---'}</span></div>
+                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Registered</span><span class="text-[11px] font-bold text-slate-700">${this.formatDate(t.created_at)}</span></div>
                                 </div>
                             </div>
 
                             <div class="space-y-4">
-                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Service Lifecycle</h4>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Start Date</span>
-                                        <span class="text-[11px] font-bold text-slate-700">${t.start_date || '---'}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Last Day</span>
-                                        <span class="text-[11px] font-bold text-slate-700">${t.last_day || '---'}</span>
-                                    </div>
-                                    <div class="col-span-full">
-                                        <span class="text-[8px] font-black text-slate-400 uppercase block">Inactivation History</span>
-                                        <span class="text-[11px] italic text-slate-500">${t.inactivation_notes || 'No notes recorded.'}</span>
-                                    </div>
+                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Status Notes</h4>
+                                <div class="col-span-full">
+                                    <span class="text-[11px] italic text-slate-500">${t.inactivation_notes || 'No notes.'}</span>
                                 </div>
                             </div>
                         </div>
@@ -237,36 +184,31 @@
                 `);
             });
 
-            container.querySelectorAll('.t-edit-btn').forEach(b => {
-                b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id));
-            });
-            container.querySelectorAll('.t-delete-btn').forEach(b => {
-                b.onclick = () => this.deleteRecord(b.dataset.id);
-            });
+            container.querySelectorAll('.t-edit-btn').forEach(b => b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id)));
+            container.querySelectorAll('.t-delete-btn').forEach(b => b.onclick = () => this.deleteRecord(b.dataset.id));
         },
 
         async deleteRecord(id) {
-            if (!confirm("Are you sure you want to remove this faculty record?")) return;
+            if (!confirm("Confirm removal?")) return;
             try {
                 const res = await fetch(`${window.NEST_ENDPOINTS.teacher.list}/${id}`, { method: 'DELETE' });
                 if (res.ok) this.init();
-            } catch (err) { console.error("Delete Error:", err); }
+            } catch (err) { console.error(err); }
         },
 
-        openModal(t = null) {
+        openModal(t) {
+            if (!t) return;
             document.getElementById('teacher-modal').classList.remove('hidden');
             document.getElementById('teacher-form').reset();
-            document.getElementById('t-edit-id').value = t ? t.id : '';
-            document.getElementById('t-modal-title').innerText = t ? 'Update Profile' : 'Register Faculty';
-
+            document.getElementById('t-edit-id').value = t.id;
+            document.getElementById('franchise_id').value = t.franchise_id;
+            document.getElementById('user_id').value = t.user_id || '';
+            
             this.schema.fields.forEach(f => {
                 const el = document.getElementById(f.id);
-                if (el) {
-                    if (f.type === 'bool' || f.type === 'checkbox') {
-                        el.checked = t ? !!t[f.id] : (f.default ?? true);
-                    } else {
-                        el.value = t ? (t[f.id] || '') : '';
-                    }
+                if (el && !['id', 'franchise_id', 'user_id'].includes(f.id)) {
+                    if (f.type === 'bool' || f.type === 'checkbox') el.checked = !!t[f.id];
+                    else el.value = t[f.id] || '';
                 }
             });
         },
@@ -275,54 +217,50 @@
 
         setupListeners() {
             document.getElementById('teacher-search').oninput = () => this.render();
-            document.getElementById('add-teacher-btn').onclick = () => this.openModal();
+            
+            // Redirect Register button to a message
+            document.getElementById('add-teacher-btn').onclick = () => {
+                alert("Contact head office to add a teacher");
+            };
+
             document.getElementById('close-modal-x').onclick = () => this.closeModal();
             document.getElementById('cancel-modal-btn').onclick = () => this.closeModal();
 
             document.getElementById('teacher-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('t-edit-id').value;
+                if (!id) return; // Logic removed for new records
+
                 const payload = { 
-                    franchise_id: parseInt(localStorage.getItem('locked_franchise_id')) 
+                    franchise_id: parseInt(document.getElementById('franchise_id').value),
+                    user_id: document.getElementById('user_id').value ? parseInt(document.getElementById('user_id').value) : null
                 };
                 
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
-                    if (el && f.id !== 'id' && !f.readonly) {
+                    if (el && !['id', 'franchise_id', 'user_id'].includes(f.id)) {
                         payload[f.id] = (f.type === 'bool' || f.type === 'checkbox') ? el.checked : el.value;
                     }
                 });
 
-                const url = id ? `${window.NEST_ENDPOINTS.teacher.list}/${id}` : window.NEST_ENDPOINTS.teacher.list;
+                const url = `${window.NEST_ENDPOINTS.teacher.list}/${id}`;
                 const res = await fetch(url, { 
-                    method: id ? 'PATCH' : 'POST', 
+                    method: 'PATCH', 
                     headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify(payload) 
                 });
-                
-                if (res.ok) { 
-                    this.closeModal(); 
-                    this.init(); 
-                }
+                if (res.ok) { this.closeModal(); this.init(); }
             };
         },
 
         async loadScript(src) {
             return new Promise(resolve => {
-                const s = document.createElement('script');
-                s.src = src;
-                s.onload = resolve;
-                s.onerror = () => {
-                    const s2 = document.createElement('script');
-                    s2.src = src.replace('/', '');
-                    s2.onload = resolve;
-                    document.head.appendChild(s2);
-                };
+                const s = document.createElement('script'); s.src = src; s.onload = resolve;
+                s.onerror = () => { s.src = src.replace('/', ''); s.onload = resolve; };
                 document.head.appendChild(s);
             });
         }
     };
-
     TeacherModule.init();
 })();
 </script>
