@@ -1,14 +1,14 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
         <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Teacher Management</h1>
-        <p id="branch-subtitle" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Faculty & Staff Records • Sariaya Branch</p>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Faculty Records • Sariaya Branch</p>
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="teacher-search" placeholder="Search staff, roles, or phone..." 
-            class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-indigo-500 shadow-sm w-full md:w-64 transition-all">
+        <input type="text" id="teacher-search" placeholder="Search names, phones, or roles..." 
+            class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all">
         
-        <button id="add-teacher-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
+        <button id="add-teacher-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
             + REGISTER TEACHER
         </button>
     </div>
@@ -16,16 +16,16 @@
 
 <div id="teacher-list-container" class="space-y-6">
     <div class="p-20 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
-        Syncing Faculty Records...
+        Loading Records...
     </div>
 </div>
 
 <div id="teacher-modal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-200 font-['Inter']">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-200">
         <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
             <div>
                 <h2 id="t-modal-title" class="text-sm font-black text-slate-800 uppercase">Faculty Profile</h2>
-                <p id="modal-branch-name" class="text-[9px] text-indigo-600 font-bold uppercase tracking-widest">Sariaya Branch</p>
+                <p class="text-[9px] text-teal-600 font-bold uppercase tracking-widest">Sariaya Branch</p>
             </div>
             <button id="close-modal-x" class="text-slate-400 hover:text-slate-900 text-3xl font-light">&times;</button>
         </div>
@@ -38,8 +38,8 @@
 
             <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
                 <button type="button" id="cancel-modal-btn" class="px-8 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Discard</button>
-                <button type="submit" class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold text-[10px] uppercase shadow-lg hover:bg-indigo-700 transition-all">
-                    Save Record
+                <button type="submit" class="flex-1 py-3 bg-teal-500 text-white rounded-xl font-bold text-[10px] uppercase shadow-lg hover:bg-teal-600 transition-all">
+                    Save
                 </button>
             </div>
         </form>
@@ -53,30 +53,23 @@
         schema: null,
 
         async init() {
-            // Fix: Wait for configs to load before proceeding
-            if (!window.NEST_SCHEMA) await this.loadScript('schema_config.js');
-            if (!window.NEST_ENDPOINTS) await this.loadScript('api_config.js');
+            if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
+            if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
             
             this.schema = window.NEST_SCHEMA.teacher;
             this.buildFormUI(); 
             
             const fid = localStorage.getItem('locked_franchise_id');
-            const fname = localStorage.getItem('locked_franchise_name') || 'Main Branch';
-            
-            document.getElementById('branch-subtitle').innerText = `Faculty & Staff Records • ${fname}`;
-            document.getElementById('modal-branch-name').innerText = `${fname} Branch`;
-
             if (!fid) return;
 
             try {
-                // Fetching from Xano via your API_CONFIG logic
+                // Exact same fetch logic as parents.html
                 const response = await fetch(`${window.NEST_ENDPOINTS.teacher.list}?franchise_id=${fid}`);
                 this.data = await response.json();
                 this.render();
                 this.setupListeners();
             } catch (err) {
                 console.error("Fetch Error:", err);
-                document.getElementById('teacher-list-container').innerHTML = `<div class="p-20 text-center text-red-500 text-[10px] font-black uppercase italic tracking-widest">Critical: API Not Defined or Xano Error</div>`;
             }
         },
 
@@ -92,7 +85,7 @@
                     currentSection = f.section;
                     grid.insertAdjacentHTML('beforeend', `
                         <div class="col-span-full mt-6 mb-2 border-b border-slate-100 pb-1">
-                            <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">${currentSection}</span>
+                            <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest">${currentSection}</span>
                         </div>
                     `);
                 }
@@ -103,15 +96,15 @@
 
                 let inputHTML = '';
                 if (f.type === 'textarea') {
-                    inputHTML = `<textarea id="${f.id}" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none transition-all"></textarea>`;
+                    inputHTML = `<textarea id="${f.id}" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 outline-none transition-all"></textarea>`;
                 } else if (f.type === 'bool' || f.type === 'checkbox') {
                     inputHTML = `
                         <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                            <input type="checkbox" id="${f.id}" class="w-4 h-4 accent-indigo-500">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase">Employment Status</span>
+                            <input type="checkbox" id="${f.id}" class="w-4 h-4 accent-teal-500">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Active Status</span>
                         </div>`;
                 } else {
-                    inputHTML = `<input type="${f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none transition-all">`;
+                    inputHTML = `<input type="${f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 outline-none transition-all">`;
                 }
 
                 grid.insertAdjacentHTML('beforeend', `
@@ -133,49 +126,42 @@
 
             container.innerHTML = '';
             filtered.forEach(t => {
-                const hiredDate = t.created_at ? new Date(t.created_at).toLocaleDateString() : '---';
+                const createdDate = t.created_at ? new Date(t.created_at).toLocaleDateString() : '---';
 
                 container.insertAdjacentHTML('beforeend', `
-                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:border-indigo-400 transition-all">
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:border-teal-400 transition-all">
                         <div class="bg-slate-50/80 p-5 flex flex-wrap items-center justify-between gap-6 border-b border-slate-100">
                             <div class="min-w-[180px]">
-                                <span class="text-[9px] text-slate-400 font-black uppercase block tracking-tighter italic">Teacher / Staff</span>
+                                <span class="text-[9px] text-slate-400 font-black uppercase block tracking-tighter">Faculty Member</span>
                                 <span class="text-sm font-black text-slate-900">${t.name}</span>
-                                <div class="text-[11px] font-mono text-indigo-600 font-bold">${t.phone || 'No Contact'}</div>
+                                <div class="text-[11px] font-mono text-teal-600 font-bold">${t.phone || 'No Phone'}</div>
                             </div>
-                            <div class="flex-1 min-w-[200px]">
-                                <span class="text-[9px] text-slate-400 font-black uppercase block tracking-tighter">Employment ID</span>
-                                <span class="text-xs text-slate-600 leading-snug font-medium">Franchise: ${t.franchise_id} | Role: ${t.my_type_id || 'Staff'}</span>
+                            <div class="flex-1 min-w-[250px]">
+                                <span class="text-[9px] text-slate-400 font-black uppercase block tracking-tighter">Tax Identification (TIN)</span>
+                                <span class="text-xs text-slate-600 leading-snug font-medium">${t.tin_number || '---'}</span>
                             </div>
                             <div class="flex items-center gap-3">
                                 <div class="text-right mr-2">
-                                    <span class="text-[8px] text-slate-400 font-black uppercase block">Hired Since</span>
-                                    <span class="text-[10px] font-mono text-slate-500">${hiredDate}</span>
+                                    <span class="text-[8px] text-slate-400 font-black uppercase block">Registration</span>
+                                    <span class="text-[10px] font-mono text-slate-500">${createdDate}</span>
                                 </div>
-                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${t.is_active ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'}">
+                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${t.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">
                                     ${t.is_active ? 'Active' : 'Inactive'}
                                 </span>
-                                <button data-id="${t.id}" class="teacher-edit-btn px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-[10px] font-black hover:text-indigo-600 hover:border-indigo-300 transition-all uppercase">Edit</button>
+                                <button data-id="${t.id}" class="teacher-edit-btn px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-[10px] font-black hover:text-teal-600 hover:border-teal-300 transition-all uppercase">Edit</button>
                                 <button data-id="${t.id}" class="teacher-delete-btn px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-red-500 text-[10px] font-black hover:bg-red-500 hover:text-white transition-all uppercase">Delete</button>
                             </div>
                         </div>
 
                         <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 text-[11px] bg-white">
                             <div class="space-y-2">
-                                <span class="text-[9px] font-black text-indigo-600 uppercase tracking-widest block border-b border-indigo-50 pb-1.5 mb-2">Payroll Details</span>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-slate-500 font-bold uppercase text-[9px]">Daily Pay:</span>
-                                    <span class="font-black text-slate-800 text-[12px] italic">₱${t.daily_pay || '0'}</span>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-slate-500 font-bold uppercase text-[9px]">TIN Number:</span>
-                                    <span class="text-slate-600 font-mono font-bold">${t.tin_number || '---'}</span>
-                                </div>
+                                <span class="text-[9px] font-black text-teal-600 uppercase tracking-widest block border-b border-teal-50 pb-1.5 mb-2">Payroll Information</span>
+                                <div class="font-black text-slate-800 text-[10px] uppercase">Daily Rate: ₱${t.daily_pay || '0'}</div>
                             </div>
-                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 col-span-2">
-                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block border-b border-slate-200 pb-1.5 mb-2 italic">Administrative Notes</span>
-                                <div class="text-[10px] text-slate-600 leading-relaxed font-medium italic">
-                                    "${t.notes || 'No faculty notes recorded.'}"
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 col-span-2 space-y-3">
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block border-b border-slate-200 pb-1.5">Employee Notes</span>
+                                <div class="text-[10px] text-slate-600 leading-relaxed font-medium">
+                                    ${t.notes || 'No employee notes.'}
                                 </div>
                             </div>
                         </div>
@@ -193,7 +179,7 @@
         },
 
         async deleteRecord(id) {
-            if (!confirm("Confirm staff removal?")) return;
+            if (!confirm("Confirm permanent removal?")) return;
             try {
                 const res = await fetch(`${window.NEST_ENDPOINTS.teacher.list}/${id}`, { method: 'DELETE' });
                 if (res.ok) this.init();
@@ -204,7 +190,7 @@
             document.getElementById('teacher-modal').classList.remove('hidden');
             document.getElementById('teacher-form').reset();
             document.getElementById('t-edit-id').value = t ? t.id : '';
-            document.getElementById('t-modal-title').innerText = t ? 'Edit Staff Profile' : 'Register Faculty';
+            document.getElementById('t-modal-title').innerText = t ? 'Edit Teacher' : 'Register Teacher';
 
             this.schema.fields.forEach(f => {
                 const el = document.getElementById(f.id);
@@ -227,8 +213,7 @@
                 e.preventDefault();
                 const id = document.getElementById('t-edit-id').value;
                 const payload = { 
-                    franchise_id: parseInt(localStorage.getItem('locked_franchise_id')),
-                    my_type_id: 4 // Defaulting to Staff role
+                    franchise_id: parseInt(localStorage.getItem('locked_franchise_id'))
                 };
                 
                 this.schema.fields.forEach(f => {
@@ -252,8 +237,7 @@
         async loadScript(src) {
             return new Promise(resolve => {
                 const s = document.createElement('script'); s.src = src; s.onload = resolve;
-                // Retry with absolute path if relative fails
-                s.onerror = () => { s.src = '/' + src; s.onload = resolve; };
+                s.onerror = () => { s.src = src.replace('/', ''); s.onload = resolve; };
                 document.head.appendChild(s);
             });
         }
