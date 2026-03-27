@@ -15,15 +15,8 @@
     
     label { display: block; font-size: 0.55rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; }
     input, select, textarea { 
-        width: 100%; 
-        border: 1px solid #cbd5e1; 
-        padding: 8px 10px; 
-        border-radius: 5px; 
-        font-size: 0.75rem; 
-        background: #f8fafc; 
-        color: #1e293b; 
-        box-sizing: border-box; 
-        transition: all 0.2s; 
+        width: 100%; border: 1px solid #cbd5e1; padding: 8px 10px; border-radius: 5px; 
+        font-size: 0.75rem; background: #f8fafc; color: #1e293b; box-sizing: border-box; transition: all 0.2s; 
     }
     input:focus { border-color: #00d1b2; box-shadow: 0 0 0 3px rgba(0, 209, 178, 0.1); outline: none; background: #fff; }
     
@@ -33,6 +26,9 @@
     
     .badge-step { background: #334155; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.75rem; margin-right: 12px; font-weight: bold; }
     .loading-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 100; justify-content: center; align-items: center; font-weight: 800; color: #00d1b2; font-size: 0.9rem; }
+    
+    .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
+    .review-box { padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; }
 </style>
 
 <div id="enrollment-ui" class="enrollment-wrapper">
@@ -45,7 +41,7 @@
             <div class="profile-item"><div class="profile-label">Primary Account</div><div id="disp-p-name" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Contact Email</div><div id="disp-p-email" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Mobile Number</div><div id="disp-p-phone" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Assigned Branch</div><div id="disp-p-fran" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Assigned Branch</div><div id="disp-p-fran" class="profile-value">Sariaya</div></div>
         </div>
         
         <div class="step-content" style="margin-top:20px;">
@@ -62,23 +58,24 @@
                     <div><label>Phone</label><input type="text" id="p_phone"></div>
                     <div><label>Email</label><input type="email" id="p_email"></div>
                     <div style="grid-column: span 4;"><label>Home Address</label><input type="text" id="p_address"></div>
+                    
                     <div><label>Secondary Guardian Name</label><input type="text" id="p_s2_name"></div>
                     <div><label>Relationship</label><input type="text" id="p_s2_rel"></div>
-                    <div><label>Phone</label><input type="text" id="p_s2_phone"></div>
-                    <div><label>Email</label><input type="email" id="p_s2_email"></div>
-                    <div style="grid-column: span 4;"><label>Secondary Address</label><input type="text" id="p_s2_address"></div>
+                    <div><label>Phone Number</label><input type="text" id="p_s2_phone"></div>
+                    <div><label>Email Address</label><input type="email" id="p_s2_email"></div>
+                    <div style="grid-column: span 4;"><label>Secondary Home Address</label><input type="text" id="p_s2_address"></div>
+                    
                     <div><label>Emergency 1 Name</label><input type="text" id="p_e1_name"></div>
                     <div><label>Relationship</label><input type="text" id="p_e1_rel"></div>
                     <div style="grid-column: span 2;"><label>Phone</label><input type="text" id="p_e1_phone"></div>
                     <div><label>Emergency 2 Name</label><input type="text" id="p_e2_name"></div>
                     <div><label>Relationship</label><input type="text" id="p_e2_rel"></div>
                     <div style="grid-column: span 2;"><label>Phone</label><input type="text" id="p_e2_phone"></div>
-                    <div style="grid-column: span 4;"><label>Branch</label><input type="text" id="p_fran_name" readonly style="background:#e2e8f0; color:#64748b;"></div>
                 </div>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button class="btn-teal btn-secondary" onclick="toggleParentMode()">New / Existing Switch</button>
-                <button id="btn-p-confirm" onclick="processParentStep()" class="btn-teal">Secure Parent Record</button>
+                <button onclick="processParentStep()" class="btn-teal">Secure Parent Record</button>
             </div>
         </div>
     </div>
@@ -95,7 +92,7 @@
             <div id="student-create-mode" style="display:none;">
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
                     <div style="grid-column: span 2;"><label>Legal Full Name</label><input type="text" id="s_name_new"></div>
-                    <div><label>Preferred Name</label><input type="text" id="s_pref_new"></div>
+                    <div><label>Preferred Nickname</label><input type="text" id="s_pref_new"></div>
                     <div><label>Date of Birth</label><input type="date" id="s_dob_new"></div>
                 </div>
             </div>
@@ -113,7 +110,7 @@
                 <div><label>Conducting Teacher</label><select id="a_teacher_id"></select></div>
                 <div><label>Assessment Date</label><input type="date" id="a_assessment_date"></div>
             </div>
-            <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px 30px; background: #f8fafc; padding: 15px; border-radius: 6px;">
+            <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px 30px; background: #f8fafc; padding: 20px; border-radius: 6px;">
                 </div>
             <button onclick="processAssessmentStep()" class="btn-teal">Submit Assessment Data</button>
         </div>
@@ -145,12 +142,18 @@
     <div id="step-final" class="step-container step-locked">
         <h2 class="nest-header"><span class="badge-step">6</span> Finalize Enrollment</h2>
         <div class="step-content" style="margin-top:20px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-                <div><label>Enrollment Date</label><input type="date" id="final_enrolled_date"></div>
-                <div><label>Class Start Date</label><input type="date" id="final_start_date"></div>
-            </div>
-            <div id="final-summary-view" style="padding: 15px; background: #f8fafc; border-radius: 6px;">
-                <p style="font-size: 0.75rem; color: #64748b;" id="summary-text">Review and commit to database.</p>
+            <div class="review-grid">
+                <div class="review-box">
+                    <label>Registration Dates</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div><label>Enrollment Date</label><input type="date" id="final_enrolled_date"></div>
+                        <div><label>Class Start Date</label><input type="date" id="final_start_date"></div>
+                    </div>
+                </div>
+                <div class="review-box" id="final-summary-view">
+                    <label>Enrollment Summary</label>
+                    <p style="font-size: 0.75rem; color: #64748b;" id="summary-text">Ready to commit to database.</p>
+                </div>
             </div>
             <button onclick="submitFinalEnrollment()" class="btn-teal" style="background: #0f766e; width: 100%; justify-content: center; margin-top: 20px;">GENERATE MASTER ENROLLMENT FILE</button>
         </div>
@@ -163,7 +166,6 @@
     const ENDPOINTS = {
         parent: `${API_BASE}:8Je8Zszx/parent`,
         student: `${API_BASE}:iEHfqd-N/student`,
-        franchise: `${API_BASE}:mXEfdJlg/franchise`,
         teacher: `${API_BASE}:xLIeVP2e/teacher`,
         questions: `${API_BASE}:ptE37CdX/student_assessment_questions`,
         pickup: `${API_BASE}:iEHfqd-N/student_authorized_pickup`,
@@ -178,57 +180,50 @@
     function moveToStep(currId, nextId, stepNum) {
         document.getElementById(currId).classList.replace('step-active', 'step-saved');
         const next = document.getElementById(nextId);
-        next.classList.remove('step-locked');
-        next.classList.add('step-active');
+        next.classList.remove('step-locked'); next.classList.add('step-active');
         document.getElementById('enrollment-progress').innerText = `Step ${stepNum} of 6: ${next.querySelector('h2').innerText.replace(/[0-9]/g, '').trim()}`;
         window.scrollTo({ top: next.offsetTop - 50, behavior: 'smooth' });
     }
 
     async function init() {
         try {
-            const [pRes, fRes, tRes, qRes, sRes] = await Promise.all([
+            const [pRes, tRes, qRes, sRes] = await Promise.all([
                 fetch(ENDPOINTS.parent).then(r => r.json()),
-                fetch(ENDPOINTS.franchise).then(r => r.json()),
                 fetch(ENDPOINTS.teacher).then(r => r.json()),
                 fetch(ENDPOINTS.questions).then(r => r.json()),
                 fetch(ENDPOINTS.session).then(r => r.json())
             ]);
             
             state.allParents = pRes;
-            const franchise = fRes.find(f => f.id === state.currentFranchiseId);
-            if (franchise) document.getElementById('p_fran_name').value = franchise.name;
-            
             renderParentList(pRes);
 
-            // Filter teachers for current franchise
+            // Filter teachers for local franchise (ID: 3)
             const tSel = document.getElementById('a_teacher_id');
-            tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
+            tSel.innerHTML = '<option value="">-- Select Local Teacher --</option>';
             tRes.filter(t => t.franchise_id === state.currentFranchiseId).forEach(t => {
                 tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`;
             });
 
-            // Map Assessment Questions
+            // Dynamically generate Assessment Questions from Table Schema
             const qGrid = document.getElementById('assessment-qa-grid');
             qGrid.innerHTML = '';
             qRes.forEach((q, i) => {
-                const text = q.question_text || "Assessment Question";
-                qGrid.innerHTML += `
-                    <div><label style="color:#1e293b; text-transform:none; font-size:0.75rem;">${text}</label></div>
-                    <div><select id="q_ans_${i}">
-                        <option value="Yes">Yes</option>
-                        <option value="No">No</option>
-                        <option value="N/A">N/A</option>
-                    </select></div>`;
+                let optionsHtml = '';
+                for(let j=1; j<=6; j++) {
+                    const ans = q[`answer_${j}`];
+                    if(ans) optionsHtml += `<option value="${ans}">${ans}</option>`;
+                }
+                qGrid.innerHTML += `<div><label style="color:#1e293b; text-transform:none; font-size:0.75rem; font-weight:700;">${q.the_question}</label></div>
+                                   <div><select id="q_ans_${i}">${optionsHtml}</select></div>`;
             });
 
             sRes.forEach(s => document.getElementById('enrollment_session_id').innerHTML += `<option value="${s.id}">${s.name}</option>`);
-        } catch(e) { console.error("NestMind Init Failure:", e); }
+        } catch(e) { console.error("NestMind Sync Error:", e); }
     }
 
     window.filterParents = () => {
         const term = document.getElementById('p_search').value.toLowerCase();
-        const filtered = state.allParents.filter(p => `${p.first_name} ${p.last_name}`.toLowerCase().includes(term));
-        renderParentList(filtered);
+        renderParentList(state.allParents.filter(p => `${p.first_name} ${p.last_name}`.toLowerCase().includes(term)));
     };
 
     function renderParentList(list) {
@@ -269,11 +264,10 @@
                 state.currentParentId = parseInt(document.getElementById('p_select_id').value);
             }
             
-            const parent = state.allParents.find(x => x.id === state.currentParentId) || { first_name: document.getElementById('p_fn').value, last_name: document.getElementById('p_ln').value, email: document.getElementById('p_email').value, phone: document.getElementById('p_phone').value };
-            document.getElementById('disp-p-name').innerText = `${parent.first_name} ${parent.last_name}`;
-            document.getElementById('disp-p-email').innerText = parent.email;
-            document.getElementById('disp-p-phone').innerText = parent.phone;
-            document.getElementById('disp-p-fran').innerText = document.getElementById('p_fran_name').value;
+            const p = state.allParents.find(x => x.id === state.currentParentId) || { first_name: document.getElementById('p_fn').value, last_name: document.getElementById('p_ln').value, email: document.getElementById('p_email').value, phone: document.getElementById('p_phone').value };
+            document.getElementById('disp-p-name').innerText = `${p.first_name} ${p.last_name}`;
+            document.getElementById('disp-p-email').innerText = p.email;
+            document.getElementById('disp-p-phone').innerText = p.phone;
             document.getElementById('parent-profile-view').style.display = 'grid';
 
             const sRes = await fetch(ENDPOINTS.student + "?parent_id=" + state.currentParentId).then(r => r.json());
@@ -313,16 +307,16 @@
     };
 
     window.finalizePickups = () => {
-        document.getElementById('summary-text').innerHTML = `Student ID: ${state.currentStudentId}<br>Session ID: ${state.selectedSessionId}<br>Authorized Pickups: ${state.pickupContacts.length}`;
+        document.getElementById('summary-text').innerHTML = `Student ID: ${state.currentStudentId}<br>Session ID: ${state.selectedSessionId}<br>Auth Pickups: ${state.pickupContacts.length}`;
         moveToStep('step-pickup', 'step-final', 6);
     };
 
     window.submitFinalEnrollment = async () => {
         try {
-            const payload = { student_id: state.currentStudentId, session_id: state.selectedSessionId, enrollment_date: document.getElementById('final_enrolled_date').value, start_date: document.getElementById('final_start_date').value };
-            await fetch(ENDPOINTS.enrollment, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)});
+            const ep = { student_id: state.currentStudentId, session_id: state.selectedSessionId, enrollment_date: document.getElementById('final_enrolled_date').value, start_date: document.getElementById('final_start_date').value };
+            await fetch(ENDPOINTS.enrollment, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(ep)});
             for (let c of state.pickupContacts) { await fetch(ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c)}); }
-            alert("Enrollment Complete."); location.reload();
+            alert("Master Enrollment Complete."); location.reload();
         } catch(e) { alert(e.message); }
     };
 
