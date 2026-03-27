@@ -103,7 +103,6 @@
                 }
 
                 const spanClass = f.width === 'full' || f.type === 'textarea' ? 'col-span-full' : 'col-span-1';
-                const readonly = f.readonly ? 'readonly' : '';
                 const bgClass = f.readonly ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-50';
 
                 let inputHTML = '';
@@ -116,7 +115,7 @@
                             <span class="text-[10px] font-bold text-slate-500 uppercase">${f.label}</span>
                         </div>`;
                 } else {
-                    inputHTML = `<input type="${f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
+                    inputHTML = `<input type="${f.type}" id="${f.id}" ${f.readonly ? 'readonly' : ''} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
                 }
 
                 grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[9px] text-slate-400 block uppercase font-black mb-1.5 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
@@ -151,7 +150,7 @@
                                     ${t.is_active ? 'Active' : 'Inactive'}
                                 </span>
                                 <button data-id="${t.id}" class="t-edit-btn px-4 py-2 bg-white border border-slate-300 rounded-lg text-[10px] font-black hover:text-teal-600 transition-all uppercase">Edit</button>
-                                <button data-id="${t.id}" class="t-delete-btn px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-red-500 text-[10px] font-black hover:bg-red-500 transition-all uppercase">Delete</button>
+                                <button data-id="${t.id}" class="t-delete-btn px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-red-500 text-[10px] font-black hover:bg-red-500 hover:text-white transition-all uppercase">Delete</button>
                             </div>
                         </div>
 
@@ -159,24 +158,27 @@
                             <div class="space-y-4">
                                 <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Location & Contact</h4>
                                 <div class="grid grid-cols-1 gap-3">
-                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Phone</span><span class="text-[11px] font-bold text-slate-700">${t.phone || '---'}</span></div>
-                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Address</span><span class="text-[11px] font-bold text-slate-700 leading-relaxed">${t.address || ''}, ${t.barangay || ''}, ${t.city || ''}</span></div>
+                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Phone Contact</span><span class="text-[11px] font-bold text-slate-700">${t.phone || '---'}</span></div>
+                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Email Address</span><span class="text-[11px] font-bold text-slate-700">${t.email || '---'}</span></div>
+                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Full Address</span><span class="text-[11px] font-bold text-slate-700 leading-relaxed">${t.address || ''}, ${t.barangay || ''}, ${t.city || ''}</span></div>
                                 </div>
                             </div>
 
                             <div class="space-y-4">
-                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Financial & ID</h4>
+                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Financial & IDs</h4>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div><span class="text-[8px] font-black text-slate-400 uppercase block">Daily Pay</span><span class="text-[11px] font-bold text-teal-600">₱${t.daily_pay || '0'}</span></div>
-                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">TIN</span><span class="text-[11px] font-bold text-slate-700">${t.tin_number || '---'}</span></div>
-                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Registered</span><span class="text-[11px] font-bold text-slate-700">${this.formatDate(t.created_at)}</span></div>
+                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">TIN Number</span><span class="text-[11px] font-bold text-slate-700">${t.tin_number || '---'}</span></div>
+                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">System Registration</span><span class="text-[11px] font-bold text-slate-700">${this.formatDate(t.created_at)}</span></div>
                                 </div>
                             </div>
 
                             <div class="space-y-4">
-                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Status Notes</h4>
-                                <div class="col-span-full">
-                                    <span class="text-[11px] italic text-slate-500">${t.inactivation_notes || 'No notes.'}</span>
+                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Service Lifecycle</h4>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Start Date</span><span class="text-[11px] font-bold text-slate-700">${t.start_date || '---'}</span></div>
+                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Last Day</span><span class="text-[11px] font-bold text-slate-700">${t.last_day || '---'}</span></div>
+                                    <div class="col-span-full"><span class="text-[8px] font-black text-slate-400 uppercase block">Inactivation History</span><span class="text-[11px] italic text-slate-500">${t.inactivation_notes || 'No notes.'}</span></div>
                                 </div>
                             </div>
                         </div>
@@ -217,19 +219,14 @@
 
         setupListeners() {
             document.getElementById('teacher-search').oninput = () => this.render();
-            
-            // Redirect Register button to a message
-            document.getElementById('add-teacher-btn').onclick = () => {
-                alert("Contact head office to add a teacher");
-            };
-
+            document.getElementById('add-teacher-btn').onclick = () => alert("Contact head office to add a teacher");
             document.getElementById('close-modal-x').onclick = () => this.closeModal();
             document.getElementById('cancel-modal-btn').onclick = () => this.closeModal();
 
             document.getElementById('teacher-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('t-edit-id').value;
-                if (!id) return; // Logic removed for new records
+                if (!id) return;
 
                 const payload = { 
                     franchise_id: parseInt(document.getElementById('franchise_id').value),
@@ -243,8 +240,7 @@
                     }
                 });
 
-                const url = `${window.NEST_ENDPOINTS.teacher.list}/${id}`;
-                const res = await fetch(url, { 
+                const res = await fetch(`${window.NEST_ENDPOINTS.teacher.list}/${id}`, { 
                     method: 'PATCH', 
                     headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify(payload) 
