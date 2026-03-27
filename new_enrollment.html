@@ -1,103 +1,111 @@
 <style>
-    .enrollment-wrapper { width: 100%; margin: 0; padding: 20px; box-sizing: border-box; background: #f8fafc; min-height: 100vh; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-    .nest-header { color: #334155; font-weight: 700; margin-bottom: 5px; }
+    .enrollment-wrapper { width: 100%; margin: 0; padding: 20px; box-sizing: border-box; background: #f1f5f9; min-height: 100vh; font-family: 'Inter', sans-serif; }
+    .nest-header { color: #1e293b; font-weight: 800; margin-bottom: 4px; font-size: 1.2rem; letter-spacing: -0.5px; }
     
-    .profile-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #fff; padding: 12px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 10px; width: 100%; }
+    /* Condensed Grid System */
+    .profile-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 8px; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .profile-item { display: flex; flex-direction: column; }
-    .profile-label { font-size: 0.5rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
-    .profile-value { font-size: 0.8rem; color: #334155; font-weight: 600; }
+    .profile-label { font-size: 0.5rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
+    .profile-value { font-size: 0.85rem; color: #334155; font-weight: 600; }
 
-    .step-container { background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 20px; margin-bottom: 20px; transition: all 0.2s ease; position: relative; }
-    .step-locked { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
-    .step-active { border-left: 6px solid #00d1b2; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-    .step-saved { border-left: 6px solid #cbd5e1; background: #ffffff; }
+    .step-container { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; margin-bottom: 15px; transition: all 0.3s ease; position: relative; overflow: hidden; }
+    .step-locked { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
+    .step-active { border-left: 6px solid #00d1b2; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transform: translateY(-2px); }
+    .step-saved { border-left: 6px solid #cbd5e1; background: #f8fafc; }
     .step-saved .step-content { display: none; }
     
-    label { display: block; font-size: 0.55rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
-    input, select, textarea { width: 100%; border: 1px solid #e2e8f0; padding: 8px 10px; border-radius: 4px; font-size: 0.8rem; background: #fff; color: #334155; box-sizing: border-box; transition: border-color 0.2s; }
-    input:focus, select:focus { border-color: #00d1b2; outline: none; }
+    /* Form Elements */
+    label { display: block; font-size: 0.55rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; }
+    input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 10px 12px; border-radius: 5px; font-size: 0.85rem; background: #fff; color: #1e293b; box-sizing: border-box; transition: all 0.2s; }
+    input:focus { border-color: #00d1b2; box-shadow: 0 0 0 3px rgba(0, 209, 178, 0.1); outline: none; }
     
-    .section-divider { grid-column: span 3; border-top: 1px solid #f1f5f9; margin: 12px 0 6px 0; padding-top: 6px; color: #00d1b2; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+    .section-divider { grid-column: span 4; border-top: 2px solid #f1f5f9; margin: 15px 0 10px 0; padding-top: 10px; color: #00d1b2; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
 
-    .btn-teal { background-color: #00d1b2; color: #ffffff !important; padding: 10px 20px; border-radius: 4px; font-weight: 700; border: none; cursor: pointer; font-size: 0.75rem; text-transform: uppercase; margin-top: 10px; transition: all 0.2s; }
-    .btn-teal:hover { background-color: #00b89c; transform: translateY(-1px); }
+    .btn-teal { background-color: #00d1b2; color: #ffffff !important; padding: 12px 24px; border-radius: 5px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; margin-top: 15px; transition: background 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-teal:hover { background-color: #00b89c; }
+    .btn-secondary { background: #64748b; }
     
-    .badge-step { background: #334155; color: white; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.7rem; margin-right: 10px; font-weight: bold; }
+    .badge-step { background: #334155; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.75rem; margin-right: 12px; font-weight: bold; }
     
-    .review-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.8rem; }
-    .review-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
-    .review-table .rev-label { font-weight: 800; color: #64748b; width: 40%; text-transform: uppercase; font-size: 0.55rem; }
-    
-    .loading-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 10; justify-content: center; align-items: center; font-size: 0.7rem; font-weight: 800; color: #00d1b2; }
-    .pickup-badge { background: #e2e8f0; padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; margin-right: 5px; display: inline-block; margin-bottom: 5px; }
+    .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 0.85rem; }
+    .review-box { background: #fff; padding: 15px; border: 1px solid #e2e8f0; border-radius: 6px; }
+    .loading-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 100; justify-content: center; align-items: center; font-weight: 800; color: #00d1b2; font-size: 0.9rem; }
 </style>
 
 <div id="enrollment-ui" class="enrollment-wrapper">
-    <div id="enrollment-progress" style="text-align: right; font-size: 0.65rem; font-weight: 800; color: #94a3b8; margin-bottom: 10px;">PROGRESS: STEP 1 OF 6</div>
+    <div id="enrollment-progress" style="text-align: right; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 12px; text-transform: uppercase;">Step 1 of 6: Guardian Verification</div>
 
     <div id="step-parent" class="step-container step-active">
-        <div class="loading-overlay" id="loader-parent">SYNCING DATA...</div>
+        <div class="loading-overlay" id="loader-parent">SYNCING NESTMIND DATABASE...</div>
         <h2 class="nest-header"><span class="badge-step">1</span> Parent Profile</h2>
         <div id="parent-profile-view" style="display:none;" class="profile-display">
-            <div class="profile-item"><div class="profile-label">Primary Parent</div><div id="disp-p-name" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Email</div><div id="disp-p-email" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Phone</div><div id="disp-p-phone" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Franchise Branch</div><div id="disp-p-fran" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Primary Account</div><div id="disp-p-name" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Contact Email</div><div id="disp-p-email" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Mobile Number</div><div id="disp-p-phone" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Assigned Branch</div><div id="disp-p-fran" class="profile-value"></div></div>
         </div>
-        <div class="step-content" style="margin-top:15px;">
-            <div id="parent-select-mode" style="display:block;"><label>Search Existing Database</label><select id="p_select_id"></select></div>
+        
+        <div class="step-content" style="margin-top:20px;">
+            <div id="parent-select-mode">
+                <label>Quick Search (Existing Parents)</label>
+                <input type="text" id="p_search" placeholder="Type name to filter..." style="margin-bottom:10px;" onkeyup="filterParents()">
+                <select id="p_select_id" size="5"></select>
+            </div>
+            
             <div id="parent-create-mode" style="display:none;">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                    <div class="section-divider">Primary Parent</div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                    <div class="section-divider">Primary Parent Identity</div>
                     <div><label>First Name</label><input type="text" id="p_fn"></div>
                     <div><label>Last Name</label><input type="text" id="p_ln"></div>
                     <div><label>Phone</label><input type="text" id="p_phone"></div>
-                    <div style="grid-column: span 1;"><label>Email</label><input type="email" id="p_email"></div>
-                    <div style="grid-column: span 2;"><label>Home Address</label><input type="text" id="p_address"></div>
-                    <div class="section-divider">Secondary Parent / Guardian</div>
+                    <div><label>Email</label><input type="email" id="p_email"></div>
+                    <div style="grid-column: span 4;"><label>Home Address</label><input type="text" id="p_address"></div>
+                    
+                    <div class="section-divider">Secondary Parent / Guardian Details</div>
                     <div><label>Full Name</label><input type="text" id="p_s2_name"></div>
                     <div><label>Relationship</label><input type="text" id="p_s2_rel"></div>
                     <div><label>Phone Number</label><input type="text" id="p_s2_phone"></div>
                     <div><label>Email Address</label><input type="email" id="p_s2_email"></div>
-                    <div style="grid-column: span 2;"><label>Secondary Home Address</label><input type="text" id="p_s2_address"></div>
-                    <div class="section-divider">Emergency Contact 1</div>
-                    <div><label>Name</label><input type="text" id="p_e1_name"></div>
-                    <div><label>Relationship</label><input type="text" id="p_e1_rel"></div>
-                    <div><label>Phone</label><input type="text" id="p_e1_phone"></div>
-                    <div class="section-divider">Emergency Contact 2</div>
-                    <div><label>Name</label><input type="text" id="p_e2_name"></div>
-                    <div><label>Relationship</label><input type="text" id="p_e2_rel"></div>
-                    <div><label>Phone</label><input type="text" id="p_e2_phone"></div>
-                    <div class="section-divider">Location</div>
-                    <div style="grid-column: span 3;"><label>Branch</label><input type="text" id="p_fran_name" readonly style="background:#f1f5f9;"></div>
+                    <div style="grid-column: span 4;"><label>Secondary Home Address</label><input type="text" id="p_s2_address"></div>
+                    
+                    <div class="section-divider">Emergency Response Contacts</div>
+                    <div><label>Contact 1 Name</label><input type="text" id="p_e1_name"></div>
+                    <div><label>C1 Relationship</label><input type="text" id="p_e1_rel"></div>
+                    <div style="grid-column: span 2;"><label>C1 Phone</label><input type="text" id="p_e1_phone"></div>
+                    <div><label>Contact 2 Name</label><input type="text" id="p_e2_name"></div>
+                    <div><label>C2 Relationship</label><input type="text" id="p_e2_rel"></div>
+                    <div style="grid-column: span 2;"><label>C2 Phone</label><input type="text" id="p_e2_phone"></div>
+                    
+                    <div class="section-divider">System Location</div>
+                    <div style="grid-column: span 4;"><label>Branch</label><input type="text" id="p_fran_name" readonly style="background:#f8fafc;"></div>
                 </div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn-teal" style="background:#64748b;" onclick="toggleParentMode()">New / Existing Toggle</button>
-                <button id="btn-p-confirm" onclick="processParentStep()" class="btn-teal">Confirm Parent Details</button>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-teal btn-secondary" onclick="toggleParentMode()">New / Existing Switch</button>
+                <button id="btn-p-confirm" onclick="processParentStep()" class="btn-teal">Secure Parent Record</button>
             </div>
         </div>
     </div>
 
     <div id="step-student" class="step-container step-locked">
-        <div class="loading-overlay" id="loader-student">CHECKING RECORDS...</div>
+        <div class="loading-overlay" id="loader-student">FETCHING STUDENT HISTORY...</div>
         <h2 class="nest-header"><span class="badge-step">2</span> Student Profile</h2>
         <div id="student-profile-view" style="display:none;" class="profile-display">
             <div class="profile-item"><div class="profile-label">Student Name</div><div id="disp-s-name" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Birthday</div><div id="disp-s-dob" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Date of Birth</div><div id="disp-s-dob" class="profile-value"></div></div>
         </div>
         <div class="step-content" style="margin-top:20px;">
-            <div id="student-select-mode" style="display:block;"><label>Registered Children</label><select id="s_select_id"></select></div>
+            <div id="student-select-mode"><label>Select Child for Enrollment</label><select id="s_select_id"></select></div>
             <div id="student-create-mode" style="display:none;">
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                    <div style="grid-column: span 2;"><label>Full Name</label><input type="text" id="s_name_new"></div>
-                    <div><label>Preferred Name</label><input type="text" id="s_pref_new"></div>
+                    <div style="grid-column: span 2;"><label>Legal Full Name</label><input type="text" id="s_name_new"></div>
+                    <div><label>Preferred Name / Nickname</label><input type="text" id="s_pref_new"></div>
                     <div><label>Date of Birth</label><input type="date" id="s_dob_new"></div>
                 </div>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn-teal" style="background:#64748b;" onclick="toggleStudentMode()">New / Existing Toggle</button>
-                <button onclick="processStudentStep()" class="btn-teal">Confirm Student Profile</button>
+                <button class="btn-teal btn-secondary" onclick="toggleStudentMode()">Toggle Child Record</button>
+                <button onclick="processStudentStep()" class="btn-teal">Confirm Student Identity</button>
             </div>
         </div>
     </div>
@@ -105,110 +113,135 @@
     <div id="step-assessment" class="step-container step-locked">
         <h2 class="nest-header"><span class="badge-step">3</span> Initial Assessment</h2>
         <div class="step-content" style="margin-top:20px;">
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom:20px;">
-                <div><label>Teacher</label><select id="a_teacher_id"></select></div>
-                <div><label>Date</label><input type="date" id="a_assessment_date"></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom:20px;">
+                <div><label>Conducting Teacher</label><select id="a_teacher_id"></select></div>
+                <div><label>Assessment Date</label><input type="date" id="a_assessment_date"></div>
             </div>
-            <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px 25px;"></div>
-            <button onclick="processAssessmentStep()" class="btn-teal">Save Assessment</button>
+            <div id="assessment-qa-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px 30px; background: #f8fafc; padding: 15px; border-radius: 6px;"></div>
+            <button onclick="processAssessmentStep()" class="btn-teal">Submit Assessment Data</button>
         </div>
     </div>
 
     <div id="step-session" class="step-container step-locked">
-        <h2 class="nest-header"><span class="badge-step">4</span> Select Session</h2>
+        <h2 class="nest-header"><span class="badge-step">4</span> Academic Session</h2>
         <div class="step-content" style="margin-top:20px;">
-            <label>Available Sessions</label>
-            <select id="enrollment_session_id"></select>
-            <button onclick="processSessionStep()" class="btn-teal">Confirm Session</button>
+            <label>Available Schedules & Classes</label>
+            <select id="enrollment_session_id" style="height: 45px;"></select>
+            <button onclick="processSessionStep()" class="btn-teal">Reserve Session Spot</button>
         </div>
     </div>
 
     <div id="step-pickup" class="step-container step-locked">
-        <h2 class="nest-header"><span class="badge-step">5</span> Authorized Pickup</h2>
+        <h2 class="nest-header"><span class="badge-step">5</span> Safety & Pickup Security</h2>
         <div class="step-content" style="margin-top:20px;">
-            <div id="pickup-entry-list" style="margin-bottom:15px;"></div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <input type="text" id="pu_name" placeholder="Name">
-                <input type="text" id="pu_rel" placeholder="Relationship">
-                <input type="text" id="pu_phone" placeholder="Phone">
+            <div id="pickup-entry-list" style="display:flex; flex-wrap: wrap; gap: 8px; margin-bottom:15px;"></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; background: #f1f5f9; padding: 15px; border-radius: 6px;">
+                <div><label>Full Name</label><input type="text" id="pu_name"></div>
+                <div><label>Relationship</label><input type="text" id="pu_rel"></div>
+                <div><label>Phone Number</label><input type="text" id="pu_phone"></div>
             </div>
-            <button onclick="addPickupLocal()" class="btn-teal" style="background:#334155; margin-top:10px;">+ Add Contact</button>
-            <button onclick="finalizePickups()" class="btn-teal">Confirm All Pickups</button>
+            <button onclick="addPickupLocal()" class="btn-teal btn-secondary" style="margin-top:10px;">+ Register Authorized Contact</button>
+            <button onclick="finalizePickups()" class="btn-teal">Validate Safety List</button>
         </div>
     </div>
 
     <div id="step-final" class="step-container step-locked">
         <h2 class="nest-header"><span class="badge-step">6</span> Finalize Enrollment</h2>
         <div class="step-content" style="margin-top:20px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
-                <div><label>Enrollment Date</label><input type="date" id="final_enrolled_date"></div>
-                <div><label>Start Date</label><input type="date" id="final_start_date"></div>
+            <div class="review-grid">
+                <div class="review-box">
+                    <label>Registration Dates</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div><label>Enrollment Date</label><input type="date" id="final_enrolled_date"></div>
+                        <div><label>Class Start Date</label><input type="date" id="final_start_date"></div>
+                    </div>
+                </div>
+                <div class="review-box" id="final-summary-view">
+                    <label>Enrollment Summary</label>
+                    <p style="font-size: 0.75rem; color: #64748b;" id="summary-text">Ready to commit to database.</p>
+                </div>
             </div>
-            <div id="review-content" style="background: #f8fafc; padding: 20px; border-radius: 4px;"></div>
-            <button onclick="submitFinalEnrollment()" class="btn-teal" style="background: #0f766e; width: 100%;">GENERATE RECORDS & CLOSE</button>
+            <button onclick="submitFinalEnrollment()" class="btn-teal" style="background: #0f766e; width: 100%; justify-content: center;">GENERATE MASTER ENROLLMENT FILE</button>
         </div>
     </div>
 </div>
 
 <script>
 (function() {
-    const PARENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
-    const STUDENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
-    const FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
-    const TEACHER_API = "https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher";
-    const QUESTIONS_API = "https://x8ki-letl-twmt.n7.xano.io/api:ptE37CdX/student_assessment_questions";
-    const ASSESSMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:e7P6emQg/student_assessment_filled";
-    const PICKUP_API = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student_authorized_pickup";
-    const ENROLLMENT_API = "https://x8ki-letl-twmt.n7.xano.io/api:IwtDgUwD/session_enrollment";
-    const SESSION_API = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session";
+    const API_BASE = "https://x8ki-letl-twmt.n7.xano.io/api";
+    const ENDPOINTS = {
+        parent: `${API_BASE}:8Je8Zszx/parent`,
+        student: `${API_BASE}:iEHfqd-N/student`,
+        franchise: `${API_BASE}:mXEfdJlg/franchise`,
+        teacher: `${API_BASE}:xLIeVP2e/teacher`,
+        questions: `${API_BASE}:ptE37CdX/student_assessment_questions`,
+        assessment: `${API_BASE}:e7P6emQg/student_assessment_filled`,
+        pickup: `${API_BASE}:iEHfqd-N/student_authorized_pickup`,
+        enrollment: `${API_BASE}:IwtDgUwD/session_enrollment`,
+        session: `${API_BASE}:mUsV7Zqx/session`
+    };
 
     let state = { currentParentId: null, currentStudentId: null, currentFranchiseId: 3, pickupContacts: [], allParents: [], allFranchises: [] };
 
     function showLoader(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
+    
     function moveToStep(currId, nextId, stepNum) {
         document.getElementById(currId).classList.replace('step-active', 'step-saved');
         const next = document.getElementById(nextId);
         next.classList.remove('step-locked');
         next.classList.add('step-active');
-        document.getElementById('enrollment-progress').innerText = `PROGRESS: STEP ${stepNum} OF 6`;
+        document.getElementById('enrollment-progress').innerText = `Step ${stepNum} of 6: ${next.querySelector('h2').innerText.replace(/[0-9]/g, '').trim()}`;
+        window.scrollTo({ top: next.offsetTop - 50, behavior: 'smooth' });
     }
 
     async function init() {
-        const [pRes, fRes, tRes, qRes, sRes] = await Promise.all([
-            fetch(PARENT_API).then(r => r.json()),
-            fetch(FRANCHISE_API).then(r => r.json()),
-            fetch(TEACHER_API).then(r => r.json()),
-            fetch(QUESTIONS_API).then(r => r.json()),
-            fetch(SESSION_API).then(r => r.json())
-        ]);
-        state.allParents = pRes; state.allFranchises = fRes;
-        const franchise = state.allFranchises.find(f => f.id === state.currentFranchiseId);
-        if (franchise) document.getElementById('p_fran_name').value = franchise.name;
-        
-        const pSel = document.getElementById('p_select_id');
-        pRes.forEach(p => pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
-        const tSel = document.getElementById('a_teacher_id');
-        tRes.forEach(t => tSel.innerHTML += `<option value="${t.id}">${t.first_name}</option>`);
-        const sessionSel = document.getElementById('enrollment_session_id');
-        sRes.forEach(s => sessionSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
+        try {
+            const [pRes, fRes, tRes, qRes, sRes] = await Promise.all([
+                fetch(ENDPOINTS.parent).then(r => r.json()),
+                fetch(ENDPOINTS.franchise).then(r => r.json()),
+                fetch(ENDPOINTS.teacher).then(r => r.json()),
+                fetch(ENDPOINTS.questions).then(r => r.json()),
+                fetch(ENDPOINTS.session).then(r => r.json())
+            ]);
+            
+            state.allParents = pRes; state.allFranchises = fRes;
+            const franchise = fRes.find(f => f.id === state.currentFranchiseId);
+            if (franchise) document.getElementById('p_fran_name').value = franchise.name;
+            
+            renderParentList(pRes);
+            tRes.forEach(t => document.getElementById('a_teacher_id').innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`);
+            sRes.forEach(s => document.getElementById('enrollment_session_id').innerHTML += `<option value="${s.id}">${s.name}</option>`);
 
-        const qGrid = document.getElementById('assessment-qa-grid');
-        qRes.forEach((q, i) => {
-            qGrid.innerHTML += `<div><label>${q.question_text}</label></div>
-                               <div><select id="q_ans_${i}"><option value="Yes">Yes</option><option value="No">No</option><option value="N/A">N/A</option></select></div>`;
-        });
+            const qGrid = document.getElementById('assessment-qa-grid');
+            qRes.forEach((q, i) => {
+                qGrid.innerHTML += `<div><label style="color:#1e293b;">${q.question_text}</label></div>
+                                   <div><select id="q_ans_${i}"><option value="Yes">Yes</option><option value="No">No</option><option value="N/A">N/A</option></select></div>`;
+            });
+        } catch(e) { console.error("NestMind Init Failure:", e); }
+    }
+
+    window.filterParents = () => {
+        const term = document.getElementById('p_search').value.toLowerCase();
+        const filtered = state.allParents.filter(p => `${p.first_name} ${p.last_name}`.toLowerCase().includes(term));
+        renderParentList(filtered);
+    };
+
+    function renderParentList(list) {
+        const sel = document.getElementById('p_select_id');
+        sel.innerHTML = '';
+        list.forEach(p => sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name} (${p.email})</option>`);
     }
 
     window.toggleParentMode = () => {
-        const s = document.getElementById('parent-select-mode'); const c = document.getElementById('parent-create-mode');
-        s.style.display = (s.style.display === 'none') ? 'block' : 'none';
-        c.style.display = (c.style.display === 'none') ? 'block' : 'none';
+        const s = document.getElementById('parent-select-mode'), c = document.getElementById('parent-create-mode');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        c.style.display = c.style.display === 'none' ? 'block' : 'none';
     };
 
     window.toggleStudentMode = () => {
-        const s = document.getElementById('student-select-mode'); const c = document.getElementById('student-create-mode');
-        s.style.display = (s.style.display === 'none') ? 'block' : 'none';
-        c.style.display = (c.style.display === 'none') ? 'block' : 'none';
+        const s = document.getElementById('student-select-mode'), c = document.getElementById('student-create-mode');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        c.style.display = c.style.display === 'none' ? 'block' : 'none';
     };
 
     window.processParentStep = async () => {
@@ -236,26 +269,23 @@
                     emergency_contact_2_phone_number: document.getElementById('p_e2_phone').value,
                     is_active: true
                 };
-                const res = await fetch(PARENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)});
+                const res = await fetch(ENDPOINTS.parent, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)});
                 const data = await res.json(); state.currentParentId = data.id;
             } else {
                 state.currentParentId = parseInt(document.getElementById('p_select_id').value);
-                const p = state.allParents.find(x => x.id === state.currentParentId);
-                state.currentFranchiseId = p.franchise_id;
+                if (!state.currentParentId) throw new Error("Please select a parent.");
             }
             
-            const franchise = state.allFranchises.find(f => f.id === state.currentFranchiseId);
             const parent = isCreate ? { first_name: document.getElementById('p_fn').value, last_name: document.getElementById('p_ln').value, email: document.getElementById('p_email').value, phone: document.getElementById('p_phone').value } : state.allParents.find(x => x.id === state.currentParentId);
-            
             document.getElementById('disp-p-name').innerText = `${parent.first_name} ${parent.last_name}`;
             document.getElementById('disp-p-email').innerText = parent.email;
             document.getElementById('disp-p-phone').innerText = parent.phone;
-            document.getElementById('disp-p-fran').innerText = franchise ? franchise.name : state.currentFranchiseId;
+            document.getElementById('disp-p-fran').innerText = document.getElementById('p_fran_name').value;
             document.getElementById('parent-profile-view').style.display = 'grid';
 
-            const sRes = await fetch(STUDENT_API + "?parent_id=" + state.currentParentId).then(r => r.json());
+            const sRes = await fetch(ENDPOINTS.student + "?parent_id=" + state.currentParentId).then(r => r.json());
             const sSel = document.getElementById('s_select_id');
-            sSel.innerHTML = '<option value="">-- Select --</option>';
+            sSel.innerHTML = '<option value="">-- Choose Student --</option>';
             sRes.forEach(s => sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
 
             moveToStep('step-parent', 'step-student', 2);
@@ -269,9 +299,11 @@
         try {
             if (isCreate) {
                 const payload = { parent_id: state.currentParentId, name: document.getElementById('s_name_new').value, date_of_birth: document.getElementById('s_dob_new').value, franchise_id: state.currentFranchiseId, is_active: true };
-                const res = await fetch(STUDENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)});
+                const res = await fetch(ENDPOINTS.student, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)});
                 const data = await res.json(); state.currentStudentId = data.id;
-            } else { state.currentStudentId = parseInt(document.getElementById('s_select_id').value); }
+            } else {
+                state.currentStudentId = parseInt(document.getElementById('s_select_id').value);
+            }
             moveToStep('step-student', 'step-assessment', 3);
         } catch(e) { alert(e.message); }
         showLoader('loader-student', false);
@@ -279,18 +311,27 @@
 
     window.processAssessmentStep = () => moveToStep('step-assessment', 'step-session', 4);
     window.processSessionStep = () => { state.selectedSessionId = parseInt(document.getElementById('enrollment_session_id').value); moveToStep('step-session', 'step-pickup', 5); };
+    
     window.addPickupLocal = () => {
         const p = { student_id: state.currentStudentId, name: document.getElementById('pu_name').value, relationship: document.getElementById('pu_rel').value, phone: document.getElementById('pu_phone').value };
         state.pickupContacts.push(p);
-        document.getElementById('pickup-entry-list').innerHTML += `<span class="pickup-badge">${p.name} (${p.relationship})</span>`;
+        document.getElementById('pickup-entry-list').innerHTML += `<div style="background:#334155; color:white; padding:5px 12px; border-radius:20px; font-size:0.7rem;">${p.name} (${p.relationship})</div>`;
+        document.getElementById('pu_name').value = ''; document.getElementById('pu_rel').value = ''; document.getElementById('pu_phone').value = '';
     };
-    window.finalizePickups = () => moveToStep('step-pickup', 'step-final', 6);
+
+    window.finalizePickups = () => {
+        document.getElementById('summary-text').innerHTML = `Student ID: ${state.currentStudentId}<br>Session ID: ${state.selectedSessionId}<br>Pickups Registered: ${state.pickupContacts.length}`;
+        moveToStep('step-pickup', 'step-final', 6);
+    };
+
     window.submitFinalEnrollment = async () => {
         try {
-            await fetch(ENROLLMENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: state.currentStudentId, session_id: state.selectedSessionId, enrollment_date: document.getElementById('final_enrolled_date').value, start_date: document.getElementById('final_start_date').value })});
-            for (let contact of state.pickupContacts) { await fetch(PICKUP_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(contact)}); }
-            alert("Master Enrollment Complete!"); location.reload();
-        } catch(e) { alert(e.message); }
+            const enrollmentPayload = { student_id: state.currentStudentId, session_id: state.selectedSessionId, enrollment_date: document.getElementById('final_enrolled_date').value, start_date: document.getElementById('final_start_date').value };
+            await fetch(ENDPOINTS.enrollment, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(enrollmentPayload)});
+            for (let c of state.pickupContacts) { await fetch(ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c)}); }
+            alert("Master Enrollment System: Transaction Successful.");
+            location.reload();
+        } catch(e) { alert("Database Error: " + e.message); }
     };
 
     init();
