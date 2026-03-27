@@ -208,14 +208,21 @@
             if (franchise) document.getElementById('p_fran_name').value = franchise.name;
             
             renderParentList(pRes);
-            tRes.forEach(t => document.getElementById('a_teacher_id').innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`);
+
+            // Filter teachers based on current franchise ID
+            const localTeachers = tRes.filter(t => t.franchise_id === state.currentFranchiseId);
+            const teacherSelect = document.getElementById('a_teacher_id');
+            teacherSelect.innerHTML = '<option value="">-- Select Local Teacher --</option>';
+            localTeachers.forEach(t => teacherSelect.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`);
+
             sRes.forEach(s => document.getElementById('enrollment_session_id').innerHTML += `<option value="${s.id}">${s.name}</option>`);
 
+            // Correctly map questions from student_assessment_questions endpoint
             const qGrid = document.getElementById('assessment-qa-grid');
-            qGrid.innerHTML = ''; // Ensure grid is clear before loading
+            qGrid.innerHTML = ''; 
             qRes.forEach((q, i) => {
-                const questionText = q.question_text || "Missing Question Data";
-                qGrid.innerHTML += `<div><label style="color:#1e293b; text-transform:none; font-size:0.75rem;">${questionText}</label></div>
+                const questionLabel = q.question_text || "Missing Question Data";
+                qGrid.innerHTML += `<div><label style="color:#1e293b; text-transform:none; font-size:0.75rem;">${questionLabel}</label></div>
                                    <div><select id="q_ans_${i}"><option value="Yes">Yes</option><option value="No">No</option><option value="N/A">N/A</option></select></div>`;
             });
         } catch(e) { console.error("NestMind Init Failure:", e); }
