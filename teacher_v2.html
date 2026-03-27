@@ -53,7 +53,7 @@
         schema: null,
 
         async init() {
-            // Mirroring parents.html setup exactly [cite: 2026-02-05]
+            // Load required configurations [cite: 2026-02-05]
             if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
             if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
             
@@ -75,7 +75,7 @@
             }
 
             try {
-                // Fetch call passing fid [cite: 2026-02-05]
+                // Fetching all records - filtering logic applied in render() [cite: 2026-02-05]
                 const response = await fetch(`${window.NEST_ENDPOINTS.teacher.list}?franchise_id=${fid}`);
                 this.data = await response.json();
                 this.render(); 
@@ -91,7 +91,7 @@
             let currentSection = "";
 
             this.schema.fields.forEach(f => {
-                if (f.id === 'id' || f.id === 'franchise_id') return;
+                if (f.id === 'id') return; // Allow franchise_id in form if needed for debugging
 
                 if (f.section && f.section !== currentSection) {
                     currentSection = f.section;
@@ -133,7 +133,7 @@
             const search = (document.getElementById('teacher-search')?.value || '').toLowerCase();
             const currentFid = parseInt(localStorage.getItem('locked_franchise_id'));
 
-            // CORE FIX: Filter by franchise_id in JavaScript to prevent leaks [cite: 2026-02-05]
+            // CORE VERIFICATION: Filter strictly by franchise_id [cite: 2026-02-05]
             let filtered = this.data.filter(t => {
                 const matchesFranchise = parseInt(t.franchise_id) === currentFid;
                 const matchesSearch = Object.values(t).some(val => String(val).toLowerCase().includes(search));
@@ -141,42 +141,45 @@
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="p-20 text-center text-slate-300 font-bold uppercase text-[10px]">No records found for this branch.</div>`;
+                container.innerHTML = `<div class="p-20 text-center text-slate-300 font-bold uppercase text-[10px]">No records found for branch ID: ${currentFid}</div>`;
                 return;
             }
 
             container.innerHTML = '';
             filtered.forEach(t => {
-                // Displaying ALL fields from schema [cite: 2026-02-05]
-                const allFieldsHTML = this.schema.fields
-                    .filter(f => f.id !== 'id' && f.id !== 'franchise_id')
-                    .map(f => {
-                        let val = t[f.id];
-                        if (f.type === 'bool') val = val ? 'YES' : 'NO';
-                        return `
-                            <div class="space-y-1">
-                                <span class="text-[8px] font-black text-slate-400 uppercase tracking-tighter block">${f.label}</span>
-                                <span class="text-[10px] font-bold text-slate-700 truncate block">${val || '---'}</span>
-                            </div>
-                        `;
-                    }).join('');
+                // VERIFICATION: Show ALL fields including IDs
+                const allFieldsHTML = Object.keys(t).map(key => {
+                    let val = t[key];
+                    // Find label from schema or use key
+                    const fieldDef = this.schema.fields.find(f => f.id === key);
+                    const label = fieldDef ? fieldDef.label : key.replace(/_/g, ' ').toUpperCase();
+                    
+                    if (typeof val === 'boolean') val = val ? 'YES' : 'NO';
+                    
+                    return `
+                        <div class="space-y-1">
+                            <span class="text-[8px] font-black ${key === 'franchise_id' ? 'text-teal-600' : 'text-slate-400'} uppercase tracking-tighter block">${label}</span>
+                            <span class="text-[10px] font-bold ${key === 'franchise_id' ? 'text-teal-700' : 'text-slate-700'} truncate block">${val || '---'}</span>
+                        </div>
+                    `;
+                }).join('');
 
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:border-teal-400 transition-all">
                         <div class="bg-slate-50/80 p-5 flex flex-wrap items-center justify-between gap-6 border-b border-slate-100">
                             <div>
                                 <span class="text-[9px] text-slate-400 font-black uppercase block tracking-tighter">Faculty Member</span>
-                                <span class="text-sm font-black text-slate-900">${t.first_name || 'Unnamed Record'}</span>
+                                <span class="text-sm font-black text-slate-900">${t.first_name || t.name || 'Unnamed Record'}</span>
                             </div>
                             <div class="flex items-center gap-3">
-                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${t.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">
-                                    ${t.is_active ? 'Active' : 'Inactive'}
+                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${t.is_active || t.active_status === 'YES' ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">
+                                    ${t.is_active || t.active_status === 'YES' ? 'Active' : 'Inactive'}
                                 </span>
                                 <button data-id="${t.id}" class="t-edit-btn px-4 py-2 bg-white border border-slate-300 rounded-lg text-[10px] font-black hover:text-teal-600 transition-all uppercase">Edit</button>
                                 <button data-id="${t.id}" class="t-delete-btn px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-red-500 text-[10px] font-black hover:bg-red-500 transition-all uppercase">Delete</button>
                             </div>
                         </div>
-                        <div class="p-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 bg-white">
+                        <div class="p-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 bg-white">
                             ${allFieldsHTML}
                         </div>
                     </div>
@@ -208,7 +211,7 @@
             this.schema.fields.forEach(f => {
                 const el = document.getElementById(f.id);
                 if (el) {
-                    if (f.type === 'bool' || f.type === 'checkbox') el.checked = t ? !!t[f.id] : (f.default ?? true);
+                    if (f.type === 'bool' || f.type === 'checkbox') el.checked = t ? (!!t[f.id] || t.active_status === 'YES') : (f.default ?? true);
                     else el.value = t ? (t[f.id] || '') : '';
                 }
             });
