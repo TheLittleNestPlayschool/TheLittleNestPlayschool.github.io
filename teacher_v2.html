@@ -1,4 +1,4 @@
-<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
     <div>
         <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Teacher Management</h1>
         <p id="branch-display" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Faculty Records • Syncing...</p>
@@ -14,8 +14,8 @@
     </div>
 </div>
 
-<div id="teacher-list-container" class="space-y-6">
-    <div class="p-20 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
+<div id="teacher-list-container" class="space-y-2">
+    <div class="p-10 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
         Syncing Faculty Records...
     </div>
 </div>
@@ -68,16 +68,20 @@
             document.getElementById('modal-branch-title').innerText = `${fname} Branch`;
 
             if (!fid) {
-                document.getElementById('teacher-list-container').innerHTML = `<div class="p-20 text-center text-red-500 font-black uppercase text-xs">No Franchise Locked</div>`;
+                document.getElementById('teacher-list-container').innerHTML = `<div class="p-10 text-center text-red-500 font-black uppercase text-xs">No Franchise Locked</div>`;
                 return;
             }
 
             try {
                 const response = await fetch(`${window.NEST_ENDPOINTS.teacher.list}?franchise_id=${fid}`);
+                if (!response.ok) throw new Error('Network response was not ok');
                 this.data = await response.json();
                 this.render(); 
                 this.setupListeners();
-            } catch (err) { console.error("Fetch Error:", err); }
+            } catch (err) { 
+                console.error("Fetch Error:", err);
+                document.getElementById('teacher-list-container').innerHTML = `<div class="p-10 text-center text-red-400 font-bold text-xs uppercase">Failed to load data.</div>`;
+            }
         },
 
         formatDate(epoch) {
@@ -96,8 +100,8 @@
                 if (f.section && f.section !== currentSection) {
                     currentSection = f.section;
                     grid.insertAdjacentHTML('beforeend', `
-                        <div class="col-span-full mt-6 mb-2 border-b border-slate-100 pb-1">
-                            <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest">${currentSection}</span>
+                        <div class="col-span-full mt-4 mb-1 border-b border-slate-100 pb-1">
+                            <span class="text-[9px] font-black text-teal-600 uppercase tracking-widest">${currentSection}</span>
                         </div>
                     `);
                 }
@@ -107,18 +111,18 @@
 
                 let inputHTML = '';
                 if (f.type === 'textarea') {
-                    inputHTML = `<textarea id="${f.id}" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500"></textarea>`;
+                    inputHTML = `<textarea id="${f.id}" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500"></textarea>`;
                 } else if (f.type === 'bool' || f.type === 'checkbox') {
                     inputHTML = `
-                        <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                        <div class="flex items-center gap-3 p-2 bg-slate-50 border border-slate-200 rounded-lg">
                             <input type="checkbox" id="${f.id}" class="w-4 h-4 accent-teal-500">
                             <span class="text-[10px] font-bold text-slate-500 uppercase">${f.label}</span>
                         </div>`;
                 } else {
-                    inputHTML = `<input type="${f.type}" id="${f.id}" ${f.readonly ? 'readonly' : ''} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
+                    inputHTML = `<input type="${f.type}" id="${f.id}" ${f.readonly ? 'readonly' : ''} class="w-full p-2 ${bgClass} border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
                 }
 
-                grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[9px] text-slate-400 block uppercase font-black mb-1.5 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
+                grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[8px] text-slate-400 block uppercase font-black mb-1 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
             });
         },
 
@@ -132,54 +136,45 @@
                 Object.values(t).some(val => String(val).toLowerCase().includes(search)));
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="p-20 text-center text-slate-300 font-bold uppercase text-[10px]">No records found.</div>`;
+                container.innerHTML = `<div class="p-10 text-center text-slate-300 font-bold uppercase text-[10px]">No records found.</div>`;
                 return;
             }
 
             container.innerHTML = '';
             filtered.forEach(t => {
                 container.insertAdjacentHTML('beforeend', `
-                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:border-teal-400 transition-all">
-                        <div class="bg-slate-50/80 p-5 flex flex-wrap items-center justify-between gap-6 border-b border-slate-100">
+                    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden hover:border-teal-400 transition-all">
+                        <div class="bg-slate-50/50 px-4 py-1.5 flex flex-wrap items-center justify-between border-b border-slate-100">
                             <div>
-                                <span class="text-[9px] text-teal-600 font-black uppercase block tracking-tighter">${currentFname} Branch</span>
-                                <span class="text-sm font-black text-slate-900 uppercase">${t.first_name || ''} ${t.last_name || ''}</span>
+                                <span class="text-[8px] text-teal-600 font-black uppercase block tracking-tighter">${currentFname} Branch</span>
+                                <span class="text-xs font-black text-slate-900 uppercase">${t.first_name || ''} ${t.last_name || ''}</span>
                             </div>
-                            <div class="flex items-center gap-3">
-                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${t.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase border ${t.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">
                                     ${t.is_active ? 'Active' : 'Inactive'}
                                 </span>
-                                <button data-id="${t.id}" class="t-edit-btn px-4 py-2 bg-white border border-slate-300 rounded-lg text-[10px] font-black hover:text-teal-600 transition-all uppercase">Edit</button>
-                                <button data-id="${t.id}" class="t-delete-btn px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-red-500 text-[10px] font-black hover:bg-red-500 hover:text-white transition-all uppercase">Delete</button>
+                                <button data-id="${t.id}" class="t-edit-btn px-3 py-1 bg-white border border-slate-300 rounded text-[9px] font-black hover:text-teal-600 transition-all uppercase">Edit</button>
+                                <button data-id="${t.id}" class="t-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-red-500 text-[9px] font-black hover:bg-red-500 hover:text-white transition-all uppercase">Delete</button>
                             </div>
                         </div>
 
-                        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-8 bg-white">
-                            <div class="space-y-4">
-                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Location & Contact</h4>
-                                <div class="grid grid-cols-1 gap-3">
-                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Phone Contact</span><span class="text-[11px] font-bold text-slate-700">${t.phone || '---'}</span></div>
-                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Email Address</span><span class="text-[11px] font-bold text-slate-700">${t.email || '---'}</span></div>
-                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Full Address</span><span class="text-[11px] font-bold text-slate-700 leading-relaxed">${t.address || ''}, ${t.barangay || ''}, ${t.city || ''}</span></div>
-                                </div>
+                        <div class="px-4 py-2 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-1 bg-white">
+                            <div class="space-y-1 border-r border-slate-50 pr-4">
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Address</span><span class="text-[10px] font-bold text-slate-700 leading-tight block">${t.address || ''}, ${t.barangay || ''}, ${t.city || ''}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Phone</span><span class="text-[10px] font-bold text-slate-700">${t.phone || '---'}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Email</span><span class="text-[10px] font-bold text-slate-700">${t.email || '---'}</span></div>
                             </div>
 
-                            <div class="space-y-4">
-                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Financial & IDs</h4>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Daily Pay</span><span class="text-[11px] font-bold text-teal-600">₱${t.daily_pay || '0'}</span></div>
-                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">TIN Number</span><span class="text-[11px] font-bold text-slate-700">${t.tin_number || '---'}</span></div>
-                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">System Registration</span><span class="text-[11px] font-bold text-slate-700">${this.formatDate(t.created_at)}</span></div>
-                                </div>
+                            <div class="space-y-1 border-r border-slate-50 pr-4">
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Daily Pay</span><span class="text-[10px] font-black text-teal-600">₱${t.daily_pay || '0'}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">TIN Number</span><span class="text-[10px] font-bold text-slate-700">${t.tin_number || '---'}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Registered</span><span class="text-[10px] font-bold text-slate-700">${this.formatDate(t.created_at)}</span></div>
                             </div>
 
-                            <div class="space-y-4">
-                                <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 pb-2">Service Lifecycle</h4>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Start Date</span><span class="text-[11px] font-bold text-slate-700">${t.start_date || '---'}</span></div>
-                                    <div><span class="text-[8px] font-black text-slate-400 uppercase block">Last Day</span><span class="text-[11px] font-bold text-slate-700">${t.last_day || '---'}</span></div>
-                                    <div class="col-span-full"><span class="text-[8px] font-black text-slate-400 uppercase block">Inactivation History</span><span class="text-[11px] italic text-slate-500">${t.inactivation_notes || 'No notes.'}</span></div>
-                                </div>
+                            <div class="space-y-1">
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Start Date</span><span class="text-[10px] font-bold text-slate-700">${t.start_date || '---'}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Last Day</span><span class="text-[10px] font-bold text-slate-700">${t.last_day || '---'}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Notes</span><span class="text-[10px] italic text-slate-500 truncate block">${t.inactivation_notes || '---'}</span></div>
                             </div>
                         </div>
                     </div>
@@ -240,19 +235,25 @@
                     }
                 });
 
-                const res = await fetch(`${window.NEST_ENDPOINTS.teacher.list}/${id}`, { 
-                    method: 'PATCH', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(payload) 
-                });
-                if (res.ok) { this.closeModal(); this.init(); }
+                try {
+                    const res = await fetch(`${window.NEST_ENDPOINTS.teacher.list}/${id}`, { 
+                        method: 'PATCH', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(payload) 
+                    });
+                    if (res.ok) { this.closeModal(); this.init(); }
+                } catch (err) { console.error("Update Error:", err); }
             };
         },
 
         async loadScript(src) {
             return new Promise(resolve => {
                 const s = document.createElement('script'); s.src = src; s.onload = resolve;
-                s.onerror = () => { s.src = src.replace('/', ''); s.onload = resolve; };
+                s.onerror = () => { 
+                    const fallback = src.replace('/', '');
+                    const s2 = document.createElement('script'); s2.src = fallback; s2.onload = resolve;
+                    document.head.appendChild(s2);
+                };
                 document.head.appendChild(s);
             });
         }
