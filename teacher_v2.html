@@ -5,7 +5,7 @@
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <input type="text" id="teacher-search" placeholder="Search faculty or FID..." 
+        <input type="text" id="teacher-search" placeholder="Search faculty name or role..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all">
         
         <button id="add-teacher-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
@@ -27,7 +27,7 @@
                 <h2 id="t-modal-title" class="text-sm font-black text-slate-800 uppercase">Faculty Profile</h2>
                 <p id="modal-branch-subtitle" class="text-[9px] text-teal-600 font-bold uppercase tracking-widest"></p>
             </div>
-            <button id="close-modal-x" class="text-slate-400 hover:text-slate-900 text-3xl font-light">&times;</button>
+            <button id="close-modal-x" class="text-slate-400 hover:text-slate-900 text-3xl font-light outline-none">&times;</button>
         </div>
         
         <form id="teacher-form" class="p-6">
@@ -51,28 +51,29 @@
         schema: null,
         isHO: false,
         currentFid: null,
+        // Full Admin Type Mapping from My Type Table [cite: 2026-02-05]
+        adminTypeMap: { 1: 'Head Office Admin', 2: 'Franchise Owner', 3: 'Branch Manager', 4: 'Teacher' },
 
         async init() {
             if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
             if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
             this.schema = window.NEST_SCHEMA.teacher;
             
-            // LOGIC FIX: Explicitly get the ID and Name
             this.currentFid = parseInt(localStorage.getItem('locked_franchise_id'));
             const currentFname = localStorage.getItem('locked_franchise_name') || '';
             
-            // Assume ID 1 is Head Office, or check for "Head Office" in name
+            // Check for Head Office permissions [cite: 2025-12-29]
             this.isHO = (this.currentFid === 1 || currentFname.toLowerCase().includes('head office'));
             
             document.getElementById('branch-display').innerText = `Faculty Records • ${currentFname}`;
 
             try {
-                // Fetch Step
+                // Fetch Logic: HO sees all, Branches see theirs [cite: 2025-12-29]
                 const url = this.isHO ? window.NEST_ENDPOINTS.teacher.list : `${window.NEST_ENDPOINTS.teacher.list}?franchise_id=${this.currentFid}`;
                 const response = await fetch(url);
                 const rawData = await response.json();
                 
-                // FILTER FIX: Even if API returns too much, we force the filter here
+                // Force filter safety
                 this.data = this.isHO ? rawData : rawData.filter(t => parseInt(t.franchise_id) === this.currentFid);
                 
                 if (this.isHO) {
@@ -83,47 +84,66 @@
                 this.buildFormUI(); 
                 this.render(); 
                 this.setupListeners();
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error("Init Error:", err); }
         },
 
         buildFormUI() {
             const grid = document.getElementById('dynamic-fields-grid');
             grid.innerHTML = '';
 
+            // 1. Franchise Selector for HO Users [cite: 2025-12-29]
             if (this.isHO) {
-                let options = this.franchises.map(f => `<option value="${f.id}">${f.name} (FID: ${f.id})</option>`).join('');
-                grid.insertAdjacentHTML('beforeend', `<div class="col-span-full mb-2"><label class="text-[8px] text-teal-600 block uppercase font-black mb-1 ml-1 tracking-wider">Assign to Franchise</label><select id="franchise_id" class="w-full p-2 bg-teal-50 border border-teal-200 rounded-lg text-xs font-bold outline-none">${options}</select></div>`);
+                let options = this.franchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+                grid.insertAdjacentHTML('beforeend', `
+                    <div class="col-span-full mb-2">
+                        <label class="text-[8px] text-teal-600 block uppercase font-black mb-1 ml-1 tracking-wider">Assign to Franchise</label>
+                        <select id="franchise_id" class="w-full p-2 bg-teal-50 border border-teal-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-teal-500">${options}</select>
+                    </div>`);
             } else {
                 grid.insertAdjacentHTML('beforeend', `<input type="hidden" id="franchise_id" value="${this.currentFid}">`);
             }
 
+            // 2. Dynamic Schema Fields
             this.schema.fields.forEach(f => {
-                if (['id', 'franchise_id', 'user_id'].includes(f.id) || f.hidden) return;
-                const spanClass = f.width === 'full' || f.type === 'textarea' ? 'col-span-full' : 'col-span-1';
-                let inputHTML = f.type === 'textarea' 
-                    ? `<textarea id="${f.id}" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500"></textarea>`
-                    : `<input type="${f.type}" id="${f.id}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
-                grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[8px] text-slate-400 block uppercase font-black mb-1 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
+                // Filter out unwanted IDs
+                if (['id', 'franchise_id', 'user_id', 'teacher_id'].includes(f.id) || f.hidden) return;
+                
+                const spanClass = (f.width === 'full' || f.type === 'textarea') ? 'col-span-full' : 'col-span-1';
+                let inputHTML = '';
+                
+                if (f.type === 'textarea') {
+                    inputHTML = `<textarea id="${f.id}" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500"></textarea>`;
+                } else if (f.type === 'date') {
+                    inputHTML = `<input type="date" id="${f.id}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
+                } else {
+                    inputHTML = `<input type="${f.type}" id="${f.id}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
+                }
+
+                grid.insertAdjacentHTML('beforeend', `
+                    <div class="${spanClass}">
+                        <label class="text-[8px] text-slate-400 block uppercase font-black mb-1 ml-1 tracking-wider">${f.label}</label>
+                        ${inputHTML}
+                    </div>`);
             });
         },
 
         render() {
             const container = document.getElementById('teacher-list-container');
             const search = (document.getElementById('teacher-search')?.value || '').toLowerCase();
-            
-            // Final logic guard: Search within the already filtered this.data
             let filtered = this.data.filter(t => Object.values(t).some(v => String(v).toLowerCase().includes(search)));
             container.innerHTML = '';
 
             filtered.forEach(t => {
-                const fName = this.isHO ? (this.franchises.find(f => f.id == t.franchise_id)?.name || 'Branch ' + t.franchise_id) : localStorage.getItem('locked_franchise_name');
-                
+                const fName = this.isHO ? (this.franchises.find(f => f.id == t.franchise_id)?.name || 'Head Office') : localStorage.getItem('locked_franchise_name');
+                const roleTitle = this.adminTypeMap[t.admin_type_id] || 'Faculty Member';
+
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden hover:border-teal-400 transition-all">
                         <div class="bg-slate-50/50 px-4 py-1.5 flex flex-wrap items-center justify-between border-b border-slate-100">
                             <div>
-                                <span class="text-[8px] text-teal-600 font-black uppercase block tracking-tighter">${fName} <span class="text-slate-400 ml-1">FID: ${t.franchise_id}</span></span>
+                                <span class="text-[8px] text-teal-600 font-black uppercase block tracking-tighter">${fName}</span>
                                 <span class="text-xs font-black text-slate-900 uppercase">${t.first_name || ''} ${t.last_name || ''}</span>
+                                <span class="text-[8px] text-slate-400 font-bold uppercase ml-2 px-1 bg-slate-100 rounded">${roleTitle}</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase border ${t.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">${t.is_active ? 'Active' : 'Inactive'}</span>
@@ -131,71 +151,117 @@
                                 ${this.isHO ? `<button data-id="${t.id}" class="t-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-red-500 text-[9px] font-black hover:bg-red-500 transition-all uppercase">Delete</button>` : ''}
                             </div>
                         </div>
+
                         <div class="px-4 py-2 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-1 bg-white">
                             <div class="space-y-1 border-r border-slate-50 pr-4">
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Address</span><span class="text-[10px] font-bold text-slate-700 leading-tight block">${t.address || ''}, ${t.city || ''}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Phone</span><span class="text-[10px] font-bold text-slate-700">${t.phone || '---'}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Email</span><span class="text-[10px] font-bold text-slate-700">${t.email || '---'}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Phone Contact</span><span class="text-[10px] font-bold text-slate-700">${t.phone || '---'}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Email Address</span><span class="text-[10px] font-bold text-slate-700">${t.email || '---'}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Full Address</span><span class="text-[10px] font-bold text-slate-700 leading-tight block">${t.address || ''}, ${t.city || ''}</span></div>
                             </div>
                             <div class="space-y-1 border-r border-slate-50 pr-4">
                                 <div><span class="text-[7px] font-black text-slate-300 uppercase block">Daily Pay</span><span class="text-[10px] font-black text-teal-600">₱${t.daily_pay || '0'}</span></div>
                                 <div><span class="text-[7px] font-black text-slate-300 uppercase block">TIN Number</span><span class="text-[10px] font-bold text-slate-700">${t.tin_number || '---'}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Teacher ID</span><span class="text-[10px] font-bold text-slate-700">#${t.id}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">System Registration</span><span class="text-[10px] font-bold text-slate-700">${new Date(t.created_at).toLocaleDateString()}</span></div>
                             </div>
                             <div class="space-y-1">
                                 <div><span class="text-[7px] font-black text-slate-300 uppercase block">Start Date</span><span class="text-[10px] font-bold text-slate-700">${t.start_date || '---'}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Notes</span><span class="text-[10px] italic text-slate-500 truncate block">${t.inactivation_notes || '---'}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Last Day</span><span class="text-[10px] font-bold text-slate-700">${t.last_day || '---'}</span></div>
+                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Inactivation History</span><span class="text-[10px] italic text-slate-500 truncate block">${t.inactivation_notes || 'No history recorded.'}</span></div>
                             </div>
                         </div>
                     </div>
                 `);
             });
+
             container.querySelectorAll('.t-edit-btn').forEach(b => b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id)));
             if (this.isHO) container.querySelectorAll('.t-delete-btn').forEach(b => b.onclick = () => this.deleteRecord(b.dataset.id));
         },
 
         openModal(t = null) {
-            document.getElementById('teacher-modal').classList.remove('hidden');
+            const modal = document.getElementById('teacher-modal');
+            modal.classList.remove('hidden');
             document.getElementById('teacher-form').reset();
+            
             document.getElementById('t-edit-id').value = t ? t.id : '';
+            document.getElementById('t-modal-title').innerText = t ? 'Update Faculty Profile' : 'New Faculty Registration';
+            
             if (t) {
-                document.getElementById('franchise_id').value = t.franchise_id;
+                // 1. Epoch to Readable Date conversion
+                if (t.created_at && document.getElementById('created_at')) {
+                    document.getElementById('created_at').value = new Date(t.created_at).toISOString().split('T')[0];
+                }
+
+                // 2. Map schema fields, skipping IDs
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
-                    if (el && !['id', 'franchise_id', 'user_id'].includes(f.id)) el.value = t[f.id] || '';
+                    if (el && !['id', 'franchise_id', 'created_at', 'user_id', 'teacher_id'].includes(f.id)) {
+                        el.value = t[f.id] || '';
+                    }
                 });
+
+                if (this.isHO && document.getElementById('franchise_id')) {
+                    document.getElementById('franchise_id').value = t.franchise_id;
+                }
+            } else if (!this.isHO) {
+                document.getElementById('franchise_id').value = this.currentFid;
             }
         },
 
         setupListeners() {
+            // FIX: Reliable Discard and Close actions
+            const closeActions = () => document.getElementById('teacher-modal').classList.add('hidden');
+            document.getElementById('cancel-modal-btn').onclick = closeActions;
+            document.getElementById('close-modal-x').onclick = closeActions;
+
             document.getElementById('teacher-search').oninput = () => this.render();
-            document.getElementById('add-teacher-btn').onclick = () => {
-                if (this.isHO) this.openModal();
-                else alert("Contact Head Office to add faculty.");
-            };
-            document.getElementById('close-modal-x').onclick = () => document.getElementById('teacher-modal').classList.add('hidden');
+            document.getElementById('add-teacher-btn').onclick = () => this.openModal();
+
             document.getElementById('teacher-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('t-edit-id').value;
-                const payload = { franchise_id: parseInt(document.getElementById('franchise_id').value) };
+                const method = id ? 'PATCH' : 'POST';
+                const url = id ? `${window.NEST_ENDPOINTS.teacher.list}/${id}` : window.NEST_ENDPOINTS.teacher.list;
+
+                const payload = { 
+                    franchise_id: parseInt(document.getElementById('franchise_id').value) 
+                };
+                
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
-                    if (el && !['id', 'franchise_id'].includes(f.id)) payload[f.id] = el.value;
+                    if (el && !['id', 'franchise_id', 'user_id'].includes(f.id)) {
+                        payload[f.id] = el.value;
+                    }
                 });
-                await fetch(id ? `${window.NEST_ENDPOINTS.teacher.list}/${id}` : window.NEST_ENDPOINTS.teacher.list, {
-                    method: id ? 'PATCH' : 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                document.getElementById('teacher-modal').classList.add('hidden');
-                this.init();
+
+                try {
+                    const res = await fetch(url, { 
+                        method, 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(payload) 
+                    });
+                    if (res.ok) {
+                        closeActions();
+                        this.init();
+                    }
+                } catch (err) { console.error("Save Error:", err); }
             };
+        },
+
+        async deleteRecord(id) {
+            if (!confirm("Permanently delete this faculty record?")) return;
+            try {
+                await fetch(`${window.NEST_ENDPOINTS.teacher.list}/${id}`, { method: 'DELETE' });
+                this.init();
+            } catch (err) { console.error(err); }
         },
 
         async loadScript(src) {
             return new Promise(resolve => {
                 const s = document.createElement('script'); s.src = src; s.onload = resolve;
-                s.onerror = () => { const s2 = document.createElement('script'); s2.src = src.replace('/',''); s2.onload = resolve; document.head.appendChild(s2); };
+                s.onerror = () => {
+                    const s2 = document.createElement('script'); s2.src = src.replace('/','');
+                    s2.onload = resolve; document.head.appendChild(s2);
+                };
                 document.head.appendChild(s);
             });
         }
