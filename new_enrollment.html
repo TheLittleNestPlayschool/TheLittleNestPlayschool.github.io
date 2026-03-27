@@ -2,7 +2,6 @@
     .enrollment-wrapper { width: 100%; margin: 0; padding: 20px; box-sizing: border-box; background: #f1f5f9; min-height: 100vh; font-family: 'Inter', sans-serif; }
     .nest-header { color: #1e293b; font-weight: 800; margin-bottom: 4px; font-size: 1.2rem; letter-spacing: -0.5px; }
     
-    /* Condensed Grid System */
     .profile-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 8px; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .profile-item { display: flex; flex-direction: column; }
     .profile-label { font-size: 0.5rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
@@ -14,7 +13,6 @@
     .step-saved { border-left: 6px solid #cbd5e1; background: #f8fafc; }
     .step-saved .step-content { display: none; }
     
-    /* Form Elements - Updated with shading and smaller font */
     label { display: block; font-size: 0.55rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; }
     input, select, textarea { 
         width: 100%; 
@@ -29,16 +27,11 @@
     }
     input:focus { border-color: #00d1b2; box-shadow: 0 0 0 3px rgba(0, 209, 178, 0.1); outline: none; background: #fff; }
     
-    .section-divider { display: none; }
-
     .btn-teal { background-color: #00d1b2; color: #ffffff !important; padding: 12px 24px; border-radius: 5px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; margin-top: 15px; transition: background 0.2s; display: inline-flex; align-items: center; gap: 8px; }
     .btn-teal:hover { background-color: #00b89c; }
     .btn-secondary { background: #64748b; }
     
     .badge-step { background: #334155; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.75rem; margin-right: 12px; font-weight: bold; }
-    
-    .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 0.85rem; }
-    .review-box { background: #fff; padding: 15px; border: 1px solid #e2e8f0; border-radius: 6px; }
     .loading-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 100; justify-content: center; align-items: center; font-weight: 800; color: #00d1b2; font-size: 0.9rem; }
 </style>
 
@@ -210,7 +203,7 @@
                 fetch(ENDPOINTS.session).then(r => r.json())
             ]);
             
-            state.allParents = pRes; state.allFranchises = fRes;
+            state.allParents = pRes;
             const franchise = fRes.find(f => f.id === state.currentFranchiseId);
             if (franchise) document.getElementById('p_fran_name').value = franchise.name;
             
@@ -219,8 +212,10 @@
             sRes.forEach(s => document.getElementById('enrollment_session_id').innerHTML += `<option value="${s.id}">${s.name}</option>`);
 
             const qGrid = document.getElementById('assessment-qa-grid');
+            qGrid.innerHTML = ''; // Ensure grid is clear before loading
             qRes.forEach((q, i) => {
-                qGrid.innerHTML += `<div><label style="color:#1e293b;">${q.question_text}</label></div>
+                const questionText = q.question_text || "Missing Question Data";
+                qGrid.innerHTML += `<div><label style="color:#1e293b; text-transform:none; font-size:0.75rem;">${questionText}</label></div>
                                    <div><select id="q_ans_${i}"><option value="Yes">Yes</option><option value="No">No</option><option value="N/A">N/A</option></select></div>`;
             });
         } catch(e) { console.error("NestMind Init Failure:", e); }
