@@ -5,33 +5,8 @@
 <script src="schema_config.js"></script>
 
 <div class="flex min-h-screen bg-[#f8fafc] font-['Inter',_sans-serif]">
-    <div class="w-72 bg-[#0f172a] text-slate-400 p-6 flex flex-col gap-8 flex-shrink-0">
-        <div class="flex items-center gap-3 px-2">
-            <div class="w-8 h-8 bg-[#10b981] rounded-lg"></div>
-            <span class="text-white font-bold text-xl tracking-tighter">NestMind</span>
-        </div>
-
-        <div class="bg-[#1e293b] rounded-2xl p-6 border border-slate-700/50 text-center">
-            <p class="text-[10px] font-black uppercase tracking-[0.2em] mb-1">Identity Lock</p>
-            <h3 id="sidebar-franchise-name" class="text-white font-black text-xl italic uppercase tracking-tighter">--</h3>
-            <div class="text-[10px] mt-2 flex items-center justify-center gap-1 font-bold">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span> TEACHERS
-            </div>
-        </div>
-
-        <nav class="space-y-1">
-            <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4 px-2 italic">Management</p>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 transition-all text-sm font-bold italic">📊 Performance</a>
-            <a href="parents.html" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 transition-all text-sm font-bold italic">👥 Parents</a>
-            <a href="teacher_v2.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#4f46e5] text-white shadow-lg shadow-indigo-500/20 text-sm font-bold italic">🧑‍🏫 Teachers</a>
-            
-            <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-8 mb-4 px-2 italic">Academic DNA</p>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 transition-all text-sm font-bold italic">✨ New Enrollment</a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 transition-all text-sm font-bold italic">🏫 Students</a>
-        </nav>
-    </div>
-
     <div class="flex-1 p-12 overflow-y-auto">
+        
         <div class="flex justify-between items-start mb-12">
             <div>
                 <h1 class="text-5xl font-[900] text-[#0f172a] tracking-tighter uppercase italic leading-none">Teacher Management</h1>
@@ -61,8 +36,8 @@
             </div>
         </div>
 
-        <div id="teacher-list" class="space-y-6">
-            <div class="py-40 text-center text-slate-300 font-black uppercase italic tracking-widest text-2xl opacity-50">Synchronizing Local Records...</div>
+        <div id="teacher-list" class="space-y-6 pb-20">
+            <div class="py-40 text-center text-slate-300 font-black uppercase italic tracking-widest text-2xl opacity-50">Syncing NestMind Database...</div>
         </div>
     </div>
 </div>
@@ -92,15 +67,14 @@
 
 <script>
     let allTeachers = [];
+    // 2. GET FRANCHISE CONTEXT
     const activeFranchiseId = localStorage.getItem('locked_franchise_id');
     const activeFranchiseName = localStorage.getItem('locked_franchise_name') || 'Main Office';
 
     async function init() {
-        // Apply franchise context to sidebar and header
-        document.getElementById('sidebar-franchise-name').innerText = activeFranchiseName;
         document.getElementById('header-franchise-name').innerText = activeFranchiseName;
         
-        // Ensure API_CONFIG is available before fetching
+        // 3. CHECK FOR CONFIG LOADED
         if (typeof API_CONFIG === 'undefined') {
             document.getElementById('teacher-list').innerHTML = `<p class="text-red-500 font-black uppercase text-center py-20 italic">Critical Error: api_config.js not loaded.</p>`;
             return;
@@ -113,7 +87,7 @@
             const res = await fetch(API_CONFIG.teacher.list);
             const data = await res.json();
 
-            // Filter by franchise
+            // 4. FILTER BY FRANCHISE ID
             allTeachers = data.filter(t => t.franchise_id == activeFranchiseId);
             
             document.getElementById('stat-count').innerText = allTeachers.length;
@@ -130,54 +104,49 @@
     function render(list) {
         const container = document.getElementById('teacher-list');
         if (!list.length) {
-            container.innerHTML = `<div class="bg-white p-24 rounded-[3rem] border-2 border-dashed border-slate-100 text-center text-slate-300 font-black uppercase italic tracking-widest text-2xl opacity-40">No Local Faculty Records Detected</div>`;
+            container.innerHTML = `<div class="bg-white p-24 rounded-[3rem] border-2 border-dashed border-slate-100 text-center text-slate-300 font-black uppercase italic tracking-widest text-2xl opacity-40">No Records Detected for ${activeFranchiseName}</div>`;
             return;
         }
 
         container.innerHTML = list.map(t => `
-            <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 hover:shadow-md transition-all group relative overflow-hidden">
-                <div class="flex justify-between items-start relative z-10">
+            <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-10 group relative">
+                <div class="flex justify-between items-start">
                     <div class="space-y-1">
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Teacher / Staff</p>
                         <h3 class="text-3xl font-[900] text-[#0f172a] tracking-tighter uppercase italic leading-none group-hover:text-[#4f46e5] transition-colors">${t.name}</h3>
-                        <div class="flex gap-4 pt-1">
-                            <p class="text-xs font-bold text-slate-500 italic lowercase">${t.email || 'no_email_provided'}</p>
-                            <p class="text-xs font-black text-[#4f46e5] uppercase tracking-widest">${t.phone || '000-0000'}</p>
-                        </div>
+                        <p class="text-xs font-black text-[#4f46e5] uppercase tracking-widest pt-1">${t.phone || '000-0000'}</p>
                     </div>
-                    <div class="text-right">
-                        <div class="flex gap-2 items-center justify-end mb-4">
+                    <div class="text-right flex flex-col items-end">
+                        <div class="flex gap-2 mb-4">
                             <span class="px-3 py-1 bg-emerald-50 text-emerald-600 text-[9px] font-black rounded-md border border-emerald-100 uppercase tracking-widest italic">Active</span>
-                            <button class="px-4 py-2 border border-slate-200 text-[9px] font-black text-slate-500 rounded-lg hover:bg-slate-50 uppercase tracking-widest transition-all shadow-sm">Edit</button>
-                            <button class="px-4 py-2 bg-red-50 text-red-500 text-[9px] font-black rounded-lg hover:bg-red-500 hover:text-white transition-all uppercase tracking-widest shadow-sm">Delete</button>
+                            <button class="px-4 py-2 border border-slate-200 text-[9px] font-black text-slate-500 rounded-lg uppercase tracking-widest shadow-sm">Edit</button>
+                            <button class="px-4 py-2 bg-red-50 text-red-500 text-[9px] font-black rounded-lg uppercase tracking-widest shadow-sm">Delete</button>
                         </div>
-                        <p class="text-[9px] font-black text-slate-300 uppercase tracking-widest">Hired Since</p>
+                        <p class="text-[9px] font-black text-slate-300 uppercase tracking-widest leading-none">Hired Since</p>
                         <p class="text-xs font-bold text-slate-800 italic">${new Date(t.created_at).toLocaleDateString()}</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-12 gap-10 mt-10 pt-8 border-t border-slate-50 relative z-10">
+                <div class="grid grid-cols-12 gap-10 mt-10 pt-8 border-t border-slate-50">
                     <div class="col-span-4 space-y-4">
                         <p class="text-[10px] font-black text-[#4f46e5] uppercase tracking-widest italic">Employment Details</p>
-                        <div class="flex justify-between items-center py-1 border-b border-slate-50">
-                            <span class="text-[9px] font-black text-slate-400 uppercase italic">TIN Number:</span>
-                            <span class="text-xs font-black text-slate-800 tracking-widest">${t.tin_number || 'N/A'}</span>
+                        <div class="flex justify-between py-1 border-b border-slate-50 text-[9px] font-black text-slate-400 uppercase italic">
+                            <span>TIN Number:</span>
+                            <span class="text-slate-800">${t.tin_number || 'N/A'}</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-[9px] font-black text-slate-400 uppercase italic">Daily Compensation:</span>
+                        <div class="flex justify-between items-center text-[9px] font-black text-slate-400 uppercase italic">
+                            <span>Daily Pay:</span>
                             <span class="text-xl font-[900] text-[#0f172a] italic tracking-tighter">₱${t.daily_pay || '0'}</span>
                         </div>
                     </div>
                     <div class="col-span-3 border-l border-slate-50 pl-10">
                         <p class="text-[10px] font-black text-[#4f46e5] uppercase tracking-widest italic mb-4">Internal Assignment</p>
-                        <div class="space-y-1">
-                            <p class="text-[11px] font-[900] text-slate-800 uppercase tracking-tighter italic">Franchise ID: ${t.franchise_id}</p>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase italic">Role ID: ${t.my_type_id || '4'}</p>
-                        </div>
+                        <p class="text-[11px] font-[900] text-slate-800 uppercase tracking-tighter italic">Franchise ID: ${t.franchise_id}</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase italic">Role ID: ${t.my_type_id || '4'}</p>
                     </div>
-                    <div class="col-span-5 bg-slate-50/50 p-6 rounded-[1.5rem] border border-slate-100 shadow-inner">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 italic">Faculty Notes</p>
-                        <p class="text-[10px] italic font-bold text-slate-500 leading-relaxed italic">"${t.notes || 'Personnel dossier verified. No additional flags recorded.'}"</p>
+                    <div class="col-span-5 bg-slate-50/50 p-6 rounded-[1.5rem] border border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 italic">Notes</p>
+                        <p class="text-[10px] italic font-bold text-slate-500 italic leading-relaxed">"${t.notes || 'No employee notes.'}"</p>
                     </div>
                 </div>
             </div>
