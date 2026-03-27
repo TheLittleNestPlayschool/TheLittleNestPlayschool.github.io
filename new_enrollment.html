@@ -42,7 +42,7 @@
             <div class="profile-item"><div class="profile-label">Primary Parent</div><div id="disp-p-name" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Email</div><div id="disp-p-email" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Phone</div><div id="disp-p-phone" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Franchise ID</div><div id="disp-p-fran" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Franchise Branch</div><div id="disp-p-fran" class="profile-value"></div></div>
         </div>
         <div class="step-content" style="margin-top:20px;">
             <div id="parent-select-mode" style="display:block;">
@@ -152,7 +152,7 @@
     let state = {
         currentParentId: null,
         currentStudentId: null,
-        currentFranchiseId: 3, // Set Sariaya Local ID [cite: 2025-12-29]
+        currentFranchiseId: 3, 
         currentTeacherId: null,
         selectedSessionId: null,
         pickupContacts: [],
@@ -170,9 +170,7 @@
         document.getElementById('enrollment-progress').innerText = `PROGRESS: STEP ${stepNum} OF 6`;
     }
 
-    // INITIAL LOAD
     async function init() {
-        // Apply the local franchise ID to the hidden/readonly field immediately [cite: 2026-02-05]
         document.getElementById('p_fran_id').value = state.currentFranchiseId;
 
         const [pRes, fRes, tRes, qRes, sRes] = await Promise.all([
@@ -227,7 +225,7 @@
                     email: document.getElementById('p_email').value,
                     phone: document.getElementById('p_phone').value,
                     address: document.getElementById('p_address').value,
-                    franchise_id: state.currentFranchiseId, // Always use local ID [cite: 2026-02-05]
+                    franchise_id: state.currentFranchiseId, 
                     is_active: true
                 };
                 const res = await fetch(PARENT_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)});
@@ -239,11 +237,11 @@
                 state.currentFranchiseId = p.franchise_id;
             }
 
-            // Populate Profile View
-            document.getElementById('disp-p-fran').innerText = state.currentFranchiseId;
+            // POPULATE PROFILE VIEW WITH FRANCHISE NAME INSTEAD OF ID [cite: 2026-02-05]
+            const franchise = state.allFranchises.find(f => f.id === state.currentFranchiseId);
+            document.getElementById('disp-p-fran').innerText = franchise ? franchise.name : state.currentFranchiseId;
             document.getElementById('parent-profile-view').style.display = 'grid';
 
-            // Filter Student List
             const sRes = await fetch(STUDENT_API + "?parent_id=" + state.currentParentId).then(r => r.json());
             const sSel = document.getElementById('s_select_id');
             sSel.innerHTML = '<option value="">-- Select --</option>';
