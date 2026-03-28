@@ -41,7 +41,16 @@
 </style>
 
 <div id="enrollment-ui" class="enrollment-wrapper">
-    <div id="enrollment-progress" style="text-align: right; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 12px; text-transform: uppercase;">Step 1 of 6: Guardian Verification</div>
+    <div id="enrollment-progress" style="text-align: right; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 12px; text-transform: uppercase;">Awaiting Configuration</div>
+
+    <div id="step-location" class="step-container" style="display:none;">
+        <h2 class="nest-header"><span class="badge-step">0</span> Select Target Branch</h2>
+        <div class="step-content" style="margin-top:20px;">
+            <label>Operating Location</label>
+            <select id="ho_franchise_selector"></select>
+            <button onclick="lockLocation()" class="btn-teal">Initialize Branch Session</button>
+        </div>
+    </div>
 
     <div id="step-parent" class="step-container step-active">
         <div class="loading-overlay" id="loader-parent">SYNCING NESTMIND DATABASE...</div>
@@ -51,7 +60,7 @@
             <div class="profile-item"><div class="profile-label">Primary Account</div><div id="disp-p-name" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Contact Email</div><div id="disp-p-email" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Mobile Number</div><div id="disp-p-phone" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Assigned Branch</div><div class="profile-value">Sariaya</div></div>
+            <div class="profile-item"><div class="profile-label">Assigned Branch</div><div id="disp-p-branch" class="profile-value">Sariaya</div></div>
         </div>
         <div class="step-content" style="margin-top:20px;">
             <div id="parent-select-mode"><label>Quick Search</label><input type="text" id="p_search" placeholder="Filter..." onkeyup="filterParents()"><select id="p_select_id" size="5"></select></div>
@@ -177,10 +186,24 @@
         questions: `${API_BASE}:ptE37CdX/student_assessment_questions`,
         pickup: `${API_BASE}:iEHfqd-N/student_authorized_pickup`,
         enrollment: `${API_BASE}:IwtDgUwD/session_enrollment`,
-        session: `${API_BASE}:mUsV7Zqx/session`
+        session: `${API_BASE}:mUsV7Zqx/session`,
+        franchise: `${API_BASE}:IwtDgUwD/franchise`
     };
 
-    let state = { currentParentId: null, currentStudentId: null, currentFranchiseId: 3, pickupContacts: [], allParents: [], selectedQuestionCount: 0, studentData: {}, sessionData: {} };
+    // User Role Context (Assumed from session)
+    const USER_ROLE = "Head Office"; // This would be dynamic in your actual build
+
+    let state = { 
+        currentParentId: null, 
+        currentStudentId: null, 
+        currentFranchiseId: 3, 
+        pickupContacts: [], 
+        allParents: [], 
+        allFranchises: [],
+        selectedQuestionCount: 0, 
+        studentData: {}, 
+        sessionData: {} 
+    };
 
     function showLoader(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
     
@@ -202,6 +225,18 @@
 
     async function init() {
         try {
+            // Load Franchises if Head Office
+            if(USER_ROLE === "Head Office") {
+                const fRes = await fetch(ENDPOINTS.franchise).then(r => r.json());
+                state.allFranchises = fRes;
+                const fSel = document.getElementById('ho_franchise_selector');
+                fSel.innerHTML = '';
+                fRes.forEach(f => fSel.innerHTML += `<option value="${f.id}">${f.name}</option>`);
+                document.getElementById('step-location').style.display = 'block';
+                document.getElementById('step-parent').classList.add('step-locked');
+                document.getElementById('step-parent').classList.remove('step-active');
+            }
+
             const [pRes, tRes, qRes, sRes] = await Promise.all([
                 fetch(ENDPOINTS.parent).then(r => r.json()),
                 fetch(ENDPOINTS.teacher).then(r => r.json()),
@@ -212,6 +247,7 @@
             state.allParents = pRes;
             renderParentList(pRes);
 
+            // Filter teachers based on chosen/default franchise
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
             tRes.filter(t => t.franchise_id === state.currentFranchiseId).forEach(t => {
@@ -219,6 +255,7 @@
             });
 
             const qGrid = document.getElementById('assessment-qa-grid');
+            qGrid.innerHTML = ''; // Clear for re-init
             qRes.forEach((q, i) => {
                 let optionsHtml = '';
                 for(let j=1; j<=6; j++) { if(q[`answer_${j}`]) optionsHtml += `<option>${q[`answer_${j}`]}</option>`; }
@@ -230,12 +267,35 @@
                 qGrid.appendChild(row);
             });
 
+            // Filter sessions based on chosen/default franchise
             const sSel = document.getElementById('enrollment_session_id');
             sSel.innerHTML = '<option value="">-- Select Academic Session --</option>';
-            sRes.forEach(s => sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
+            sRes.filter(s => s.franchise_id === state.currentFranchiseId).forEach(s => {
+                sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+            });
             state.allSessions = sRes;
+            
+            if(USER_ROLE !== "Head Office") {
+                document.getElementById('enrollment-progress').innerText = `Step 1 of 6`;
+            }
+
         } catch(e) { console.error(e); }
     }
+
+    window.lockLocation = () => {
+        state.currentFranchiseId = parseInt(document.getElementById('ho_franchise_selector').value);
+        const branchName = state.allFranchises.find(f => f.id === state.currentFranchiseId).name;
+        document.getElementById('disp-p-branch').innerText = branchName;
+        
+        // Hide Step 0 and unlock Step 1
+        document.getElementById('step-location').style.display = 'none';
+        document.getElementById('step-parent').classList.remove('step-locked');
+        document.getElementById('step-parent').classList.add('step-active');
+        document.getElementById('enrollment-progress').innerText = `Step 1 of 6`;
+        
+        // Re-init data filters
+        init(); 
+    };
 
     window.handleQuestionSelection = (cb, index) => {
         const row = cb.closest('.qa-row');
