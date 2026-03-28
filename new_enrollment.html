@@ -11,18 +11,21 @@
         .nest-header { color: var(--nest-dark); font-weight: 800; margin-bottom: 8px; font-size: 1.3rem; letter-spacing: -0.5px; display: flex; align-items: center; }
         .progress-bar { text-align: right; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 12px; text-transform: uppercase; }
         
+        /* Profile Summary Displays */
         .profile-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid var(--nest-border); margin-top: 10px; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; box-sizing: border-box; }
         .profile-item { display: flex; flex-direction: column; }
         .profile-label { font-size: 0.55rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
         .profile-value { font-size: 0.85rem; color: #334155; font-weight: 600; }
         .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
         
+        /* Step Containers */
         .step-container { background: white; border: 1px solid var(--nest-border); border-radius: 8px; padding: 25px; margin-bottom: 15px; transition: all 0.3s ease; position: relative; }
         .step-locked { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
         .step-active { border-left: 6px solid var(--nest-teal); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .step-saved { border-left: 6px solid #cbd5e1; background: #f8fafc; }
         .step-saved .step-content { display: none; }
         
+        /* Form Elements */
         label { display: block; font-size: 0.6rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; margin-top: 10px; }
         input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; font-size: 0.8rem; background: #f8fafc; box-sizing: border-box; font-family: inherit; }
         .btn-teal { background-color: var(--nest-teal); color: #fff; padding: 14px 24px; border-radius: 6px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; margin-top: 15px; width: 100%; transition: opacity 0.2s; }
@@ -30,6 +33,7 @@
         .btn-secondary { background: #64748b; margin-top: 10px; }
         .badge-step { background: var(--nest-dark); color: white; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; flex-shrink: 0; }
         
+        /* Assessment Grid */
         .qa-row { display: grid; grid-template-columns: 40px 2fr 1fr; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
         .q-select-ans { visibility: hidden; }
         .qa-row.selected { background: #f0fdfa; }
@@ -160,7 +164,6 @@
 <script>
 (function() {
     const API_BASE = "https://x8ki-letl-twmt.n7.xano.io/api";
-    const HEAD_OFFICE_ID = 12;
 
     const ENDPOINTS = {
         franchise: `${API_BASE}:mXEfdJlg/franchise`, 
@@ -189,8 +192,11 @@
             const franchises = await res.json();
             const sel = document.getElementById('ho_franchise_selector');
             
-            // Fixed identity detection logic
-            const idElement = document.querySelector('.IDENTITY-LOCK-TEXT-ELEMENT') || document.querySelector('.sidebar-branch-name');
+            // RESTORED: This is the exact logic for finding the branch in the sidebar
+            const idElement = document.querySelector('.IDENTITY-LOCK-TEXT-ELEMENT') || 
+                              document.querySelector('.sidebar-branch-name') ||
+                              Array.from(document.querySelectorAll('div')).find(el => el.textContent.trim() === 'Sariaya' || el.textContent.trim() === 'Lucena' || el.textContent.trim() === 'Candelaria');
+            
             const currentIdentityText = idElement ? idElement.innerText.trim() : ""; 
             
             sel.innerHTML = '<option value="">-- Choose Branch --</option>';
@@ -198,7 +204,7 @@
                 sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
             });
 
-            // Re-established the Sariaya/Branch Auto-lock
+            // Re-established the mandatory lock for Sariaya/Lucena etc.
             if (currentIdentityText && currentIdentityText.toLowerCase() !== "head office") {
                 const currentBranch = franchises.find(f => f.name.toLowerCase() === currentIdentityText.toLowerCase());
                 if (currentBranch) {
@@ -206,8 +212,7 @@
                     sel.disabled = true;
                     sel.style.backgroundColor = "#e2e8f0";
                     state.currentFranchiseId = currentBranch.id;
-                    moveToStep('step-location', 'step-parent', 1);
-                    await fetchBranchData();
+                    await lockLocation(); 
                 }
             }
         } catch(e) { console.error("Identity Sync failed", e); }
@@ -230,6 +235,7 @@
                 fetch(ENDPOINTS.questions).then(r => r.json()),
                 fetch(ENDPOINTS.session).then(r => r.json())
             ]);
+            
             state.allParents = p.filter(x => x.franchise_id === state.currentFranchiseId);
             renderParentList(state.allParents);
             
@@ -259,8 +265,8 @@
     }
 
     window.processParentStep = async () => {
-        const isNewParent = document.getElementById('parent-create-mode').style.display === 'block';
-        if (isNewParent) {
+        const isNew = document.getElementById('parent-create-mode').style.display === 'block';
+        if (isNew) {
             const res = await fetch(ENDPOINTS.parent, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -278,6 +284,7 @@
             state.currentParentId = data.id;
             updateParentSummary(data);
             
+            // Auto-toggle student to create mode for new parents
             document.getElementById('student-select-mode').style.display = 'none';
             document.getElementById('student-create-mode').style.display = 'block';
             document.getElementById('student-toggle-btn').style.display = 'none'; 
@@ -351,6 +358,7 @@
         if(!teacherId || !date) return alert("Missing assessment details");
 
         const selectedRows = document.querySelectorAll('.qa-row.selected');
+        // FULL RESTORE: Loop through and post every assessment item
         for(let row of selectedRows) {
             const qid = row.querySelector('input').dataset.qid;
             const ans = row.querySelector('.ans-val').value;
@@ -396,7 +404,9 @@
                 <div><strong>${contact.name}</strong> (${contact.relationship})</div>
                 <div style="font-size:0.75rem">${contact.phone}</div>
             </div>`;
-        document.getElementById('pu_name').value = ''; document.getElementById('pu_rel').value = ''; document.getElementById('pu_phone').value = '';
+        document.getElementById('pu_name').value = ''; 
+        document.getElementById('pu_rel').value = ''; 
+        document.getElementById('pu_phone').value = '';
     };
 
     window.finalizePickups = () => moveToStep('step-pickup', 'step-final', 6);
@@ -410,11 +420,15 @@
                 start_date: document.getElementById('final_start_date').value,
                 franchise_id: state.currentFranchiseId
             };
+            
+            // Master enrollment record
             await fetch(ENDPOINTS.enrollment, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(enrollPayload) });
 
+            // Post all pickup contacts
             for (let c of state.pickupContacts) {
                 await fetch(ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) });
             }
+            
             alert("Enrollment Successful");
             location.reload();
         } catch(e) { console.error(e); }
