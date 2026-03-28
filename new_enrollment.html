@@ -52,7 +52,7 @@
         <div class="step-content">
             <label>Operating Location</label>
             <select id="ho_franchise_selector">
-                <option value="">Loading full network...</option>
+                <option value="">Syncing with Network...</option>
             </select>
             <button onclick="lockLocation()" class="btn-teal">Initialize System</button>
         </div>
@@ -163,16 +163,17 @@
 
 <script>
 (function() {
+    // UPDATED API ENDPOINTS
     const API_BASE = "https://x8ki-letl-twmt.n7.xano.io/api";
     const ENDPOINTS = {
+        franchise: `${API_BASE}:mXEfdJlg/franchise`, // Corrected Franchise Endpoint
         parent: `${API_BASE}:8Je8Zszx/parent`, 
         student: `${API_BASE}:iEHfqd-N/student`,
         teacher: `${API_BASE}:xLIeVP2e/teacher`,
         questions: `${API_BASE}:ptE37CdX/student_assessment_questions`,
         pickup: `${API_BASE}:iEHfqd-N/student_authorized_pickup`,
         enrollment: `${API_BASE}:IwtDgUwD/session_enrollment`,
-        session: `${API_BASE}:mUsV7Zqx/session`,
-        franchise: `${API_BASE}:IwtDgUwD/franchise`
+        session: `${API_BASE}:mUsV7Zqx/session`
     };
 
     let state = { 
@@ -184,24 +185,33 @@
         selectedQuestionCount: 0 
     };
 
-    // 1. INITIAL LOAD: FETCH THE ENTIRE NETWORK
+    // 1. INITIAL LOAD: FETCH THE ENTIRE NETWORK FROM THE CORRECT ENDPOINT
     async function initNetwork() {
         try {
             const res = await fetch(ENDPOINTS.franchise);
             const franchises = await res.json();
             const sel = document.getElementById('ho_franchise_selector');
             sel.innerHTML = '<option value="">-- Choose Branch --</option>';
-            franchises.sort((a,b) => a.name.localeCompare(b.name)).forEach(f => {
-                sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
-            });
-        } catch(e) { console.error("Xano connection failed", e); }
+            
+            franchises
+                .sort((a,b) => a.name.localeCompare(b.name))
+                .forEach(f => {
+                    sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
+                });
+            
+            // Auto-select Head Office if found in the list
+            const ho = franchises.find(f => f.name === 'Head Office');
+            if(ho) {
+                sel.value = ho.id;
+            }
+        } catch(e) { console.error("Network Fetch Failed:", e); }
     }
     initNetwork();
 
-    // 2. INITIALIZE SELECTED BRANCH
+    // 2. LOCK SELECTED BRANCH
     window.lockLocation = async () => {
         const val = document.getElementById('ho_franchise_selector').value;
-        if(!val) return alert("Select a location.");
+        if(!val) return alert("Select a location to initialize the system.");
         state.currentFranchiseId = parseInt(val);
         document.getElementById('step-location').classList.replace('step-active', 'step-saved');
         document.getElementById('step-parent').classList.remove('step-locked');
@@ -222,7 +232,6 @@
             state.allParents = p;
             renderParentList(p);
             
-            // Filter teachers and sessions by branch
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
             t.filter(x => x.franchise_id === state.currentFranchiseId).forEach(x => {
@@ -277,7 +286,6 @@
             updateParentSummary(data);
         }
         
-        // Load children linked to this parent
         const children = await fetch(`${ENDPOINTS.student}?parent_id=${state.currentParentId}`).then(r => r.json());
         const sSel = document.getElementById('s_select_id');
         sSel.innerHTML = '<option value="">-- Select Child --</option>';
