@@ -5,41 +5,183 @@
     <title>NestMind Enrollment Master</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --nest-teal: #00d1b2; --nest-dark: #1e293b; --nest-bg: #f1f5f9; --nest-border: #e2e8f0; }
-        body { margin: 0; padding: 0; background: var(--nest-bg); font-family: 'Inter', sans-serif; color: var(--nest-dark); }
-        .enrollment-wrapper { width: 100%; max-width: 900px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
-        .nest-header { color: var(--nest-dark); font-weight: 800; margin-bottom: 8px; font-size: 1.3rem; letter-spacing: -0.5px; display: flex; align-items: center; }
-        .progress-bar { text-align: right; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 12px; text-transform: uppercase; }
+        :root { 
+            --nest-teal: #00d1b2; 
+            --nest-dark: #1e293b; 
+            --nest-bg: #f1f5f9; 
+            --nest-border: #e2e8f0; 
+        }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background: var(--nest-bg); 
+            font-family: 'Inter', sans-serif; 
+            color: var(--nest-dark); 
+        }
+        .enrollment-wrapper { 
+            width: 100%; 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            box-sizing: border-box; 
+        }
+        .nest-header { 
+            color: var(--nest-dark); 
+            font-weight: 800; 
+            margin-bottom: 8px; 
+            font-size: 1.3rem; 
+            letter-spacing: -0.5px; 
+            display: flex; 
+            align-items: center; 
+        }
+        .progress-bar { 
+            text-align: right; 
+            font-size: 0.7rem; 
+            font-weight: 800; 
+            color: #64748b; 
+            margin-bottom: 12px; 
+            text-transform: uppercase; 
+        }
         
         /* Profile Summary Displays */
-        .profile-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid var(--nest-border); margin-top: 10px; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; box-sizing: border-box; }
+        .profile-display { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+            gap: 10px; 
+            background: #fff; 
+            padding: 15px; 
+            border-radius: 6px; 
+            border: 1px solid var(--nest-border); 
+            margin-top: 10px; 
+            width: 100%; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
+            position: relative; 
+            box-sizing: border-box; 
+        }
         .profile-item { display: flex; flex-direction: column; }
-        .profile-label { font-size: 0.55rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
-        .profile-value { font-size: 0.85rem; color: #334155; font-weight: 600; }
-        .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+        .profile-label { 
+            font-size: 0.55rem; 
+            font-weight: 800; 
+            color: #64748b; 
+            text-transform: uppercase; 
+            margin-bottom: 2px; 
+            letter-spacing: 0.5px; 
+        }
+        .profile-value { 
+            font-size: 0.85rem; 
+            color: #334155; 
+            font-weight: 600; 
+        }
+        .edit-pill { 
+            position: absolute; 
+            top: 10px; 
+            right: 10px; 
+            background: #f1f5f9; 
+            color: #64748b; 
+            border: 1px solid var(--nest-border); 
+            padding: 4px 10px; 
+            border-radius: 4px; 
+            font-size: 0.6rem; 
+            font-weight: 800; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+        }
         
         /* Step Containers */
-        .step-container { background: white; border: 1px solid var(--nest-border); border-radius: 8px; padding: 25px; margin-bottom: 15px; transition: all 0.3s ease; position: relative; }
+        .step-container { 
+            background: white; 
+            border: 1px solid var(--nest-border); 
+            border-radius: 8px; 
+            padding: 25px; 
+            margin-bottom: 15px; 
+            transition: all 0.3s ease; 
+            position: relative; 
+        }
         .step-locked { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
-        .step-active { border-left: 6px solid var(--nest-teal); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .step-saved { border-left: 6px solid #cbd5e1; background: #f8fafc; }
+        .step-active { 
+            border-left: 6px solid var(--nest-teal); 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); 
+        }
+        .step-saved { 
+            border-left: 6px solid #cbd5e1; 
+            background: #f8fafc; 
+        }
         .step-saved .step-content { display: none; }
         
         /* Form Elements */
-        label { display: block; font-size: 0.6rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; margin-top: 10px; }
-        input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; font-size: 0.8rem; background: #f8fafc; box-sizing: border-box; font-family: inherit; }
-        .btn-teal { background-color: var(--nest-teal); color: #fff; padding: 14px 24px; border-radius: 6px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; margin-top: 15px; width: 100%; transition: opacity 0.2s; }
+        label { 
+            display: block; 
+            font-size: 0.6rem; 
+            font-weight: 800; 
+            color: #475569; 
+            text-transform: uppercase; 
+            margin-bottom: 4px; 
+            margin-top: 10px; 
+        }
+        input, select, textarea { 
+            width: 100%; 
+            border: 1px solid #cbd5e1; 
+            padding: 10px; 
+            border-radius: 6px; 
+            font-size: 0.8rem; 
+            background: #f8fafc; 
+            box-sizing: border-box; 
+            font-family: inherit; 
+        }
+        .btn-teal { 
+            background-color: var(--nest-teal); 
+            color: #fff; 
+            padding: 14px 24px; 
+            border-radius: 6px; 
+            font-weight: 700; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 0.8rem; 
+            text-transform: uppercase; 
+            margin-top: 15px; 
+            width: 100%; 
+            transition: opacity 0.2s; 
+        }
         .btn-teal:hover { opacity: 0.9; }
         .btn-secondary { background: #64748b; margin-top: 10px; }
-        .badge-step { background: var(--nest-dark); color: white; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; flex-shrink: 0; }
+        .badge-step { 
+            background: var(--nest-dark); 
+            color: white; 
+            width: 26px; 
+            height: 26px; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 50%; 
+            font-size: 0.8rem; 
+            margin-right: 12px; 
+            flex-shrink: 0; 
+        }
         
         /* Assessment Grid */
-        .qa-row { display: grid; grid-template-columns: 40px 2fr 1fr; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
+        .qa-row { 
+            display: grid; 
+            grid-template-columns: 40px 2fr 1.5fr; 
+            gap: 10px; 
+            align-items: center; 
+            padding: 12px; 
+            border-bottom: 1px solid #f1f5f9; 
+            font-size: 0.85rem; 
+        }
         .q-select-ans { visibility: hidden; }
         .qa-row.selected { background: #f0fdfa; }
         .qa-row.selected .q-select-ans { visibility: visible; }
         
-        .pickup-card { background: #fff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .pickup-card { 
+            background: #fff; 
+            border: 1px solid #e2e8f0; 
+            padding: 10px; 
+            border-radius: 6px; 
+            margin-bottom: 5px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
     </style>
 </head>
 <body>
@@ -192,9 +334,8 @@
             const franchises = await res.json();
             const sel = document.getElementById('ho_franchise_selector');
             
-            const idElement = document.querySelector('.IDENTITY-LOCK-TEXT-ELEMENT') || 
-                              document.querySelector('.sidebar-branch-name') ||
-                              Array.from(document.querySelectorAll('div')).find(el => el.textContent.trim() === 'Sariaya' || el.textContent.trim() === 'Lucena' || el.textContent.trim() === 'Candelaria');
+            const idElement = document.querySelector('.sidebar-branch-name') ||
+                              Array.from(document.querySelectorAll('div')).find(el => el.textContent.trim() === 'Sariaya' || el.textContent.trim() === 'Lucena');
             
             const currentIdentityText = idElement ? idElement.innerText.trim() : ""; 
             
@@ -252,11 +393,19 @@
             const qGrid = document.getElementById('assessment-qa-grid');
             qGrid.innerHTML = '';
             q.forEach(item => {
+                // Fixed logic to gather all 4 potential answers
+                const rawAns = [item.answer_1, item.answer_2, item.answer_3, item.answer_4];
+                const validAns = rawAns.filter(a => a && a.toString().trim() !== "");
+                let optionsHtml = '';
+                validAns.forEach(val => { optionsHtml += `<option value="${val}">${val}</option>`; });
+
                 qGrid.innerHTML += `
                     <div class="qa-row">
                         <div><input type="checkbox" data-qid="${item.id}" onchange="handleQS(this)"></div>
                         <div>${item.the_question}</div>
-                        <div class="q-select-ans"><select class="ans-val"><option value="${item.answer_1}">${item.answer_1}</option><option value="${item.answer_2}">${item.answer_2}</option></select></div>
+                        <div class="q-select-ans">
+                            <select class="ans-val">${optionsHtml}</select>
+                        </div>
                     </div>`;
             });
         } catch(e) { console.error("Sync failed", e); }
@@ -294,10 +443,7 @@
             const data = await fetch(`${ENDPOINTS.parent}/${state.currentParentId}`).then(r => r.json());
             updateParentSummary(data);
             
-            // FILTER REINFORCEMENT: Fetch specifically by parent_id
             const children = await fetch(`${ENDPOINTS.student}?parent_id=${state.currentParentId}`).then(r => r.json());
-            
-            // MOAT: JavaScript fallback filter to ensure identity lock
             const linkedChildren = children.filter(c => c.parent_id === state.currentParentId);
             
             if (linkedChildren.length > 0) {
