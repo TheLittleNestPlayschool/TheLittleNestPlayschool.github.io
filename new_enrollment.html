@@ -178,6 +178,7 @@
             justify-content: space-between; 
             align-items: center; 
         }
+        .full-width-summary { grid-column: 1 / -1; }
     </style>
 </head>
 <body>
@@ -275,8 +276,10 @@
         <h2 class="nest-header"><span class="badge-step">5</span> Pickup Security</h2>
         <div id="pickup-summary-view" style="display:none;" class="profile-display">
             <button class="edit-pill" onclick="unlockStep('step-pickup', 'pickup-summary-view')">Modify</button>
-            <div class="profile-item"><div class="profile-label">Authorized Count</div><div id="disp-pu-count" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Primary Contact</div><div id="disp-pu-first" class="profile-value"></div></div>
+            <div class="profile-item full-width-summary">
+                <div class="profile-label">Authorized Pickup List</div>
+                <div id="disp-pu-list" style="margin-top:5px;"></div>
+            </div>
         </div>
         <div class="step-content">
             <div id="pickup-entry-list" style="margin-bottom:15px;"></div>
@@ -536,8 +539,14 @@
 
     window.finalizePickups = () => {
         if(state.pickupContacts.length === 0) return alert("Add at least one pickup contact");
-        document.getElementById('disp-pu-count').innerText = `${state.pickupContacts.length} Contacts Registered`;
-        document.getElementById('disp-pu-first').innerText = state.pickupContacts[0].name;
+        const listContainer = document.getElementById('disp-pu-list');
+        listContainer.innerHTML = '';
+        state.pickupContacts.forEach(contact => {
+            listContainer.innerHTML += `
+                <div style="font-size:0.8rem; margin-bottom:5px; padding-bottom:5px; border-bottom: 1px solid #f1f5f9;">
+                    <strong>${contact.name}</strong> • ${contact.relationship} • ${contact.phone}
+                </div>`;
+        });
         document.getElementById('pickup-summary-view').style.display = 'grid';
         moveToStep('step-pickup', 'step-final', 6);
     };
