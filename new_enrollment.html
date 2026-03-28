@@ -264,6 +264,9 @@
 
     window.processParentStep = async () => {
         const isNew = document.getElementById('parent-create-mode').style.display === 'block';
+        const sSel = document.getElementById('s_select_id');
+        sSel.innerHTML = '<option value="">-- Select Child --</option>';
+
         if (isNew) {
             const res = await fetch(ENDPOINTS.parent, {
                 method: 'POST',
@@ -291,13 +294,14 @@
             const data = await fetch(`${ENDPOINTS.parent}/${state.currentParentId}`).then(r => r.json());
             updateParentSummary(data);
             
-            // KEY FIX: Filter specifically by parent_id to prevent showing all children
+            // FILTER REINFORCEMENT: Fetch specifically by parent_id
             const children = await fetch(`${ENDPOINTS.student}?parent_id=${state.currentParentId}`).then(r => r.json());
-            const sSel = document.getElementById('s_select_id');
-            sSel.innerHTML = '<option value="">-- Select Child --</option>';
             
-            if (children.length > 0) {
-                children.forEach(c => sSel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+            // MOAT: JavaScript fallback filter to ensure identity lock
+            const linkedChildren = children.filter(c => c.parent_id === state.currentParentId);
+            
+            if (linkedChildren.length > 0) {
+                linkedChildren.forEach(c => sSel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
                 document.getElementById('student-select-mode').style.display = 'block';
                 document.getElementById('student-create-mode').style.display = 'none';
             } else {
