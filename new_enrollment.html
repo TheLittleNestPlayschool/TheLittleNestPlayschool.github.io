@@ -43,7 +43,6 @@
             text-transform: uppercase; 
         }
         
-        /* Profile Summary Displays */
         .profile-display { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
@@ -87,7 +86,6 @@
             text-transform: uppercase; 
         }
         
-        /* Step Containers */
         .step-container { 
             background: white; 
             border: 1px solid var(--nest-border); 
@@ -108,7 +106,6 @@
         }
         .step-saved .step-content { display: none; }
         
-        /* Form Elements */
         label { 
             display: block; 
             font-size: 0.6rem; 
@@ -158,7 +155,6 @@
             flex-shrink: 0; 
         }
         
-        /* Assessment Grid */
         .qa-row { 
             display: grid; 
             grid-template-columns: 40px 2fr 1.5fr; 
@@ -193,9 +189,7 @@
         <h2 class="nest-header"><span class="badge-step">0</span> Select Branch</h2>
         <div class="step-content">
             <label>Operating Location</label>
-            <select id="ho_franchise_selector">
-                <option value="">Syncing with Network...</option>
-            </select>
+            <select id="ho_franchise_selector"><option value="">Syncing with Network...</option></select>
             <button id="init-btn" onclick="lockLocation()" class="btn-teal">Initialize System</button>
         </div>
     </div>
@@ -279,6 +273,11 @@
 
     <div id="step-pickup" class="step-container step-locked">
         <h2 class="nest-header"><span class="badge-step">5</span> Pickup Security</h2>
+        <div id="pickup-summary-view" style="display:none;" class="profile-display">
+            <button class="edit-pill" onclick="unlockStep('step-pickup', 'pickup-summary-view')">Modify</button>
+            <div class="profile-item"><div class="profile-label">Authorized Count</div><div id="disp-pu-count" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">Primary Contact</div><div id="disp-pu-first" class="profile-value"></div></div>
+        </div>
         <div class="step-content">
             <div id="pickup-entry-list" style="margin-bottom:15px;"></div>
             <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid var(--nest-border);">
@@ -306,7 +305,6 @@
 <script>
 (function() {
     const API_BASE = "https://x8ki-letl-twmt.n7.xano.io/api";
-
     const ENDPOINTS = {
         franchise: `${API_BASE}:mXEfdJlg/franchise`, 
         parent: `${API_BASE}:8Je8Zszx/parent`, 
@@ -320,12 +318,8 @@
     };
 
     let state = { 
-        currentParentId: null, 
-        currentStudentId: null, 
-        currentFranchiseId: null, 
-        pickupContacts: [], 
-        allParents: [], 
-        selectedQuestionCount: 0 
+        currentParentId: null, currentStudentId: null, currentFranchiseId: null, 
+        pickupContacts: [], allParents: [], selectedQuestionCount: 0 
     };
 
     async function initNetwork() {
@@ -333,10 +327,8 @@
             const res = await fetch(ENDPOINTS.franchise);
             const franchises = await res.json();
             const sel = document.getElementById('ho_franchise_selector');
-            
             const idElement = document.querySelector('.sidebar-branch-name') ||
                               Array.from(document.querySelectorAll('div')).find(el => el.textContent.trim() === 'Sariaya' || el.textContent.trim() === 'Lucena');
-            
             const currentIdentityText = idElement ? idElement.innerText.trim() : ""; 
             
             sel.innerHTML = '<option value="">-- Choose Branch --</option>';
@@ -347,9 +339,7 @@
             if (currentIdentityText && currentIdentityText.toLowerCase() !== "head office") {
                 const currentBranch = franchises.find(f => f.name.toLowerCase() === currentIdentityText.toLowerCase());
                 if (currentBranch) {
-                    sel.value = currentBranch.id;
-                    sel.disabled = true;
-                    sel.style.backgroundColor = "#e2e8f0";
+                    sel.value = currentBranch.id; sel.disabled = true;
                     state.currentFranchiseId = currentBranch.id;
                     await lockLocation(); 
                 }
@@ -374,7 +364,6 @@
                 fetch(ENDPOINTS.questions).then(r => r.json()),
                 fetch(ENDPOINTS.session).then(r => r.json())
             ]);
-            
             state.allParents = p.filter(x => x.franchise_id === state.currentFranchiseId);
             renderParentList(state.allParents);
             
@@ -393,19 +382,15 @@
             const qGrid = document.getElementById('assessment-qa-grid');
             qGrid.innerHTML = '';
             q.forEach(item => {
-                // Fixed logic to gather all 4 potential answers
                 const rawAns = [item.answer_1, item.answer_2, item.answer_3, item.answer_4];
                 const validAns = rawAns.filter(a => a && a.toString().trim() !== "");
                 let optionsHtml = '';
                 validAns.forEach(val => { optionsHtml += `<option value="${val}">${val}</option>`; });
-
                 qGrid.innerHTML += `
                     <div class="qa-row">
                         <div><input type="checkbox" data-qid="${item.id}" onchange="handleQS(this)"></div>
                         <div>${item.the_question}</div>
-                        <div class="q-select-ans">
-                            <select class="ans-val">${optionsHtml}</select>
-                        </div>
+                        <div class="q-select-ans"><select class="ans-val">${optionsHtml}</select></div>
                     </div>`;
             });
         } catch(e) { console.error("Sync failed", e); }
@@ -433,7 +418,6 @@
             const data = await res.json();
             state.currentParentId = data.id;
             updateParentSummary(data);
-            
             document.getElementById('student-select-mode').style.display = 'none';
             document.getElementById('student-create-mode').style.display = 'block';
             document.getElementById('student-toggle-btn').style.display = 'none'; 
@@ -442,10 +426,8 @@
             if (!state.currentParentId) return alert("Select parent");
             const data = await fetch(`${ENDPOINTS.parent}/${state.currentParentId}`).then(r => r.json());
             updateParentSummary(data);
-            
             const children = await fetch(`${ENDPOINTS.student}?parent_id=${state.currentParentId}`).then(r => r.json());
             const linkedChildren = children.filter(c => c.parent_id === state.currentParentId);
-            
             if (linkedChildren.length > 0) {
                 linkedChildren.forEach(c => sSel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
                 document.getElementById('student-select-mode').style.display = 'block';
@@ -480,8 +462,7 @@
                     is_active: true
                 })
             });
-            const data = await res.json();
-            state.currentStudentId = data.id;
+            const data = await res.json(); state.currentStudentId = data.id;
             updateStudentSummary(data);
         } else {
             state.currentStudentId = parseInt(document.getElementById('s_select_id').value);
@@ -509,24 +490,18 @@
         const teacherId = document.getElementById('a_teacher_id').value;
         const date = document.getElementById('a_assessment_date').value;
         if(!teacherId || !date) return alert("Missing assessment details");
-
         const selectedRows = document.querySelectorAll('.qa-row.selected');
         for(let row of selectedRows) {
             const qid = row.querySelector('input').dataset.qid;
             const ans = row.querySelector('.ans-val').value;
             await fetch(ENDPOINTS.assessment_submit, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    student_id: state.currentStudentId,
-                    teacher_id: parseInt(teacherId),
-                    question_id: parseInt(qid),
-                    answer_text: ans,
-                    assessment_date: date
+                    student_id: state.currentStudentId, teacher_id: parseInt(teacherId),
+                    question_id: parseInt(qid), answer_text: ans, assessment_date: date
                 })
             });
         }
-        
         document.getElementById('disp-a-teacher').innerText = document.getElementById('a_teacher_id').options[document.getElementById('a_teacher_id').selectedIndex].text;
         document.getElementById('disp-a-count').innerText = `${state.selectedQuestionCount} items assessed`;
         document.getElementById('assessment-summary-view').style.display = 'grid';
@@ -556,12 +531,16 @@
                 <div><strong>${contact.name}</strong> (${contact.relationship})</div>
                 <div style="font-size:0.75rem">${contact.phone}</div>
             </div>`;
-        document.getElementById('pu_name').value = ''; 
-        document.getElementById('pu_rel').value = ''; 
-        document.getElementById('pu_phone').value = '';
+        document.getElementById('pu_name').value = ''; document.getElementById('pu_rel').value = ''; document.getElementById('pu_phone').value = '';
     };
 
-    window.finalizePickups = () => moveToStep('step-pickup', 'step-final', 6);
+    window.finalizePickups = () => {
+        if(state.pickupContacts.length === 0) return alert("Add at least one pickup contact");
+        document.getElementById('disp-pu-count').innerText = `${state.pickupContacts.length} Contacts Registered`;
+        document.getElementById('disp-pu-first').innerText = state.pickupContacts[0].name;
+        document.getElementById('pickup-summary-view').style.display = 'grid';
+        moveToStep('step-pickup', 'step-final', 6);
+    };
 
     window.submitFinalEnrollment = async () => {
         try {
@@ -572,13 +551,10 @@
                 start_date: document.getElementById('final_start_date').value,
                 franchise_id: state.currentFranchiseId
             };
-            
             await fetch(ENDPOINTS.enrollment, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(enrollPayload) });
-
             for (let c of state.pickupContacts) {
                 await fetch(ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) });
             }
-            
             alert("Enrollment Successful");
             location.reload();
         } catch(e) { console.error(e); }
@@ -614,8 +590,7 @@
     };
 
     function renderParentList(list) {
-        const sel = document.getElementById('p_select_id');
-        sel.innerHTML = '';
+        const sel = document.getElementById('p_select_id'); sel.innerHTML = '';
         list.forEach(p => { sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`; });
     }
 })();
