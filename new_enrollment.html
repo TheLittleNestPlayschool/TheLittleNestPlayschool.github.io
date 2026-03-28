@@ -192,7 +192,6 @@
             const franchises = await res.json();
             const sel = document.getElementById('ho_franchise_selector');
             
-            // RESTORED: This is the exact logic for finding the branch in the sidebar
             const idElement = document.querySelector('.IDENTITY-LOCK-TEXT-ELEMENT') || 
                               document.querySelector('.sidebar-branch-name') ||
                               Array.from(document.querySelectorAll('div')).find(el => el.textContent.trim() === 'Sariaya' || el.textContent.trim() === 'Lucena' || el.textContent.trim() === 'Candelaria');
@@ -204,7 +203,6 @@
                 sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
             });
 
-            // Re-established the mandatory lock for Sariaya/Lucena etc.
             if (currentIdentityText && currentIdentityText.toLowerCase() !== "head office") {
                 const currentBranch = franchises.find(f => f.name.toLowerCase() === currentIdentityText.toLowerCase());
                 if (currentBranch) {
@@ -284,7 +282,6 @@
             state.currentParentId = data.id;
             updateParentSummary(data);
             
-            // Auto-toggle student to create mode for new parents
             document.getElementById('student-select-mode').style.display = 'none';
             document.getElementById('student-create-mode').style.display = 'block';
             document.getElementById('student-toggle-btn').style.display = 'none'; 
@@ -294,13 +291,19 @@
             const data = await fetch(`${ENDPOINTS.parent}/${state.currentParentId}`).then(r => r.json());
             updateParentSummary(data);
             
+            // KEY FIX: Filter specifically by parent_id to prevent showing all children
             const children = await fetch(`${ENDPOINTS.student}?parent_id=${state.currentParentId}`).then(r => r.json());
             const sSel = document.getElementById('s_select_id');
             sSel.innerHTML = '<option value="">-- Select Child --</option>';
-            children.forEach(c => sSel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
             
-            document.getElementById('student-select-mode').style.display = 'block';
-            document.getElementById('student-create-mode').style.display = 'none';
+            if (children.length > 0) {
+                children.forEach(c => sSel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+                document.getElementById('student-select-mode').style.display = 'block';
+                document.getElementById('student-create-mode').style.display = 'none';
+            } else {
+                document.getElementById('student-select-mode').style.display = 'none';
+                document.getElementById('student-create-mode').style.display = 'block';
+            }
             document.getElementById('student-toggle-btn').style.display = 'block';
         }
         moveToStep('step-parent', 'step-student', 2);
@@ -358,7 +361,6 @@
         if(!teacherId || !date) return alert("Missing assessment details");
 
         const selectedRows = document.querySelectorAll('.qa-row.selected');
-        // FULL RESTORE: Loop through and post every assessment item
         for(let row of selectedRows) {
             const qid = row.querySelector('input').dataset.qid;
             const ans = row.querySelector('.ans-val').value;
@@ -421,10 +423,8 @@
                 franchise_id: state.currentFranchiseId
             };
             
-            // Master enrollment record
             await fetch(ENDPOINTS.enrollment, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(enrollPayload) });
 
-            // Post all pickup contacts
             for (let c of state.pickupContacts) {
                 await fetch(ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) });
             }
