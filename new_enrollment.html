@@ -180,8 +180,7 @@
         currentFranchiseId: null, 
         pickupContacts: [], 
         allParents: [], 
-        selectedQuestionCount: 0,
-        isNewParent: false 
+        selectedQuestionCount: 0 
     };
 
     async function initNetwork() {
@@ -189,22 +188,29 @@
             const res = await fetch(ENDPOINTS.franchise);
             const franchises = await res.json();
             const sel = document.getElementById('ho_franchise_selector');
+            
+            // Fixed identity detection logic
             const idElement = document.querySelector('.IDENTITY-LOCK-TEXT-ELEMENT') || document.querySelector('.sidebar-branch-name');
-            const currentIdentityText = idElement ? idElement.innerText.trim() : "Head Office"; 
+            const currentIdentityText = idElement ? idElement.innerText.trim() : ""; 
             
             sel.innerHTML = '<option value="">-- Choose Branch --</option>';
             franchises.sort((a,b) => a.name.localeCompare(b.name)).forEach(f => {
                 sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
             });
 
-            const currentBranch = franchises.find(f => f.name.toLowerCase() === currentIdentityText.toLowerCase());
-            if (currentBranch && currentBranch.id !== HEAD_OFFICE_ID) {
-                sel.value = currentBranch.id;
-                sel.disabled = true;
-                sel.style.backgroundColor = "#e2e8f0";
-                lockLocation(); 
+            // Re-established the Sariaya/Branch Auto-lock
+            if (currentIdentityText && currentIdentityText.toLowerCase() !== "head office") {
+                const currentBranch = franchises.find(f => f.name.toLowerCase() === currentIdentityText.toLowerCase());
+                if (currentBranch) {
+                    sel.value = currentBranch.id;
+                    sel.disabled = true;
+                    sel.style.backgroundColor = "#e2e8f0";
+                    state.currentFranchiseId = currentBranch.id;
+                    moveToStep('step-location', 'step-parent', 1);
+                    await fetchBranchData();
+                }
             }
-        } catch(e) { console.error("Sync failed", e); }
+        } catch(e) { console.error("Identity Sync failed", e); }
     }
     initNetwork();
 
@@ -242,23 +248,19 @@
             const qGrid = document.getElementById('assessment-qa-grid');
             qGrid.innerHTML = '';
             q.forEach(item => {
-                const row = document.createElement('div');
-                row.className = 'qa-row';
-                row.innerHTML = `
-                    <div><input type="checkbox" data-qid="${item.id}" onchange="handleQS(this)"></div>
-                    <div>${item.the_question}</div>
-                    <div class="q-select-ans"><select class="ans-val"><option value="${item.answer_1}">${item.answer_1}</option><option value="${item.answer_2}">${item.answer_2}</option></select></div>
-                `;
-                qGrid.appendChild(row);
+                qGrid.innerHTML += `
+                    <div class="qa-row">
+                        <div><input type="checkbox" data-qid="${item.id}" onchange="handleQS(this)"></div>
+                        <div>${item.the_question}</div>
+                        <div class="q-select-ans"><select class="ans-val"><option value="${item.answer_1}">${item.answer_1}</option><option value="${item.answer_2}">${item.answer_2}</option></select></div>
+                    </div>`;
             });
         } catch(e) { console.error("Sync failed", e); }
     }
 
     window.processParentStep = async () => {
-        const isNew = document.getElementById('parent-create-mode').style.display === 'block';
-        state.isNewParent = isNew;
-
-        if (isNew) {
+        const isNewParent = document.getElementById('parent-create-mode').style.display === 'block';
+        if (isNewParent) {
             const res = await fetch(ENDPOINTS.parent, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -276,7 +278,6 @@
             state.currentParentId = data.id;
             updateParentSummary(data);
             
-            // GATEKEEPER: New Parent = No Student Search allowed
             document.getElementById('student-select-mode').style.display = 'none';
             document.getElementById('student-create-mode').style.display = 'block';
             document.getElementById('student-toggle-btn').style.display = 'none'; 
@@ -395,9 +396,7 @@
                 <div><strong>${contact.name}</strong> (${contact.relationship})</div>
                 <div style="font-size:0.75rem">${contact.phone}</div>
             </div>`;
-        document.getElementById('pu_name').value = ''; 
-        document.getElementById('pu_rel').value = ''; 
-        document.getElementById('pu_phone').value = '';
+        document.getElementById('pu_name').value = ''; document.getElementById('pu_rel').value = ''; document.getElementById('pu_phone').value = '';
     };
 
     window.finalizePickups = () => moveToStep('step-pickup', 'step-final', 6);
@@ -416,7 +415,7 @@
             for (let c of state.pickupContacts) {
                 await fetch(ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) });
             }
-            alert("Enrollment Successful Master File Generated.");
+            alert("Enrollment Successful");
             location.reload();
         } catch(e) { console.error(e); }
     };
@@ -435,16 +434,14 @@
 
     window.toggleParentMode = () => {
         const s = document.getElementById('parent-select-mode'), c = document.getElementById('parent-create-mode');
-        const searchVis = s.style.display !== 'none';
-        s.style.display = searchVis ? 'none' : 'block';
-        c.style.display = searchVis ? 'block' : 'none';
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        c.style.display = c.style.display === 'none' ? 'block' : 'none';
     };
 
     window.toggleStudentMode = () => {
         const s = document.getElementById('student-select-mode'), c = document.getElementById('student-create-mode');
-        const searchVis = s.style.display !== 'none';
-        s.style.display = searchVis ? 'none' : 'block';
-        c.style.display = searchVis ? 'block' : 'none';
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        c.style.display = c.style.display === 'none' ? 'block' : 'none';
     };
 
     window.filterParents = () => {
@@ -455,12 +452,7 @@
     function renderParentList(list) {
         const sel = document.getElementById('p_select_id');
         sel.innerHTML = '';
-        list.forEach(p => { 
-            const opt = document.createElement('option');
-            opt.value = p.id;
-            opt.text = `${p.first_name} ${p.last_name}`;
-            sel.appendChild(opt);
-        });
+        list.forEach(p => { sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`; });
     }
 })();
 </script>
