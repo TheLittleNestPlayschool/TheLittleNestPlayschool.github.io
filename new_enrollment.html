@@ -190,15 +190,12 @@
         franchise: `${API_BASE}:IwtDgUwD/franchise`
     };
 
-    // User Role Context (Assumed from session)
-    // Note: If currentIdentity is the Head Office ID, we initialize the switcher.
-    const USER_ROLE = "Head Office"; 
-    const HEAD_OFFICE_ID = 1; // Replace with your actual Head Office ID
-
+    // IDENTITY STATE
+    const USER_ROLE = "Head Office"; // [cite: 2025-12-29]
     let state = { 
         currentParentId: null, 
         currentStudentId: null, 
-        currentFranchiseId: null, // Initialized via branching logic
+        currentFranchiseId: null, 
         pickupContacts: [], 
         allParents: [], 
         allFranchises: [],
@@ -207,6 +204,7 @@
         sessionData: {} 
     };
 
+    // UI UTILS
     function showLoader(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
     
     function moveToStep(currId, nextId, stepNum) {
@@ -225,10 +223,9 @@
         window.scrollTo({ top: step.offsetTop - 50, behavior: 'smooth' });
     };
 
+    // INITIALIZATION
     async function init() {
         try {
-            // BRANCHING LOGIC FOR HEAD OFFICE
-            // If current identity is Head Office, force branch selection first.
             if(USER_ROLE === "Head Office") {
                 const fRes = await fetch(ENDPOINTS.franchise).then(r => r.json());
                 state.allFranchises = fRes;
@@ -241,14 +238,11 @@
                 document.getElementById('step-parent').classList.remove('step-active');
                 document.getElementById('enrollment-progress').innerText = "SELECT BRANCH";
                 
-                // If Head Office hasn't selected a target yet, stop here.
                 if (!state.currentFranchiseId) return; 
             } else {
-                // If not Head Office, use the locked franchise ID
-                state.currentFranchiseId = LOCKED_FRANCHISE_ID;
+                state.currentFranchiseId = 2; // Default to Sariaya for now
             }
 
-            // LOAD DATA FOR RESOLVED FRANCHISE
             const [pRes, tRes, qRes, sRes] = await Promise.all([
                 fetch(ENDPOINTS.parent).then(r => r.json()),
                 fetch(ENDPOINTS.teacher).then(r => r.json()),
@@ -259,7 +253,6 @@
             state.allParents = pRes;
             renderParentList(pRes);
 
-            // Filter teachers based on chosen/default franchise
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
             tRes.filter(t => t.franchise_id === state.currentFranchiseId).forEach(t => {
@@ -279,66 +272,30 @@
                 qGrid.appendChild(row);
             });
 
-            // Filter sessions based on chosen/default franchise
             const sSel = document.getElementById('enrollment_session_id');
             sSel.innerHTML = '<option value="">-- Select Academic Session --</option>';
             sRes.filter(s => s.franchise_id === state.currentFranchiseId).forEach(s => {
                 sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
             });
             state.allSessions = sRes;
-            
             document.getElementById('enrollment-progress').innerText = `Step 1 of 6`;
 
         } catch(e) { console.error(e); }
     }
 
     window.lockLocation = () => {
-        const selectedVal = document.getElementById('ho_franchise_selector').value;
-        if(!selectedVal) return alert("Select a branch to proceed.");
-        
-        state.currentFranchiseId = parseInt(selectedVal);
-        const branchName = state.allFranchises.find(f => f.id === state.currentFranchiseId).name;
-        document.getElementById('disp-p-branch').innerText = branchName;
-        
-        // Hide Step 0 and unlock Step 1
+        const val = document.getElementById('ho_franchise_selector').value;
+        if(!val) return alert("Select branch.");
+        state.currentFranchiseId = parseInt(val);
+        const name = state.allFranchises.find(f => f.id === state.currentFranchiseId).name;
+        document.getElementById('disp-p-branch').innerText = name;
         document.getElementById('step-location').style.display = 'none';
         document.getElementById('step-parent').classList.remove('step-locked');
         document.getElementById('step-parent').classList.add('step-active');
-        
-        // Re-initialize data fetching with the new Franchise ID
         init(); 
     };
 
-    window.handleQuestionSelection = (cb, index) => {
-        const row = cb.closest('.qa-row');
-        if (cb.checked) { state.selectedQuestionCount++; row.classList.add('selected'); }
-        else { state.selectedQuestionCount--; row.classList.remove('selected'); }
-        document.getElementById('selection-counter').innerText = `QUESTIONS: ${state.selectedQuestionCount} / 10`;
-        document.querySelectorAll('.q-checkbox').forEach(box => { if (!box.checked) box.disabled = state.selectedQuestionCount >= 10; });
-    };
-
-    window.filterParents = () => {
-        const term = document.getElementById('p_search').value.toLowerCase();
-        renderParentList(state.allParents.filter(p => `${p.first_name} ${p.last_name}`.toLowerCase().includes(term)));
-    };
-
-    function renderParentList(list) {
-        const sel = document.getElementById('p_select_id'); sel.innerHTML = '';
-        list.forEach(p => sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
-    }
-
-    window.toggleParentMode = () => {
-        const s = document.getElementById('parent-select-mode'), c = document.getElementById('parent-create-mode');
-        s.style.display = s.style.display === 'none' ? 'block' : 'none';
-        c.style.display = c.style.display === 'none' ? 'block' : 'none';
-    };
-
-    window.toggleStudentMode = () => {
-        const s = document.getElementById('student-select-mode'), c = document.getElementById('student-create-mode');
-        s.style.display = s.style.display === 'none' ? 'block' : 'none';
-        c.style.display = c.style.display === 'none' ? 'block' : 'none';
-    };
-
+    // STEP PROCESSING
     window.processParentStep = async () => {
         showLoader('loader-parent', true);
         try {
@@ -356,10 +313,10 @@
             document.getElementById('parent-profile-view').style.display = 'grid';
 
             const sRes = await fetch(ENDPOINTS.student + "?parent_id=" + state.currentParentId).then(r => r.json());
-            state.parentStudents = sRes;
             const sSel = document.getElementById('s_select_id');
             sSel.innerHTML = '<option value="">-- Choose Student --</option>';
             sRes.forEach(s => sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
+            state.parentStudents = sRes;
             moveToStep('step-parent', 'step-student', 2);
         } catch(e) { alert(e.message); }
         showLoader('loader-parent', false);
@@ -426,9 +383,40 @@
             const ep = { student_id: state.currentStudentId, session_id: state.selectedSessionId, enrollment_date: document.getElementById('final_enrolled_date').value, start_date: document.getElementById('final_start_date').value };
             await fetch(ENDPOINTS.enrollment, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(ep)});
             for (let c of state.pickupContacts) { await fetch(ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c)}); }
-            alert("Enrollment finalized successfully."); location.reload();
+            alert("Master Enrollment Generated Successfully."); location.reload();
         } catch(e) { alert(e.message); }
     };
+
+    // LIST HELPERS
+    window.handleQuestionSelection = (cb, index) => {
+        const row = cb.closest('.qa-row');
+        if (cb.checked) { state.selectedQuestionCount++; row.classList.add('selected'); }
+        else { state.selectedQuestionCount--; row.classList.remove('selected'); }
+        document.getElementById('selection-counter').innerText = `QUESTIONS: ${state.selectedQuestionCount} / 10`;
+    };
+
+    window.filterParents = () => {
+        const term = document.getElementById('p_search').value.toLowerCase();
+        renderParentList(state.allParents.filter(p => `${p.first_name} ${p.last_name}`.toLowerCase().includes(term)));
+    };
+
+    function renderParentList(list) {
+        const sel = document.getElementById('p_select_id'); sel.innerHTML = '';
+        list.forEach(p => sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
+    }
+
+    window.toggleParentMode = () => {
+        const s = document.getElementById('parent-select-mode'), c = document.getElementById('parent-create-mode');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        c.style.display = c.style.display === 'none' ? 'block' : 'none';
+    };
+
+    window.toggleStudentMode = () => {
+        const s = document.getElementById('student-select-mode'), c = document.getElementById('student-create-mode');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        c.style.display = c.style.display === 'none' ? 'block' : 'none';
+    };
+
     init();
 })();
 </script>
