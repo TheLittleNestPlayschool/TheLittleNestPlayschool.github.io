@@ -163,10 +163,9 @@
 
 <script>
 (function() {
-    // UPDATED API ENDPOINTS
     const API_BASE = "https://x8ki-letl-twmt.n7.xano.io/api";
     const ENDPOINTS = {
-        franchise: `${API_BASE}:mXEfdJlg/franchise`, // Corrected Franchise Endpoint
+        franchise: `${API_BASE}:mXEfdJlg/franchise`, 
         parent: `${API_BASE}:8Je8Zszx/parent`, 
         student: `${API_BASE}:iEHfqd-N/student`,
         teacher: `${API_BASE}:xLIeVP2e/teacher`,
@@ -185,7 +184,7 @@
         selectedQuestionCount: 0 
     };
 
-    // 1. INITIAL LOAD: FETCH THE ENTIRE NETWORK FROM THE CORRECT ENDPOINT
+    // 1. INITIAL LOAD
     async function initNetwork() {
         try {
             const res = await fetch(ENDPOINTS.franchise);
@@ -198,25 +197,27 @@
                 .forEach(f => {
                     sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
                 });
-            
-            // Auto-select Head Office if found in the list
-            const ho = franchises.find(f => f.name === 'Head Office');
-            if(ho) {
-                sel.value = ho.id;
-            }
         } catch(e) { console.error("Network Fetch Failed:", e); }
     }
     initNetwork();
 
-    // 2. LOCK SELECTED BRANCH
+    // 2. LOCK SELECTED BRANCH & DISABLE SELECTOR
     window.lockLocation = async () => {
-        const val = document.getElementById('ho_franchise_selector').value;
+        const selector = document.getElementById('ho_franchise_selector');
+        const val = selector.value;
+        
         if(!val) return alert("Select a location to initialize the system.");
+        
+        // Disable the dropdown once initialized
+        selector.disabled = true; 
+        selector.style.backgroundColor = "#e2e8f0";
+        
         state.currentFranchiseId = parseInt(val);
         document.getElementById('step-location').classList.replace('step-active', 'step-saved');
         document.getElementById('step-parent').classList.remove('step-locked');
         document.getElementById('step-parent').classList.add('step-active');
         document.getElementById('enrollment-progress').innerText = "Step 1 of 6";
+        
         await fetchBranchData();
     };
 
