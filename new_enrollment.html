@@ -179,6 +179,12 @@
             align-items: center; 
         }
         .full-width-summary { grid-column: 1 / -1; }
+        .assessment-summary-item { 
+            font-size: 0.8rem; 
+            margin-bottom: 8px; 
+            padding-bottom: 8px; 
+            border-bottom: 1px solid #f1f5f9; 
+        }
     </style>
 </head>
 <body>
@@ -249,7 +255,10 @@
         <div id="assessment-summary-view" style="display:none;" class="profile-display">
             <button class="edit-pill" onclick="unlockStep('step-assessment', 'assessment-summary-view')">Modify</button>
             <div class="profile-item"><div class="profile-label">Teacher</div><div id="disp-a-teacher" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Items</div><div id="disp-a-count" class="profile-value"></div></div>
+            <div class="profile-item full-width-summary" style="margin-top:10px;">
+                <div class="profile-label">Evaluation Results</div>
+                <div id="disp-a-results-list" style="margin-top:5px;"></div>
+            </div>
         </div>
         <div class="step-content">
             <label>Assessing Teacher</label><select id="a_teacher_id"></select>
@@ -390,9 +399,9 @@
                 let optionsHtml = '';
                 validAns.forEach(val => { optionsHtml += `<option value="${val}">${val}</option>`; });
                 qGrid.innerHTML += `
-                    <div class="qa-row">
+                    <div class="qa-row" data-question-text="${item.the_question}">
                         <div><input type="checkbox" data-qid="${item.id}" onchange="handleQS(this)"></div>
-                        <div>${item.the_question}</div>
+                        <div class="question-label">${item.the_question}</div>
                         <div class="q-select-ans"><select class="ans-val">${optionsHtml}</select></div>
                     </div>`;
             });
@@ -493,10 +502,22 @@
         const teacherId = document.getElementById('a_teacher_id').value;
         const date = document.getElementById('a_assessment_date').value;
         if(!teacherId || !date) return alert("Missing assessment details");
+        
         const selectedRows = document.querySelectorAll('.qa-row.selected');
+        const resultsContainer = document.getElementById('disp-a-results-list');
+        resultsContainer.innerHTML = '';
+
         for(let row of selectedRows) {
             const qid = row.querySelector('input').dataset.qid;
+            const qText = row.dataset.questionText;
             const ans = row.querySelector('.ans-val').value;
+            
+            resultsContainer.innerHTML += `
+                <div class="assessment-summary-item">
+                    <strong>${qText}</strong><br>
+                    <span style="color:var(--nest-teal); font-weight:700;">➔ ${ans}</span>
+                </div>`;
+
             await fetch(ENDPOINTS.assessment_submit, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -505,8 +526,8 @@
                 })
             });
         }
+        
         document.getElementById('disp-a-teacher').innerText = document.getElementById('a_teacher_id').options[document.getElementById('a_teacher_id').selectedIndex].text;
-        document.getElementById('disp-a-count').innerText = `${state.selectedQuestionCount} items assessed`;
         document.getElementById('assessment-summary-view').style.display = 'grid';
         moveToStep('step-assessment', 'step-session', 4);
     };
