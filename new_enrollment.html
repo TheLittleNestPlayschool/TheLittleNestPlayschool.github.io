@@ -160,7 +160,7 @@
 <script>
 (function() {
     const API_BASE = "https://x8ki-letl-twmt.n7.xano.io/api";
-    const HEAD_OFFICE_ID = 12; // From your Xano Row screenshot
+    const HEAD_OFFICE_ID = 12;
 
     const ENDPOINTS = {
         franchise: `${API_BASE}:mXEfdJlg/franchise`, 
@@ -168,7 +168,7 @@
         student: `${API_BASE}:iEHfqd-N/student`,
         teacher: `${API_BASE}:xLIeVP2e/teacher`,
         questions: `${API_BASE}:ptE37CdX/student_assessment_questions`,
-        pickup: `${API_BASE}:iEHfqd-N/student_authorized_pickup`,
+        pickup: `${API_BASE}:Mg8y2ES9/student_authorized_pickup`,
         enrollment: `${API_BASE}:IwtDgUwD/session_enrollment`,
         session: `${API_BASE}:mUsV7Zqx/session`
     };
@@ -182,46 +182,44 @@
         selectedQuestionCount: 0 
     };
 
-    // 1. INITIAL LOAD & IDENTITY LOGIC
+    // 1. IDENTITY LOGIC & INITIAL SYNC
     async function initNetwork() {
         try {
             const res = await fetch(ENDPOINTS.franchise);
             const franchises = await res.json();
             const sel = document.getElementById('ho_franchise_selector');
             
-            // Get current identity from the sidebar text
-            const currentIdentityText = document.querySelector('.IDENTITY-LOCK-TEXT-ELEMENT-SELECTOR')?.innerText || "Sariaya"; 
+            // Check for Identity Lock Element (adjust class name if needed)
+            const idElement = document.querySelector('.IDENTITY-LOCK-TEXT-ELEMENT') || 
+                              document.querySelector('.sidebar-branch-name');
+            const currentIdentityText = idElement ? idElement.innerText.trim() : "Sariaya"; 
+            
             const currentBranch = franchises.find(f => f.name.toLowerCase() === currentIdentityText.toLowerCase());
 
             sel.innerHTML = '<option value="">-- Choose Branch --</option>';
-            
             franchises.sort((a,b) => a.name.localeCompare(b.name)).forEach(f => {
                 sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
             });
 
-            // ENFORCEMENT LOGIC:
+            // ENFORCEMENT: If local branch (not HO), auto-lock and hide picker
             if (currentBranch && currentBranch.id !== HEAD_OFFICE_ID) {
-                // If local franchise: force selection and disable dropdown
                 sel.value = currentBranch.id;
                 sel.disabled = true;
                 sel.style.backgroundColor = "#e2e8f0";
-                // Auto-lock and move to Step 1
                 lockLocation(); 
             }
-        } catch(e) { console.error("Network Fetch Failed:", e); }
+        } catch(e) { console.error("Initial load failed", e); }
     }
     initNetwork();
 
-    // 2. LOCK SELECTION
     window.lockLocation = async () => {
         const selector = document.getElementById('ho_franchise_selector');
-        const val = selector.value;
-        if(!val) return;
+        if(!selector.value) return;
         
         selector.disabled = true; 
         selector.style.backgroundColor = "#e2e8f0";
         
-        state.currentFranchiseId = parseInt(val);
+        state.currentFranchiseId = parseInt(selector.value);
         document.getElementById('step-location').classList.replace('step-active', 'step-saved');
         document.getElementById('step-parent').classList.remove('step-locked');
         document.getElementById('step-parent').classList.add('step-active');
@@ -230,7 +228,6 @@
         await fetchBranchData();
     };
 
-    // 3. DATA FETCHING
     async function fetchBranchData() {
         try {
             const [p, t, q, s] = await Promise.all([
@@ -240,7 +237,7 @@
                 fetch(ENDPOINTS.session).then(r => r.json())
             ]);
             
-            // Filter parents based on the locked franchise
+            // Strictly filter parents to ONLY this branch
             state.allParents = p.filter(x => x.franchise_id === state.currentFranchiseId);
             renderParentList(state.allParents);
             
@@ -268,10 +265,9 @@
                 `;
                 qGrid.appendChild(row);
             });
-        } catch(e) { console.error("Data sync error", e); }
+        } catch(e) { console.error("Branch fetch failed", e); }
     }
 
-    // 4. STEP PROCESSING
     window.processParentStep = async () => {
         const isNew = document.getElementById('parent-create-mode').style.display === 'block';
         if (isNew) {
@@ -293,7 +289,7 @@
             updateParentSummary(data);
         } else {
             state.currentParentId = parseInt(document.getElementById('p_select_id').value);
-            if (!state.currentParentId) return alert("Select a parent");
+            if (!state.currentParentId) return alert("Select parent");
             const data = await fetch(`${ENDPOINTS.parent}/${state.currentParentId}`).then(r => r.json());
             updateParentSummary(data);
         }
@@ -331,7 +327,7 @@
             updateStudentSummary(data);
         } else {
             state.currentStudentId = parseInt(document.getElementById('s_select_id').value);
-            if (!state.currentStudentId) return alert("Select a student");
+            if (!state.currentStudentId) return alert("Select student");
             const data = await fetch(`${ENDPOINTS.student}/${state.currentStudentId}`).then(r => r.json());
             updateStudentSummary(data);
         }
@@ -346,13 +342,8 @@
 
     window.handleQS = (cb) => {
         const row = cb.closest('.qa-row');
-        if (cb.checked) {
-            state.selectedQuestionCount++;
-            row.classList.add('selected');
-        } else {
-            state.selectedQuestionCount--;
-            row.classList.remove('selected');
-        }
+        if (cb.checked) { state.selectedQuestionCount++; row.classList.add('selected'); }
+        else { state.selectedQuestionCount--; row.classList.remove('selected'); }
         document.getElementById('selection-counter').innerText = `ITEMS SELECTED: ${state.selectedQuestionCount} / 10`;
     };
 
@@ -367,7 +358,7 @@
 
     window.processSessionStep = () => {
         const s = document.getElementById('enrollment_session_id');
-        if(!s.value) return alert("Select session slot");
+        if(!s.value) return alert("Select session");
         document.getElementById('disp-sess-name').innerText = s.options[s.selectedIndex].text;
         document.getElementById('session-profile-view').style.display = 'grid';
         moveToStep('step-session', 'step-pickup', 5);
@@ -378,7 +369,8 @@
             student_id: state.currentStudentId,
             name: document.getElementById('pu_name').value,
             relationship: document.getElementById('pu_rel').value,
-            phone: document.getElementById('pu_phone').value
+            phone: document.getElementById('pu_phone').value,
+            is_active: true
         };
         if(!contact.name) return;
         state.pickupContacts.push(contact);
@@ -410,6 +402,7 @@
                 body: JSON.stringify(enrollPayload)
             });
 
+            // Write each pickup into its own record
             for (let c of state.pickupContacts) {
                 await fetch(ENDPOINTS.pickup, {
                     method: 'POST',
@@ -420,7 +413,7 @@
 
             alert("Enrollment Complete.");
             location.reload();
-        } catch(e) { console.error("Finalization failed", e); }
+        } catch(e) { console.error("Submit failed", e); }
     };
 
     window.moveToStep = (curr, next, num) => {
