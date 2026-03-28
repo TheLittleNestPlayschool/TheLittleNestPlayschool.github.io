@@ -11,21 +11,18 @@
         .nest-header { color: var(--nest-dark); font-weight: 800; margin-bottom: 8px; font-size: 1.3rem; letter-spacing: -0.5px; display: flex; align-items: center; }
         .progress-bar { text-align: right; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 12px; text-transform: uppercase; }
         
-        /* Summary Card Styling */
         .profile-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid var(--nest-border); margin-top: 10px; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; box-sizing: border-box; }
         .profile-item { display: flex; flex-direction: column; }
         .profile-label { font-size: 0.55rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
         .profile-value { font-size: 0.85rem; color: #334155; font-weight: 600; }
         .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
         
-        /* Step Container Logic */
         .step-container { background: white; border: 1px solid var(--nest-border); border-radius: 8px; padding: 25px; margin-bottom: 15px; transition: all 0.3s ease; position: relative; }
         .step-locked { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
         .step-active { border-left: 6px solid var(--nest-teal); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .step-saved { border-left: 6px solid #cbd5e1; background: #f8fafc; }
         .step-saved .step-content { display: none; }
         
-        /* UI Elements */
         label { display: block; font-size: 0.6rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; margin-top: 10px; }
         input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; font-size: 0.8rem; background: #f8fafc; box-sizing: border-box; font-family: inherit; }
         .btn-teal { background-color: var(--nest-teal); color: #fff; padding: 14px 24px; border-radius: 6px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; margin-top: 15px; width: 100%; transition: opacity 0.2s; }
@@ -33,7 +30,6 @@
         .btn-secondary { background: #64748b; margin-top: 10px; }
         .badge-step { background: var(--nest-dark); color: white; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; flex-shrink: 0; }
         
-        /* Assessment QA Logic */
         .qa-row { display: grid; grid-template-columns: 40px 2fr 1fr; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
         .q-select-ans { visibility: hidden; }
         .qa-row.selected { background: #f0fdfa; }
@@ -54,7 +50,7 @@
             <select id="ho_franchise_selector">
                 <option value="">Syncing with Network...</option>
             </select>
-            <button onclick="lockLocation()" class="btn-teal">Initialize System</button>
+            <button id="init-btn" onclick="lockLocation()" class="btn-teal">Initialize System</button>
         </div>
     </div>
 
@@ -164,6 +160,8 @@
 <script>
 (function() {
     const API_BASE = "https://x8ki-letl-twmt.n7.xano.io/api";
+    const HEAD_OFFICE_ID = 12; // From your Xano Row screenshot
+
     const ENDPOINTS = {
         franchise: `${API_BASE}:mXEfdJlg/franchise`, 
         parent: `${API_BASE}:8Je8Zszx/parent`, 
@@ -184,31 +182,42 @@
         selectedQuestionCount: 0 
     };
 
-    // 1. INITIAL LOAD
+    // 1. INITIAL LOAD & IDENTITY LOGIC
     async function initNetwork() {
         try {
             const res = await fetch(ENDPOINTS.franchise);
             const franchises = await res.json();
             const sel = document.getElementById('ho_franchise_selector');
+            
+            // Get current identity from the sidebar text
+            const currentIdentityText = document.querySelector('.IDENTITY-LOCK-TEXT-ELEMENT-SELECTOR')?.innerText || "Sariaya"; 
+            const currentBranch = franchises.find(f => f.name.toLowerCase() === currentIdentityText.toLowerCase());
+
             sel.innerHTML = '<option value="">-- Choose Branch --</option>';
             
-            franchises
-                .sort((a,b) => a.name.localeCompare(b.name))
-                .forEach(f => {
-                    sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
-                });
+            franchises.sort((a,b) => a.name.localeCompare(b.name)).forEach(f => {
+                sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
+            });
+
+            // ENFORCEMENT LOGIC:
+            if (currentBranch && currentBranch.id !== HEAD_OFFICE_ID) {
+                // If local franchise: force selection and disable dropdown
+                sel.value = currentBranch.id;
+                sel.disabled = true;
+                sel.style.backgroundColor = "#e2e8f0";
+                // Auto-lock and move to Step 1
+                lockLocation(); 
+            }
         } catch(e) { console.error("Network Fetch Failed:", e); }
     }
     initNetwork();
 
-    // 2. LOCK SELECTED BRANCH & DISABLE SELECTOR
+    // 2. LOCK SELECTION
     window.lockLocation = async () => {
         const selector = document.getElementById('ho_franchise_selector');
         const val = selector.value;
+        if(!val) return;
         
-        if(!val) return alert("Select a location to initialize the system.");
-        
-        // Disable the dropdown once initialized
         selector.disabled = true; 
         selector.style.backgroundColor = "#e2e8f0";
         
@@ -221,7 +230,7 @@
         await fetchBranchData();
     };
 
-    // 3. FETCH DATA SPECIFIC TO BRANCH
+    // 3. DATA FETCHING
     async function fetchBranchData() {
         try {
             const [p, t, q, s] = await Promise.all([
@@ -230,8 +239,10 @@
                 fetch(ENDPOINTS.questions).then(r => r.json()),
                 fetch(ENDPOINTS.session).then(r => r.json())
             ]);
-            state.allParents = p;
-            renderParentList(p);
+            
+            // Filter parents based on the locked franchise
+            state.allParents = p.filter(x => x.franchise_id === state.currentFranchiseId);
+            renderParentList(state.allParents);
             
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
@@ -260,7 +271,7 @@
         } catch(e) { console.error("Data sync error", e); }
     }
 
-    // 4. PARENT PROCESSING
+    // 4. STEP PROCESSING
     window.processParentStep = async () => {
         const isNew = document.getElementById('parent-create-mode').style.display === 'block';
         if (isNew) {
@@ -301,7 +312,6 @@
         document.getElementById('parent-profile-view').style.display = 'grid';
     }
 
-    // 5. STUDENT PROCESSING
     window.processStudentStep = async () => {
         const isNew = document.getElementById('student-create-mode').style.display === 'block';
         if (isNew) {
@@ -334,7 +344,6 @@
         document.getElementById('student-profile-view').style.display = 'grid';
     }
 
-    // 6. ASSESSMENT LOGIC
     window.handleQS = (cb) => {
         const row = cb.closest('.qa-row');
         if (cb.checked) {
@@ -356,7 +365,6 @@
         moveToStep('step-assessment', 'step-session', 4);
     };
 
-    // 7. SESSION & PICKUP
     window.processSessionStep = () => {
         const s = document.getElementById('enrollment_session_id');
         if(!s.value) return alert("Select session slot");
@@ -386,7 +394,6 @@
 
     window.finalizePickups = () => moveToStep('step-pickup', 'step-final', 6);
 
-    // 8. FINAL SUBMISSION
     window.submitFinalEnrollment = async () => {
         try {
             const enrollPayload = {
@@ -411,12 +418,11 @@
                 });
             }
 
-            alert("Enrollment Complete. Profile Synchronized.");
+            alert("Enrollment Complete.");
             location.reload();
         } catch(e) { console.error("Finalization failed", e); }
     };
 
-    // UTILITIES
     window.moveToStep = (curr, next, num) => {
         document.getElementById(curr).classList.replace('step-active', 'step-saved');
         document.getElementById(next).classList.remove('step-locked');
