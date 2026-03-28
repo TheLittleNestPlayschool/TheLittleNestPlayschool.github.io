@@ -5,25 +5,72 @@
     </div>
     
     <div class="text-center">
-        <h1 class="text-3xl font-black text-slate-800 tracking-tighter uppercase">Media Vault</h1>
+        <h1 id="vault-title" class="text-3xl font-black text-slate-800 tracking-tighter uppercase">Media Vault</h1>
         <p class="text-slate-400 font-medium text-sm italic tracking-wide">Secure Asset Storage & Student Portfolios</p>
     </div>
 
     <div class="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-2xl shadow-sm">
-        <div class="w-2 h-2 rounded-full bg-[#00d1b2] animate-pulse"></div>
-        <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">System Ready</span>
+        <div id="status-indicator" class="w-2 h-2 rounded-full bg-[#00d1b2] animate-pulse"></div>
+        <span id="status-text" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">System Ready</span>
     </div>
 
-    <div class="max-w-md w-full bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mt-4 text-center">
-        <p class="text-slate-500 text-xs leading-relaxed">
-            This module is synchronized with your <strong>uploader_media_vault</strong> table. 
-            Select a student record or upload a new file to begin managing branch assets.
-        </p>
-    </div>
+    <div id="download-card" class="max-w-md w-full bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mt-4 text-center">
+        <div id="loading-msg">
+            <p class="text-slate-500 text-xs leading-relaxed">
+                Enter a Session ID or select a student record to begin.
+            </p>
+        </div>
 
+        <div id="action-buttons" class="hidden space-y-3">
+            <p id="session-info" class="text-slate-500 text-[10px] font-bold uppercase mb-2"></p>
+            <div class="flex flex-col gap-2">
+                <a id="link-lesson" href="#" target="_blank" class="block w-full py-3 bg-slate-800 text-white text-xs font-bold rounded-xl hover:bg-slate-700 transition">DOWNLOAD LESSON PLAN</a>
+                <a id="link-worksheet" href="#" target="_blank" class="block w-full py-3 border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition">DOWNLOAD WORKSHEET</a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-    // Module initialization logic can go here
-    console.log("Media Vault Module Loaded.");
+    // Logic to grab ID from URL: ?session_id=123
+    const params = new URLSearchParams(window.location.search);
+    const sid = params.get('session_id');
+
+    async function loadVaultData() {
+        if (!sid) return;
+
+        const statusText = document.getElementById('status-text');
+        const statusInd = document.getElementById('status-indicator');
+        
+        statusText.innerText = "Connecting to Xano...";
+
+        try {
+            // Using your specific Xano Endpoint
+            const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details/${sid}`);
+            const session = await res.json();
+
+            if (session.id) {
+                document.getElementById('loading-msg').classList.add('hidden');
+                document.getElementById('action-buttons').classList.remove('hidden');
+                document.getElementById('vault-title').innerText = `Session ${session.session_num}`;
+                
+                // Constructing the temporary Wasabi Download Links
+                // Note: These URLs should ideally be generated in Xano and passed as fields
+                // If Xano returns the full URL, use: session.lesson_plan_presigned_url
+                document.getElementById('link-lesson').href = session.lesson_plan_url;
+                document.getElementById('link-worksheet').href = session.worksheet_url;
+                
+                statusText.innerText = "Assets Online";
+                statusInd.classList.replace('bg-[#00d1b2]', 'bg-blue-500');
+            } else {
+                statusText.innerText = "Session Not Found";
+                statusInd.classList.replace('bg-[#00d1b2]', 'bg-orange-500');
+            }
+        } catch (err) {
+            statusText.innerText = "Offline / Error";
+            statusInd.classList.replace('bg-[#00d1b2]', 'bg-red-500');
+        }
+    }
+
+    loadVaultData();
 </script>
