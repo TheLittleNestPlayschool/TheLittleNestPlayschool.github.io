@@ -191,12 +191,14 @@
     };
 
     // User Role Context (Assumed from session)
-    const USER_ROLE = "Head Office"; // This would be dynamic in your actual build
+    // Note: If currentIdentity is the Head Office ID, we initialize the switcher.
+    const USER_ROLE = "Head Office"; 
+    const HEAD_OFFICE_ID = 1; // Replace with your actual Head Office ID
 
     let state = { 
         currentParentId: null, 
         currentStudentId: null, 
-        currentFranchiseId: 3, 
+        currentFranchiseId: null, // Initialized via branching logic
         pickupContacts: [], 
         allParents: [], 
         allFranchises: [],
@@ -225,18 +227,28 @@
 
     async function init() {
         try {
-            // Load Franchises if Head Office
+            // BRANCHING LOGIC FOR HEAD OFFICE
+            // If current identity is Head Office, force branch selection first.
             if(USER_ROLE === "Head Office") {
                 const fRes = await fetch(ENDPOINTS.franchise).then(r => r.json());
                 state.allFranchises = fRes;
                 const fSel = document.getElementById('ho_franchise_selector');
-                fSel.innerHTML = '';
+                fSel.innerHTML = '<option value="">-- Choose Branch --</option>';
                 fRes.forEach(f => fSel.innerHTML += `<option value="${f.id}">${f.name}</option>`);
+                
                 document.getElementById('step-location').style.display = 'block';
                 document.getElementById('step-parent').classList.add('step-locked');
                 document.getElementById('step-parent').classList.remove('step-active');
+                document.getElementById('enrollment-progress').innerText = "SELECT BRANCH";
+                
+                // If Head Office hasn't selected a target yet, stop here.
+                if (!state.currentFranchiseId) return; 
+            } else {
+                // If not Head Office, use the locked franchise ID
+                state.currentFranchiseId = LOCKED_FRANCHISE_ID;
             }
 
+            // LOAD DATA FOR RESOLVED FRANCHISE
             const [pRes, tRes, qRes, sRes] = await Promise.all([
                 fetch(ENDPOINTS.parent).then(r => r.json()),
                 fetch(ENDPOINTS.teacher).then(r => r.json()),
@@ -255,7 +267,7 @@
             });
 
             const qGrid = document.getElementById('assessment-qa-grid');
-            qGrid.innerHTML = ''; // Clear for re-init
+            qGrid.innerHTML = ''; 
             qRes.forEach((q, i) => {
                 let optionsHtml = '';
                 for(let j=1; j<=6; j++) { if(q[`answer_${j}`]) optionsHtml += `<option>${q[`answer_${j}`]}</option>`; }
@@ -275,15 +287,16 @@
             });
             state.allSessions = sRes;
             
-            if(USER_ROLE !== "Head Office") {
-                document.getElementById('enrollment-progress').innerText = `Step 1 of 6`;
-            }
+            document.getElementById('enrollment-progress').innerText = `Step 1 of 6`;
 
         } catch(e) { console.error(e); }
     }
 
     window.lockLocation = () => {
-        state.currentFranchiseId = parseInt(document.getElementById('ho_franchise_selector').value);
+        const selectedVal = document.getElementById('ho_franchise_selector').value;
+        if(!selectedVal) return alert("Select a branch to proceed.");
+        
+        state.currentFranchiseId = parseInt(selectedVal);
         const branchName = state.allFranchises.find(f => f.id === state.currentFranchiseId).name;
         document.getElementById('disp-p-branch').innerText = branchName;
         
@@ -291,9 +304,8 @@
         document.getElementById('step-location').style.display = 'none';
         document.getElementById('step-parent').classList.remove('step-locked');
         document.getElementById('step-parent').classList.add('step-active');
-        document.getElementById('enrollment-progress').innerText = `Step 1 of 6`;
         
-        // Re-init data filters
+        // Re-initialize data fetching with the new Franchise ID
         init(); 
     };
 
