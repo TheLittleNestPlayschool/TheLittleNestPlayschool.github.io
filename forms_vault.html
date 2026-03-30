@@ -29,7 +29,6 @@
     const FormsVaultModule = {
         data: [],
         selectedIds: new Set(),
-        // Endpoints provided for didN9vp2 group
         listEndpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/forms_vault',
         bulkEndpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/get_bulk_forms',
 
@@ -109,7 +108,6 @@
             btn.innerText = "SIGNING...";
             
             try {
-                // Post to the bulk signing endpoint
                 const response = await fetch(this.bulkEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -118,7 +116,6 @@
                 
                 const signedUrls = await response.json();
                 
-                // Trigger sequential downloads for signed AWS URLs
                 signedUrls.forEach((url, index) => {
                     setTimeout(() => {
                         const link = document.createElement('a');
@@ -136,6 +133,21 @@
                 console.error("Bulk Download Error:", err);
                 btn.innerText = "ERROR";
             }
+        },
+
+        async loadScript(src) {
+            return new Promise(resolve => {
+                const s = document.createElement('script'); 
+                s.src = src; 
+                s.onload = resolve;
+                s.onerror = () => {
+                    const fallback = document.createElement('script');
+                    fallback.src = src.replace('/', ''); 
+                    fallback.onload = resolve;
+                    document.head.appendChild(fallback);
+                };
+                document.head.appendChild(s);
+            });
         }
     };
 
