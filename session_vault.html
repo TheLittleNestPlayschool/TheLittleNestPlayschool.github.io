@@ -14,6 +14,7 @@
     .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
     
+    /* Debugger Overlay */
     #vault-debug-overlay { 
         display: none; 
         position: fixed; 
@@ -28,7 +29,7 @@
 
 <div id="vault-debug-overlay">
     <div class="bg-white rounded-xl p-6 max-w-2xl w-full shadow-2xl">
-        <h2 id="debug-title" class="text-sm font-black uppercase tracking-widest text-slate-400 mb-4 text-center tracking-widest">Step 1: Outbound Payload</h2>
+        <h2 id="debug-title" class="text-sm font-black uppercase tracking-widest text-slate-400 mb-4 text-center">Step 1: Outbound Payload</h2>
         
         <div class="bg-slate-900 rounded-lg p-4 mb-6">
             <p id="debug-label" class="text-[10px] font-mono text-teal-400 mb-2">// session_id array to Xano:</p>
@@ -37,14 +38,11 @@
 
         <div class="flex gap-3" id="debug-actions">
             <button id="debug-cancel" class="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest border border-slate-200 rounded-lg hover:bg-slate-50 transition-all">Cancel</button>
-            <button id="debug-continue" class="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest bg-teal-500 text-white rounded-lg hover:bg-teal-600 shadow-lg transition-all shadow-teal-500/20">Send to get_bulk_sessions</button>
+            <button id="debug-continue" class="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest bg-teal-500 text-white rounded-lg hover:bg-teal-600 shadow-lg transition-all">Send to get_bulk_sessions</button>
         </div>
 
         <div id="debug-final-actions" class="hidden flex flex-col gap-3">
-            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-[10px] text-amber-700 font-bold uppercase text-center">
-                Review the session_list above. If it's empty [], your Query failed.
-            </div>
-            <button id="debug-close" class="w-full py-3 text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-all">Close & Attempt Downloads</button>
+            <button id="debug-close" class="w-full py-3 text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-all">Start Browser Download Loop</button>
         </div>
     </div>
 </div>
@@ -129,7 +127,7 @@
                     <div class="min-w-0">
                         <span class="text-[10px] font-black text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 uppercase tracking-tighter">Session ${s.session_num}</span>
                         <p class="text-[11px] text-slate-600 font-medium leading-snug line-clamp-2 mt-1">
-                            ${s.session_description || 'No description provided.'}
+                            ${s.session_description || 'No description.'}
                         </p>
                     </div>
                 </div>
@@ -141,10 +139,13 @@
         setupListeners() {
             document.getElementById('vault-search').oninput = () => this.render();
             document.getElementById('vault-sort').onchange = () => this.render();
+            
             document.getElementById('vault-select-all').onchange = (e) => {
-                document.querySelectorAll('.session-row-check').forEach(cb => cb.checked = e.target.checked);
+                const checks = document.querySelectorAll('.session-row-check');
+                checks.forEach(cb => cb.checked = e.target.checked);
                 this.updateDownloadUI();
             };
+
             document.getElementById('session-grid').onchange = () => this.updateDownloadUI();
 
             const downloadBtn = document.getElementById('vault-download-btn');
@@ -169,9 +170,9 @@
             document.getElementById('debug-cancel').onclick = () => debugOverlay.style.display = 'none';
 
             document.getElementById('debug-continue').onclick = async () => {
-                debugTitle.innerText = "Step 2: Database Results";
+                debugTitle.innerText = "Step 2: Xano Raw Response";
                 debugLabel.innerText = "// Response from get_bulk_sessions:";
-                debugPayload.innerText = "Querying NestMind Database...";
+                debugPayload.innerText = "Processing signed URLs...";
                 debugActions.style.display = 'none';
 
                 try {
@@ -181,15 +182,23 @@
                         body: JSON.stringify({ session_id: pendingIds })
                     });
                     
-                    const result = await response.json();
-                    debugPayload.innerText = JSON.stringify(result, null, 4);
+                    const data = await response.json();
+                    debugPayload.innerText = JSON.stringify(data, null, 4);
                     finalActions.classList.remove('hidden');
 
                     document.getElementById('debug-close').onclick = () => {
-                        debugOverlay.style.display = 'none';
-                        const links = result.links || result; 
-                        if (Array.isArray(links)) {
-                            links.forEach((url, index) => {
+                        // Crucial Fix: Map objects to just the URL string
+                        const finalLinks = Array.isArray(data) 
+                            ? data.map(item => (typeof item === 'object' && item.url) ? item.url : item)
+                            : [];
+
+                        debugTitle.innerText = "Step 3: Final Link Extraction";
+                        debugLabel.innerText = "// Strings extracted for browser loop:";
+                        debugPayload.innerText = JSON.stringify(finalLinks, null, 4);
+                        
+                        setTimeout(() => {
+                            debugOverlay.style.display = 'none';
+                            finalLinks.forEach((url, index) => {
                                 if (url && typeof url === 'string') {
                                     setTimeout(() => {
                                         const a = document.createElement('a');
@@ -197,13 +206,13 @@
                                         document.body.appendChild(a);
                                         a.click();
                                         document.body.removeChild(a);
-                                    }, index * 600);
+                                    }, index * 800);
                                 }
                             });
-                        }
+                        }, 1500);
                     };
                 } catch (err) {
-                    debugPayload.innerText = "FETCH ERROR: " + err.message;
+                    debugPayload.innerText = "Fetch Error: " + err.message;
                     finalActions.classList.remove('hidden');
                 }
             };
@@ -213,10 +222,14 @@
             const checked = document.querySelectorAll('.session-row-check:checked');
             const btn = document.getElementById('vault-download-btn');
             document.getElementById('vault-selected-count').innerText = checked.length;
-            btn.disabled = checked.length === 0;
-            btn.className = checked.length > 0 
-                ? "bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold text-xs uppercase shadow-md cursor-pointer" 
-                : "bg-slate-300 text-white px-5 py-2 rounded-lg font-bold text-xs uppercase shadow-md cursor-not-allowed";
+            
+            if (checked.length > 0) {
+                btn.disabled = false;
+                btn.className = "bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md cursor-pointer";
+            } else {
+                btn.disabled = true;
+                btn.className = "bg-slate-300 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md cursor-not-allowed";
+            }
         }
     };
 
