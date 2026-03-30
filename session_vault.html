@@ -58,6 +58,7 @@
     const SessionModule = {
         data: [],
         endpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details',
+        bulkEndpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/get_bulk_sessions',
 
         async init() {
             try {
@@ -133,9 +134,41 @@
                 }
             };
 
-            downloadBtn.onclick = () => {
-                const selectedIds = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => cb.value);
-                alert(`Preparing bulk download for ${selectedIds.length} curriculum files...`);
+            downloadBtn.onclick = async () => {
+                const selectedIds = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => parseInt(cb.value));
+                
+                downloadBtn.innerText = "Processing...";
+                downloadBtn.disabled = true;
+
+                try {
+                    const response = await fetch(this.bulkEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ session_id: selectedIds })
+                    });
+
+                    const links = await response.json();
+
+                    if (links && Array.isArray(links)) {
+                        links.forEach((url, index) => {
+                            if (url) {
+                                setTimeout(() => {
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.setAttribute('download', ''); 
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                }, index * 250); 
+                            }
+                        });
+                    }
+                } catch (err) {
+                    console.error("Bulk Download Error:", err);
+                    alert("Download failed. Please check connection.");
+                } finally {
+                    this.updateDownloadUI();
+                }
             };
         },
 
@@ -147,6 +180,7 @@
             const allChecks = document.querySelectorAll('.session-row-check');
 
             counter.innerText = checked.length;
+            btn.innerText = `Download (${checked.length})`;
             
             if (checked.length > 0) {
                 btn.disabled = false;
@@ -162,8 +196,6 @@
         }
     };
 
-    // TAB-AWARE LOADING (MutationObserver)
-    // This ensures the module loads even if you switch tabs after the page is ready
     const tabObserver = new MutationObserver((mutations, obs) => {
         if (document.getElementById('session-grid')) {
             SessionModule.init();
@@ -173,7 +205,6 @@
 
     tabObserver.observe(document.body, { childList: true, subtree: true });
 
-    // Immediate attempt if already on screen
     if (document.getElementById('session-grid')) SessionModule.init();
 })();
 </script>
