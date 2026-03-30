@@ -13,39 +13,7 @@
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-    
-    /* Debugger Overlay */
-    #vault-debug-overlay { 
-        display: none; 
-        position: fixed; 
-        inset: 0; 
-        background: rgba(15, 23, 42, 0.95); 
-        z-index: 9999; 
-        align-items: center; 
-        justify-content: center; 
-        padding: 20px; 
-    }
 </style>
-
-<div id="vault-debug-overlay">
-    <div class="bg-white rounded-xl p-6 max-w-2xl w-full shadow-2xl">
-        <h2 id="debug-title" class="text-sm font-black uppercase tracking-widest text-slate-400 mb-4 text-center">Step 1: Outbound Payload</h2>
-        
-        <div class="bg-slate-900 rounded-lg p-4 mb-6">
-            <p id="debug-label" class="text-[10px] font-mono text-teal-400 mb-2">// session_id array to Xano:</p>
-            <pre id="debug-payload" class="text-xs text-white font-mono overflow-auto max-h-80 custom-scrollbar"></pre>
-        </div>
-
-        <div class="flex gap-3" id="debug-actions">
-            <button id="debug-cancel" class="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest border border-slate-200 rounded-lg hover:bg-slate-50 transition-all">Cancel</button>
-            <button id="debug-continue" class="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest bg-teal-500 text-white rounded-lg hover:bg-teal-600 shadow-lg transition-all">Send to get_bulk_sessions</button>
-        </div>
-
-        <div id="debug-final-actions" class="hidden flex flex-col gap-3">
-            <button id="debug-close" class="w-full py-3 text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-all">Start Browser Download Loop</button>
-        </div>
-    </div>
-</div>
 
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
@@ -127,7 +95,7 @@
                     <div class="min-w-0">
                         <span class="text-[10px] font-black text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 uppercase tracking-tighter">Session ${s.session_num}</span>
                         <p class="text-[11px] text-slate-600 font-medium leading-snug line-clamp-2 mt-1">
-                            ${s.session_description || 'No description.'}
+                            ${s.session_description || 'No description provided.'}
                         </p>
                     </div>
                 </div>
@@ -148,72 +116,46 @@
 
             document.getElementById('session-grid').onchange = () => this.updateDownloadUI();
 
-            const downloadBtn = document.getElementById('vault-download-btn');
-            const debugOverlay = document.getElementById('vault-debug-overlay');
-            const debugPayload = document.getElementById('debug-payload');
-            const debugTitle = document.getElementById('debug-title');
-            const debugLabel = document.getElementById('debug-label');
-            const debugActions = document.getElementById('debug-actions');
-            const finalActions = document.getElementById('debug-final-actions');
-            let pendingIds = [];
+            document.getElementById('vault-download-btn').onclick = async (e) => {
+                const btn = e.currentTarget;
+                const selectedIds = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => parseInt(cb.value));
+                
+                if (selectedIds.length === 0) return;
 
-            downloadBtn.onclick = () => {
-                pendingIds = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => parseInt(cb.value));
-                debugTitle.innerText = "Step 1: Outbound Payload";
-                debugLabel.innerText = "// session_id array to Xano:";
-                debugPayload.innerText = JSON.stringify({ session_id: pendingIds }, null, 4);
-                debugActions.style.display = 'flex';
-                finalActions.classList.add('hidden');
-                debugOverlay.style.display = 'flex';
-            };
-
-            document.getElementById('debug-cancel').onclick = () => debugOverlay.style.display = 'none';
-
-            document.getElementById('debug-continue').onclick = async () => {
-                debugTitle.innerText = "Step 2: Xano Raw Response";
-                debugLabel.innerText = "// Response from get_bulk_sessions:";
-                debugPayload.innerText = "Processing signed URLs...";
-                debugActions.style.display = 'none';
+                const originalText = btn.innerHTML;
+                btn.innerHTML = "PREPARING...";
+                btn.disabled = true;
 
                 try {
                     const response = await fetch(this.bulkEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ session_id: pendingIds })
+                        body: JSON.stringify({ session_id: selectedIds })
                     });
                     
                     const data = await response.json();
-                    debugPayload.innerText = JSON.stringify(data, null, 4);
-                    finalActions.classList.remove('hidden');
+                    
+                    // Logic to extract URL string if Xano returns objects
+                    const finalLinks = Array.isArray(data) 
+                        ? data.map(item => (typeof item === 'object' && item.url) ? item.url : item)
+                        : [];
 
-                    document.getElementById('debug-close').onclick = () => {
-                        // Crucial Fix: Map objects to just the URL string
-                        const finalLinks = Array.isArray(data) 
-                            ? data.map(item => (typeof item === 'object' && item.url) ? item.url : item)
-                            : [];
-
-                        debugTitle.innerText = "Step 3: Final Link Extraction";
-                        debugLabel.innerText = "// Strings extracted for browser loop:";
-                        debugPayload.innerText = JSON.stringify(finalLinks, null, 4);
-                        
-                        setTimeout(() => {
-                            debugOverlay.style.display = 'none';
-                            finalLinks.forEach((url, index) => {
-                                if (url && typeof url === 'string') {
-                                    setTimeout(() => {
-                                        const a = document.createElement('a');
-                                        a.href = url;
-                                        document.body.appendChild(a);
-                                        a.click();
-                                        document.body.removeChild(a);
-                                    }, index * 800);
-                                }
-                            });
-                        }, 1500);
-                    };
+                    finalLinks.forEach((url, index) => {
+                        if (url && typeof url === 'string') {
+                            setTimeout(() => {
+                                const a = document.createElement('a');
+                                a.href = url;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                            }, index * 800);
+                        }
+                    });
                 } catch (err) {
-                    debugPayload.innerText = "Fetch Error: " + err.message;
-                    finalActions.classList.remove('hidden');
+                    console.error("Bulk Download Error:", err);
+                } finally {
+                    btn.innerHTML = originalText;
+                    this.updateDownloadUI();
                 }
             };
         },
@@ -221,7 +163,11 @@
         updateDownloadUI() {
             const checked = document.querySelectorAll('.session-row-check:checked');
             const btn = document.getElementById('vault-download-btn');
-            document.getElementById('vault-selected-count').innerText = checked.length;
+            const counter = document.getElementById('vault-selected-count');
+            const selectAll = document.getElementById('vault-select-all');
+            const allChecks = document.querySelectorAll('.session-row-check');
+
+            counter.innerText = checked.length;
             
             if (checked.length > 0) {
                 btn.disabled = false;
@@ -229,6 +175,10 @@
             } else {
                 btn.disabled = true;
                 btn.className = "bg-slate-300 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md cursor-not-allowed";
+            }
+
+            if (allChecks.length > 0) {
+                selectAll.checked = (checked.length === allChecks.length);
             }
         }
     };
