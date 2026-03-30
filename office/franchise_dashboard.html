@@ -33,6 +33,11 @@
             <nav class="flex-1 overflow-y-auto p-4 space-y-1">
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-2">Core Operations</p>
                 
+                <div id="nav-dashboard" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+                    <span class="text-lg">📊</span>
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Performance</span>
+                </div>
+
                 <div id="nav-sessions-vault" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
                     <span class="text-lg">📚</span>
                     <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Curriculum</span>
@@ -42,45 +47,85 @@
                     <span class="text-lg">📁</span>
                     <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Forms Vault</span>
                 </div>
+
+                <div class="pt-4 mt-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-2">Intelligence</p>
+                    
+                    <div id="nav-competitor-hub" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+                        <span class="text-lg">🔍</span>
+                        <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Competitor Hub</span>
+                    </div>
+                </div>
             </nav>
+
+            <div class="p-4 border-t border-slate-100">
+                <div class="bg-slate-50 rounded-2xl p-4 flex items-center gap-3 border border-slate-100">
+                    <div class="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold text-xs">AD</div>
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-black text-slate-800 uppercase truncate">Admin Director</p>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase truncate">The Little Nest</p>
+                    </div>
+                </div>
+            </div>
         </aside>
 
         <main class="flex-1 flex flex-col bg-[#f8fafc] overflow-hidden">
+            
             <header class="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
                 <div class="flex items-center gap-2">
                     <span class="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></span>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Sync</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">System Status: Live Sync</p>
                 </div>
             </header>
 
-            <div id="main-content-area" class="flex-1 overflow-y-auto p-8"></div>
+            <div id="main-content-area" class="flex-1 overflow-y-auto p-8">
+                </div>
+
         </main>
     </div>
 
     <script>
-        // Restoring your exact original loadModule logic
+        /**
+         * Standard Module Loader Logic
+         */
         async function loadModule(moduleName) {
             const container = document.getElementById('main-content-area');
-            const response = await fetch(`${moduleName}.html`);
-            const html = await response.text();
-            container.innerHTML = html;
+            
+            try {
+                const response = await fetch(`${moduleName}.html`);
+                const html = await response.text();
+                container.innerHTML = html;
 
-            const scripts = container.querySelectorAll('script');
-            scripts.forEach(oldScript => {
-                const newScript = document.createElement('script');
-                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                oldScript.parentNode.replaceChild(newScript, oldScript);
-            });
+                // Execute scripts within the loaded HTML
+                const scripts = container.querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+
+                // Set Active State on Nav
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('nav-active'));
+                const navId = `nav-${moduleName.replace('_', '-')}`;
+                if (document.getElementById(navId)) {
+                    document.getElementById(navId).classList.add('nav-active');
+                }
+
+            } catch (err) {
+                console.error("Error loading module:", err);
+            }
         }
 
-        // NAVIGATION LISTENERS
+        // Navigation Listeners
+        document.getElementById('nav-dashboard').onclick = () => loadModule('performance_dashboard');
         document.getElementById('nav-sessions-vault').onclick = () => loadModule('sessions_vault');
-        
-        // THE ONLY OTHER CHANGE: ADDED LISTENER FOR FORMS
         document.getElementById('nav-forms-vault').onclick = () => loadModule('forms_vault');
+        document.getElementById('nav-competitor-hub').onclick = () => loadModule('competitor_hub');
 
+        // Initial Load
         window.onload = () => loadModule('sessions_vault');
+
     </script>
 </body>
 </html>
