@@ -152,7 +152,6 @@
                 const statusText = document.getElementById('progress-status');
                 const fileList = document.getElementById('file-list-debug');
 
-                // Initialize Modal
                 overlay.style.display = 'flex';
                 progressBar.style.width = '0%';
                 statusText.innerText = "Requesting Signed URLs...";
@@ -174,34 +173,34 @@
 
                     if (finalLinks.length === 0) throw new Error("No links returned");
 
-                    // Loop through links for download
                     for (let i = 0; i < finalLinks.length; i++) {
                         const url = finalLinks[i];
                         const progress = Math.round(((i + 1) / finalLinks.length) * 100);
                         
-                        // Update UI
                         statusText.innerText = `Downloading File ${i + 1} of ${finalLinks.length}`;
                         progressBar.style.width = `${progress}%`;
                         
-                        // Add to visual list
                         const fileName = url.split('/').pop().split('?')[0];
                         fileList.innerHTML += `<div class="mb-1">✓ ${fileName}</div>`;
                         fileList.scrollTop = fileList.scrollHeight;
 
-                        // Trigger Browser Download
                         const a = document.createElement('a');
                         a.href = url;
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);
 
-                        // Pause to avoid browser pop-up blocks
                         await new Promise(resolve => setTimeout(resolve, 800));
                     }
 
-                    statusText.innerText = "All Downloads Complete! Reloading...";
+                    statusText.innerText = "All Downloads Complete!";
+                    
+                    // Reset UI instead of full page reload
                     setTimeout(() => {
-                        window.location.reload();
+                        overlay.style.display = 'none';
+                        document.querySelectorAll('.session-row-check').forEach(cb => cb.checked = false);
+                        document.getElementById('vault-select-all').checked = false;
+                        this.updateDownloadUI();
                     }, 1500);
 
                 } catch (err) {
