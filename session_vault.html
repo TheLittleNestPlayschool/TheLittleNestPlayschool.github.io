@@ -1,120 +1,179 @@
-<div class="vault-container" style="display: flex; flex-direction: column; max-height: 550px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); font-family: 'Inter', sans-serif; border: 1px solid #edf2f7;">
+<style>
+    /* Zebra striping for 3-column grid */
+    #session-grid > div:nth-child(6n+4),
+    #session-grid > div:nth-child(6n+5),
+    #session-grid > div:nth-child(6n+6) {
+        background-color: #f8fafc !important; /* slate-50 */
+    }
     
-    <div style="padding: 8px 10px; border-bottom: 2px solid #edf2f7; background: #fff; border-radius: 8px 8px 0 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="font-size: 14px;">📁</span>
-                <h4 style="margin: 0; color: #2c3e50; font-size: 11px; font-weight: 700;">Session Vault</h4>
-            </div>
-            <button id="vaultDownloadBtn" style="padding: 4px 10px; background-color: #dfe6e9; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 10px;" disabled>
-                Download (<span id="vaultSelectedCount">0</span>)
-            </button>
-        </div>
-        
-        <div style="display: flex; gap: 5px; align-items: center; width: 100%;">
-            <label style="display: flex; align-items: center; gap: 3px; font-size: 10px; cursor: pointer; color: #2d3436; font-weight: 800; background: #f8f9fa; padding: 4px 6px; border-radius: 4px; border: 1px solid #ddd; flex-shrink: 0;">
-                <input type="checkbox" id="vaultSelectAll" style="transform: scale(0.85);"> ALL
+    .session-vault-item:hover {
+        background-color: #f1f5f9 !important; /* slate-100 */
+    }
+
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+</style>
+
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div>
+        <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Curriculum Vault</h1>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Session Downloads • Linear Progression</p>
+    </div>
+    
+    <div class="flex flex-wrap gap-2 w-full md:w-auto">
+        <div class="flex items-center gap-2 bg-white border border-slate-300 rounded-lg p-1 shadow-sm w-full md:w-auto">
+            <label class="flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-md cursor-pointer hover:bg-slate-100 transition-all border border-slate-200">
+                <input type="checkbox" id="vault-select-all" class="w-3.5 h-3.5 accent-teal-500">
+                <span class="text-[10px] font-black text-slate-700 uppercase">All</span>
             </label>
 
-            <input type="text" id="vaultSearch" placeholder="Search..." style="flex: 3; min-width: 0; padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; outline: none; font-size: 10px;">
+            <input type="text" id="vault-search" placeholder="Search sessions..." 
+                class="pl-2 pr-2 py-1.5 text-xs outline-none w-32 md:w-48 bg-transparent">
             
-            <select id="vaultSort" style="flex: 1; min-width: 0; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 10px; cursor: pointer; background: #fff;">
+            <select id="vault-sort" class="py-1.5 px-2 bg-slate-50 border-l border-slate-200 text-[10px] font-bold text-slate-600 outline-none rounded-r-md">
                 <option value="num_asc">1 → 300</option>
                 <option value="num_desc">300 → 1</option>
                 <option value="newest">Newest</option>
-                <option value="alpha">A → Z</option>
+                <option value="alpha">A-Z</option>
             </select>
         </div>
-    </div>
 
-    <div id="vaultGrid" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background-color: #edf2f7;">
-        <div style="grid-column: span 3; padding: 30px; text-align: center; color: #95a5a6; font-size: 10px; background: #fff;">
+        <button id="vault-download-btn" disabled class="bg-slate-300 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md cursor-not-allowed">
+            Download (<span id="vault-selected-count">0</span>)
+        </button>
+    </div>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+    <div id="session-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 max-h-[70vh] overflow-y-auto custom-scrollbar">
+        <div class="col-span-full p-20 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
             Syncing NestMind Database...
         </div>
     </div>
 </div>
 
 <script>
-    let allSessions = [];
-    const vaultGrid = document.getElementById('vaultGrid');
-    const vaultSearch = document.getElementById('vaultSearch');
-    const vaultSort = document.getElementById('vaultSort');
-    const vaultBtn = document.getElementById('vaultDownloadBtn');
-    const vaultCounter = document.getElementById('vaultSelectedCount');
-    const vaultMaster = document.getElementById('vaultSelectAll');
+(function() {
+    const SessionModule = {
+        data: [],
+        endpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details',
 
-    async function populateSessionVault() {
-        try {
-            const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details');
-            allSessions = await response.json();
-            renderVault();
-        } catch (error) {
-            vaultGrid.innerHTML = '<div style="grid-column: span 3; padding: 20px; color: red; background: #fff; font-size: 10px;">Connection Error.</div>';
-        }
-    }
+        async init() {
+            try {
+                const response = await fetch(this.endpoint);
+                this.data = await response.json();
+                this.render();
+                this.setupListeners();
+            } catch (err) {
+                console.error("Vault Fetch Error:", err);
+                document.getElementById('session-grid').innerHTML = '<div class="col-span-full p-10 text-center text-red-400 font-bold uppercase text-[10px]">Connection Error</div>';
+            }
+        },
 
-    function renderVault() {
-        const searchTerm = vaultSearch.value.toLowerCase();
-        const sortVal = vaultSort.value;
+        render() {
+            const container = document.getElementById('session-grid');
+            const search = (document.getElementById('vault-search')?.value || '').toLowerCase();
+            const sortVal = document.getElementById('vault-sort')?.value || 'num_asc';
+            
+            let filtered = this.data.filter(s => 
+                (s.session_description || '').toLowerCase().includes(search) || 
+                s.session_num.toString().includes(search)
+            );
 
-        let filtered = allSessions.filter(s => 
-            (s.session_description || '').toLowerCase().includes(searchTerm) || 
-            s.session_num.toString().includes(searchTerm)
-        );
+            filtered.sort((a, b) => {
+                if (sortVal === 'num_asc') return a.session_num - b.session_num;
+                if (sortVal === 'num_desc') return b.session_num - a.session_num;
+                if (sortVal === 'newest') return b.id - a.id;
+                if (sortVal === 'alpha') return (a.session_description || '').localeCompare(b.session_description || '');
+                return 0;
+            });
 
-        filtered.sort((a, b) => {
-            if (sortVal === 'num_asc') return a.session_num - b.session_num;
-            if (sortVal === 'num_desc') return b.session_num - a.session_num;
-            if (sortVal === 'newest') return b.id - a.id;
-            if (sortVal === 'alpha') return (a.session_description || '').localeCompare(b.session_description || '');
-            return 0;
-        });
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="col-span-full p-20 text-center text-slate-400 font-bold uppercase text-[10px]">No sessions found</div>';
+                return;
+            }
 
-        if (filtered.length === 0) {
-            vaultGrid.innerHTML = '<div style="grid-column: span 3; padding: 15px; text-align: center; background: #fff; font-size: 10px;">No results.</div>';
-            return;
-        }
-
-        vaultGrid.innerHTML = filtered.map(session => `
-            <div style="background: white; padding: 5px; display: flex; align-items: flex-start; gap: 4px; border-bottom: 0.5px solid #f0f0f0; border-right: 0.5px solid #f0f0f0;">
-                <input type="checkbox" class="session-row-check" value="${session.id}" style="margin-top: 1px; cursor: pointer; transform: scale(0.85);">
-                <div style="min-width: 0;">
-                    <div style="font-weight: 800; color: #2d3436; font-size: 9px;">#${session.session_num}</div>
-                    <div style="color: #636e72; font-size: 9px; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${session.session_description || ''}">
-                        ${session.session_description || '---'}
+            container.innerHTML = filtered.map(s => `
+                <div class="session-vault-item flex items-start gap-3 p-4 border-b border-r border-slate-100 transition-all bg-white">
+                    <input type="checkbox" class="session-row-check w-4 h-4 mt-0.5 accent-teal-500 cursor-pointer" value="${s.id}">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[10px] font-black text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 uppercase tracking-tighter">Session ${s.session_num}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-600 font-medium leading-snug line-clamp-2" title="${s.session_description || ''}">
+                            ${s.session_description || 'No description provided.'}
+                        </p>
                     </div>
                 </div>
-            </div>
-        `).join('');
-        
-        updateVaultUI();
-    }
+            `).join('');
 
-    vaultSearch.addEventListener('input', renderVault);
-    vaultSort.addEventListener('change', renderVault);
-    
-    vaultMaster.addEventListener('change', () => {
-        document.querySelectorAll('.session-row-check').forEach(cb => cb.checked = vaultMaster.checked);
-        updateVaultUI();
+            this.updateDownloadUI();
+        },
+
+        setupListeners() {
+            const searchInput = document.getElementById('vault-search');
+            const sortSelect = document.getElementById('vault-sort');
+            const selectAll = document.getElementById('vault-select-all');
+            const grid = document.getElementById('session-grid');
+            const downloadBtn = document.getElementById('vault-download-btn');
+
+            searchInput.oninput = () => this.render();
+            sortSelect.onchange = () => this.render();
+            
+            selectAll.onchange = (e) => {
+                const checks = document.querySelectorAll('.session-row-check');
+                checks.forEach(cb => cb.checked = e.target.checked);
+                this.updateDownloadUI();
+            };
+
+            grid.onchange = (e) => {
+                if (e.target.classList.contains('session-row-check')) {
+                    this.updateDownloadUI();
+                }
+            };
+
+            downloadBtn.onclick = () => {
+                const selectedIds = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => cb.value);
+                alert(`Preparing bulk download for ${selectedIds.length} curriculum files...`);
+            };
+        },
+
+        updateDownloadUI() {
+            const checked = document.querySelectorAll('.session-row-check:checked');
+            const btn = document.getElementById('vault-download-btn');
+            const counter = document.getElementById('vault-selected-count');
+            const selectAll = document.getElementById('vault-select-all');
+            const allChecks = document.querySelectorAll('.session-row-check');
+
+            counter.innerText = checked.length;
+            
+            if (checked.length > 0) {
+                btn.disabled = false;
+                btn.className = "bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md cursor-pointer";
+            } else {
+                btn.disabled = true;
+                btn.className = "bg-slate-300 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md cursor-not-allowed";
+            }
+
+            if (allChecks.length > 0) {
+                selectAll.checked = (checked.length === allChecks.length);
+            }
+        }
+    };
+
+    // TAB-AWARE LOADING (MutationObserver)
+    // This ensures the module loads even if you switch tabs after the page is ready
+    const tabObserver = new MutationObserver((mutations, obs) => {
+        if (document.getElementById('session-grid')) {
+            SessionModule.init();
+            obs.disconnect(); 
+        }
     });
 
-    vaultGrid.addEventListener('change', (e) => { 
-        if (e.target.classList.contains('session-row-check')) updateVaultUI(); 
-    });
+    tabObserver.observe(document.body, { childList: true, subtree: true });
 
-    function updateVaultUI() {
-        const checked = document.querySelectorAll('.session-row-check:checked');
-        vaultBtn.disabled = checked.length === 0;
-        vaultCounter.textContent = checked.length;
-        vaultBtn.style.backgroundColor = checked.length > 0 ? "#00b894" : "#dfe6e9";
-        const all = document.querySelectorAll('.session-row-check');
-        vaultMaster.checked = (all.length > 0 && checked.length === all.length);
-    }
-
-    vaultBtn.addEventListener('click', () => {
-        const ids = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => cb.value);
-        alert("Preparing " + ids.length + " session files.");
-    });
-
-    populateSessionVault();
+    // Immediate attempt if already on screen
+    if (document.getElementById('session-grid')) SessionModule.init();
+})();
 </script>
