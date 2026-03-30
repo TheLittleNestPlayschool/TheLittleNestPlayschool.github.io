@@ -1,4 +1,5 @@
 <div class="vault-container" style="padding: 25px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); font-family: 'Inter', sans-serif;">
+    
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #f0f0f0; padding-bottom: 20px;">
         <div style="display: flex; align-items: center; gap: 12px;">
             <span style="font-size: 24px;">📁</span>
@@ -22,7 +23,9 @@
                 </tr>
             </thead>
             <tbody id="vaultTableBody">
-                <tr><td colspan="4" style="text-align: center; padding: 40px; color: #95a5a6;">Syncing with NestMind...</td></tr>
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 40px; color: #95a5a6;">Syncing with NestMind...</td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -48,7 +51,7 @@
 
             sessions.forEach(session => {
                 const row = `
-                    <tr style="border-bottom: 1px solid #f1f1f1;">
+                    <tr style="border-bottom: 1px solid #f1f1f1; transition: background 0.15s ease-in-out;">
                         <td style="padding: 15px; text-align: center;">
                             <input type="checkbox" class="session-row-check" value="${session.id}" style="transform: scale(1.2); cursor: pointer;">
                         </td>
@@ -56,9 +59,9 @@
                             ${session.session_num}
                         </td>
                         <td style="padding: 15px; color: #2d3436; font-weight: 500;">
-                            ${session.lesson_plan_name || '—'}
+                            ${session.session_plan_name || '—'}
                         </td>
-                        <td style="padding: 15px; color: #636e72;">
+                        <td style="padding: 15px; color: #636e72; font-size: 0.95em;">
                             ${session.worksheet_plan_name || '—'}
                         </td>
                     </tr>
@@ -67,8 +70,8 @@
             });
 
         } catch (error) {
-            console.error("Connection Error:", error);
-            vaultTable.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#d63031;">Connection failed.</td></tr>';
+            console.error("Vault Connection Error:", error);
+            vaultTable.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#d63031;">Failed to load vault. Please check your connection.</td></tr>';
         }
     }
 
@@ -79,22 +82,30 @@
     });
 
     vaultTable.addEventListener('change', function(e) {
-        if (e.target.classList.contains('session-row-check')) updateVaultUI();
+        if (e.target.classList.contains('session-row-check')) {
+            updateVaultUI();
+        }
     });
 
     function updateVaultUI() {
         const checked = document.querySelectorAll('.session-row-check:checked');
         vaultBtn.disabled = checked.length === 0;
         vaultCounter.textContent = checked.length;
+        
         vaultBtn.style.backgroundColor = checked.length > 0 ? "#00b894" : "#dfe6e9";
+        
         const all = document.querySelectorAll('.session-row-check');
-        if(all.length > 0) vaultMaster.checked = (checked.length === all.length);
+        if(all.length > 0) {
+            vaultMaster.checked = (checked.length === all.length);
+        }
     }
 
     vaultBtn.addEventListener('click', function() {
         const selectedIds = Array.from(document.querySelectorAll('.session-row-check:checked'))
                                  .map(cb => cb.value);
-        alert("Preparing " + selectedIds.length + " files for download.");
+
+        alert("Preparing secure download links for " + selectedIds.length + " session files.");
+        console.log("Processing IDs:", selectedIds);
     });
 
     populateSessionVault();
