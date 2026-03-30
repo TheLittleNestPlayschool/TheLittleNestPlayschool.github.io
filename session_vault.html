@@ -134,7 +134,6 @@
                 }
             };
 
-            // THIS IS THE ONLY PART I AM CHANGING FROM YOUR WORKING VERSION
             downloadBtn.onclick = async () => {
                 const selectedIds = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => parseInt(cb.value));
                 
@@ -142,14 +141,17 @@
                 downloadBtn.disabled = true;
 
                 try {
+                    // Send IDs to get_bulk_sessions
                     const response = await fetch(this.bulkEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ session_id: selectedIds })
                     });
 
+                    // Get the signed URLs back from Xano
                     const links = await response.json();
 
+                    // Run the URLs to trigger browser downloads
                     links.forEach((url, index) => {
                         if (url) {
                             setTimeout(() => {
@@ -158,7 +160,7 @@
                                 document.body.appendChild(a);
                                 a.click();
                                 document.body.removeChild(a);
-                            }, index * 300); 
+                            }, index * 400); 
                         }
                     });
                 } catch (err) {
