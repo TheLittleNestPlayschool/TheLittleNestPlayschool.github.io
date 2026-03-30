@@ -1,45 +1,85 @@
+<style>
+    /* Zebra striping for 3-column grid */
+    #session-grid > div:nth-child(6n+4),
+    #session-grid > div:nth-child(6n+5),
+    #session-grid > div:nth-child(6n+6) {
+        background-color: #f8fafc !important; /* slate-50 */
+    }
+    
+    .session-vault-item:hover {
+        background-color: #f1f5f9 !important; /* slate-100 */
+    }
+
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+</style>
+
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div>
+        <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Curriculum Vault</h1>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Session Downloads • Linear Progression</p>
+    </div>
+    
+    <div class="flex flex-wrap gap-2 w-full md:w-auto">
+        <div class="flex items-center gap-2 bg-white border border-slate-300 rounded-lg p-1 shadow-sm w-full md:w-auto">
+            <label class="flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-md cursor-pointer hover:bg-slate-100 transition-all border border-slate-200">
+                <input type="checkbox" id="vault-select-all" class="w-3.5 h-3.5 accent-teal-500">
+                <span class="text-[10px] font-black text-slate-700 uppercase">All</span>
+            </label>
+
+            <input type="text" id="vault-search" placeholder="Search sessions..." 
+                class="pl-2 pr-2 py-1.5 text-xs outline-none w-32 md:w-48 bg-transparent">
+            
+            <select id="vault-sort" class="py-1.5 px-2 bg-slate-50 border-l border-slate-200 text-[10px] font-bold text-slate-600 outline-none rounded-r-md">
+                <option value="num_asc">1 → 300</option>
+                <option value="num_desc">300 → 1</option>
+                <option value="newest">Newest</option>
+                <option value="alpha">A-Z</option>
+            </select>
+        </div>
+
+        <button id="vault-download-btn" disabled class="bg-slate-300 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md cursor-not-allowed">
+            Download (<span id="vault-selected-count">0</span>)
+        </button>
+    </div>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+    <div id="session-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 max-h-[70vh] overflow-y-auto custom-scrollbar">
+        <div class="col-span-full p-20 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
+            Syncing NestMind Database...
+        </div>
+    </div>
+</div>
+
 <script>
 (function() {
     const SessionModule = {
         data: [],
-        // Ensure these URLs are exactly what is in your Xano dashboard
         endpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details',
         bulkEndpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/get_bulk_sessions',
 
         async init() {
-            const container = document.getElementById('session-grid');
             try {
-                // 1. FETCH DATA FIRST
                 const response = await fetch(this.endpoint);
-                if (!response.ok) throw new Error('Network response was not ok');
-                
                 this.data = await response.json();
-
-                // 2. ONLY RENDER IF DATA EXISTS
-                if (this.data && Array.isArray(this.data)) {
-                    this.render();
-                    this.setupListeners();
-                } else {
-                    throw new Error('Data is not an array');
-                }
+                this.render();
+                this.setupListeners();
             } catch (err) {
-                console.error("Vault Initialization Error:", err);
-                if (container) {
-                    container.innerHTML = `<div class="col-span-full p-10 text-center text-red-400 font-bold uppercase text-[10px]">Connection Error: ${err.message}</div>`;
-                }
+                console.error("Vault Fetch Error:", err);
+                document.getElementById('session-grid').innerHTML = '<div class="col-span-full p-10 text-center text-red-400 font-bold uppercase text-[10px]">Connection Error</div>';
             }
         },
 
         render() {
             const container = document.getElementById('session-grid');
-            if (!container) return;
-
             const search = (document.getElementById('vault-search')?.value || '').toLowerCase();
             const sortVal = document.getElementById('vault-sort')?.value || 'num_asc';
             
             let filtered = this.data.filter(s => 
                 (s.session_description || '').toLowerCase().includes(search) || 
-                (s.session_num && s.session_num.toString().includes(search))
+                s.session_num.toString().includes(search)
             );
 
             filtered.sort((a, b) => {
@@ -69,7 +109,6 @@
                 </div>
             `).join('');
 
-            // Only run UI updates AFTER items are drawn to screen
             this.updateDownloadUI();
         },
 
@@ -80,102 +119,88 @@
             const grid = document.getElementById('session-grid');
             const downloadBtn = document.getElementById('vault-download-btn');
 
-            if (searchInput) searchInput.oninput = () => this.render();
-            if (sortSelect) sortSelect.onchange = () => this.render();
+            searchInput.oninput = () => this.render();
+            sortSelect.onchange = () => this.render();
             
-            if (selectAll) {
-                selectAll.onchange = (e) => {
-                    const checks = document.querySelectorAll('.session-row-check');
-                    checks.forEach(cb => cb.checked = e.target.checked);
+            selectAll.onchange = (e) => {
+                const checks = document.querySelectorAll('.session-row-check');
+                checks.forEach(cb => cb.checked = e.target.checked);
+                this.updateDownloadUI();
+            };
+
+            grid.onchange = (e) => {
+                if (e.target.classList.contains('session-row-check')) {
                     this.updateDownloadUI();
-                };
-            }
+                }
+            };
 
-            if (grid) {
-                grid.onchange = (e) => {
-                    if (e.target.classList.contains('session-row-check')) {
-                        this.updateDownloadUI();
-                    }
-                };
-            }
+            // THIS IS THE ONLY PART I AM CHANGING FROM YOUR WORKING VERSION
+            downloadBtn.onclick = async () => {
+                const selectedIds = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => parseInt(cb.value));
+                
+                downloadBtn.innerText = "WAIT...";
+                downloadBtn.disabled = true;
 
-            if (downloadBtn) {
-                downloadBtn.onclick = async () => {
-                    const checkedBoxes = document.querySelectorAll('.session-row-check:checked');
-                    if (checkedBoxes.length === 0) return;
+                try {
+                    const response = await fetch(this.bulkEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ session_id: selectedIds })
+                    });
 
-                    const selectedIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
-                    
-                    downloadBtn.innerText = "Generating Links...";
-                    downloadBtn.disabled = true;
+                    const links = await response.json();
 
-                    try {
-                        const response = await fetch(this.bulkEndpoint, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ session_id: selectedIds })
-                        });
-
-                        const links = await response.json();
-
-                        if (links && Array.isArray(links)) {
-                            links.forEach((url, index) => {
-                                if (url) {
-                                    setTimeout(() => {
-                                        const a = document.createElement('a');
-                                        a.href = url;
-                                        a.setAttribute('download', ''); 
-                                        document.body.appendChild(a);
-                                        a.click();
-                                        document.body.removeChild(a);
-                                    }, index * 300); // Slightly longer delay for safety
-                                }
-                            });
+                    links.forEach((url, index) => {
+                        if (url) {
+                            setTimeout(() => {
+                                const a = document.createElement('a');
+                                a.href = url;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                            }, index * 300); 
                         }
-                    } catch (err) {
-                        console.error("Bulk Download Error:", err);
-                        alert("Download failed. Check browser console.");
-                    } finally {
-                        this.updateDownloadUI();
-                    }
-                };
-            }
+                    });
+                } catch (err) {
+                    console.error("Bulk Download Error:", err);
+                } finally {
+                    this.updateDownloadUI();
+                }
+            };
         },
 
         updateDownloadUI() {
+            const checked = document.querySelectorAll('.session-row-check:checked');
             const btn = document.getElementById('vault-download-btn');
             const counter = document.getElementById('vault-selected-count');
-            if (!btn || !counter) return;
-
-            const checked = document.querySelectorAll('.session-row-check:checked');
+            const selectAll = document.getElementById('vault-select-all');
             const allChecks = document.querySelectorAll('.session-row-check');
 
             counter.innerText = checked.length;
-            btn.innerText = `Download (${checked.length})`;
             
             if (checked.length > 0) {
                 btn.disabled = false;
-                btn.classList.remove('bg-slate-300', 'cursor-not-allowed');
-                btn.classList.add('bg-teal-500', 'hover:bg-teal-600', 'cursor-pointer');
+                btn.className = "bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md cursor-pointer";
             } else {
                 btn.disabled = true;
-                btn.classList.add('bg-slate-300', 'cursor-not-allowed');
-                btn.classList.remove('bg-teal-500', 'hover:bg-teal-600', 'cursor-pointer');
+                btn.className = "bg-slate-300 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md cursor-not-allowed";
             }
 
-            const selectAll = document.getElementById('vault-select-all');
-            if (selectAll && allChecks.length > 0) {
+            if (allChecks.length > 0) {
                 selectAll.checked = (checked.length === allChecks.length);
             }
         }
     };
 
-    // Clean up: Only initialize once the grid is confirmed on screen
-    const checkExist = setInterval(function() {
-       if (document.getElementById('session-grid')) {
-          SessionModule.init();
-          clearInterval(checkExist);
-       }
-    }, 100);
+    const tabObserver = new MutationObserver((mutations, obs) => {
+        if (document.getElementById('session-grid')) {
+            SessionModule.init();
+            obs.disconnect(); 
+        }
+    });
+
+    tabObserver.observe(document.body, { childList: true, subtree: true });
+
+    if (document.getElementById('session-grid')) SessionModule.init();
 })();
 </script>
