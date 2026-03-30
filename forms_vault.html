@@ -29,8 +29,9 @@
     const FormsVaultModule = {
         data: [],
         selectedIds: new Set(),
+        // Endpoints from your didN9vp2 group
         listEndpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/forms_vault',
-        bulkEndpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/get_bulk_forms',
+        bulkEndpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/get_bulk_form',
 
         async init() {
             try {
@@ -38,6 +39,7 @@
                 if (!response.ok) throw new Error("Sync Failed");
                 
                 const rawData = await response.json();
+                // Handle Xano's potential nesting or direct array return
                 this.data = Array.isArray(rawData) ? rawData : (rawData.items || []);
                 
                 this.render();
@@ -70,8 +72,8 @@
                     </div>
                     <div class="flex items-center gap-10 ml-auto text-right">
                         <div>
-                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Format</p>
-                            <p class="text-[10px] font-bold text-slate-700 uppercase">Document Asset</p>
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Asset ID</p>
+                            <p class="text-[10px] font-bold text-slate-700 uppercase">#${f.id}</p>
                         </div>
                         <div class="flex items-center gap-2 pl-6 border-l border-slate-100 min-w-[90px] justify-end">
                             <div class="w-1.5 h-1.5 rounded-full bg-teal-500"></div>
@@ -95,7 +97,7 @@
             countLabel.innerText = count;
             if (count > 0) {
                 btn.disabled = false;
-                btn.className = "bg-teal-500 text-white px-4 py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-widest shadow-md hover:bg-teal-600 transition-all cursor-pointer";
+                btn.className = "bg-[#00d1b2] text-white px-4 py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-widest shadow-lg hover:brightness-110 transition-all cursor-pointer";
             } else {
                 btn.disabled = true;
                 btn.className = "bg-slate-200 text-slate-400 px-4 py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-widest border border-slate-200 transition-all cursor-not-allowed";
@@ -105,7 +107,7 @@
         async downloadSelected() {
             const btn = document.getElementById('bulk-download-btn');
             const originalHTML = btn.innerHTML;
-            btn.innerText = "SIGNING...";
+            btn.innerText = "SIGNING ASSETS...";
             
             try {
                 const response = await fetch(this.bulkEndpoint, {
@@ -114,13 +116,17 @@
                     body: JSON.stringify({ form_ids: Array.from(this.selectedIds) })
                 });
                 
+                if (!response.ok) throw new Error("Signing failed");
                 const signedUrls = await response.json();
                 
+                // Trigger sequential downloads
                 signedUrls.forEach((url, index) => {
                     setTimeout(() => {
                         const link = document.createElement('a');
                         link.href = url;
-                        link.setAttribute('target', '_blank');
+                        // target="_blank" helps prevent browser pop-up blocks
+                        link.setAttribute('target', '_blank'); 
+                        link.setAttribute('download', '');
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
@@ -131,7 +137,8 @@
                 setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
             } catch (err) {
                 console.error("Bulk Download Error:", err);
-                btn.innerText = "ERROR";
+                btn.innerText = "DOWNLOAD ERROR";
+                setTimeout(() => { btn.innerHTML = originalHTML; }, 3000);
             }
         },
 
@@ -151,6 +158,7 @@
         }
     };
 
+    // Expose toggle to the window for the inline onchange
     window.FormsVaultToggleSelection = (id, checked) => FormsVaultModule.toggleSelection(id, checked);
     document.getElementById('bulk-download-btn').onclick = () => FormsVaultModule.downloadSelected();
 
