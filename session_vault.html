@@ -13,7 +13,34 @@
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+
+    /* Progress Modal Styles */
+    #vault-progress-overlay { 
+        display: none; 
+        position: fixed; 
+        inset: 0; 
+        background: rgba(15, 23, 42, 0.9); 
+        z-index: 9999; 
+        align-items: center; 
+        justify-content: center; 
+        padding: 20px; 
+    }
 </style>
+
+<div id="vault-progress-overlay">
+    <div class="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl text-center">
+        <h2 class="text-sm font-black uppercase tracking-widest text-slate-400 mb-2">NestMind Download Manager</h2>
+        <p id="progress-status" class="text-xs font-bold text-slate-600 uppercase mb-6">Preparing files...</p>
+        
+        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4">
+            <div id="progress-bar" class="bg-teal-500 h-full w-0 transition-all duration-300"></div>
+        </div>
+        
+        <div id="file-list-debug" class="text-[10px] font-mono text-slate-400 bg-slate-50 p-3 rounded border border-slate-100 text-left max-h-32 overflow-y-auto custom-scrollbar mb-2">
+            </div>
+        <p class="text-[9px] text-amber-600 font-bold uppercase italic">Please do not close this window until complete.</p>
+    </div>
+</div>
 
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
@@ -117,14 +144,19 @@
             document.getElementById('session-grid').onchange = () => this.updateDownloadUI();
 
             document.getElementById('vault-download-btn').onclick = async (e) => {
-                const btn = e.currentTarget;
                 const selectedIds = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => parseInt(cb.value));
-                
                 if (selectedIds.length === 0) return;
 
-                const originalText = btn.innerHTML;
-                btn.innerHTML = "PREPARING...";
-                btn.disabled = true;
+                const overlay = document.getElementById('vault-progress-overlay');
+                const progressBar = document.getElementById('progress-bar');
+                const statusText = document.getElementById('progress-status');
+                const fileList = document.getElementById('file-list-debug');
+
+                // Initialize Modal
+                overlay.style.display = 'flex';
+                progressBar.style.width = '0%';
+                statusText.innerText = "Requesting Signed URLs...";
+                fileList.innerHTML = "";
 
                 try {
                     const response = await fetch(this.bulkEndpoint, {
@@ -135,27 +167,47 @@
                     
                     const data = await response.json();
                     
-                    // Logic to extract URL string if Xano returns objects
+                    // Extract strings from Xano objects
                     const finalLinks = Array.isArray(data) 
                         ? data.map(item => (typeof item === 'object' && item.url) ? item.url : item)
                         : [];
 
-                    finalLinks.forEach((url, index) => {
-                        if (url && typeof url === 'string') {
-                            setTimeout(() => {
-                                const a = document.createElement('a');
-                                a.href = url;
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                            }, index * 800);
-                        }
-                    });
+                    if (finalLinks.length === 0) throw new Error("No links returned");
+
+                    // Loop through links for download
+                    for (let i = 0; i < finalLinks.length; i++) {
+                        const url = finalLinks[i];
+                        const progress = Math.round(((i + 1) / finalLinks.length) * 100);
+                        
+                        // Update UI
+                        statusText.innerText = `Downloading File ${i + 1} of ${finalLinks.length}`;
+                        progressBar.style.width = `${progress}%`;
+                        
+                        // Add to visual list
+                        const fileName = url.split('/').pop().split('?')[0];
+                        fileList.innerHTML += `<div class="mb-1">✓ ${fileName}</div>`;
+                        fileList.scrollTop = fileList.scrollHeight;
+
+                        // Trigger Browser Download
+                        const a = document.createElement('a');
+                        a.href = url;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+
+                        // Pause to avoid browser pop-up blocks
+                        await new Promise(resolve => setTimeout(resolve, 800));
+                    }
+
+                    statusText.innerText = "All Downloads Complete! Reloading...";
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+
                 } catch (err) {
-                    console.error("Bulk Download Error:", err);
-                } finally {
-                    btn.innerHTML = originalText;
-                    this.updateDownloadUI();
+                    statusText.innerText = "Error during download.";
+                    console.error(err);
+                    setTimeout(() => overlay.style.display = 'none', 3000);
                 }
             };
         },
