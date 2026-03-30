@@ -5,7 +5,7 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
             <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Session Catalog</h1>
-            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Active Academic Schedules • Sariaya Branch</p>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Active Academic Schedules</p>
         </div>
         <div class="bg-slate-100 px-3 py-1.5 rounded-lg text-[10px] font-extrabold text-slate-500 uppercase tracking-widest border border-slate-200">
             View Only Mode
@@ -25,14 +25,12 @@
         data: [],
 
         async init() {
-            // Match the exact loading pattern from parents.html
             if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
             
             const fid = localStorage.getItem('locked_franchise_id');
             if (!fid) return;
 
             try {
-                // Use the correct nested mapping: .session.list
                 const url = `${window.NEST_ENDPOINTS.session.list}?franchise_id=${fid}`;
                 const response = await fetch(url);
                 
@@ -49,14 +47,12 @@
             }
         },
 
-        // Mirroring your parents.html loadScript exactly
         async loadScript(src) {
             return new Promise(resolve => {
                 const s = document.createElement('script'); 
                 s.src = src; 
                 s.onload = resolve;
                 s.onerror = () => { 
-                    // This is the part that fixed parents.html
                     s.src = src.replace('/', ''); 
                     s.onload = resolve; 
                 };
@@ -66,12 +62,17 @@
 
         render() {
             const container = document.getElementById('session-list-container');
-            if (!this.data || this.data.length === 0) {
+            
+            // --- THE FIX: FILTER OUT HIDDEN SESSIONS ---
+            // This strictly keeps only records where display is true.
+            const visibleSessions = (this.data || []).filter(s => s.display === true);
+
+            if (visibleSessions.length === 0) {
                 container.innerHTML = `<div class="p-20 text-center text-slate-400 text-xs font-bold uppercase border-2 border-dashed border-slate-100 rounded-2xl italic">No sessions found</div>`;
                 return;
             }
 
-            container.innerHTML = this.data.map(s => `
+            container.innerHTML = visibleSessions.map(s => `
                 <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center hover:border-teal-400 transition-all cursor-default">
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-1">
