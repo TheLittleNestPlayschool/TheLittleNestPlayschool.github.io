@@ -29,27 +29,13 @@
     const FormsVaultModule = {
         data: [],
         selectedIds: new Set(),
-        retries: 0,
+        // Endpoints provided for didN9vp2 group
+        listEndpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/forms_vault',
+        bulkEndpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/get_bulk_forms',
 
         async init() {
-            if (!window.NEST_SCHEMA) await this.loadScript('schema_config.js');
-            if (!window.NEST_ENDPOINTS) await this.loadScript('api_config.js');
-            
-            const endpoints = window.NEST_ENDPOINTS;
-            
-            // Expected mapping in api_config.js: window.NEST_ENDPOINTS.forms.list
-            if (!endpoints || !endpoints.forms || !endpoints.forms.list) {
-                if (this.retries < 10) {
-                    this.retries++;
-                    setTimeout(() => this.init(), 500);
-                } else {
-                    document.getElementById('sync-status').innerHTML = "Error: API Config mapping mismatch (forms.list).";
-                }
-                return;
-            }
-
             try {
-                const response = await fetch(`${endpoints.forms.list}?t=${Date.now()}`);
+                const response = await fetch(`${this.listEndpoint}?t=${Date.now()}`);
                 if (!response.ok) throw new Error("Sync Failed");
                 
                 const rawData = await response.json();
@@ -80,18 +66,18 @@
                                onchange="window.FormsVaultToggleSelection(${f.id}, this.checked)">
                     </div>
                     <div class="flex-1">
-                        <h3 class="text-sm font-black text-slate-800 uppercase tracking-tight">${f.form_name}</h3>
-                        <p class="text-[11px] text-slate-500 font-medium mt-1 leading-relaxed">${f.form_description || 'Verified Document'}</p>
+                        <h3 class="text-sm font-black text-slate-800 uppercase tracking-tight">${f.form_name || 'Untitled Form'}</h3>
+                        <p class="text-[11px] text-slate-500 font-medium mt-1 leading-relaxed">${f.form_description || 'Operational Document'}</p>
                     </div>
                     <div class="flex items-center gap-10 ml-auto text-right">
                         <div>
-                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Type</p>
-                            <p class="text-[10px] font-bold text-slate-700 uppercase">PDF Asset</p>
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Format</p>
+                            <p class="text-[10px] font-bold text-slate-700 uppercase">Document Asset</p>
                         </div>
                         <div class="flex items-center gap-2 pl-6 border-l border-slate-100 min-w-[90px] justify-end">
                             <div class="w-1.5 h-1.5 rounded-full bg-teal-500"></div>
                             <span class="text-[9px] font-black uppercase tracking-widest text-teal-500">
-                                Available
+                                Ready
                             </span>
                         </div>
                     </div>
@@ -119,11 +105,12 @@
 
         async downloadSelected() {
             const btn = document.getElementById('bulk-download-btn');
-            const originalText = btn.innerHTML;
-            btn.innerText = "SIGNING ASSETS...";
+            const originalHTML = btn.innerHTML;
+            btn.innerText = "SIGNING...";
             
             try {
-                const response = await fetch(window.NEST_ENDPOINTS.forms.get_bulk_forms, {
+                // Post to the bulk signing endpoint
+                const response = await fetch(this.bulkEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ form_ids: Array.from(this.selectedIds) })
@@ -131,45 +118,28 @@
                 
                 const signedUrls = await response.json();
                 
-                // Trigger downloads
+                // Trigger sequential downloads for signed AWS URLs
                 signedUrls.forEach((url, index) => {
                     setTimeout(() => {
                         const link = document.createElement('a');
                         link.href = url;
-                        link.setAttribute('download', '');
+                        link.setAttribute('target', '_blank');
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-                    }, index * 500); // Stagger to prevent browser block
+                    }, index * 600); 
                 });
 
                 btn.innerText = "SUCCESS";
-                setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
             } catch (err) {
                 console.error("Bulk Download Error:", err);
-                btn.innerText = "FETCH ERROR";
+                btn.innerText = "ERROR";
             }
-        },
-
-        async loadScript(src) {
-            return new Promise(resolve => {
-                const s = document.createElement('script'); 
-                s.src = src; 
-                s.onload = resolve;
-                s.onerror = () => {
-                    const fallback = document.createElement('script');
-                    fallback.src = src.replace('/', ''); 
-                    fallback.onload = resolve;
-                    document.head.appendChild(fallback);
-                };
-                document.head.appendChild(s);
-            });
         }
     };
 
-    // Global hook for the checkbox onchange
     window.FormsVaultToggleSelection = (id, checked) => FormsVaultModule.toggleSelection(id, checked);
-    
     document.getElementById('bulk-download-btn').onclick = () => FormsVaultModule.downloadSelected();
 
     FormsVaultModule.init();
