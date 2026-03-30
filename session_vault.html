@@ -1,35 +1,35 @@
 <div class="vault-container" style="display: flex; flex-direction: column; max-height: 550px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); font-family: 'Inter', sans-serif; border: 1px solid #edf2f7;">
     
-    <div style="padding: 10px; border-bottom: 2px solid #edf2f7; background: #fff; border-radius: 8px 8px 0 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 16px;">📁</span>
-                <h4 style="margin: 0; color: #2c3e50; font-size: 12px; font-weight: 700;">Session Vault</h4>
+    <div style="padding: 8px 10px; border-bottom: 2px solid #edf2f7; background: #fff; border-radius: 8px 8px 0 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 14px;">📁</span>
+                <h4 style="margin: 0; color: #2c3e50; font-size: 11px; font-weight: 700;">Session Vault</h4>
             </div>
-            <button id="vaultDownloadBtn" style="padding: 5px 12px; background-color: #dfe6e9; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 11px;" disabled>
+            <button id="vaultDownloadBtn" style="padding: 4px 10px; background-color: #dfe6e9; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 10px;" disabled>
                 Download (<span id="vaultSelectedCount">0</span>)
             </button>
         </div>
         
-        <div style="display: flex; gap: 6px; align-items: center;">
-            <input type="text" id="vaultSearch" placeholder="Search..." style="width: 110px; padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; outline: none; font-size: 11px;">
-            
-            <select id="vaultSort" style="flex: 1; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; cursor: pointer; background: #fff; min-width: 120px;">
-                <option value="num_asc">Session: 1 → 300</option>
-                <option value="num_desc">Session: 300 → 1</option>
-                <option value="newest">Recently Added</option>
-                <option value="alpha">A → Z (Description)</option>
-            </select>
-
-            <label style="display: flex; align-items: center; gap: 4px; font-size: 10px; cursor: pointer; color: #636e72; font-weight: 700; white-space: nowrap;">
-                <input type="checkbox" id="vaultSelectAll"> ALL
+        <div style="display: flex; gap: 5px; align-items: center;">
+            <label style="display: flex; align-items: center; gap: 3px; font-size: 10px; cursor: pointer; color: #2d3436; font-weight: 800; background: #f8f9fa; padding: 4px 6px; border-radius: 4px; border: 1px solid #ddd;">
+                <input type="checkbox" id="vaultSelectAll" style="transform: scale(0.85);"> ALL
             </label>
+
+            <input type="text" id="vaultSearch" placeholder="Search..." style="width: 60px; padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; outline: none; font-size: 10px; flex: 0 0 auto;">
+            
+            <select id="vaultSort" style="flex: 1; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 10px; cursor: pointer; background: #fff; min-width: 80px;">
+                <option value="num_asc">1 → 300</option>
+                <option value="num_desc">300 → 1</option>
+                <option value="newest">Newest</option>
+                <option value="alpha">A → Z</option>
+            </select>
         </div>
     </div>
 
     <div id="vaultGrid" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background-color: #edf2f7;">
-        <div style="grid-column: span 3; padding: 30px; text-align: center; color: #95a5a6; font-size: 11px; background: #fff;">
-            Loading NestMind Files...
+        <div style="grid-column: span 3; padding: 30px; text-align: center; color: #95a5a6; font-size: 10px; background: #fff;">
+            Syncing NestMind Database...
         </div>
     </div>
 </div>
@@ -49,7 +49,7 @@
             allSessions = await response.json();
             renderVault();
         } catch (error) {
-            vaultGrid.innerHTML = '<div style="grid-column: span 3; padding: 20px; color: red; background: #fff; font-size: 11px;">Connection Error.</div>';
+            vaultGrid.innerHTML = '<div style="grid-column: span 3; padding: 20px; color: red; background: #fff; font-size: 10px;">Connection Error.</div>';
         }
     }
 
@@ -62,7 +62,6 @@
             s.session_num.toString().includes(searchTerm)
         );
 
-        // Advanced Sorting Logic
         filtered.sort((a, b) => {
             if (sortVal === 'num_asc') return a.session_num - b.session_num;
             if (sortVal === 'num_desc') return b.session_num - a.session_num;
@@ -72,15 +71,15 @@
         });
 
         if (filtered.length === 0) {
-            vaultGrid.innerHTML = '<div style="grid-column: span 3; padding: 20px; text-align: center; background: #fff; font-size: 11px;">No sessions found.</div>';
+            vaultGrid.innerHTML = '<div style="grid-column: span 3; padding: 15px; text-align: center; background: #fff; font-size: 10px;">No results.</div>';
             return;
         }
 
         vaultGrid.innerHTML = filtered.map(session => `
-            <div style="background: white; padding: 6px; display: flex; align-items: flex-start; gap: 5px; border-bottom: 0.5px solid #f0f0f0; border-right: 0.5px solid #f0f0f0;">
-                <input type="checkbox" class="session-row-check" value="${session.id}" style="margin-top: 2px; cursor: pointer; transform: scale(0.9);">
+            <div style="background: white; padding: 5px; display: flex; align-items: flex-start; gap: 4px; border-bottom: 0.5px solid #f0f0f0; border-right: 0.5px solid #f0f0f0;">
+                <input type="checkbox" class="session-row-check" value="${session.id}" style="margin-top: 1px; cursor: pointer; transform: scale(0.85);">
                 <div style="min-width: 0;">
-                    <div style="font-weight: 800; color: #2d3436; font-size: 10px;">#${session.session_num}</div>
+                    <div style="font-weight: 800; color: #2d3436; font-size: 9px;">#${session.session_num}</div>
                     <div style="color: #636e72; font-size: 9px; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${session.session_description || ''}">
                         ${session.session_description || '---'}
                     </div>
@@ -114,8 +113,8 @@
 
     vaultBtn.addEventListener('click', () => {
         const ids = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => cb.value);
-        console.log("Ready to download IDs:", ids);
-        alert("Generating secure links for " + ids.length + " sessions.");
+        console.log("Downloading IDs:", ids);
+        alert("Preparing " + ids.length + " session files.");
     });
 
     populateSessionVault();
