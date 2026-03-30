@@ -1,76 +1,68 @@
-<div class="flex flex-col items-center justify-center min-h-[400px] space-y-4 animate-in fade-in duration-500">
-    
-    <div class="bg-slate-100 p-6 rounded-full text-4xl shadow-inner">
-        📂
-    </div>
-    
-    <div class="text-center">
-        <h1 id="vault-title" class="text-3xl font-black text-slate-800 tracking-tighter uppercase">Media Vault</h1>
-        <p class="text-slate-400 font-medium text-sm italic tracking-wide">Secure Asset Storage & Student Portfolios</p>
+<div class="vault-container" style="padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+        <h3 style="margin: 0; color: #333;">📂 Session Download Vault</h3>
+        <button id="vaultDownloadBtn" class="btn-primary" style="padding: 10px 20px; cursor: pointer;" disabled>
+            Download Selected (<span id="vaultSelectedCount">0</span>)
+        </button>
     </div>
 
-    <div class="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-2xl shadow-sm">
-        <div id="status-indicator" class="w-2 h-2 rounded-full bg-[#00d1b2] animate-pulse"></div>
-        <span id="status-text" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">System Ready</span>
-    </div>
-
-    <div id="download-card" class="max-w-md w-full bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mt-4 text-center">
-        <div id="loading-msg">
-            <p class="text-slate-500 text-xs leading-relaxed">
-                Enter a Session ID or select a student record to begin.
-            </p>
-        </div>
-
-        <div id="action-buttons" class="hidden space-y-3">
-            <p id="session-info" class="text-slate-500 text-[10px] font-bold uppercase mb-2"></p>
-            <div class="flex flex-col gap-2">
-                <a id="link-lesson" href="#" target="_blank" class="block w-full py-3 bg-slate-800 text-white text-xs font-bold rounded-xl hover:bg-slate-700 transition">DOWNLOAD LESSON PLAN</a>
-                <a id="link-worksheet" href="#" target="_blank" class="block w-full py-3 border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition">DOWNLOAD WORKSHEET</a>
-            </div>
-        </div>
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="background-color: #f9f9f9;">
+                    <th style="padding: 12px; width: 40px; border-bottom: 2px solid #ddd;">
+                        <input type="checkbox" id="vaultSelectAll">
+                    </th>
+                    <th style="padding: 12px; border-bottom: 2px solid #ddd;">Session Topic</th>
+                    <th style="padding: 12px; border-bottom: 2px solid #ddd;">File Name</th>
+                    <th style="padding: 12px; border-bottom: 2px solid #ddd;">Added On</th>
+                </tr>
+            </thead>
+            <tbody id="vaultTableBody">
+                </tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    // Logic to grab ID from URL: ?session_id=123
-    const params = new URLSearchParams(window.location.search);
-    const sid = params.get('session_id');
+    // These elements are now specific to the vault component
+    const vaultMaster = document.getElementById('vaultSelectAll');
+    const vaultBtn = document.getElementById('vaultDownloadBtn');
+    const vaultCounter = document.getElementById('vaultSelectedCount');
+    const vaultTable = document.getElementById('vaultTableBody');
 
-    async function loadVaultData() {
-        if (!sid) return;
+    // 1. SELECT ALL LOGIC
+    vaultMaster.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.session-row-check');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+        updateVaultUI();
+    });
 
-        const statusText = document.getElementById('status-text');
-        const statusInd = document.getElementById('status-indicator');
-        
-        statusText.innerText = "Connecting to Xano...";
-
-        try {
-            // Using your specific Xano Endpoint
-            const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details/${sid}`);
-            const session = await res.json();
-
-            if (session.id) {
-                document.getElementById('loading-msg').classList.add('hidden');
-                document.getElementById('action-buttons').classList.remove('hidden');
-                document.getElementById('vault-title').innerText = `Session ${session.session_num}`;
-                
-                // Constructing the temporary Wasabi Download Links
-                // Note: These URLs should ideally be generated in Xano and passed as fields
-                // If Xano returns the full URL, use: session.lesson_plan_presigned_url
-                document.getElementById('link-lesson').href = session.lesson_plan_url;
-                document.getElementById('link-worksheet').href = session.worksheet_url;
-                
-                statusText.innerText = "Assets Online";
-                statusInd.classList.replace('bg-[#00d1b2]', 'bg-blue-500');
-            } else {
-                statusText.innerText = "Session Not Found";
-                statusInd.classList.replace('bg-[#00d1b2]', 'bg-orange-500');
-            }
-        } catch (err) {
-            statusText.innerText = "Offline / Error";
-            statusInd.classList.replace('bg-[#00d1b2]', 'bg-red-500');
+    // 2. INDIVIDUAL SELECTION LOGIC
+    vaultTable.addEventListener('change', function(e) {
+        if (e.target.classList.contains('session-row-check')) {
+            updateVaultUI();
         }
+    });
+
+    // 3. UI UPDATER
+    function updateVaultUI() {
+        const checked = document.querySelectorAll('.session-row-check:checked');
+        vaultBtn.disabled = checked.length === 0;
+        vaultCounter.textContent = checked.length;
+        
+        // Sync master checkbox
+        const all = document.querySelectorAll('.session-row-check');
+        vaultMaster.checked = (checked.length === all.length && all.length > 0);
     }
 
-    loadVaultData();
+    // 4. DOWNLOAD PLACEHOLDER
+    vaultBtn.addEventListener('click', function() {
+        const selectedIds = Array.from(document.querySelectorAll('.session-row-check:checked'))
+                                 .map(cb => cb.value);
+
+        // Placeholder alert for now
+        alert("PLACEHOLDER: " + selectedIds.length + " files selected. Ready for Xano API call.");
+        console.log("IDs to process:", selectedIds);
+    });
 </script>
