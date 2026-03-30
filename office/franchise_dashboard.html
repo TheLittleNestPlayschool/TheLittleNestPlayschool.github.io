@@ -1,136 +1,160 @@
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-
-<div class="flex h-screen w-full bg-[#f8fafc] overflow-hidden font-['Inter',_sans-serif]">
-    <aside class="w-[260px] bg-[#0f172a] flex-shrink-0 flex flex-col border-r border-[#1e293b] z-50">
-        <div class="p-8">
-            <h1 class="text-[#00d1b2] text-2xl font-black tracking-tighter">NestMind</h1>
-        </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NestMind | Franchise Director</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .nav-item:hover { background-color: #f1f5f9; cursor: pointer; }
+        .nav-active { background-color: #f1f5f9; border-left: 4px solid #0f172a; }
         
-        <div class="px-4 mb-6">
-            <div class="bg-[#1e293b] p-5 rounded-2xl border border-slate-700 text-center shadow-xl">
-                <p class="text-[10px] font-black text-[#2dd4bf] uppercase mb-3 tracking-widest">Identity Lock</p>
-                <select id="branch-select" onchange="unlockDashboard()" class="w-full bg-[#0f172a] text-white p-2.5 rounded-lg border border-slate-600 text-xs focus:ring-2 focus:ring-[#00d1b2] outline-none cursor-pointer">
-                    <option value="">-- Select Branch --</option>
-                </select>
-                <div id="active-branch-name" class="hidden text-white font-extrabold text-base tracking-tight py-1"></div>
-                
-                <div id="breadcrumb-container" class="hidden mt-3 pt-3 border-t border-slate-700/50">
-                    <div class="flex items-center justify-center gap-2">
-                        <div class="w-1 h-1 rounded-full bg-[#00d1b2] animate-pulse"></div>
-                        <span id="breadcrumb-text" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Portal Root</span>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-slate-900 antialiased">
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <aside class="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0">
+            <div class="p-6 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-black text-xl italic">N</div>
+                    <div>
+                        <h1 class="text-sm font-black uppercase tracking-tighter leading-none">NestMind</h1>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Franchise OS</p>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <nav id="nav-menu" class="hidden px-3 overflow-y-auto space-y-1">
-            <div class="text-[0.65rem] font-800 text-[#475569] uppercase tracking-widest px-4 py-3">Management</div>
+            <nav class="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-2">Core Operations</p>
+                
+                <div id="nav-dashboard" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+                    <span class="text-lg">📊</span>
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Performance</span>
+                </div>
+
+                <div id="nav-sessions-vault" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+                    <span class="text-lg">📚</span>
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Curriculum Vault</span>
+                </div>
+
+                <div id="nav-forms-vault" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+                    <span class="text-lg">📁</span>
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Forms Vault</span>
+                </div>
+
+                <div class="pt-4 mt-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-2">Intelligence</p>
+                    <div id="nav-competitor-hub" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+                        <span class="text-lg">🔍</span>
+                        <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Competitor Hub</span>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="p-4 border-t border-slate-100">
+                <div class="bg-slate-50 rounded-2xl p-4 flex items-center gap-3 border border-slate-100">
+                    <div class="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold text-xs">AD</div>
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-black text-slate-800 uppercase truncate">Admin Director</p>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase truncate">The Little Nest</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col bg-[#f8fafc] overflow-hidden">
             
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('franchise_performance.html', 'Performance')">
-                <span>📈</span> Performance
+            <header class="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></span>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">System Status: Live Sync</p>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <button class="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">Help</button>
+                    <div class="h-4 w-px bg-slate-200"></div>
+                    <button class="text-xs font-black text-slate-600 uppercase tracking-widest">Logout</button>
+                </div>
+            </header>
+
+            <div id="main-content-area" class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                <div class="flex items-center justify-center h-full">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                            <span class="text-xl">🚀</span>
+                        </div>
+                        <h2 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Initializing NestMind Dashboard...</h2>
+                    </div>
+                </div>
             </div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('parents.html', 'Parents')">
-                <span>👨‍👩‍👧</span> Parents
-            </div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('teacher_v2.html', 'Teachers')">
-                <span>🧑‍🏫</span> Teachers
-            </div>
+
+        </main>
+    </div>
+
+    <script>
+        /**
+         * Load Module logic for injecting HTML files into the main area
+         */
+        async function loadModule(moduleName) {
+            const container = document.getElementById('main-content-area');
             
-            <div class="text-[0.65rem] font-800 text-[#475569] uppercase tracking-widest px-4 py-3">Academic DNA</div>
-            
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('new_enrollment.html', 'New Enrollment')">
-                <span>✨</span> New Enrollment
-            </div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('students.html', 'Students')">
-                <span>🏫</span> Students
-            </div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('student_assessment.html', 'Assessments')">
-                <span>📝</span> Assessments
-            </div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('session_display.html', 'Sessions')">
-                <span>🗓️</span> Sessions
-            </div>
+            // Visual feedback
+            container.innerHTML = `
+                <div class="flex items-center justify-center h-64">
+                    <div class="text-slate-400 text-xs font-black uppercase tracking-widest animate-pulse">
+                        Accessing ${moduleName.replace('_', ' ')}...
+                    </div>
+                </div>
+            `;
 
-            <div class="text-[0.65rem] font-800 text-[#475569] uppercase tracking-widest px-4 py-3">Logistics</div>
+            try {
+                const response = await fetch(`${moduleName}.html`);
+                if (!response.ok) throw new Error('Module not found');
+                
+                const html = await response.text();
+                container.innerHTML = html;
 
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('session_vault.html', 'Session Vault')">
-                <span>📁</span> Session Vault
-            </div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('forms_vault.html', 'Forms Vault')">
-                <span>📄</span> Forms Vault
-            </div>
-            <div class="group cursor-pointer p-3 text-[#94a3b8] text-sm font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-xl transition-all flex items-center gap-3" onclick="loadModule('order_merch.html', 'Order Merch')">
-                <span>👕</span> Order Merch
-            </div>
-        </nav>
-    </aside>
+                // Re-initialize scripts inside the loaded HTML
+                const scripts = container.querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
 
-    <main id="main-workspace" class="flex-grow overflow-y-auto relative bg-[#f8fafc]">
-        <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full">
-            <h1 class="text-8xl font-black text-slate-800 tracking-tighter mb-4">NestMind</h1>
-            <p id="status-text" class="text-slate-400 font-medium text-lg italic">Please select a branch to initialize portal.</p>
-        </div>
-    </main>
-</div>
+                // Update UI state for sidebar
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('nav-active'));
+                const activeNav = document.getElementById(`nav-${moduleName.replace('_', '-')}`);
+                if (activeNav) activeNav.classList.add('nav-active');
 
-<script>
-    const GITHUB_ROOT = "https://thelittlenestplayschool.github.io/";
-    const XANO_FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `
+                    <div class="p-20 text-center">
+                        <p class="text-red-400 font-black uppercase text-xs tracking-widest">Module Error</p>
+                        <p class="text-slate-400 text-[10px] mt-2 font-medium">Unable to locate ${moduleName}.html</p>
+                    </div>
+                `;
+            }
+        }
 
-    async function init() {
-        try {
-            const res = await fetch(XANO_FRANCHISE_API);
-            const data = await res.json();
-            const select = document.getElementById('branch-select');
-            data.forEach(f => {
-                let opt = document.createElement('option');
-                opt.value = f.id; opt.innerText = f.name;
-                select.appendChild(opt);
-            });
-        } catch (e) { console.error("Identity Lock failed", e); }
-    }
-
-    function unlockDashboard() {
-        const select = document.getElementById('branch-select');
-        const branchDisplay = document.getElementById('active-branch-name');
-        const breadcrumbBox = document.getElementById('breadcrumb-container');
-        const fid = select.value;
-        const fname = select.options[select.selectedIndex].text;
-        if(!fid) return;
+        // EVENT LISTENERS
+        document.getElementById('nav-sessions-vault').onclick = () => loadModule('sessions_vault');
+        document.getElementById('nav-forms-vault').onclick = () => loadModule('forms_vault');
         
-        localStorage.setItem('locked_franchise_id', fid);
-        localStorage.setItem('locked_franchise_name', fname);
-        
-        select.classList.add('hidden');
-        branchDisplay.innerText = fname;
-        branchDisplay.classList.remove('hidden');
-        breadcrumbBox.classList.remove('hidden'); 
-        document.getElementById('nav-menu').classList.remove('hidden');
-        document.getElementById('status-text').innerText = "Identity Verified.";
-    }
+        // DEFAULT LOAD
+        window.onload = () => loadModule('sessions_vault');
 
-    async function loadModule(file, title) {
-        const workspace = document.getElementById('main-workspace');
-        const breadcrumbText = document.getElementById('breadcrumb-text');
-        
-        workspace.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic">Synchronizing ${title}...</div>`;
-        
-        if(breadcrumbText) breadcrumbText.innerText = title;
-
-        try {
-            const res = await fetch(GITHUB_ROOT + file + '?v=' + Date.now());
-            const html = await res.text();
-            workspace.innerHTML = `<div class="p-12">${html}</div>`;
-            
-            const scripts = workspace.querySelectorAll('script');
-            scripts.forEach(oldScript => {
-                const newScript = document.createElement('script');
-                if (oldScript.src) newScript.src = oldScript.src;
-                else newScript.text = oldScript.text;
-                document.head.appendChild(newScript).parentNode.removeChild(newScript);
-            });
-        } catch (e) { workspace.innerHTML = `<div class="p-20 text-red-500 font-bold">${e.message}</div>`; }
-    }
-    init();
-</script>
+    </script>
+</body>
+</html>
