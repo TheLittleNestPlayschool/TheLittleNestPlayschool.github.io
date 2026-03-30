@@ -3,11 +3,11 @@
     #session-grid > div:nth-child(6n+4),
     #session-grid > div:nth-child(6n+5),
     #session-grid > div:nth-child(6n+6) {
-        background-color: #f8fafc !important; /* slate-50 */
+        background-color: #f8fafc !important;
     }
     
     .session-vault-item:hover {
-        background-color: #f1f5f9 !important; /* slate-100 */
+        background-color: #f1f5f9 !important;
     }
 
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -29,7 +29,7 @@
 
 <div id="vault-debug-overlay">
     <div class="bg-white rounded-xl p-6 max-w-lg w-full shadow-2xl">
-        <h2 class="text-sm font-black uppercase tracking-widest text-slate-400 mb-4">NestMind Outbound Debugger</h2>
+        <h2 class="text-sm font-black uppercase tracking-widest text-slate-400 mb-4 text-center">NestMind Outbound Debugger</h2>
         <div class="bg-slate-900 rounded-lg p-4 mb-6">
             <p class="text-[10px] font-mono text-teal-400 mb-2">// Data being sent to get_bulk_sessions:</p>
             <pre id="debug-payload" class="text-xs text-white font-mono overflow-auto max-h-60"></pre>
@@ -163,7 +163,6 @@
                 }
             };
 
-            // Capture IDs and show debugger first
             downloadBtn.onclick = () => {
                 pendingIds = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => parseInt(cb.value));
                 debugPayload.innerText = JSON.stringify({ session_id: pendingIds }, null, 4);
@@ -174,21 +173,18 @@
                 debugOverlay.style.display = 'none'; 
             };
 
-            // ONLY call Xano after clicking "Continue" in debug
             document.getElementById('debug-continue').onclick = async () => {
                 debugOverlay.style.display = 'none';
                 downloadBtn.innerText = "WAIT...";
                 downloadBtn.disabled = true;
 
                 try {
-                    // Send list of session_ids to Xano
                     const response = await fetch(this.bulkEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ session_id: pendingIds })
                     });
 
-                    // Xano returns the list of signed URLs
                     const links = await response.json();
 
                     if (Array.isArray(links)) {
@@ -197,10 +193,11 @@
                                 setTimeout(() => {
                                     const a = document.createElement('a');
                                     a.href = url;
+                                    a.setAttribute('target', '_blank');
                                     document.body.appendChild(a);
                                     a.click();
                                     document.body.removeChild(a);
-                                }, index * 400); 
+                                }, index * 600); 
                             }
                         });
                     }
@@ -234,15 +231,6 @@
             }
         }
     };
-
-    const tabObserver = new MutationObserver((mutations, obs) => {
-        if (document.getElementById('session-grid')) {
-            SessionModule.init();
-            obs.disconnect(); 
-        }
-    });
-
-    tabObserver.observe(document.body, { childList: true, subtree: true });
 
     if (document.getElementById('session-grid')) SessionModule.init();
 })();
