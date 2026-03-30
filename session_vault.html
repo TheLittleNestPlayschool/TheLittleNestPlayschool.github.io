@@ -13,7 +13,33 @@
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+    
+    /* Debugger Overlay Styling */
+    #vault-debug-overlay { 
+        display: none; 
+        position: fixed; 
+        inset: 0; 
+        background: rgba(15, 23, 42, 0.9); 
+        z-index: 9999; 
+        align-items: center; 
+        justify-content: center; 
+        padding: 20px; 
+    }
 </style>
+
+<div id="vault-debug-overlay">
+    <div class="bg-white rounded-xl p-6 max-w-lg w-full shadow-2xl">
+        <h2 class="text-sm font-black uppercase tracking-widest text-slate-400 mb-4">NestMind Outbound Debugger</h2>
+        <div class="bg-slate-900 rounded-lg p-4 mb-6">
+            <p class="text-[10px] font-mono text-teal-400 mb-2">// Data being sent to get_bulk_sessions:</p>
+            <pre id="debug-payload" class="text-xs text-white font-mono overflow-auto max-h-60"></pre>
+        </div>
+        <div class="flex gap-3">
+            <button id="debug-cancel" class="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest border border-slate-200 rounded-lg hover:bg-slate-50 transition-all">Cancel</button>
+            <button id="debug-continue" class="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest bg-teal-500 text-white rounded-lg hover:bg-teal-600 shadow-lg transition-all shadow-teal-500/20">Continue to Xano</button>
+        </div>
+    </div>
+</div>
 
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
@@ -118,6 +144,9 @@
             const selectAll = document.getElementById('vault-select-all');
             const grid = document.getElementById('session-grid');
             const downloadBtn = document.getElementById('vault-download-btn');
+            const debugOverlay = document.getElementById('vault-debug-overlay');
+            const debugPayload = document.getElementById('debug-payload');
+            let pendingIds = [];
 
             searchInput.oninput = () => this.render();
             sortSelect.onchange = () => this.render();
@@ -134,35 +163,47 @@
                 }
             };
 
-            downloadBtn.onclick = async () => {
-                const selectedIds = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => parseInt(cb.value));
-                
+            // Capture IDs and show debugger first
+            downloadBtn.onclick = () => {
+                pendingIds = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => parseInt(cb.value));
+                debugPayload.innerText = JSON.stringify({ session_id: pendingIds }, null, 4);
+                debugOverlay.style.display = 'flex';
+            };
+
+            document.getElementById('debug-cancel').onclick = () => { 
+                debugOverlay.style.display = 'none'; 
+            };
+
+            // ONLY call Xano after clicking "Continue" in debug
+            document.getElementById('debug-continue').onclick = async () => {
+                debugOverlay.style.display = 'none';
                 downloadBtn.innerText = "WAIT...";
                 downloadBtn.disabled = true;
 
                 try {
-                    // Send IDs to get_bulk_sessions
+                    // Send list of session_ids to Xano
                     const response = await fetch(this.bulkEndpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ session_id: selectedIds })
+                        body: JSON.stringify({ session_id: pendingIds })
                     });
 
-                    // Get the signed URLs back from Xano
+                    // Xano returns the list of signed URLs
                     const links = await response.json();
 
-                    // Run the URLs to trigger browser downloads
-                    links.forEach((url, index) => {
-                        if (url) {
-                            setTimeout(() => {
-                                const a = document.createElement('a');
-                                a.href = url;
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                            }, index * 400); 
-                        }
-                    });
+                    if (Array.isArray(links)) {
+                        links.forEach((url, index) => {
+                            if (url) {
+                                setTimeout(() => {
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                }, index * 400); 
+                            }
+                        });
+                    }
                 } catch (err) {
                     console.error("Bulk Download Error:", err);
                 } finally {
