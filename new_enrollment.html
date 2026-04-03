@@ -13,7 +13,7 @@
     .qa-row.selected { background: #f0fdfa; }
     .q-select-ans { visibility: hidden; }
     .qa-row.selected .q-select-ans { visibility: visible; }
-    .pickup-card { background: #fff; border: 1px solid var(--nest-border); padding: 10px; border-radius: var(--nest-radius-sm); margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+    .pickup-card { background: #fff; border: 1px solid var(--nest-border); padding: 10px; border-radius: 6px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
     .full-width-summary { grid-column: 1 / -1; }
     .assessment-summary-item { font-size: 0.8rem; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
 </style>
@@ -22,11 +22,10 @@
     <div id="enrollment-progress" class="progress-bar">Step 0 of 6</div>
 
     <div id="step-location" class="nest-step-container nest-step-active">
-        <h2 class="nest-header"><span class="badge-step">0</span> Select Branch</h2>
         <div class="step-content">
-            <label class="nest-label">Operating Location</label>
+            <label class="nest-label">Set Branch</label>
             <select id="ho_franchise_selector" class="nest-select"><option value="">Syncing with Network...</option></select>
-            <button id="init-btn" onclick="lockLocation()" class="nest-btn nest-btn-teal w-full mt-4">Initialize System</button>
+            <button id="init-btn" onclick="lockLocation()" class="nest-btn nest-btn-teal w-full mt-4" style="display:none;">Initialize System</button>
         </div>
     </div>
 
@@ -205,22 +204,28 @@
             const res = await fetch(ENDPOINTS.franchise);
             const franchises = await res.json();
             const sel = document.getElementById('ho_franchise_selector');
-            const idElement = document.querySelector('.sidebar-branch-name') ||
-                              Array.from(document.querySelectorAll('div')).find(el => el.textContent.trim() === 'Sariaya' || el.textContent.trim() === 'Lucena');
-            const currentIdentityText = idElement ? idElement.innerText.trim() : ""; 
+            const initBtn = document.getElementById('init-btn');
             
+            // Check Local Storage for Sidebar selection
+            const lockedName = localStorage.getItem('locked_franchise_name');
+            const lockedId = localStorage.getItem('locked_franchise_id');
+
             sel.innerHTML = '<option value="">-- Choose Branch --</option>';
             franchises.sort((a,b) => a.name.localeCompare(b.name)).forEach(f => {
                 sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
             });
 
-            if (currentIdentityText && currentIdentityText.toLowerCase() !== "head office") {
-                const currentBranch = franchises.find(f => f.name.toLowerCase() === currentIdentityText.toLowerCase());
-                if (currentBranch) {
-                    sel.value = currentBranch.id; sel.disabled = true;
-                    state.currentFranchiseId = currentBranch.id;
-                    await lockLocation(); 
-                }
+            // LOGIC: If we have a local variable selection and it's NOT "Head Office"
+            if (lockedName && lockedName.toLowerCase() !== "head office") {
+                sel.value = lockedId;
+                sel.disabled = true; // Auto-lock
+                initBtn.style.display = 'none'; // Hide button
+                state.currentFranchiseId = parseInt(lockedId);
+                await lockLocation(); // Trigger auto-start
+            } else {
+                // It is Head Office, user must manually select and click "Set Branch"
+                initBtn.innerText = "SET BRANCH";
+                initBtn.style.display = 'block';
             }
         } catch(e) { console.error("Identity Sync failed", e); }
     }
@@ -324,10 +329,8 @@
             }
         }
 
-        // HIDE INPUTS, SHOW SUMMARY
         document.querySelector('#step-parent .step-content').style.display = 'none';
         document.getElementById('parent-profile-view').style.display = 'grid';
-
         moveToStep('step-parent', 'step-student', 2);
     };
 
@@ -365,10 +368,8 @@
             updateStudentSummary(data);
         }
 
-        // HIDE INPUTS, SHOW SUMMARY
         document.querySelector('#step-student .step-content').style.display = 'none';
         document.getElementById('student-profile-view').style.display = 'grid';
-
         moveToStep('step-student', 'step-assessment', 3);
     };
 
@@ -414,11 +415,8 @@
         }
         
         document.getElementById('disp-a-teacher').innerText = document.getElementById('a_teacher_id').options[document.getElementById('a_teacher_id').selectedIndex].text;
-        
-        // HIDE INPUTS, SHOW SUMMARY
         document.querySelector('#step-assessment .step-content').style.display = 'none';
         document.getElementById('assessment-summary-view').style.display = 'grid';
-
         moveToStep('step-assessment', 'step-session', 4);
     };
 
@@ -474,7 +472,6 @@
                 franchise_id: state.currentFranchiseId
             };
             
-            // Link back session to student record
             await fetch(`${ENDPOINTS.student}/${state.currentStudentId}`, {
                 method: 'PATCH',
                 headers: {'Content-Type': 'application/json'},
@@ -504,7 +501,6 @@
     window.unlockStep = (stepId, viewId) => {
         document.getElementById(stepId).classList.replace('step-saved', 'nest-step-active');
         document.getElementById(viewId).style.display = 'none';
-        // Re-show the input content
         document.querySelector(`#${stepId} .step-content`).style.display = 'block';
     };
 
