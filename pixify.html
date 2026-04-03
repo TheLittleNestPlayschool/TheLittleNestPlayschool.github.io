@@ -3,7 +3,7 @@
     <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between gap-6">
         <div>
             <h2 class="text-3xl font-black text-slate-800 tracking-tight">Pixify! AI Intelligence</h2>
-            <p class="text-slate-500 font-medium">Privacy-safe Pixar art for your branch marketing.</p>
+            <p class="text-slate-500 font-medium">Transform classroom photos into privacy-safe Pixar art.</p>
         </div>
         
         <div class="flex items-center gap-4">
@@ -15,7 +15,7 @@
                 ➕ Add Photos
             </button>
             
-            <button id="go-button" onclick="startBatchProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all animate-pulse">
+            <button id="go-button" onclick="startUnifiedProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all animate-pulse">
                 🚀 Pixify! [0]
             </button>
         </div>
@@ -23,69 +23,79 @@
         <input type="file" id="fileInput" multiple accept="image/*" class="hidden" onchange="handleSelection(event)">
     </div>
 
-    <div class="grid grid-cols-12 gap-8">
-        
-        <div class="col-span-3 space-y-4">
-            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Input Queue</h4>
-            <div id="queue-container" class="space-y-3">
-                </div>
-        </div>
-
-        <div class="col-span-9 space-y-4 border-l border-slate-200 pl-8">
-            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Comparison & Results</h4>
-            <div id="compare-container" class="space-y-4">
-                </div>
-        </div>
+    <div class="space-y-4">
+        <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Workspace & Results</h4>
+        <div id="unified-container" class="space-y-4">
+            </div>
     </div>
 </div>
 
 <script>
     const PIXIFY_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify";
     const fid = localStorage.getItem('locked_franchise_id');
-    let fileQueue = [];
+    
+    // Internal state to manage queued vs. processing cards
+    let fileQueue = []; 
 
     function handleSelection(event) {
         const files = Array.from(event.target.files);
         if (!files.length) return;
 
         files.forEach(file => {
-            const fileId = 'file-' + Math.random().toString(36).substr(2, 9);
+            const fileId = 'pix-' + Math.random().toString(36).substr(2, 9);
             const fileData = { id: fileId, file: file };
+            
+            // 1. Store the data for processing
             fileQueue.push(fileData);
-            addQueueItemToUI(fileData);
+            
+            // 2. Create the "Queued" card immediately
+            addQueuedCardToWorkspace(fileData);
         });
+        
         updateGoButton();
-        event.target.value = ''; 
+        event.target.value = ''; // Reset input
     }
 
     /**
-     * Updated with a clear "Del" button for easy visibility.
+     * Step 1: Creates the initial "Input" row in the main workspace.
      */
-    function addQueueItemToUI(fileData) {
-        const queue = document.getElementById('queue-container');
-        const item = document.createElement('div');
-        const previewUrl = URL.createObjectURL(fileData.file);
-        
-        item.id = `queue-${fileData.id}`;
-        item.className = "bg-white border border-slate-200 rounded-xl p-2 flex items-center gap-3 shadow-sm animate-fadeInLeft relative";
-        item.innerHTML = `
-            <div class="w-12 h-12 bg-slate-50 rounded-lg overflow-hidden border border-slate-100 flex-shrink-0">
-                <img src="${previewUrl}" class="w-full h-full object-cover">
+    function addQueuedCardToWorkspace(fileData) {
+        const workspace = document.getElementById('unified-container');
+        const cardId = `row-${fileData.id}`;
+        const card = document.createElement('div');
+        const originalUrl = URL.createObjectURL(fileData.file);
+
+        card.id = cardId;
+        card.className = "flex items-center gap-6 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm animate-fadeInLeft relative";
+        card.innerHTML = `
+            <div class="w-40 aspect-video bg-slate-50 rounded-lg overflow-hidden border border-slate-100 relative">
+                <img src="${originalUrl}" class="w-full h-full object-cover">
+                <div class="absolute top-1 left-1 bg-black/40 text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-bold">Original</div>
             </div>
-            <div class="overflow-hidden flex-grow">
-                <p class="text-[10px] font-bold text-slate-700 truncate pr-12">${fileData.file.name}</p>
-                <p class="text-[9px] text-[#00d1b2] font-black uppercase">Ready</p>
+
+            <div id="${cardId}-right" class="w-40 aspect-video bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-100 relative">
+                <span class="text-[8px] font-black text-slate-300 uppercase">Ready</span>
             </div>
-            <button onclick="removeFromQueue('${fileData.id}')" class="bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-600 text-[10px] font-bold px-2 py-1 rounded-md transition-colors mr-1">
-                Del
-            </button>
+            
+            <div id="${cardId}-meta" class="flex-grow">
+                <p class="text-[11px] font-bold text-slate-700 truncate max-w-[150px]">${fileData.file.name}</p>
+                <p class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tight">Queued for AI</p>
+            </div>
+
+            <div id="${cardId}-actions" class="flex items-center gap-4 border-l border-slate-100 pl-6 h-full pt-4">
+                <button onclick="removeFromWorkspace('${fileData.id}')" class="text-slate-300 hover:text-red-500 transition-colors pt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </div>
         `;
-        queue.append(item);
+        workspace.prepend(card);
     }
 
-    function removeFromQueue(fileId) {
+    function removeFromWorkspace(fileId) {
         fileQueue = fileQueue.filter(item => item.id !== fileId);
-        document.getElementById(`queue-${fileId}`).remove();
+        document.getElementById(`row-${fileId}`).remove();
         updateGoButton();
     }
 
@@ -95,14 +105,19 @@
         btn.classList.toggle('hidden', fileQueue.length === 0);
     }
 
-    async function startBatchProcess() {
+    /**
+     * Step 2: Batch process the queued files.
+     */
+    async function startUnifiedProcess() {
         const activeBatch = [...fileQueue];
         fileQueue = [];
         updateGoButton();
 
         for (let item of activeBatch) {
-            const originalPreviewUrl = URL.createObjectURL(item.file);
-            const rowId = createResultRow(item.file, originalPreviewUrl);
+            const cardId = `row-${item.id}`;
+            
+            // Transform card state: Show spinner on right, update meta
+            transformCardToLoading(cardId);
             
             const formData = new FormData();
             formData.append('image', item.file);
@@ -111,73 +126,66 @@
             try {
                 const res = await fetch(PIXIFY_API, { method: 'POST', body: formData });
                 const data = await res.json();
-                finalizeRow(rowId, data.pixar_url);
+                
+                // Finalize card state: Show result, enable Download button
+                finalizeCardState(cardId, data.pixar_url);
             } catch (e) {
-                console.error("AI Generation Failed", e);
-                document.getElementById(`${rowId}-img-right`).innerHTML = `<span class="text-[8px] text-red-500 font-bold">Error</span>`;
+                console.error("Unified Process Failed", e);
+                document.getElementById(`${cardId}-right`).innerHTML = `<span class="text-[8px] text-red-500 font-bold">Error</span>`;
             }
         }
     }
 
-    /**
-     * Updated layout: Left Original -> Right Pixar -> Download Button.
-     */
-    function createResultRow(file, originalUrl) {
-        const container = document.getElementById('compare-container');
-        const rowId = 'row-' + Math.random().toString(36).substr(2, 9);
-        const row = document.createElement('div');
-        row.id = rowId;
+    function transformCardToLoading(cardId) {
+        const rightBox = document.getElementById(`${cardId}-right`);
+        const metaBox = document.getElementById(`${cardId}-meta`);
+        const actionsBox = document.getElementById(`${cardId}-actions`);
         
-        row.className = "flex items-center gap-6 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm animate-slideDown";
-        row.innerHTML = `
-            <div class="w-40 aspect-video bg-slate-50 rounded-lg overflow-hidden border border-slate-100 relative">
-                <img src="${originalUrl}" class="w-full h-full object-cover">
-                <div class="absolute top-1 left-1 bg-black/40 text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-bold">Original</div>
-            </div>
-
-            <div id="${rowId}-img-right" class="w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center relative border-2 border-dashed border-slate-200">
-                <div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>
-            </div>
-            
-            <div class="flex-grow">
-                <p class="text-[11px] font-bold text-slate-700 truncate max-w-[150px]">${file.name}</p>
-                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Identity Locked</p>
-            </div>
-
-            <div class="flex items-center gap-4 border-l border-slate-100 pl-6">
-                <button id="${rowId}-dl" disabled onclick="downloadSingle('${rowId}')" class="opacity-30 cursor-not-allowed bg-[#0f172a] text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">
-                    Download
-                </button>
-                
-                <button onclick="document.getElementById('${rowId}').remove()" class="text-slate-300 hover:text-red-500 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                </button>
-            </div>
-        `;
-        container.prepend(row);
-        return rowId;
+        // Show spinner
+        rightBox.className = "w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center relative border-2 border-dashed border-slate-200";
+        rightBox.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>`;
+        
+        // Update Meta
+        metaBox.querySelector('p:last-child').innerText = "AI Rendering...";
+        metaBox.querySelector('p:last-child').className = "text-[9px] text-slate-400 font-bold uppercase tracking-tight animate-pulse";
+        
+        // Prep actions area for the new buttons, but keep it empty while processing
+        actionsBox.innerHTML = '';
+        actionsBox.className = "flex items-center gap-4 border-l border-slate-100 pl-6 h-full";
     }
 
-    function finalizeRow(rowId, pixarUrl) {
-        const imgBoxRight = document.getElementById(`${rowId}-img-right`);
-        const dlBtn = document.getElementById(`${rowId}-dl`);
-        
-        imgBoxRight.innerHTML = `
+    function finalizeCardState(cardId, pixarUrl) {
+        const rightBox = document.getElementById(`${cardId}-right`);
+        const metaBox = document.getElementById(`${cardId}-meta`);
+        const actionsBox = document.getElementById(`${cardId}-actions`);
+
+        // Update Right Image Slot with Pixar result
+        rightBox.innerHTML = `
             <img src="${pixarUrl}" class="w-full h-full object-cover animate-fadeIn">
             <div class="absolute top-1 right-1 bg-[#00d1b2] text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-bold">Pixar AI</div>
         `;
-        imgBoxRight.classList.remove('border-dashed', 'border-2', 'bg-slate-100');
-        
-        dlBtn.disabled = false;
-        dlBtn.classList.remove('opacity-30', 'cursor-not-allowed');
-        dlBtn.dataset.url = pixarUrl;
+        rightBox.className = "w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden relative";
+
+        // Update Metadata (Done)
+        metaBox.querySelector('p:last-child').innerText = "Identity Locked";
+        metaBox.querySelector('p:last-child').className = "text-[9px] text-slate-400 font-bold uppercase tracking-tight";
+        metaBox.querySelector('p:last-child').classList.remove('animate-pulse');
+
+        // Inject Final Actions (Download + Delete Result)
+        actionsBox.innerHTML = `
+            <button onclick="downloadResult('${pixarUrl}')" class="bg-[#0f172a] text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">
+                Download
+            </button>
+            
+            <button onclick="document.getElementById('${cardId}').remove()" class="text-slate-300 hover:text-red-500 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+            </button>
+        `;
     }
 
-    function downloadSingle(rowId) {
-        const url = document.getElementById(`${rowId}-dl`).dataset.url;
-        if(!url) return;
+    function downloadResult(url) {
         const link = document.createElement('a');
         link.href = url;
         link.download = `Pixify_${Date.now()}.jpg`;
@@ -189,9 +197,7 @@
 
 <style>
     @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .animate-fadeInLeft { animation: fadeInLeft 0.3s ease-out forwards; }
-    .animate-slideDown { animation: slideDown 0.4s ease-out forwards; }
     .animate-fadeIn { animation: fadeIn 0.6s ease-in forwards; }
 </style>
