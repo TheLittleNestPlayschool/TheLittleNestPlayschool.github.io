@@ -4,18 +4,22 @@
         <div>
             <h2 class="text-3xl font-black text-slate-800 tracking-tight">Pixify! AI Intelligence</h2>
             <div class="flex gap-3 mt-1.5">
-                <span class="text-[10px] bg-slate-100 text-slate-500 px-2.5 py-1.5 rounded-full font-extrabold uppercase tracking-wider"> Render: 3 Credits</span>
-                <span class="text-[10px] bg-[#00d1b2]/10 text-[#00d1b2] px-2.5 py-1.5 rounded-full font-extrabold uppercase tracking-wider"> Download: 6 Credits</span>
+                <span class="text-[10px] bg-slate-100 text-slate-500 px-2.5 py-1.5 rounded-full font-extrabold uppercase tracking-wider">Render: 3 Credits</span>
+                <span class="text-[10px] bg-[#00d1b2]/10 text-[#00d1b2] px-2.5 py-1.5 rounded-full font-extrabold uppercase tracking-wider">Download: 6 Credits</span>
             </div>
         </div>
         
         <div class="flex items-center gap-4">
-            <button onclick="document.getElementById('fileInput').click()" class="bg-slate-100 text-slate-700 px-5 py-3 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors flex items-center gap-2">
+            <button id="add-photos-btn" onclick="document.getElementById('fileInput').click()" class="bg-slate-100 text-slate-700 px-5 py-3 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors flex items-center gap-2">
                 ➕ Add Photos
             </button>
             
             <button id="go-button" onclick="startUnifiedProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:scale-105 transition-all">
                 🚀 Pixify! [0]
+            </button>
+
+            <button id="batch-download-btn" onclick="showDownloadModal()" class="hidden bg-[#0f172a] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:scale-105 transition-all">
+                📥 Download Selected
             </button>
         </div>
 
@@ -23,32 +27,76 @@
     </div>
 
     <div class="space-y-4">
-        <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Active Workspace</h4>
+        <div class="flex justify-between items-center px-2">
+            <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Active Workspace (Max 10)</h4>
+            <div id="selection-counter" class="hidden text-[10px] font-bold text-[#00d1b2] uppercase tracking-wider">0 Selected</div>
+        </div>
         <div id="unified-container" class="space-y-4">
             </div>
     </div>
 </div>
 
+<div id="download-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 animate-fadeIn">
+        <h3 class="text-2xl font-black text-slate-800 mb-2">Confirm Download</h3>
+        <p class="text-slate-500 text-sm mb-6">Your account will be billed for the following items at the end of the month.</p>
+        
+        <div class="bg-slate-50 rounded-2xl p-4 space-y-3 mb-8">
+            <div class="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                <span>Items to Unlock</span>
+                <span id="modal-count">0 Images</span>
+            </div>
+            <div class="flex justify-between text-lg font-black text-slate-800 border-t border-slate-200 pt-3">
+                <span>Total Billing</span>
+                <span id="modal-cost">0 Credits</span>
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="closeDownloadModal()" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancel</button>
+            <button onclick="executeBatchDownload()" class="flex-1 bg-[#00d1b2] text-white py-3 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-[#00d1b2]/20">Unlock & Save</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // Developer: Replace these with your actual Xano Endpoints
     const PIXIFY_RENDER_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_render";
-    const PIXIFY_DOWNLOAD_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_download"; 
+    const PIXIFY_BILLING_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_download"; 
     
     const fid = localStorage.getItem('locked_franchise_id');
     let fileQueue = []; 
+    let processedResults = [];
 
     function handleSelection(event) {
         const files = Array.from(event.target.files);
         if (!files.length) return;
 
-        files.forEach(file => {
+        // Disable Button During Upload
+        const addBtn = document.getElementById('add-photos-btn');
+        addBtn.disabled = true;
+        addBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+        // Enforcement: Max 10 photos total in workspace
+        const currentCount = document.querySelectorAll('#unified-container > div').length;
+        const availableSlots = 10 - currentCount;
+        
+        const toProcess = files.slice(0, availableSlots);
+
+        toProcess.forEach(file => {
             const fileId = 'pix-' + Math.random().toString(36).substr(2, 9);
             const fileData = { id: fileId, file: file };
             fileQueue.push(fileData);
             addQueuedCard(fileData);
         });
+        
         updateGoButton();
         event.target.value = '';
+        
+        // Re-enable after UI updates
+        setTimeout(() => {
+            addBtn.disabled = false;
+            addBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }, 500);
     }
 
     function addQueuedCard(fileData) {
@@ -64,40 +112,24 @@
                 <img src="${originalUrl}" class="w-full h-full object-cover">
                 <div class="absolute top-1 left-1 bg-black/40 text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-bold">Original</div>
             </div>
-
             <div id="${cardId}-right" class="w-40 aspect-video bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-100">
                 <span class="text-[8px] font-black text-slate-300 uppercase">Ready</span>
             </div>
-            
             <div id="${cardId}-meta" class="flex-grow">
                 <p class="text-[11px] font-bold text-slate-700 truncate">${fileData.file.name}</p>
                 <p class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tight">Queued (3 Credits to render)</p>
             </div>
-
-            <div id="${cardId}-actions" class="flex items-center gap-4 border-l border-slate-100 pl-6 h-full pt-4">
-                <button onclick="removeFromWorkspace('${fileData.id}')" class="text-slate-300 hover:text-red-500 transition-colors">
-                    <span class="text-[10px] font-bold px-2">Del Queue</span>
+            <div id="${cardId}-actions" class="flex items-center gap-4 border-l border-slate-100 pl-6 h-full">
+                <button onclick="removeFromWorkspace('${fileData.id}')" class="text-red-400 hover:text-red-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                 </button>
             </div>
         `;
         workspace.prepend(card);
     }
 
-    function removeFromWorkspace(fileId) {
-        fileQueue = fileQueue.filter(item => item.id !== fileId);
-        document.getElementById(`row-${fileId}`).remove();
-        updateGoButton();
-    }
-
-    function updateGoButton() {
-        const btn = document.getElementById('go-button');
-        btn.innerText = `🚀 Pixify! [${fileQueue.length}]`;
-        btn.classList.toggle('hidden', fileQueue.length === 0);
-    }
-
-    /**
-     * Tries to deduct 3 credits and calls Nano Banana 2.
-     */
     async function startUnifiedProcess() {
         const activeBatch = [...fileQueue];
         fileQueue = [];
@@ -109,14 +141,8 @@
             const metaBox = document.getElementById(`${cardId}-meta`);
             const actionsBox = document.getElementById(`${cardId}-actions`);
             
-            // 1. Show processing state
             rightBox.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>`;
-            rightBox.className = "w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center relative border-2 border-dashed border-slate-200";
-            
-            metaBox.querySelector('p:last-child').innerText = "Renderying (3 credits)...";
-            metaBox.querySelector('p:last-child').className = "text-[9px] text-orange-400 font-bold uppercase tracking-tight animate-pulse";
-            
-            // Lock actions area
+            metaBox.querySelector('p:last-child').innerText = "Rendering (3 credits)...";
             actionsBox.innerHTML = '';
             
             const formData = new FormData();
@@ -124,105 +150,114 @@
             formData.append('franchise_id', fid);
 
             try {
-                // 2. Call Xano to render and deduct 3 credits
                 const res = await fetch(PIXIFY_RENDER_API, { method: 'POST', body: formData });
                 const data = await res.json();
-                
-                // 3. Finalize the preview card with watermarking
-                finalizeCardPreview(cardId, data.pixar_url);
+                processedResults.push({ id: item.id, url: data.pixar_url });
+                finalizeCardPreview(cardId, data.pixar_url, item.id);
             } catch (e) {
-                console.error("Xano Render Failed", e);
-                document.getElementById(`${cardId}-meta`).innerHTML = `<div class="text-[9px] text-red-500">Error: ${e.message}</div>`;
+                console.error(e);
             }
         }
     }
 
-    /**
-     * Updates the card to show a watermarked Pixar preview.
-     */
-    function finalizeCardPreview(cardId, pixarUrl) {
+    function finalizeCardPreview(cardId, pixarUrl, fileId) {
         const rightBox = document.getElementById(`${cardId}-right`);
         const metaBox = document.getElementById(`${cardId}-meta`);
         const actionsBox = document.getElementById(`${cardId}-actions`);
 
-        // Apply "Identity Lock" Preview with watermarking
         rightBox.innerHTML = `
-            <img src="${pixarUrl}" class="w-full h-full object-cover blur-sm opacity-50 animate-fadeIn">
-            
+            <img src="${pixarUrl}" class="w-full h-full object-cover blur-sm opacity-50">
             <div class="absolute inset-0 flex items-center justify-center transform rotate-[-20deg]">
-                <span class="text-[7px] font-black text-black/60 uppercase tracking-[0.2em] px-4 py-1.5 border border-dashed border-black/30 rounded-md shadow-inner">
-                    Nest Internal Preview
-                </span>
+                <span class="text-[7px] font-black text-black/60 uppercase tracking-[0.2em] px-3 py-1.5 border border-dashed border-black/30 rounded-md">Nest Internal</span>
             </div>
-            
-            <div class="absolute top-1 right-1 bg-black/50backdrop-blur-sm text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-bold tracking-widest">Preview</div>
         `;
-        rightBox.className = "w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden relative shadow-inner";
 
-        // Update Meta
         metaBox.innerHTML = `
-            <p class="text-[11px] font-bold text-slate-700 truncate">Identity Locked • Optimized preview</p>
-            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Render: 3 Credits (Paid)</p>
+            <p class="text-[11px] font-bold text-slate-700">Identity Locked</p>
+            <p class="text-[9px] text-slate-400 font-bold uppercase">Render: 3 Credits (Paid)</p>
         `;
 
-        // Inject Final Actions (Download & Remove Result)
-        actionsBox.className = "flex items-center gap-4 border-l border-slate-100 pl-6 h-full";
+        // Action: Selection Column
         actionsBox.innerHTML = `
-            <button onclick="purchaseDownload('${cardId}', '${pixarUrl}')" class="bg-[#0f172a] text-white px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all">
-                Download
-            </button>
-            
-            <button onclick="document.getElementById('${cardId}').remove()" class="text-slate-300 hover:text-red-500 transition-colors">
-                <span class="text-[10px] font-bold px-2">Clear</span>
+            <div class="flex flex-col items-center gap-1">
+                <input type="checkbox" value="${fileId}" onchange="updateBatchUI()" class="download-checkbox w-5 h-5 rounded-md border-slate-200 text-[#00d1b2] focus:ring-[#00d1b2]">
+                <span class="text-[8px] font-bold text-slate-400 uppercase">Select</span>
+            </div>
+            <button onclick="document.getElementById('${cardId}').remove(); updateBatchUI();" class="text-red-400 hover:text-red-600 transition-colors ml-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
             </button>
         `;
+        updateBatchUI();
     }
 
-    /**
-     * Tries to deduct 6 credits and unlocks the final download.
-     */
-    async function purchaseDownload(cardId, url) {
-        const btn = event.currentTarget;
-        btn.disabled = true;
-        btn.innerText = "Verifying Ledger...";
+    function updateBatchUI() {
+        const checked = document.querySelectorAll('.download-checkbox:checked');
+        const btn = document.getElementById('batch-download-btn');
+        const counter = document.getElementById('selection-counter');
+        
+        btn.classList.toggle('hidden', checked.length === 0);
+        counter.classList.toggle('hidden', checked.length === 0);
+        counter.innerText = `${checked.length} Selected`;
+        btn.innerText = `📥 Download Selected [${checked.length}]`;
+    }
 
-        try {
-            // 1. Call Xano to deduct 6 credits and update the monthly bill
-            const response = await fetch(PIXIFY_DOWNLOAD_API, {
+    function showDownloadModal() {
+        const checked = document.querySelectorAll('.download-checkbox:checked');
+        document.getElementById('modal-count').innerText = `${checked.length} Images`;
+        document.getElementById('modal-cost').innerText = `${checked.length * 6} Credits`;
+        document.getElementById('download-modal').classList.remove('hidden');
+    }
+
+    function closeDownloadModal() {
+        document.getElementById('download-modal').classList.add('hidden');
+    }
+
+    async function executeBatchDownload() {
+        const checked = document.querySelectorAll('.download-checkbox:checked');
+        const ids = Array.from(checked).map(cb => cb.value);
+        
+        closeDownloadModal();
+
+        for (let id of ids) {
+            const item = processedResults.find(r => r.id === id);
+            const cardId = `row-${id}`;
+            
+            // Call Xano for internal ledger update (monthly billing)
+            await fetch(PIXIFY_BILLING_API, {
                 method: 'POST',
-                body: JSON.stringify({ franchise_id: fid, image_url: url }),
+                body: JSON.stringify({ franchise_id: fid, image_url: item.url }),
                 headers: { 'Content-Type': 'application/json' }
             });
 
-            if (response.ok) {
-                // 2. Trigger browser download of the clean image
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `NestMind_Pixify_${Date.now()}.jpg`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+            // Trigger Browser Download
+            const link = document.createElement('a');
+            link.href = item.url;
+            link.download = `NestMind_${id}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
-                // 3. Clear watermarking from UI to show they "own" it now
-                const imgSlot = document.getElementById(`${cardId}-right`);
-                imgSlot.querySelector('img').classList.remove('blur-sm', 'opacity-50');
-                imgSlot.querySelector('div:not(.absolute)').remove(); // Remove the watermark banner
-                imgSlot.querySelector('div:first-of-type').innerHTML = `<span class="bg-[#00d1b2] text-white text-[8px] px-1.5 py-0.5 rounded uppercase font-bold tracking-widest">Unlocked</span>`;
-                
-                // 4. Update Button State
-                btn.innerText = "Downloaded";
-                btn.className = "bg-slate-100 text-slate-400 px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-default";
-                btn.onclick = null;
-            } else {
-                alert("Insufficient Credits. Please top up your dashboard.");
-                btn.disabled = false;
-                btn.innerText = "Download";
-            }
-        } catch (e) {
-            console.error(e);
-            btn.disabled = false;
-            btn.innerText = "Download";
+            // Update UI to show Unlocked
+            const imgSlot = document.getElementById(`${cardId}-right`);
+            imgSlot.querySelector('img').classList.remove('blur-sm', 'opacity-50');
+            imgSlot.querySelector('div').remove();
+            document.getElementById(cardId).querySelector('.download-checkbox').checked = false;
         }
+        updateBatchUI();
+    }
+
+    function removeFromWorkspace(id) {
+        fileQueue = fileQueue.filter(i => i.id !== id);
+        document.getElementById(`row-${id}`).remove();
+        updateGoButton();
+    }
+
+    function updateGoButton() {
+        const btn = document.getElementById('go-button');
+        btn.innerText = `🚀 Pixify! [${fileQueue.length}]`;
+        btn.classList.toggle('hidden', fileQueue.length === 0);
     }
 </script>
 
@@ -230,5 +265,5 @@
     @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .animate-fadeInLeft { animation: fadeInLeft 0.3s ease-out forwards; }
-    .animate-fadeIn { animation: fadeIn 0.6s ease-in forwards; }
+    .animate-fadeIn { animation: fadeIn 0.4s ease-in forwards; }
 </style>
