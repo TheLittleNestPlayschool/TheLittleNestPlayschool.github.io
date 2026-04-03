@@ -212,7 +212,6 @@
         pickupContacts: [], allParents: [], selectedQuestionCount: 0 
     };
 
-    // CUSTOM MODAL LOGIC
     window.showModal = (title, message) => {
         document.getElementById('modal-title').innerText = title;
         document.getElementById('modal-message').innerText = message;
@@ -274,7 +273,8 @@
             
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
-            t.filter(x => x.franchise_id === state.currentFranchiseId).forEach(x => {
+            // FILTER BY FRANCHISE AND IS_ACTIVE
+            t.filter(x => x.franchise_id === state.currentFranchiseId && x.is_active === true).forEach(x => {
                 tSel.innerHTML += `<option value="${x.id}">${x.first_name} ${x.last_name}</option>`;
             });
 
@@ -296,7 +296,7 @@
                     <div class="qa-row" data-question-text="${item.the_question}">
                         <div><input type="checkbox" data-qid="${item.id}" onchange="handleQS(this)"></div>
                         <div class="question-label">${item.the_question}</div>
-                        <div class="q-select-ans"><select class="ans-val">${optionsHtml}</select></div>
+                        <div class="q-select-ans"><select class="ans-val nest-select py-1 text-xs">${optionsHtml}</select></div>
                     </div>`;
             });
         } catch(e) { console.error("Sync failed", e); }
@@ -510,7 +510,6 @@
                 await fetch(ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) });
             }
             
-            // SHOW CUSTOM MODAL
             showModal("Master File Generated", "Student enrollment has been successfully logged to the network.");
             
         } catch(e) { console.error(e); }
