@@ -2,10 +2,10 @@
 <link rel="stylesheet" href="https://thelittlenestplayschool.github.io/nest_style.css">
 
 <style>
-    /* Module-specific layout overrides for the enrollment flow */
+    /* Module-specific layout overrides */
     .enrollment-wrapper { width: 100%; max-width: 900px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
     .progress-bar { text-align: right; font-size: 0.7rem; font-weight: 800; color: var(--nest-text-muted); margin-bottom: 12px; text-transform: uppercase; }
-    .profile-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #fff; padding: 15px; border-radius: var(--nest-radius-sm); border: 1px solid var(--nest-border); margin-top: 10px; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; box-sizing: border-box; }
+    .profile-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid var(--nest-border); margin-top: 10px; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; box-sizing: border-box; }
     .profile-item { display: flex; flex-direction: column; }
     .profile-value { font-size: 0.85rem; color: #334155; font-weight: 600; }
     .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
@@ -16,7 +16,20 @@
     .pickup-card { background: #fff; border: 1px solid var(--nest-border); padding: 10px; border-radius: 6px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
     .full-width-summary { grid-column: 1 / -1; }
     .assessment-summary-item { font-size: 0.8rem; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
+
+    /* Custom NestMind Modal */
+    #nest-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    #nest-modal { background: white; width: 90%; max-width: 400px; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
 </style>
+
+<div id="nest-modal-overlay">
+    <div id="nest-modal">
+        <div style="font-size: 3rem; margin-bottom: 10px;">✨</div>
+        <h3 class="nest-header" id="modal-title" style="font-size: 1.25rem; margin-bottom: 8px;">Success</h3>
+        <p id="modal-message" style="color: var(--nest-text-muted); font-size: 0.9rem; margin-bottom: 20px;"></p>
+        <button onclick="closeModal()" class="nest-btn nest-btn-teal w-full">Great, Thanks!</button>
+    </div>
+</div>
 
 <div id="enrollment-ui" class="enrollment-wrapper">
     <div id="enrollment-progress" class="progress-bar">Step 0 of 6</div>
@@ -199,6 +212,18 @@
         pickupContacts: [], allParents: [], selectedQuestionCount: 0 
     };
 
+    // CUSTOM MODAL LOGIC
+    window.showModal = (title, message) => {
+        document.getElementById('modal-title').innerText = title;
+        document.getElementById('modal-message').innerText = message;
+        document.getElementById('nest-modal-overlay').style.display = 'flex';
+    };
+
+    window.closeModal = () => {
+        document.getElementById('nest-modal-overlay').style.display = 'none';
+        location.reload();
+    };
+
     async function initNetwork() {
         try {
             const res = await fetch(ENDPOINTS.franchise);
@@ -206,7 +231,6 @@
             const sel = document.getElementById('ho_franchise_selector');
             const initBtn = document.getElementById('init-btn');
             
-            // Check Local Storage for Sidebar selection
             const lockedName = localStorage.getItem('locked_franchise_name');
             const lockedId = localStorage.getItem('locked_franchise_id');
 
@@ -215,15 +239,13 @@
                 sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
             });
 
-            // LOGIC: If we have a local variable selection and it's NOT "Head Office"
             if (lockedName && lockedName.toLowerCase() !== "head office") {
                 sel.value = lockedId;
-                sel.disabled = true; // Auto-lock
-                initBtn.style.display = 'none'; // Hide button
+                sel.disabled = true;
+                initBtn.style.display = 'none';
                 state.currentFranchiseId = parseInt(lockedId);
-                await lockLocation(); // Trigger auto-start
+                await lockLocation(); 
             } else {
-                // It is Head Office, user must manually select and click "Set Branch"
                 initBtn.innerText = "SET BRANCH";
                 initBtn.style.display = 'block';
             }
@@ -258,7 +280,8 @@
 
             const sSel = document.getElementById('enrollment_session_id');
             sSel.innerHTML = '<option value="">-- Select Session --</option>';
-            s.filter(x => x.franchise_id === state.currentFranchiseId).forEach(x => {
+            // FILTER BY DISPLAY TRUE
+            s.filter(x => x.franchise_id === state.currentFranchiseId && x.display === true).forEach(x => {
                 sSel.innerHTML += `<option value="${x.id}">${x.name}</option>`;
             });
 
@@ -486,8 +509,10 @@
             for (let c of state.pickupContacts) {
                 await fetch(ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) });
             }
-            alert("Enrollment Successful");
-            location.reload();
+            
+            // SHOW CUSTOM MODAL
+            showModal("Master File Generated", "Student enrollment has been successfully logged to the network.");
+            
         } catch(e) { console.error(e); }
     };
 
