@@ -2,10 +2,10 @@
 <link rel="stylesheet" href="https://thelittlenestplayschool.github.io/nest_style.css">
 
 <style>
-    /* Layout specific to the Enrollment Stepper */
+    /* Module-specific layout overrides for the enrollment flow */
     .enrollment-wrapper { width: 100%; max-width: 900px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
     .progress-bar { text-align: right; font-size: 0.7rem; font-weight: 800; color: var(--nest-text-muted); margin-bottom: 12px; text-transform: uppercase; }
-    .profile-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid var(--nest-border); margin-top: 10px; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; box-sizing: border-box; }
+    .profile-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #fff; padding: 15px; border-radius: var(--nest-radius-sm); border: 1px solid var(--nest-border); margin-top: 10px; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; box-sizing: border-box; }
     .profile-item { display: flex; flex-direction: column; }
     .profile-value { font-size: 0.85rem; color: #334155; font-weight: 600; }
     .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
@@ -13,7 +13,7 @@
     .qa-row.selected { background: #f0fdfa; }
     .q-select-ans { visibility: hidden; }
     .qa-row.selected .q-select-ans { visibility: visible; }
-    .pickup-card { background: #fff; border: 1px solid var(--nest-border); padding: 10px; border-radius: 6px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+    .pickup-card { background: #fff; border: 1px solid var(--nest-border); padding: 10px; border-radius: var(--nest-radius-sm); margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
     .full-width-summary { grid-column: 1 / -1; }
     .assessment-summary-item { font-size: 0.8rem; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
 </style>
@@ -63,7 +63,7 @@
                 </div>
                 <div class="flex gap-2 mt-2">
                     <div class="flex-1"><label class="nest-label">Phone Number</label><input type="text" id="p_p2_phone" class="nest-input"></div>
-                    <div class="flex-1"><label class="nest-label">Email Address</label><input type="email" id="p_p2_email" class="nest-input"></div>
+                    <div class="flex-1"><label class="nest-label">Email Address</label><input type="email" id="p_email_p2" class="nest-input"></div>
                 </div>
                 <label class="nest-label mt-2">Home Address (if different)</label><input type="text" id="p_p2_address" class="nest-input">
 
@@ -294,7 +294,7 @@
                     second_parent_full_name: document.getElementById('p_p2_name').value,
                     second_parent_relationship: document.getElementById('p_p2_rel').value,
                     second_parent_phone_number: document.getElementById('p_p2_phone').value,
-                    second_parent_email_address: document.getElementById('p_p2_email').value,
+                    second_parent_email_address: document.getElementById('p_email_p2').value,
                     second_parent_home_address: document.getElementById('p_p2_address').value,
                     emergency_contact_1_name: document.getElementById('p_e1_name').value,
                     emergency_contact_1_relationship: document.getElementById('p_e1_rel').value,
@@ -307,9 +307,6 @@
             const data = await res.json();
             state.currentParentId = data.id;
             updateParentSummary(data);
-            document.getElementById('student-select-mode').style.display = 'none';
-            document.getElementById('student-create-mode').style.display = 'block';
-            document.getElementById('student-toggle-btn').style.display = 'none'; 
         } else {
             state.currentParentId = parseInt(document.getElementById('p_select_id').value);
             if (!state.currentParentId) return alert("Select parent");
@@ -325,8 +322,12 @@
                 document.getElementById('student-select-mode').style.display = 'none';
                 document.getElementById('student-create-mode').style.display = 'block';
             }
-            document.getElementById('student-toggle-btn').style.display = 'block';
         }
+
+        // HIDE INPUTS, SHOW SUMMARY
+        document.querySelector('#step-parent .step-content').style.display = 'none';
+        document.getElementById('parent-profile-view').style.display = 'grid';
+
         moveToStep('step-parent', 'step-student', 2);
     };
 
@@ -334,7 +335,6 @@
         document.getElementById('disp-p-name').innerText = `${data.first_name} ${data.last_name}`;
         document.getElementById('disp-p-email').innerText = data.email || 'N/A';
         document.getElementById('disp-p-phone').innerText = data.phone || 'N/A';
-        document.getElementById('parent-profile-view').style.display = 'grid';
     }
 
     window.processStudentStep = async () => {
@@ -364,13 +364,17 @@
             const data = await fetch(`${ENDPOINTS.student}/${state.currentStudentId}`).then(r => r.json());
             updateStudentSummary(data);
         }
+
+        // HIDE INPUTS, SHOW SUMMARY
+        document.querySelector('#step-student .step-content').style.display = 'none';
+        document.getElementById('student-profile-view').style.display = 'grid';
+
         moveToStep('step-student', 'step-assessment', 3);
     };
 
     function updateStudentSummary(data) {
         document.getElementById('disp-s-name').innerText = data.name;
         document.getElementById('disp-s-dob').innerText = data.date_of_birth;
-        document.getElementById('student-profile-view').style.display = 'grid';
     }
 
     window.handleQS = (cb) => {
@@ -410,7 +414,11 @@
         }
         
         document.getElementById('disp-a-teacher').innerText = document.getElementById('a_teacher_id').options[document.getElementById('a_teacher_id').selectedIndex].text;
+        
+        // HIDE INPUTS, SHOW SUMMARY
+        document.querySelector('#step-assessment .step-content').style.display = 'none';
         document.getElementById('assessment-summary-view').style.display = 'grid';
+
         moveToStep('step-assessment', 'step-session', 4);
     };
 
@@ -419,6 +427,7 @@
         if(!s.value) return alert("Select session");
         document.getElementById('disp-sess-name').innerText = s.options[s.selectedIndex].text;
         document.getElementById('session-profile-view').style.display = 'grid';
+        document.querySelector('#step-session .step-content').style.display = 'none';
         moveToStep('step-session', 'step-pickup', 5);
     };
 
@@ -451,6 +460,7 @@
                 </div>`;
         });
         document.getElementById('pickup-summary-view').style.display = 'grid';
+        document.querySelector('#step-pickup .step-content').style.display = 'none';
         moveToStep('step-pickup', 'step-final', 6);
     };
 
@@ -494,6 +504,8 @@
     window.unlockStep = (stepId, viewId) => {
         document.getElementById(stepId).classList.replace('step-saved', 'nest-step-active');
         document.getElementById(viewId).style.display = 'none';
+        // Re-show the input content
+        document.querySelector(`#${stepId} .step-content`).style.display = 'block';
     };
 
     window.toggleParentMode = () => {
