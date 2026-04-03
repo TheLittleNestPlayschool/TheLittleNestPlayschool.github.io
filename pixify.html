@@ -72,8 +72,8 @@
 
 <script>
     const PIXIFY_RENDER_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_render";
-    const PIXIFY_BILLING_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_download";
-    const PIXIFY_GET_SAVED = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_history"; 
+    const PIXIFY_DOWNLOADED_API = "https://x8ki-letl-twmt.n7.xano.io/api:LjfD10pY/pixify_downloaded";
+    const PIXIFY_HISTORY_API = "https://x8ki-letl-twmt.n7.xano.io/api:SHRYwhhe/pixify_history"; 
     
     const fid = localStorage.getItem('locked_franchise_id');
     let fileQueue = []; 
@@ -88,7 +88,7 @@
         const savedControls = document.getElementById('saved-controls');
         const container = document.getElementById('unified-container');
 
-        container.innerHTML = ''; // Clear workspace
+        container.innerHTML = '';
         
         if (tab === 'create') {
             createBtn.className = "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-white shadow-sm text-slate-800";
@@ -112,7 +112,7 @@
         container.innerHTML = '<div class="text-center p-10 text-slate-400 font-bold animate-pulse">Loading your vault...</div>';
         
         try {
-            const res = await fetch(`${PIXIFY_GET_SAVED}?franchise_id=${fid}&is_downloaded=false`);
+            const res = await fetch(`${PIXIFY_HISTORY_API}?franchise_id=${fid}&is_downloaded=false`);
             const data = await res.json();
             container.innerHTML = '';
             
@@ -122,9 +122,8 @@
             }
 
             data.forEach(item => {
-                // Re-cache for modal
                 processedResults.push({ id: item.id, url: item.pixar_url, name: "Saved Image" });
-                finalizeCardPreview(`row-${item.id}`, item.pixar_url, item.id);
+                finalizeCardPreview(`row-${item.id}`, item.pixar_url, item.id, item.original_url);
             });
         } catch (e) { console.error(e); }
     }
@@ -159,9 +158,10 @@
         card.innerHTML = `
             <div class="w-40 aspect-video bg-slate-50 rounded-lg overflow-hidden border border-slate-100 relative">
                 <img src="${originalUrl}" class="w-full h-full object-cover">
+                <div class="absolute top-2 left-2 bg-black/40 text-[7px] text-white px-1.5 py-0.5 rounded-md font-black uppercase">Original</div>
             </div>
             <div id="${cardId}-right" class="w-40 aspect-video bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-200 relative">
-                <span class="text-[8px] font-black text-slate-300 uppercase">Ready</span>
+                <span class="text-[8px] font-black text-slate-300 uppercase">Awaiting Render</span>
             </div>
             <div id="${cardId}-meta" class="flex-grow">
                 <p class="text-[11px] font-bold text-slate-700 truncate max-w-[200px]">${fileData.file.name}</p>
@@ -184,7 +184,6 @@
         for (let item of activeBatch) {
             const cardId = `row-${item.id}`;
             const rightBox = document.getElementById(`${cardId}-right`);
-            const metaBox = document.getElementById(`${cardId}-meta`);
             
             rightBox.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>`;
             
@@ -195,17 +194,31 @@
             try {
                 const res = await fetch(PIXIFY_RENDER_API, { method: 'POST', body: formData });
                 const data = await res.json();
-                processedResults.push({ id: item.id, url: data.pixar_url, name: item.file.name });
-                finalizeCardPreview(cardId, data.pixar_url, item.id);
+                
+                // Log to History Table INCLUDING the original URL from Xano's response if available, 
+                // or the rendered original if the API returns it.
+                const historyRes = await fetch(PIXIFY_HISTORY_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        franchise_id: fid,
+                        pixar_url: data.pixar_url,
+                        original_url: data.original_url || "", // Save original if your backend stores it
+                        is_downloaded: false
+                    })
+                });
+                const historyData = await historyRes.json();
+
+                processedResults.push({ id: historyData.id, url: data.pixar_url, name: item.file.name });
+                finalizeCardPreview(cardId, data.pixar_url, historyData.id, data.original_url);
             } catch (e) { console.error(e); }
         }
     }
 
-    function finalizeCardPreview(cardId, pixarUrl, fileId) {
+    function finalizeCardPreview(cardId, pixarUrl, fileId, originalUrl = "") {
         const container = document.getElementById('unified-container');
         let card = document.getElementById(cardId);
         
-        // If loading from Saved tab, create card skeleton
         if(!card) {
             card = document.createElement('div');
             card.id = cardId;
@@ -214,10 +227,16 @@
         }
 
         card.innerHTML = `
-            <div class="w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden relative shadow-inner">
-                <img src="${pixarUrl}" class="w-full h-full object-cover blur-sm opacity-50">
-                <div class="absolute inset-0 flex items-center justify-center transform rotate-[-20deg] pointer-events-none">
-                    <span class="text-[7px] font-black text-black/60 uppercase tracking-[0.2em] px-3 py-1.5 border border-dashed border-black/30 rounded-md">Nest Internal</span>
+            <div class="flex items-center gap-2">
+                <div class="w-16 h-16 bg-slate-50 rounded-lg overflow-hidden border border-slate-100 grayscale opacity-40">
+                    <img src="${originalUrl}" class="w-full h-full object-cover">
+                </div>
+                <div class="text-slate-300">➜</div>
+                <div class="w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden relative shadow-inner">
+                    <img src="${pixarUrl}" class="w-full h-full object-cover blur-sm opacity-50">
+                    <div class="absolute inset-0 flex items-center justify-center transform rotate-[-20deg] pointer-events-none">
+                        <span class="text-[7px] font-black text-black/60 uppercase tracking-[0.2em] px-3 py-1.5 border border-dashed border-black/30 rounded-md">Nest Internal</span>
+                    </div>
                 </div>
             </div>
             <div class="flex-grow">
@@ -282,9 +301,15 @@
             const item = processedResults.find(r => r.id == id);
             const cardId = `row-${id}`;
             
-            await fetch(PIXIFY_BILLING_API, {
+            await fetch(PIXIFY_DOWNLOADED_API, {
                 method: 'POST',
-                body: JSON.stringify({ franchise_id: fid, image_url: item.url }),
+                body: JSON.stringify({ franchise_id: fid, pixify_history_id: id, amount: 6 }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            await fetch(`${PIXIFY_HISTORY_API}/${id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ is_downloaded: true }),
                 headers: { 'Content-Type': 'application/json' }
             });
 
