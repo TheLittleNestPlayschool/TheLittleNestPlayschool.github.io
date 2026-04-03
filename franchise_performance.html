@@ -1,9 +1,9 @@
 <link rel="stylesheet" href="/nest_style.css">
 <script src="/api_config.js"></script>
 
-<div class="flex flex-col items-center justify-start w-full max-w-6xl mx-auto space-y-4 animate-in fade-in duration-500 pb-20">
+<div class="flex flex-col items-center justify-start w-full max-w-[98%] mx-auto space-y-4 animate-in fade-in duration-500 pb-20">
     
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
         
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition-all">
             <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-2">
@@ -126,6 +126,20 @@
                 </div>
             </div>
         </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition-all">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-2">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Billing Due</p>
+                <select id="billing-lookahead" class="bg-slate-50 text-[8px] font-black uppercase border border-slate-100 rounded px-1 py-0.5 outline-none focus:border-[#00d1b2]">
+                    <option value="1">1 Day</option>
+                    <option value="3" selected>3 Days</option>
+                    <option value="7">7 Days</option>
+                </select>
+            </div>
+            <div id="billing-list" class="space-y-1.5 max-h-[120px] overflow-y-auto pr-1 text-left">
+                <p class="text-[8px] text-slate-300 italic text-center py-4 uppercase">Synchronizing...</p>
+            </div>
+        </div>
     </div>
 
     <div class="bg-white w-full rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -139,8 +153,8 @@
             </div>
         </div>
         
-        <div id="perf-sessions-body" class="p-4 grid grid-cols-1 md:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto bg-slate-50/10">
-            </div>
+        <div id="perf-sessions-body" class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-h-[400px] overflow-y-auto bg-slate-50/10">
+        </div>
     </div>
 
     <div class="w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -156,7 +170,6 @@
                 <button onclick="document.getElementById('expense-modal').classList.remove('hidden')" class="flex-1 md:flex-none text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">Expenses</button>
             </div>
         </div>
-        
         <div class="space-y-4">
             <div class="h-5 bg-slate-50 border border-slate-100 rounded-full overflow-hidden p-1">
                 <div id="recovery-bar" class="h-full bg-gradient-to-r from-[#00d1b2] to-[#00b89c] rounded-full transition-all duration-1000 shadow-sm" style="width: 0.5%"></div>
@@ -244,19 +257,23 @@
         const { fid, endpoints } = identity;
 
         try {
-            const [sessionRes, studentRes, profileRes] = await Promise.all([
+            // Updated Fetch to include parent list for Billing Due box
+            const [sessionRes, studentRes, profileRes, parentRes] = await Promise.all([
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`),
-                fetch(`${endpoints.lead_profile.list}?franchise_id=${fid}`)
+                fetch(`${endpoints.lead_profile.list}?franchise_id=${fid}`),
+                fetch(`${endpoints.parent.list}?franchise_id=${fid}`)
             ]);
 
             const sessionsRaw = await sessionRes.json();
             const studentsRaw = await studentRes.json();
             const profilesRaw = await profileRes.json();
+            const parentsRaw = await parentRes.json();
             
             const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : (sessionsRaw.items || []);
             const students = Array.isArray(studentsRaw) ? studentsRaw : (studentsRaw.items || []);
             const profiles = Array.isArray(profilesRaw) ? profilesRaw : (profilesRaw.items || []);
+            const parents = Array.isArray(parentsRaw) ? parentsRaw : (parentsRaw.items || []);
 
             const now = new Date();
             const oneDay = 24 * 60 * 60 * 1000;
@@ -306,7 +323,18 @@
             document.getElementById('rev-monthly').innerText = (getCount(activeStudents, 0, oneMonth) * TUITION).toLocaleString();
             document.getElementById('rev-prev-monthly').innerText = (getCount(activeStudents, oneMonth, oneMonth * 2) * TUITION).toLocaleString();
 
-            // GRID RENDER FOR SESSIONS
+            // Populate Billing Due Box
+            const billingContainer = document.getElementById('billing-list');
+            billingContainer.innerHTML = '';
+            parents.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || '')).forEach(p => {
+                billingContainer.insertAdjacentHTML('beforeend', `
+                    <div class="flex justify-between items-center border-b border-slate-50 pb-1 last:border-0">
+                        <span class="text-[9px] font-bold text-slate-600 truncate w-24">${p.first_name} ${p.last_name}</span>
+                        <span class="text-[8px] font-black text-[#00d1b2] tracking-tighter">DUE NEXT</span>
+                    </div>
+                `);
+            });
+
             const grid = document.getElementById('perf-sessions-body');
             grid.innerHTML = ''; 
             const sessionCounts = {};
@@ -359,3 +387,8 @@
 
     initPerformance();
 </script>
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+</style>
