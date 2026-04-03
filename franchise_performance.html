@@ -233,7 +233,7 @@
 
 <script>
     async function initPerformance() {
-        // 1. REINFORCED WAIT: Ensure ID exists and api_config is ready
+        // Retry logic specifically for Identity and Endpoints
         const getIdentity = () => {
             return new Promise((resolve) => {
                 let attempts = 0;
@@ -244,7 +244,7 @@
                         clearInterval(interval);
                         resolve({ fid, endpoints });
                     }
-                    if (attempts > 50) { // Timeout after 5 seconds
+                    if (attempts > 50) {
                         clearInterval(interval);
                         resolve(null);
                     }
@@ -255,14 +255,13 @@
 
         const identity = await getIdentity();
         if (!identity) {
-            console.error("Identity Lock failure in Performance Module.");
+            console.error("Performance Module: Identity/Config timeout.");
             return;
         }
 
         const { fid, endpoints } = identity;
 
         try {
-            // 2. Fetch Data
             const [sessionRes, studentRes] = await Promise.all([
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`)
@@ -289,13 +288,22 @@
                 return age >= minAge && age < maxAge;
             }).length;
 
-            // 3. Update Text Metrics
+            // Update Metrics
             document.getElementById('perf-today-active').innerText = getCount(activeStudents, 0, oneDay);
             document.getElementById('perf-today-wth').innerText = getCount(withdrawnStudents, 0, oneDay);
+            document.getElementById('perf-prev-day-active').innerText = getCount(activeStudents, oneDay, oneDay * 2);
+            document.getElementById('perf-prev-day-wth').innerText = getCount(withdrawnStudents, oneDay, oneDay * 2);
+
             document.getElementById('perf-week-active').innerText = getCount(activeStudents, 0, oneWeek);
             document.getElementById('perf-week-wth').innerText = getCount(withdrawnStudents, 0, oneWeek);
+            document.getElementById('perf-prev-week-active').innerText = getCount(activeStudents, oneWeek, oneWeek * 2);
+            document.getElementById('perf-prev-week-wth').innerText = getCount(withdrawnStudents, oneWeek, oneWeek * 2);
+
             document.getElementById('perf-month-active').innerText = getCount(activeStudents, 0, oneMonth);
             document.getElementById('perf-month-wth').innerText = getCount(withdrawnStudents, 0, oneMonth);
+            document.getElementById('perf-prev-month-active').innerText = getCount(activeStudents, oneMonth, oneMonth * 2);
+            document.getElementById('perf-prev-month-wth').innerText = getCount(withdrawnStudents, oneMonth, oneMonth * 2);
+
             document.getElementById('perf-total-active').innerText = activeStudents.length;
 
             const TUITION = 3500;
@@ -306,14 +314,14 @@
             document.getElementById('rev-monthly').innerText = (getCount(activeStudents, 0, oneMonth) * TUITION).toLocaleString();
             document.getElementById('rev-prev-monthly').innerText = (getCount(activeStudents, oneMonth, oneMonth * 2) * TUITION).toLocaleString();
 
-            // 4. Render Session Monitor (BOOLEAN FIX)
+            // Render Session Monitor (BOOLEAN FIX)
             const tbody = document.getElementById('perf-sessions-body');
             tbody.innerHTML = ''; 
 
             const displaySessions = sessions.filter(s => s.display === true);
 
             if (displaySessions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-[10px] font-black text-slate-300 uppercase italic">No sessions marked for display.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-[10px] font-black text-slate-300 uppercase italic">No sessions set to Display</td></tr>';
             }
 
             displaySessions.forEach(session => {
