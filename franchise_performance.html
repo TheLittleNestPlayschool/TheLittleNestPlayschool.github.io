@@ -147,7 +147,7 @@
             </div>
             <div class="flex gap-2">
                 <button onclick="document.getElementById('investment-modal').classList.remove('hidden')" class="text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">Investment</button>
-                <button onclick="document.getElementById('expense-modal').classList.remove('hidden')" class="text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">Expenses</button>
+                <button onclick="document.getElementById('expense-modal').classList.add('hidden')" class="text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">Expenses</button>
             </div>
         </div>
         <div class="space-y-4">
@@ -175,23 +175,28 @@
                 let attempts = 0;
                 const interval = setInterval(() => {
                     const fid = localStorage.getItem('locked_franchise_id');
+                    // CRITICAL FIX: Ensure endpoints object is actually populated before resolving
                     const endpoints = window.NEST_ENDPOINTS;
-                    if (fid && endpoints) {
+                    if (fid && endpoints && Object.keys(endpoints).length > 0) {
                         clearInterval(interval);
                         resolve({ fid, endpoints });
                     }
-                    if (attempts > 50) { clearInterval(interval); resolve(null); }
+                    if (attempts > 100) { clearInterval(interval); resolve(null); }
                     attempts++;
                 }, 100);
             });
         };
 
         const identity = await getIdentity();
-        if (!identity) return;
+        if (!identity) {
+            console.error("Dashboard Config Timeout: Identity or Endpoints not found.");
+            return;
+        }
+        
         const { fid, endpoints } = identity;
 
         try {
-            // VERIFIED FRANCHISE FILTERING IN ALL CALLS
+            // VERIFIED: Using fid and endpoints correctly
             const [sessionRes, studentRes, profileRes, parentRes] = await Promise.all([
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`),
@@ -209,15 +214,15 @@
             const oneWeek = 7 * oneDay;
             const oneMonth = 30 * oneDay;
 
-            const activeStudents = students.filter(s => s.is_active === true);
-            const withdrawnStudents = students.filter(s => s.is_active === false);
+            const activeStudents = Array.isArray(students) ? students.filter(s => s.is_active === true) : [];
+            const withdrawnStudents = Array.isArray(students) ? students.filter(s => s.is_active === false) : [];
             
             const getCount = (list, minAge, maxAge) => list.filter(s => {
                 const age = now - s.created_at;
                 return age >= minAge && age < maxAge;
             }).length;
 
-            // RESTORED: Full Enrollment Pulse Logic
+            // RESTORED: Pulse Stats
             document.getElementById('perf-today-active').innerText = getCount(activeStudents, 0, oneDay);
             document.getElementById('perf-today-wth').innerText = getCount(withdrawnStudents, 0, oneDay);
             document.getElementById('perf-prev-day-active').innerText = getCount(activeStudents, oneDay, oneDay * 2);
@@ -235,7 +240,7 @@
             
             document.getElementById('perf-total-active').innerText = activeStudents.length;
 
-            // RESTORED: Revenue Intelligence (Curr/Prev)
+            // Revenue
             const TUITION = 3500;
             document.getElementById('rev-daily').innerText = (getCount(activeStudents, 0, oneDay) * TUITION).toLocaleString();
             document.getElementById('rev-prev-daily').innerText = (getCount(activeStudents, oneDay, oneDay * 2) * TUITION).toLocaleString();
@@ -254,7 +259,7 @@
             const rate = totalInq > 0 ? Math.round((totalReady / totalInq) * 100) : 0;
             document.getElementById('msg-conversion-rate').innerText = rate + "%";
 
-            // Billing List Render
+            // Billing Render
             const billingContainer = document.getElementById('billing-list');
             billingContainer.innerHTML = '';
             parents.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || '')).forEach(p => {
@@ -266,7 +271,7 @@
                 `);
             });
 
-            // 4-Column Session Grid Render
+            // Session Grid Render
             const grid = document.getElementById('perf-sessions-body');
             grid.innerHTML = '';
             const sessionCounts = {};
@@ -295,7 +300,7 @@
             });
 
             if (window.calculateROI) window.calculateROI();
-        } catch (e) { console.error("Data Synchronisation Failed:", e); }
+        } catch (e) { console.error("Identity Sync Error:", e); }
     }
 
     window.calculateROI = () => {
