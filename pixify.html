@@ -1,4 +1,5 @@
 <div class="max-w-7xl mx-auto space-y-10">
+    
     <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between gap-6">
         <div>
             <h2 class="text-3xl font-black text-slate-800 tracking-tight">Pixify! AI Intelligence</h2>
@@ -6,18 +7,23 @@
         </div>
         
         <div class="flex items-center gap-4">
+            <span class="bg-[#00d1b2]/10 text-[#00d1b2] px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest">
+                Rate: ₱8.00 / Image
+            </span>
+            
             <button onclick="document.getElementById('fileInput').click()" class="bg-slate-100 text-slate-700 px-5 py-3 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors">
                 ➕ Add Photos
             </button>
             
-            <button id="go-button" onclick="startBatchProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg animate-pulse">
+            <button id="go-button" onclick="startBatchProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all animate-pulse">
                 🚀 Pixify! [0]
             </button>
 
-            <button id="download-selected" onclick="downloadSelected()" class="hidden bg-slate-800 text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest">
+            <button id="download-selected" onclick="downloadSelected()" class="hidden bg-[#0f172a] text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all">
                 ⬇️ Download Selected
             </button>
         </div>
+
         <input type="file" id="fileInput" multiple accept="image/*" class="hidden" onchange="handleSelection(event)">
     </div>
 
@@ -30,7 +36,7 @@
         </div>
 
         <div class="col-span-9 space-y-4 border-l border-slate-200 pl-8">
-            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Processed Results</h4>
+            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Comparison & Results</h4>
             <div id="compare-container" class="space-y-4">
                 </div>
         </div>
@@ -41,10 +47,14 @@
     const PIXIFY_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify";
     const fid = localStorage.getItem('locked_franchise_id');
     let fileQueue = [];
-    let selectedForDownload = [];
 
+    /**
+     * Handles initial file selection and populates the left-hand queue.
+     */
     function handleSelection(event) {
         const files = event.target.files;
+        if (!files.length) return;
+
         for (let file of files) {
             fileQueue.push(file);
             addQueueItemToUI(file);
@@ -55,12 +65,12 @@
     function addQueueItemToUI(file) {
         const queue = document.getElementById('queue-container');
         const item = document.createElement('div');
-        item.className = "bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-3 shadow-sm";
+        item.className = "bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-3 shadow-sm animate-fadeInLeft";
         item.innerHTML = `
             <div class="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center text-lg">🖼️</div>
             <div class="overflow-hidden">
                 <p class="text-[11px] font-bold text-slate-700 truncate">${file.name}</p>
-                <p class="text-[9px] text-[#00d1b2] font-black uppercase">Ready</p>
+                <p class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tighter">Ready to Process</p>
             </div>
         `;
         queue.append(item);
@@ -68,10 +78,17 @@
 
     function updateGoButton() {
         const btn = document.getElementById('go-button');
-        btn.innerText = `🚀 Pixify! [${fileQueue.length}]`;
-        btn.classList.toggle('hidden', fileQueue.length === 0);
+        if (fileQueue.length > 0) {
+            btn.innerText = `🚀 Pixify! [${fileQueue.length}]`;
+            btn.classList.remove('hidden');
+        } else {
+            btn.classList.add('hidden');
+        }
     }
 
+    /**
+     * Batch processes the queue, aligning originals and AI results side-by-side.
+     */
     async function startBatchProcess() {
         const activeBatch = [...fileQueue];
         fileQueue = [];
@@ -79,7 +96,10 @@
         document.getElementById('download-selected').classList.remove('hidden');
 
         for (let file of activeBatch) {
-            const rowId = createResultRow(file);
+            // Create local preview for immediate display of original
+            const originalPreviewUrl = URL.createObjectURL(file);
+            const rowId = createResultRow(file, originalPreviewUrl);
+            
             const formData = new FormData();
             formData.append('image', file);
             formData.append('franchise_id', fid);
@@ -87,30 +107,46 @@
             try {
                 const res = await fetch(PIXIFY_API, { method: 'POST', body: formData });
                 const data = await res.json();
+                
+                // Update the right side with the Pixar result
                 finalizeRow(rowId, data.pixar_url);
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error("AI Generation Failed", e);
+                document.getElementById(`${rowId}-img-right`).innerHTML = `<span class="text-[8px] text-red-500 font-bold">Error</span>`;
+            }
         }
     }
 
-    function createResultRow(file) {
+    function createResultRow(file, originalUrl) {
         const container = document.getElementById('compare-container');
         const rowId = 'row-' + Math.random().toString(36).substr(2, 9);
         const row = document.createElement('div');
         row.id = rowId;
-        row.className = "flex items-center gap-4 bg-white border border-slate-100 rounded-2xl p-2 pr-6 shadow-sm";
+        
+        row.className = "flex items-center gap-6 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm animate-slideDown";
         row.innerHTML = `
-            <div id="${rowId}-img" class="w-48 aspect-video bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center relative">
-                <div class="animate-spin h-5 w-5 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>
+            <div class="w-44 aspect-video bg-slate-50 rounded-lg overflow-hidden border border-slate-100 relative group">
+                <img src="${originalUrl}" class="w-full h-full object-cover">
+                <div class="absolute top-2 left-2 bg-black/50 backdrop-blur-sm text-[8px] text-white px-2 py-0.5 rounded uppercase font-bold tracking-widest">Original</div>
+            </div>
+
+            <div id="${rowId}-img-right" class="w-44 aspect-video bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center relative border-2 border-dashed border-slate-200">
+                <div class="text-center">
+                    <div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full mx-auto mb-2"></div>
+                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter">AI Rendering...</p>
+                </div>
             </div>
             
             <div class="flex-grow">
-                <p class="text-xs font-bold text-slate-700">${file.name}</p>
-                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Identity Locked • AI Rendered</p>
+                <p class="text-[11px] font-bold text-slate-700 truncate max-w-[180px]">${file.name}</p>
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Identity Locked • Optimized for Ads</p>
             </div>
 
-            <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
-                <span class="text-[9px] font-black text-slate-300 uppercase">Select</span>
-                <input type="checkbox" data-url="" id="${rowId}-check" disabled class="w-5 h-5 rounded border-slate-300 text-[#00d1b2] focus:ring-[#00d1b2] cursor-pointer">
+            <div class="flex items-center gap-3 border-l border-slate-100 pl-6 h-full">
+                <div class="text-center">
+                    <p class="text-[8px] font-black text-slate-300 uppercase mb-1">Select</p>
+                    <input type="checkbox" data-url="" id="${rowId}-check" disabled class="w-6 h-6 rounded-lg border-slate-300 text-[#00d1b2] focus:ring-[#00d1b2] cursor-pointer transition-all disabled:opacity-30">
+                </div>
             </div>
         `;
         container.prepend(row);
@@ -118,25 +154,52 @@
     }
 
     function finalizeRow(rowId, pixarUrl) {
-        const imgBox = document.getElementById(`${rowId}-img`);
+        const imgBoxRight = document.getElementById(`${rowId}-img-right`);
         const check = document.getElementById(`${rowId}-check`);
         
-        imgBox.innerHTML = `<img src="${pixarUrl}" class="w-full h-full object-cover">`;
+        imgBoxRight.innerHTML = `
+            <img src="${pixarUrl}" class="w-full h-full object-cover animate-fadeIn">
+            <div class="absolute top-2 right-2 bg-[#00d1b2] text-[8px] text-white px-2 py-0.5 rounded uppercase font-bold tracking-widest shadow-lg">Pixar AI</div>
+        `;
+        imgBoxRight.classList.remove('border-dashed', 'border-2', 'bg-slate-100');
+        
         check.disabled = false;
         check.dataset.url = pixarUrl;
     }
 
     function downloadSelected() {
         const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
-        checkboxes.forEach(cb => {
+        if (checkboxes.length === 0) return alert("Please select at least one image to download.");
+
+        checkboxes.forEach((cb, index) => {
             if(cb.dataset.url) {
-                const link = document.createElement('a');
-                link.href = cb.dataset.url;
-                link.download = "Pixify_Export.jpg";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.href = cb.dataset.url;
+                    link.download = `NestMind_Pixify_${Date.now()}.jpg`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }, index * 300); // Staggered download to avoid browser blocks
             }
         });
     }
 </script>
+
+<style>
+    @keyframes fadeInLeft {
+        from { opacity: 0; transform: translateX(-10px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .animate-fadeInLeft { animation: fadeInLeft 0.3s ease-out forwards; }
+    .animate-slideDown { animation: slideDown 0.4s ease-out forwards; }
+    .animate-fadeIn { animation: fadeIn 0.6s ease-in forwards; }
+</style>
