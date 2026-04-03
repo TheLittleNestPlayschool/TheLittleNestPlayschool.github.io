@@ -18,10 +18,6 @@
             <button id="go-button" onclick="startBatchProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all animate-pulse">
                 🚀 Pixify! [0]
             </button>
-
-            <button id="download-selected" onclick="downloadSelected()" class="hidden bg-[#0f172a] text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all">
-                ⬇️ Download Selected
-            </button>
         </div>
 
         <input type="file" id="fileInput" multiple accept="image/*" class="hidden" onchange="handleSelection(event)">
@@ -48,9 +44,6 @@
     const fid = localStorage.getItem('locked_franchise_id');
     let fileQueue = [];
 
-    /**
-     * Handles initial file selection.
-     */
     function handleSelection(event) {
         const files = Array.from(event.target.files);
         if (!files.length) return;
@@ -62,11 +55,11 @@
             addQueueItemToUI(fileData);
         });
         updateGoButton();
-        event.target.value = ''; // Reset input so same file can be re-selected if deleted
+        event.target.value = ''; 
     }
 
     /**
-     * Shows the full picture and a delete button in the queue.
+     * Updated with a clear "Del" button for easy visibility.
      */
     function addQueueItemToUI(fileData) {
         const queue = document.getElementById('queue-container');
@@ -74,19 +67,17 @@
         const previewUrl = URL.createObjectURL(fileData.file);
         
         item.id = `queue-${fileData.id}`;
-        item.className = "bg-white border border-slate-200 rounded-xl p-2 flex items-center gap-3 shadow-sm animate-fadeInLeft group relative";
+        item.className = "bg-white border border-slate-200 rounded-xl p-2 flex items-center gap-3 shadow-sm animate-fadeInLeft relative";
         item.innerHTML = `
             <div class="w-12 h-12 bg-slate-50 rounded-lg overflow-hidden border border-slate-100 flex-shrink-0">
                 <img src="${previewUrl}" class="w-full h-full object-cover">
             </div>
             <div class="overflow-hidden flex-grow">
-                <p class="text-[10px] font-bold text-slate-700 truncate pr-6">${fileData.file.name}</p>
+                <p class="text-[10px] font-bold text-slate-700 truncate pr-12">${fileData.file.name}</p>
                 <p class="text-[9px] text-[#00d1b2] font-black uppercase">Ready</p>
             </div>
-            <button onclick="removeFromQueue('${fileData.id}')" class="absolute right-2 text-slate-300 hover:text-red-500 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+            <button onclick="removeFromQueue('${fileData.id}')" class="bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-600 text-[10px] font-bold px-2 py-1 rounded-md transition-colors mr-1">
+                Del
             </button>
         `;
         queue.append(item);
@@ -104,14 +95,10 @@
         btn.classList.toggle('hidden', fileQueue.length === 0);
     }
 
-    /**
-     * Batch processes the queue.
-     */
     async function startBatchProcess() {
         const activeBatch = [...fileQueue];
         fileQueue = [];
         updateGoButton();
-        document.getElementById('download-selected').classList.remove('hidden');
 
         for (let item of activeBatch) {
             const originalPreviewUrl = URL.createObjectURL(item.file);
@@ -132,6 +119,9 @@
         }
     }
 
+    /**
+     * Updated layout: Left Original -> Right Pixar -> Download Button.
+     */
     function createResultRow(file, originalUrl) {
         const container = document.getElementById('compare-container');
         const rowId = 'row-' + Math.random().toString(36).substr(2, 9);
@@ -154,13 +144,12 @@
                 <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Identity Locked</p>
             </div>
 
-            <div class="flex items-center gap-6 border-l border-slate-100 pl-6">
-                <div class="text-center">
-                    <p class="text-[8px] font-black text-slate-300 uppercase mb-1">Select</p>
-                    <input type="checkbox" data-url="" id="${rowId}-check" disabled class="w-5 h-5 rounded border-slate-300 text-[#00d1b2] cursor-pointer">
-                </div>
+            <div class="flex items-center gap-4 border-l border-slate-100 pl-6">
+                <button id="${rowId}-dl" disabled onclick="downloadSingle('${rowId}')" class="opacity-30 cursor-not-allowed bg-[#0f172a] text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">
+                    Download
+                </button>
                 
-                <button onclick="document.getElementById('${rowId}').remove()" class="text-slate-300 hover:text-red-500 transition-colors pt-3">
+                <button onclick="document.getElementById('${rowId}').remove()" class="text-slate-300 hover:text-red-500 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
@@ -173,34 +162,28 @@
 
     function finalizeRow(rowId, pixarUrl) {
         const imgBoxRight = document.getElementById(`${rowId}-img-right`);
-        const check = document.getElementById(`${rowId}-check`);
+        const dlBtn = document.getElementById(`${rowId}-dl`);
         
         imgBoxRight.innerHTML = `
             <img src="${pixarUrl}" class="w-full h-full object-cover animate-fadeIn">
-            <div class="absolute top-2 right-2 bg-[#00d1b2] text-[8px] text-white px-2 py-0.5 rounded uppercase font-bold tracking-widest shadow-lg">Pixar AI</div>
+            <div class="absolute top-1 right-1 bg-[#00d1b2] text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-bold">Pixar AI</div>
         `;
         imgBoxRight.classList.remove('border-dashed', 'border-2', 'bg-slate-100');
         
-        check.disabled = false;
-        check.dataset.url = pixarUrl;
+        dlBtn.disabled = false;
+        dlBtn.classList.remove('opacity-30', 'cursor-not-allowed');
+        dlBtn.dataset.url = pixarUrl;
     }
 
-    function downloadSelected() {
-        const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
-        if (checkboxes.length === 0) return alert("Please select at least one image to download.");
-
-        checkboxes.forEach((cb, index) => {
-            if(cb.dataset.url) {
-                setTimeout(() => {
-                    const link = document.createElement('a');
-                    link.href = cb.dataset.url;
-                    link.download = `Pixify_Export_${index}.jpg`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }, index * 300);
-            }
-        });
+    function downloadSingle(rowId) {
+        const url = document.getElementById(`${rowId}-dl`).dataset.url;
+        if(!url) return;
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Pixify_${Date.now()}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 </script>
 
