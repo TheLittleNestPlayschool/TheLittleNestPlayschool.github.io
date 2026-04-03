@@ -37,27 +37,27 @@
 </div>
 
 <div id="download-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 animate-fadeIn">
-        <h3 class="text-2xl font-black text-slate-800 mb-2">Confirm Download</h3>
+    <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-slate-100 animate-fadeIn">
+        <h3 class="text-2xl font-black text-slate-800 mb-1.5">Confirm Download</h3>
         <p class="text-slate-500 text-sm mb-6">These items will be added to your monthly bill.</p>
         
-        <div id="modal-file-list" class="max-h-40 overflow-y-auto mb-6 space-y-2 border-y border-slate-50 py-4">
+        <div id="modal-image-queue" class="flex items-center gap-3 overflow-x-auto pb-4 mb-8 border-b border-slate-100 scroll-smooth">
             </div>
 
-        <div class="bg-slate-50 rounded-2xl p-4 space-y-3 mb-8">
+        <div class="bg-slate-50 rounded-2xl p-5 space-y-3 mb-8">
             <div class="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-tighter">
                 <span>Items to Unlock</span>
                 <span id="modal-count">0 Images</span>
             </div>
-            <div class="flex justify-between text-lg font-black text-slate-800 border-t border-slate-200 pt-3">
+            <div class="flex justify-between text-xl font-black text-slate-900 border-t border-slate-200 pt-3.5">
                 <span>Total Billing</span>
                 <span id="modal-cost">0 Credits</span>
             </div>
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex gap-4">
             <button onclick="closeDownloadModal()" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancel</button>
-            <button onclick="executeBatchDownload()" class="flex-1 bg-[#00d1b2] text-white py-3 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-[#00d1b2]/20">Confirm & Save</button>
+            <button onclick="executeBatchDownload()" class="flex-1 bg-[#00d1b2] text-white py-3 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-[#00d1b2]/20 hover:scale-105 transition-all">Confirm & Save</button>
         </div>
     </div>
 </div>
@@ -84,8 +84,9 @@
 
         toProcess.forEach(file => {
             const fileId = 'pix-' + Math.random().toString(36).substr(2, 9);
-            fileQueue.push({ id: fileId, file: file });
-            addQueuedCard({ id: fileId, file: file });
+            const fileData = { id: fileId, file: file };
+            fileQueue.push(fileData);
+            addQueuedCard(fileData);
         });
         
         updateGoButton();
@@ -109,16 +110,16 @@
                 <img src="${originalUrl}" class="w-full h-full object-cover">
                 <div class="absolute top-1 left-1 bg-black/40 text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-bold">Original</div>
             </div>
-            <div id="${cardId}-right" class="w-40 aspect-video bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-100">
+            <div id="${cardId}-right" class="w-40 aspect-video bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-200 relative">
                 <span class="text-[8px] font-black text-slate-300 uppercase">Ready</span>
             </div>
             <div id="${cardId}-meta" class="flex-grow">
-                <p class="text-[11px] font-bold text-slate-700 truncate">${fileData.file.name}</p>
+                <p class="text-[11px] font-bold text-slate-700 truncate max-w-[200px]">${fileData.file.name}</p>
                 <p class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tight">Queued (3 Credits)</p>
             </div>
-            <div id="${cardId}-actions" class="flex items-center gap-4 border-l border-slate-100 pl-6 h-full">
-                <button onclick="removeFromWorkspace('${fileData.id}')" class="text-red-400 hover:text-red-600 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            <div id="${cardId}-actions" class="flex items-center gap-4 border-l border-slate-100 pl-6 h-full pt-4 flex-shrink-0">
+                <button onclick="removeFromWorkspace('${fileData.id}')" class="text-red-300 hover:text-red-500 transition-colors">
+                    <span class="text-[10px] font-bold px-2">Del</span>
                 </button>
             </div>
         `;
@@ -134,9 +135,11 @@
             const cardId = `row-${item.id}`;
             const rightBox = document.getElementById(`${cardId}-right`);
             const metaBox = document.getElementById(`${cardId}-meta`);
+            const actionsBox = document.getElementById(`${cardId}-actions`);
             
             rightBox.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>`;
             metaBox.querySelector('p:last-child').innerText = "Processing...";
+            actionsBox.innerHTML = '';
             
             const formData = new FormData();
             formData.append('image', item.file);
@@ -156,29 +159,29 @@
         const metaBox = document.getElementById(`${cardId}-meta`);
         const actionsBox = document.getElementById(`${cardId}-actions`);
 
-        // Banner now correctly positioned OVER the pixar image
+        // Correct banner placement over image
         rightBox.innerHTML = `
-            <div class="relative w-full h-full">
-                <img src="${pixarUrl}" class="w-full h-full object-cover blur-sm opacity-50">
-                <div class="absolute inset-0 flex items-center justify-center transform rotate-[-20deg] pointer-events-none">
-                    <span class="text-[7px] font-black text-black/60 uppercase tracking-[0.2em] px-3 py-1.5 border border-dashed border-black/30 rounded-md">Nest Internal</span>
-                </div>
+            <img src="${pixarUrl}" class="w-full h-full object-cover blur-sm opacity-50">
+            <div class="absolute inset-0 flex items-center justify-center transform rotate-[-20deg] pointer-events-none">
+                <span class="text-[7px] font-black text-black/60 uppercase tracking-[0.2em] px-3 py-1.5 border border-dashed border-black/30 rounded-md">Nest Internal</span>
             </div>
         `;
+        rightBox.className = "w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden relative shadow-inner";
 
         metaBox.innerHTML = `
-            <p class="text-[11px] font-bold text-slate-700">Identity Locked</p>
-            <p class="text-[9px] text-slate-400 font-bold uppercase">Rendered (3 Credits Billed)</p>
+            <p class="text-[11px] font-bold text-slate-700 truncate">Identity Locked</p>
+            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Rendered (3 Credits Paid)</p>
         `;
 
-        // Selection column with clear "Download" Header logic
+        // Selection column with "Download" header
+        actionsBox.className = "flex items-center gap-6 border-l border-slate-100 pl-6 h-full pt-4 flex-shrink-0";
         actionsBox.innerHTML = `
             <div class="flex flex-col items-center gap-1">
                 <span class="text-[7px] font-black text-slate-300 uppercase tracking-widest">Download</span>
-                <input type="checkbox" value="${fileId}" onchange="updateBatchUI()" class="download-checkbox w-5 h-5 rounded-md border-slate-200 text-[#00d1b2] focus:ring-[#00d1b2]">
+                <input type="checkbox" value="${fileId}" onchange="updateBatchUI()" class="download-checkbox w-6 h-6 rounded-lg border-slate-300 text-[#00d1b2] cursor-pointer">
             </div>
-            <button onclick="document.getElementById('${cardId}').remove(); updateBatchUI();" class="text-red-400 hover:text-red-600 transition-colors ml-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            <button onclick="document.getElementById('${cardId}').remove(); updateBatchUI();" class="text-red-300 hover:text-red-500 transition-colors pt-2">
+                <span class="text-[10px] font-bold px-2">Del</span>
             </button>
         `;
         updateBatchUI();
@@ -196,15 +199,21 @@
 
     function showDownloadModal() {
         const checked = document.querySelectorAll('.download-checkbox:checked');
-        const listContainer = document.getElementById('modal-file-list');
-        listContainer.innerHTML = '';
+        const imgQueue = document.getElementById('modal-image-queue');
+        imgQueue.innerHTML = '';
         
         checked.forEach(cb => {
             const item = processedResults.find(r => r.id === cb.value);
-            const div = document.createElement('div');
-            div.className = "text-[10px] text-slate-600 font-medium flex items-center gap-2";
-            div.innerHTML = `<span>•</span> <span class="truncate">${item.name}</span>`;
-            listContainer.appendChild(div);
+            const thumb = document.createElement('div');
+            thumb.className = "w-28 aspect-video rounded-lg overflow-hidden flex-shrink-0 border border-slate-200 bg-slate-100 relative";
+            // Banner over images in popup
+            thumb.innerHTML = `
+                <img src="${item.url}" class="w-full h-full object-cover blur-[1.5px] opacity-60">
+                <div class="absolute inset-0 flex items-center justify-center transform rotate-[-20deg] pointer-events-none">
+                    <span class="text-[5px] font-black text-black/50 uppercase tracking-[0.2em] px-1.5 py-1 border border-dashed border-black/20 rounded-md">Internal</span>
+                </div>
+            `;
+            imgQueue.appendChild(thumb);
         });
 
         document.getElementById('modal-count').innerText = `${checked.length} Images`;
@@ -238,14 +247,13 @@
             link.click();
             document.body.removeChild(link);
 
-            // Update row UI to unlocked state
             const imgSlot = document.getElementById(`${cardId}-right`);
             imgSlot.querySelector('img').classList.remove('blur-sm', 'opacity-50');
             const banner = imgSlot.querySelector('.absolute');
             if(banner) banner.remove();
             
-            const checkbox = document.getElementById(cardId).querySelector('.download-checkbox');
-            if(checkbox) checkbox.checked = false;
+            const actionArea = document.getElementById(cardId).querySelector('.flex-col');
+            actionArea.innerHTML = `<span class="text-[#00d1b2] text-[8px] font-black uppercase tracking-widest mt-1">Unlocked</span>`;
         }
         updateBatchUI();
     }
@@ -268,4 +276,7 @@
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .animate-fadeInLeft { animation: fadeInLeft 0.3s ease-out forwards; }
     .animate-fadeIn { animation: fadeIn 0.4s ease-in forwards; }
+    #modal-image-queue::-webkit-scrollbar { height: 4px; }
+    #modal-image-queue::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+    #modal-image-queue::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
 </style>
