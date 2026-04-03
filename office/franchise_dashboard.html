@@ -10,9 +10,11 @@
         <div class="px-4 mb-6">
             <div class="bg-[#1e293b] p-5 rounded-2xl border border-slate-700 text-center shadow-xl">
                 <p class="text-[10px] font-black text-[#2dd4bf] uppercase mb-3 tracking-widest">Identity Lock</p>
+                
                 <select id="branch-select" onchange="unlockDashboard()" class="w-full bg-[#0f172a] text-white p-2.5 rounded-lg border border-slate-600 text-xs focus:ring-2 focus:ring-[#00d1b2] outline-none cursor-pointer">
                     <option value="">-- Select Branch --</option>
                 </select>
+
                 <div id="active-branch-name" class="hidden text-white font-extrabold text-base tracking-tight py-1"></div>
                 
                 <div id="breadcrumb-container" class="hidden mt-3 pt-3 border-t border-slate-700/50">
@@ -98,21 +100,16 @@
                 select.appendChild(opt);
             });
 
-            // FIXED: Verify saved ID actually exists in the new list before auto-locking
-            const savedFid = localStorage.getItem('locked_franchise_id');
-            const exists = Array.from(select.options).some(opt => opt.value == savedFid);
+            // LOGIC FIX: Always require a fresh selection on initialization 
+            // unless we are specifically returning from an internal module view.
+            // This prevents the "Sariaya" auto-lock from previous sessions.
+            localStorage.removeItem('locked_franchise_id');
+            localStorage.removeItem('locked_franchise_name');
             
-            if (savedFid && exists) {
-                select.value = savedFid;
-                unlockDashboard();
-            } else {
-                // Clear any "ghost" selection and force manual choice
-                localStorage.removeItem('locked_franchise_id');
-                localStorage.removeItem('locked_franchise_name');
-                select.value = "";
-                document.getElementById('status-text').innerText = "Please select a branch to initialize portal.";
-            }
-        } catch (e) { console.error("Identity Lock failed", e); }
+            select.value = "";
+            document.getElementById('status-text').innerText = "Please select a branch to initialize portal.";
+
+        } catch (e) { console.error("Identity initialization failed", e); }
     }
 
     function unlockDashboard() {
@@ -126,16 +123,18 @@
 
         const fname = select.options[select.selectedIndex].text;
         
+        // Lock the identity for the session
         localStorage.setItem('locked_franchise_id', fid);
         localStorage.setItem('locked_franchise_name', fname);
         
+        // UI Transition
         select.classList.add('hidden');
         branchDisplay.innerText = fname;
         branchDisplay.classList.remove('hidden');
         breadcrumbBox.classList.remove('hidden'); 
         document.getElementById('nav-menu').classList.remove('hidden');
         
-        if(statusText) statusText.innerText = "Identity Verified.";
+        if(statusText) statusText.innerText = "Identity Verified: " + fname;
     }
 
     async function loadModule(file, title) {
@@ -151,6 +150,7 @@
             const html = await res.text();
             workspace.innerHTML = `<div class="p-12">${html}</div>`;
             
+            // Re-execute scripts in the loaded HTML
             const scripts = workspace.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
