@@ -220,7 +220,13 @@
 
     window.closeModal = () => {
         document.getElementById('nest-modal-overlay').style.display = 'none';
-        location.reload();
+        
+        // Respecting order: Go back to menu with franchise still active
+        if (window.parent && window.parent.loadPage) {
+            window.parent.loadPage('franchise_dashboard.html', 'HOME');
+        } else {
+            location.reload();
+        }
     };
 
     async function initNetwork() {
@@ -273,14 +279,12 @@
             
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
-            // FILTER BY FRANCHISE AND IS_ACTIVE
             t.filter(x => x.franchise_id === state.currentFranchiseId && x.is_active === true).forEach(x => {
                 tSel.innerHTML += `<option value="${x.id}">${x.first_name} ${x.last_name}</option>`;
             });
 
             const sSel = document.getElementById('enrollment_session_id');
             sSel.innerHTML = '<option value="">-- Select Session --</option>';
-            // FILTER BY DISPLAY TRUE
             s.filter(x => x.franchise_id === state.currentFranchiseId && x.display === true).forEach(x => {
                 sSel.innerHTML += `<option value="${x.id}">${x.name}</option>`;
             });
