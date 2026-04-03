@@ -87,16 +87,22 @@
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
             <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-2">
                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Revenue Analytics</p>
-                <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest">Current</span>
+                <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest text-right">Current / Prev</span>
             </div>
             <div class="space-y-3">
                 <div class="flex justify-between items-center">
-                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-tight">Daily Total</span>
-                    <span class="text-sm font-black text-slate-800 text-right">₱<span id="rev-daily">0</span></span>
+                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-tight">Daily</span>
+                    <div class="flex gap-4">
+                        <span class="text-sm font-black text-slate-800">₱<span id="rev-daily">0</span></span>
+                        <span class="text-sm font-black text-slate-200 italic">₱<span id="rev-prev-daily">0</span></span>
+                    </div>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-tight">Monthly Total</span>
-                    <span class="text-sm font-black text-slate-800 text-right">₱<span id="rev-monthly">0</span></span>
+                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-tight">Monthly</span>
+                    <div class="flex gap-4">
+                        <span class="text-sm font-black text-slate-800">₱<span id="rev-monthly">0</span></span>
+                        <span class="text-sm font-black text-slate-200 italic">₱<span id="rev-prev-monthly">0</span></span>
+                    </div>
                 </div>
                 <div class="pt-3 border-t border-slate-50 flex justify-end">
                     <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest italic animate-pulse">Live Stream</span>
@@ -123,11 +129,10 @@
         <div class="px-6 py-3 border-b border-slate-50 bg-slate-50/30 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex flex-col text-left w-full">
                 <h2 class="text-[10px] font-black text-slate-800 uppercase tracking-tight leading-none">Session Capacity Monitor</h2>
-                <span class="text-[7px] font-bold text-slate-400 uppercase tracking-widest italic leading-none mt-1">Live Distribution | Full Fluid Grid</span>
+                <span class="text-[7px] font-bold text-slate-400 uppercase tracking-widest italic leading-none mt-1">Live Distribution | 4-Column Intelligence</span>
             </div>
             <button class="whitespace-nowrap text-[8px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all">Create Session Listing</button>
         </div>
-        
         <div id="perf-sessions-body" class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50/10">
             </div>
     </div>
@@ -141,11 +146,10 @@
                 <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter italic">Real-time recovery tracking</p>
             </div>
             <div class="flex gap-2">
-                <button onclick="document.getElementById('investment-modal').classList.remove('hidden')" class="text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl">Investment</button>
-                <button onclick="document.getElementById('expense-modal').classList.remove('hidden')" class="text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl">Expenses</button>
+                <button onclick="document.getElementById('investment-modal').classList.remove('hidden')" class="text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">Investment</button>
+                <button onclick="document.getElementById('expense-modal').classList.remove('hidden')" class="text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">Expenses</button>
             </div>
         </div>
-        
         <div class="space-y-4">
             <div class="h-5 bg-slate-50 border border-slate-100 rounded-full overflow-hidden p-1">
                 <div id="recovery-bar" class="h-full bg-gradient-to-r from-[#00d1b2] to-[#00b89c] rounded-full transition-all duration-1000 shadow-sm" style="width: 0.5%"></div>
@@ -187,6 +191,7 @@
         const { fid, endpoints } = identity;
 
         try {
+            // ALL CALLS NOW RE-VERIFIED WITH ?franchise_id=${fid}
             const [sessionRes, studentRes, profileRes, parentRes] = await Promise.all([
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`),
@@ -212,7 +217,7 @@
                 return age >= minAge && age < maxAge;
             }).length;
 
-            // RESTORED ENROLLMENT PULSE LOGIC
+            // Restoration: Full Pulse Data
             document.getElementById('perf-today-active').innerText = getCount(activeStudents, 0, oneDay);
             document.getElementById('perf-today-wth').innerText = getCount(withdrawnStudents, 0, oneDay);
             document.getElementById('perf-prev-day-active').innerText = getCount(activeStudents, oneDay, oneDay * 2);
@@ -230,7 +235,7 @@
             
             document.getElementById('perf-total-active').innerText = activeStudents.length;
 
-            // Messenger 
+            // Messenger & Revenue Intelligence
             const getMsgCount = (list, type, minAge) => list.filter(m => (m.status === type && (now - m.created_at) < minAge)).length;
             document.getElementById('msg-week-inquiry').innerText = getMsgCount(profiles, 'inquiry', oneWeek);
             document.getElementById('msg-week-ready').innerText = getMsgCount(profiles, 'ready', oneWeek);
@@ -242,9 +247,11 @@
             const rate = totalInq > 0 ? Math.round((totalReady / totalInq) * 100) : 0;
             document.getElementById('msg-conversion-rate').innerText = rate + "%";
 
-            // Revenue
-            document.getElementById('rev-daily').innerText = (getCount(activeStudents, 0, oneDay) * 3500).toLocaleString();
-            document.getElementById('rev-monthly').innerText = (getCount(activeStudents, 0, oneMonth) * 3500).toLocaleString();
+            const TUITION = 3500;
+            document.getElementById('rev-daily').innerText = (getCount(activeStudents, 0, oneDay) * TUITION).toLocaleString();
+            document.getElementById('rev-prev-daily').innerText = (getCount(activeStudents, oneDay, oneDay * 2) * TUITION).toLocaleString();
+            document.getElementById('rev-monthly').innerText = (getCount(activeStudents, 0, oneMonth) * TUITION).toLocaleString();
+            document.getElementById('rev-prev-monthly').innerText = (getCount(activeStudents, oneMonth, oneMonth * 2) * TUITION).toLocaleString();
 
             // Billing List Render
             const billingContainer = document.getElementById('billing-list');
@@ -258,7 +265,7 @@
                 `);
             });
 
-            // Sessions Grid Render
+            // Grid Render for Sessions
             const grid = document.getElementById('perf-sessions-body');
             grid.innerHTML = '';
             const sessionCounts = {};
@@ -287,7 +294,7 @@
             });
 
             if (window.calculateROI) window.calculateROI();
-        } catch (e) { console.error("Identity Sync Error:", e); }
+        } catch (e) { console.error("Data Sync Failure:", e); }
     }
 
     window.calculateROI = () => {
