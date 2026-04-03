@@ -190,7 +190,6 @@
         fileQueue = [];
         updateGoButton();
 
-        // Global Progress Init
         const globalCont = document.getElementById('global-progress-container');
         const globalBar = document.getElementById('global-progress-bar');
         const globalText = document.getElementById('global-progress-text');
@@ -215,14 +214,12 @@
  
             try {
                 const res = await fetch(PIXIFY_RENDER_API, { method: 'POST', body: formData });
-                
-               progressBar.style.width = "60%";
-               rightBox.querySelector('span').innerText = "Pixifying... 60%";
+                progressBar.style.width = "60%";
+                rightBox.querySelector('span').innerText = "Pixifying... 60%";
                 
                 const data = await res.json();
-                
-               progressBar.style.width = "85%";
-               rightBox.querySelector('span').innerText = "Finalizing... 85%";
+                progressBar.style.width = "85%";
+                rightBox.querySelector('span').innerText = "Finalizing... 85%";
  
                 const historyRes = await fetch(PIXIFY_HISTORY_API, {
                    method: 'POST',
@@ -237,7 +234,6 @@
                 const historyData = await historyRes.json();
  
                progressBar.style.width = "100%";
-                
                processedResults.push({ id: historyData.id, url: data.pixar_url, name: item.file.name, originalUrl: data.original_url || localOriginal });
                finalizeCardPreview(cardId, data.pixar_url, historyData.id, data.original_url || localOriginal);
             } catch (e) { 
@@ -380,6 +376,8 @@
                 }
             } catch (err) { console.error(err); }
         }
+        
+        alert("Downloads Complete!");
        updateBatchUI();
     }
  
