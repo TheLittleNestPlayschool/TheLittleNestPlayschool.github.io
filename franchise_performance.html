@@ -1,3 +1,6 @@
+<link rel="stylesheet" href="nest-style.css">
+<script src="api_config.js"></script>
+
 <div class="flex flex-col items-center justify-start w-full max-w-6xl mx-auto space-y-4 animate-in fade-in duration-500 pb-20">
     
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
@@ -244,18 +247,14 @@
         const fid = localStorage.getItem('locked_franchise_id');
         if (!fid) return;
 
-        if (!window.NEST_ENDPOINTS) {
-            await new Promise((resolve) => {
-                const script = document.createElement('script');
-                script.src = '/api_config.js';
-                script.onload = resolve;
-                script.onerror = () => { script.src = 'api_config.js'; script.onload = resolve; };
-                document.head.appendChild(script);
-            });
+        // Ensure NEST_ENDPOINTS is loaded from external script
+        if (typeof NEST_ENDPOINTS === 'undefined') {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Brief wait for script
+            if (typeof NEST_ENDPOINTS === 'undefined') return console.error("api_config.js load failed.");
         }
 
         try {
-            const endpoints = window.NEST_ENDPOINTS;
+            const endpoints = NEST_ENDPOINTS;
             const [sessionRes, studentRes] = await Promise.all([
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`)
