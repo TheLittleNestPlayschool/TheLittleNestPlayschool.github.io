@@ -220,18 +220,14 @@
 
     window.closeModal = () => {
         document.getElementById('nest-modal-overlay').style.display = 'none';
-        
         if (window.parent && window.parent.loadPage) {
-            // Load the main dashboard view
             window.parent.loadPage('franchise_dashboard.html', 'HOME');
-            
-            // Allow time for reload then ensure it hits verified state
             setTimeout(() => {
                 const iframe = window.parent.document.getElementById('content-frame');
                 if (iframe && iframe.contentWindow && iframe.contentWindow.unlockDashboard) {
                     iframe.contentWindow.unlockDashboard();
                 }
-            }, 300);
+            }, 500);
         } else {
             location.reload();
         }
@@ -243,7 +239,6 @@
             const franchises = await res.json();
             const sel = document.getElementById('ho_franchise_selector');
             const initBtn = document.getElementById('init-btn');
-            
             const lockedName = localStorage.getItem('locked_franchise_name');
             const lockedId = localStorage.getItem('locked_franchise_id');
 
@@ -363,7 +358,6 @@
                 document.getElementById('student-create-mode').style.display = 'block';
             }
         }
-
         document.querySelector('#step-parent .step-content').style.display = 'none';
         document.getElementById('parent-profile-view').style.display = 'grid';
         moveToStep('step-parent', 'step-student', 2);
@@ -402,7 +396,6 @@
             const data = await fetch(`${ENDPOINTS.student}/${state.currentStudentId}`).then(r => r.json());
             updateStudentSummary(data);
         }
-
         document.querySelector('#step-student .step-content').style.display = 'none';
         document.getElementById('student-profile-view').style.display = 'grid';
         moveToStep('step-student', 'step-assessment', 3);
@@ -424,22 +417,18 @@
         const teacherId = document.getElementById('a_teacher_id').value;
         const date = document.getElementById('a_assessment_date').value;
         if(!teacherId || !date) return alert("Missing assessment details");
-        
         const selectedRows = document.querySelectorAll('.qa-row.selected');
         const resultsContainer = document.getElementById('disp-a-results-list');
         resultsContainer.innerHTML = '';
-
         for(let row of selectedRows) {
             const qid = row.querySelector('input').dataset.qid;
             const qText = row.dataset.questionText;
             const ans = row.querySelector('.ans-val').value;
-            
             resultsContainer.innerHTML += `
                 <div class="assessment-summary-item">
                     <strong>${qText}</strong><br>
                     <span style="color:var(--nest-teal); font-weight:700;">➔ ${ans}</span>
                 </div>`;
-
             await fetch(ENDPOINTS.assessment_submit, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -448,7 +437,6 @@
                 })
             });
         }
-        
         document.getElementById('disp-a-teacher').innerText = document.getElementById('a_teacher_id').options[document.getElementById('a_teacher_id').selectedIndex].text;
         document.querySelector('#step-assessment .step-content').style.display = 'none';
         document.getElementById('assessment-summary-view').style.display = 'grid';
@@ -506,7 +494,6 @@
                 start_date: document.getElementById('final_start_date').value,
                 franchise_id: state.currentFranchiseId
             };
-            
             await fetch(`${ENDPOINTS.student}/${state.currentStudentId}`, {
                 method: 'PATCH',
                 headers: {'Content-Type': 'application/json'},
@@ -516,14 +503,11 @@
                     enrolled_date: enrollPayload.enrollment_date
                 })
             });
-
             await fetch(ENDPOINTS.enrollment, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(enrollPayload) });
             for (let c of state.pickupContacts) {
                 await fetch(ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) });
             }
-            
             showModal("Master File Generated", "Student enrollment has been successfully logged to the network.");
-            
         } catch(e) { console.error(e); }
     };
 
