@@ -1,0 +1,36 @@
+<div class="pixify-container">
+    <h2>📸 Pixify! Classroom Gallery</h2>
+    
+    <div class="upload-section">
+        <input type="file" id="imageInput" multiple accept="image/*">
+        <button onclick="startPixify()">🚀 Pixify Selected Images</button>
+        <p><small>Cost: ₱8.00 per processed image</small></p>
+    </div>
+
+    <div id="galleryGrid" class="gallery-grid">
+        </div>
+</div>
+
+<script>
+async function startPixify() {
+    const files = document.getElementById('imageInput').files;
+    for (let file of files) {
+        // Step 1: Create a placeholder card with a loading spinner
+        const cardId = createPlaceholderCard(file);
+        
+        // Step 2: Send to Xano
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('franchise_id', CURRENT_FRANCHISE_ID);
+
+        const response = await fetch('YOUR_XANO_API_ENDPOINT/pixify', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+
+        // Step 3: Update the card with the actual URLs from AWS
+        updateCardWithResults(cardId, result.original_url, result.pixar_url);
+    }
+}
+</script>
