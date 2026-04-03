@@ -98,11 +98,19 @@
                 select.appendChild(opt);
             });
 
-            // Check Local Storage AFTER population
+            // FIXED: Verify saved ID actually exists in the new list before auto-locking
             const savedFid = localStorage.getItem('locked_franchise_id');
-            if (savedFid) {
+            const exists = Array.from(select.options).some(opt => opt.value == savedFid);
+            
+            if (savedFid && exists) {
                 select.value = savedFid;
                 unlockDashboard();
+            } else {
+                // Clear any "ghost" selection and force manual choice
+                localStorage.removeItem('locked_franchise_id');
+                localStorage.removeItem('locked_franchise_name');
+                select.value = "";
+                document.getElementById('status-text').innerText = "Please select a branch to initialize portal.";
             }
         } catch (e) { console.error("Identity Lock failed", e); }
     }
