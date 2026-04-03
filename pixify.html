@@ -1,84 +1,66 @@
 <div class="max-w-7xl mx-auto space-y-10">
-    
     <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between gap-6">
         <div>
             <h2 class="text-3xl font-black text-slate-800 tracking-tight">Pixify! AI Intelligence</h2>
-            <p class="text-slate-500 font-medium">Transform classroom photos into privacy-safe Pixar art.</p>
+            <p class="text-slate-500 font-medium">Privacy-safe Pixar art for your branch marketing.</p>
         </div>
         
         <div class="flex items-center gap-4">
-            <span class="bg-[#00d1b2]/10 text-[#00d1b2] px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest">
-                Rate: ₱8.00 / Image
-            </span>
-            
-            <button onclick="document.getElementById('fileInput').click()" class="bg-slate-100 text-slate-700 px-5 py-3 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors flex items-center gap-2">
-                <span>➕</span> Add Photos
+            <button onclick="document.getElementById('fileInput').click()" class="bg-slate-100 text-slate-700 px-5 py-3 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors">
+                ➕ Add Photos
             </button>
             
-            <button id="go-button" onclick="startBatchProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg hover:shadow-xl hover:scale-105 transition-all animate-pulse">
+            <button id="go-button" onclick="startBatchProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg animate-pulse">
                 🚀 Pixify! [0]
             </button>
-        </div>
 
+            <button id="download-selected" onclick="downloadSelected()" class="hidden bg-slate-800 text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest">
+                ⬇️ Download Selected
+            </button>
+        </div>
         <input type="file" id="fileInput" multiple accept="image/*" class="hidden" onchange="handleSelection(event)">
     </div>
 
     <div class="grid grid-cols-12 gap-8">
         
-        <div class="col-span-5 space-y-4">
-            <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest px-4">Input Queue</h4>
-            <div id="queue-container" class="space-y-4">
+        <div class="col-span-3 space-y-4">
+            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Input Queue</h4>
+            <div id="queue-container" class="space-y-3">
                 </div>
         </div>
 
-        <div class="col-span-7 space-y-4 border-l border-slate-200 pl-8">
-            <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest px-4">Comparison & Results</h4>
-            <div id="compare-container" class="space-y-6">
+        <div class="col-span-9 space-y-4 border-l border-slate-200 pl-8">
+            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Processed Results</h4>
+            <div id="compare-container" class="space-y-4">
                 </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Configuration
     const PIXIFY_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify";
     const fid = localStorage.getItem('locked_franchise_id');
-    
-    // Internal Queue to manage the "GO!" batch
     let fileQueue = [];
+    let selectedForDownload = [];
 
     function handleSelection(event) {
         const files = event.target.files;
-        if (!files.length) return;
-
         for (let file of files) {
-            // Add file object to local array
             fileQueue.push(file);
-            
-            // 1. Create a queue item (left side)
             addQueueItemToUI(file);
         }
-        
-        // 2. Update the "GO!" button
         updateGoButton();
     }
 
     function addQueueItemToUI(file) {
         const queue = document.getElementById('queue-container');
-        const tempId = 'q-' + Math.random().toString(36).substr(2, 9);
-        
-        // Create a basic card with a generic "Image" thumbnail
         const item = document.createElement('div');
-        item.id = tempId;
-        item.dataset.fileName = file.name; // Keep filename for association later
-        item.className = "bg-white border border-slate-200 rounded-2xl p-3 flex items-center gap-4 animate-slideInLeft";
+        item.className = "bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-3 shadow-sm";
         item.innerHTML = `
-            <div class="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center">
-                <span class="text-xl">📄</span>
-            </div>
-            <div class="flex-grow">
-                <p class="text-sm font-bold text-slate-700 truncate">${file.name}</p>
-                <p class="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Queued</p>
+            <div class="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center text-lg">🖼️</div>
+            <div class="overflow-hidden">
+                <p class="text-[11px] font-bold text-slate-700 truncate">${file.name}</p>
+                <p class="text-[9px] text-[#00d1b2] font-black uppercase">Ready</p>
             </div>
         `;
         queue.append(item);
@@ -86,28 +68,18 @@
 
     function updateGoButton() {
         const btn = document.getElementById('go-button');
-        if (fileQueue.length > 0) {
-            btn.innerText = `🚀 Pixify! [${fileQueue.length}]`;
-            btn.classList.remove('hidden');
-        } else {
-            btn.classList.add('hidden');
-        }
+        btn.innerText = `🚀 Pixify! [${fileQueue.length}]`;
+        btn.classList.toggle('hidden', fileQueue.length === 0);
     }
 
     async function startBatchProcess() {
-        // 1. Hide the queue and GO button to start
-        document.getElementById('queue-container').innerHTML = ''; // Clear queue UI
-        document.getElementById('go-button').classList.add('hidden');
-        
-        // Copy the queue so we can empty the main one
         const activeBatch = [...fileQueue];
-        fileQueue = []; // Reset queue for next batch
+        fileQueue = [];
+        updateGoButton();
+        document.getElementById('download-selected').classList.remove('hidden');
 
         for (let file of activeBatch) {
-            // Step 2: Create the comparison row (right side) with loading state
-            const rowId = createComparisonRowWithLoading(file);
-            
-            // Step 3: Run the API call
+            const rowId = createResultRow(file);
             const formData = new FormData();
             formData.append('image', file);
             formData.append('franchise_id', fid);
@@ -115,80 +87,56 @@
             try {
                 const res = await fetch(PIXIFY_API, { method: 'POST', body: formData });
                 const data = await res.json();
-                
-                // Step 4: Update the row with the results (Original and Pixar)
-                finalizeComparisonRow(rowId, data.original_url, data.pixar_url);
-            } catch (e) {
-                console.error("Pixify Row Failed", e);
-                // (Optional: update row with error state)
-            }
+                finalizeRow(rowId, data.pixar_url);
+            } catch (e) { console.error(e); }
         }
     }
 
-    function createComparisonRowWithLoading(file) {
-        const compare = document.getElementById('compare-container');
-        const tempId = 'comp-' + Math.random().toString(36).substr(2, 9);
-        
+    function createResultRow(file) {
+        const container = document.getElementById('compare-container');
+        const rowId = 'row-' + Math.random().toString(36).substr(2, 9);
         const row = document.createElement('div');
-        row.id = tempId;
-        row.className = "bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm animate-fadeInDown";
+        row.id = rowId;
+        row.className = "flex items-center gap-4 bg-white border border-slate-100 rounded-2xl p-2 pr-6 shadow-sm";
         row.innerHTML = `
-            <div class="grid grid-cols-2 gap-px bg-slate-200">
-                <div class="aspect-video bg-slate-50 flex flex-col items-center justify-center text-center">
-                    <span class="text-3xl mb-2">📸</span>
-                    <p class="text-sm font-bold text-slate-700">${file.name}</p>
-                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-tight">Original</p>
-                </div>
-                <div id="${tempId}-pixar-box" class="aspect-video bg-slate-100 flex items-center justify-center">
-                    <div class="text-center animate-pulse">
-                        <div class="w-8 h-8 border-4 border-[#00d1b2] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AI Rendering...</p>
-                    </div>
-                </div>
+            <div id="${rowId}-img" class="w-48 aspect-video bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center relative">
+                <div class="animate-spin h-5 w-5 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>
             </div>
-            <div class="p-4 flex items-center justify-between border-t border-slate-200">
-                <div class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Classroom Identity Protected</div>
-                <div id="${tempId}-download-box" class="text-slate-300 text-sm font-bold italic">Waiting for result...</div>
+            
+            <div class="flex-grow">
+                <p class="text-xs font-bold text-slate-700">${file.name}</p>
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Identity Locked • AI Rendered</p>
+            </div>
+
+            <div class="flex items-center gap-3 border-l border-slate-100 pl-6">
+                <span class="text-[9px] font-black text-slate-300 uppercase">Select</span>
+                <input type="checkbox" data-url="" id="${rowId}-check" disabled class="w-5 h-5 rounded border-slate-300 text-[#00d1b2] focus:ring-[#00d1b2] cursor-pointer">
             </div>
         `;
-        compare.prepend(row);
-        return tempId;
+        container.prepend(row);
+        return rowId;
     }
 
-    function finalizeComparisonRow(rowId, originalUrl, pixarUrl) {
-        const pixarBox = document.getElementById(`${rowId}-pixar-box`);
-        const downloadBox = document.getElementById(`${rowId}-download-box`);
+    function finalizeRow(rowId, pixarUrl) {
+        const imgBox = document.getElementById(`${rowId}-img`);
+        const check = document.getElementById(`${rowId}-check`);
+        
+        imgBox.innerHTML = `<img src="${pixarUrl}" class="w-full h-full object-cover">`;
+        check.disabled = false;
+        check.dataset.url = pixarUrl;
+    }
 
-        // Update the Pixar slot with the generated image
-        pixarBox.innerHTML = `
-            <img src="${pixarUrl}" class="w-full h-full object-cover">
-            <div class="absolute bottom-2 right-2">
-                <span class="bg-black/50 backdrop-blur-md text-white text-[9px] px-2 py-1 rounded-md font-bold uppercase tracking-widest">Pixar AI</span>
-            </div>
-        `;
-        // Make the Pixar image slot relative so the "Pixar AI" tag anchors correctly
-        pixarBox.classList.add('relative');
-
-        // Update the Download area
-        downloadBox.innerHTML = `
-            <a href="${pixarUrl}" download target="_blank" class="bg-[#00d1b2] text-white px-4 py-1.5 rounded-lg text-xs font-black uppercase hover:scale-105 hover:shadow-lg transition-all flex items-center gap-1.5">
-                <span>⬇️</span> Download HD Pixar
-            </a>
-        `;
-        downloadBox.classList.remove('text-slate-300', 'font-bold', 'italic', 'text-sm');
+    function downloadSelected() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+        checkboxes.forEach(cb => {
+            if(cb.dataset.url) {
+                const link = document.createElement('a');
+                link.href = cb.dataset.url;
+                link.download = "Pixify_Export.jpg";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        });
     }
 </script>
-
-<style>
-    /* Unique animation timings for the different elements */
-    @keyframes slideInLeft {
-        from { opacity: 0; transform: translateX(-30px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes fadeInDown {
-        from { opacity: 0; transform: translateY(-20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-slideInLeft { animation: slideInLeft 0.3s ease-out forwards; }
-    .animate-fadeInDown { animation: fadeInDown 0.4s ease-out forwards; }
-</style>
