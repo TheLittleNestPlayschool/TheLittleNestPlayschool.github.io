@@ -39,8 +39,11 @@
 <div id="download-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 animate-fadeIn">
         <h3 class="text-2xl font-black text-slate-800 mb-2">Confirm Download</h3>
-        <p class="text-slate-500 text-sm mb-6">Your account will be billed for the following items at the end of the month.</p>
+        <p class="text-slate-500 text-sm mb-6">These items will be added to your monthly bill.</p>
         
+        <div id="modal-file-list" class="max-h-40 overflow-y-auto mb-6 space-y-2 border-y border-slate-50 py-4">
+            </div>
+
         <div class="bg-slate-50 rounded-2xl p-4 space-y-3 mb-8">
             <div class="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-tighter">
                 <span>Items to Unlock</span>
@@ -54,7 +57,7 @@
 
         <div class="flex gap-3">
             <button onclick="closeDownloadModal()" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancel</button>
-            <button onclick="executeBatchDownload()" class="flex-1 bg-[#00d1b2] text-white py-3 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-[#00d1b2]/20">Unlock & Save</button>
+            <button onclick="executeBatchDownload()" class="flex-1 bg-[#00d1b2] text-white py-3 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-[#00d1b2]/20">Confirm & Save</button>
         </div>
     </div>
 </div>
@@ -71,28 +74,22 @@
         const files = Array.from(event.target.files);
         if (!files.length) return;
 
-        // Disable Button During Upload
         const addBtn = document.getElementById('add-photos-btn');
         addBtn.disabled = true;
         addBtn.classList.add('opacity-50', 'cursor-not-allowed');
 
-        // Enforcement: Max 10 photos total in workspace
         const currentCount = document.querySelectorAll('#unified-container > div').length;
         const availableSlots = 10 - currentCount;
-        
         const toProcess = files.slice(0, availableSlots);
 
         toProcess.forEach(file => {
             const fileId = 'pix-' + Math.random().toString(36).substr(2, 9);
-            const fileData = { id: fileId, file: file };
-            fileQueue.push(fileData);
-            addQueuedCard(fileData);
+            fileQueue.push({ id: fileId, file: file });
+            addQueuedCard({ id: fileId, file: file });
         });
         
         updateGoButton();
         event.target.value = '';
-        
-        // Re-enable after UI updates
         setTimeout(() => {
             addBtn.disabled = false;
             addBtn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -117,13 +114,11 @@
             </div>
             <div id="${cardId}-meta" class="flex-grow">
                 <p class="text-[11px] font-bold text-slate-700 truncate">${fileData.file.name}</p>
-                <p class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tight">Queued (3 Credits to render)</p>
+                <p class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tight">Queued (3 Credits)</p>
             </div>
             <div id="${cardId}-actions" class="flex items-center gap-4 border-l border-slate-100 pl-6 h-full">
                 <button onclick="removeFromWorkspace('${fileData.id}')" class="text-red-400 hover:text-red-600 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
             </div>
         `;
@@ -139,11 +134,9 @@
             const cardId = `row-${item.id}`;
             const rightBox = document.getElementById(`${cardId}-right`);
             const metaBox = document.getElementById(`${cardId}-meta`);
-            const actionsBox = document.getElementById(`${cardId}-actions`);
             
             rightBox.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>`;
-            metaBox.querySelector('p:last-child').innerText = "Rendering (3 credits)...";
-            actionsBox.innerHTML = '';
+            metaBox.querySelector('p:last-child').innerText = "Processing...";
             
             const formData = new FormData();
             formData.append('image', item.file);
@@ -152,11 +145,9 @@
             try {
                 const res = await fetch(PIXIFY_RENDER_API, { method: 'POST', body: formData });
                 const data = await res.json();
-                processedResults.push({ id: item.id, url: data.pixar_url });
+                processedResults.push({ id: item.id, url: data.pixar_url, name: item.file.name });
                 finalizeCardPreview(cardId, data.pixar_url, item.id);
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
     }
 
@@ -165,28 +156,29 @@
         const metaBox = document.getElementById(`${cardId}-meta`);
         const actionsBox = document.getElementById(`${cardId}-actions`);
 
+        // Banner now correctly positioned OVER the pixar image
         rightBox.innerHTML = `
-            <img src="${pixarUrl}" class="w-full h-full object-cover blur-sm opacity-50">
-            <div class="absolute inset-0 flex items-center justify-center transform rotate-[-20deg]">
-                <span class="text-[7px] font-black text-black/60 uppercase tracking-[0.2em] px-3 py-1.5 border border-dashed border-black/30 rounded-md">Nest Internal</span>
+            <div class="relative w-full h-full">
+                <img src="${pixarUrl}" class="w-full h-full object-cover blur-sm opacity-50">
+                <div class="absolute inset-0 flex items-center justify-center transform rotate-[-20deg] pointer-events-none">
+                    <span class="text-[7px] font-black text-black/60 uppercase tracking-[0.2em] px-3 py-1.5 border border-dashed border-black/30 rounded-md">Nest Internal</span>
+                </div>
             </div>
         `;
 
         metaBox.innerHTML = `
             <p class="text-[11px] font-bold text-slate-700">Identity Locked</p>
-            <p class="text-[9px] text-slate-400 font-bold uppercase">Render: 3 Credits (Paid)</p>
+            <p class="text-[9px] text-slate-400 font-bold uppercase">Rendered (3 Credits Billed)</p>
         `;
 
-        // Action: Selection Column
+        // Selection column with clear "Download" Header logic
         actionsBox.innerHTML = `
             <div class="flex flex-col items-center gap-1">
+                <span class="text-[7px] font-black text-slate-300 uppercase tracking-widest">Download</span>
                 <input type="checkbox" value="${fileId}" onchange="updateBatchUI()" class="download-checkbox w-5 h-5 rounded-md border-slate-200 text-[#00d1b2] focus:ring-[#00d1b2]">
-                <span class="text-[8px] font-bold text-slate-400 uppercase">Select</span>
             </div>
             <button onclick="document.getElementById('${cardId}').remove(); updateBatchUI();" class="text-red-400 hover:text-red-600 transition-colors ml-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             </button>
         `;
         updateBatchUI();
@@ -200,11 +192,21 @@
         btn.classList.toggle('hidden', checked.length === 0);
         counter.classList.toggle('hidden', checked.length === 0);
         counter.innerText = `${checked.length} Selected`;
-        btn.innerText = `📥 Download Selected [${checked.length}]`;
     }
 
     function showDownloadModal() {
         const checked = document.querySelectorAll('.download-checkbox:checked');
+        const listContainer = document.getElementById('modal-file-list');
+        listContainer.innerHTML = '';
+        
+        checked.forEach(cb => {
+            const item = processedResults.find(r => r.id === cb.value);
+            const div = document.createElement('div');
+            div.className = "text-[10px] text-slate-600 font-medium flex items-center gap-2";
+            div.innerHTML = `<span>•</span> <span class="truncate">${item.name}</span>`;
+            listContainer.appendChild(div);
+        });
+
         document.getElementById('modal-count').innerText = `${checked.length} Images`;
         document.getElementById('modal-cost').innerText = `${checked.length * 6} Credits`;
         document.getElementById('download-modal').classList.remove('hidden');
@@ -217,33 +219,33 @@
     async function executeBatchDownload() {
         const checked = document.querySelectorAll('.download-checkbox:checked');
         const ids = Array.from(checked).map(cb => cb.value);
-        
         closeDownloadModal();
 
         for (let id of ids) {
             const item = processedResults.find(r => r.id === id);
             const cardId = `row-${id}`;
             
-            // Call Xano for internal ledger update (monthly billing)
             await fetch(PIXIFY_BILLING_API, {
                 method: 'POST',
                 body: JSON.stringify({ franchise_id: fid, image_url: item.url }),
                 headers: { 'Content-Type': 'application/json' }
             });
 
-            // Trigger Browser Download
             const link = document.createElement('a');
             link.href = item.url;
-            link.download = `NestMind_${id}.jpg`;
+            link.download = `Pixify_${id}.jpg`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-            // Update UI to show Unlocked
+            // Update row UI to unlocked state
             const imgSlot = document.getElementById(`${cardId}-right`);
             imgSlot.querySelector('img').classList.remove('blur-sm', 'opacity-50');
-            imgSlot.querySelector('div').remove();
-            document.getElementById(cardId).querySelector('.download-checkbox').checked = false;
+            const banner = imgSlot.querySelector('.absolute');
+            if(banner) banner.remove();
+            
+            const checkbox = document.getElementById(cardId).querySelector('.download-checkbox');
+            if(checkbox) checkbox.checked = false;
         }
         updateBatchUI();
     }
