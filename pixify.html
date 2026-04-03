@@ -49,49 +49,63 @@
     let fileQueue = [];
 
     /**
-     * Handles initial file selection and populates the left-hand queue with previews.
+     * Handles initial file selection.
      */
     function handleSelection(event) {
-        const files = event.target.files;
+        const files = Array.from(event.target.files);
         if (!files.length) return;
 
-        for (let file of files) {
-            fileQueue.push(file);
-            addQueueItemToUI(file);
-        }
+        files.forEach(file => {
+            const fileId = 'file-' + Math.random().toString(36).substr(2, 9);
+            const fileData = { id: fileId, file: file };
+            fileQueue.push(fileData);
+            addQueueItemToUI(fileData);
+        });
         updateGoButton();
+        event.target.value = ''; // Reset input so same file can be re-selected if deleted
     }
 
-    function addQueueItemToUI(file) {
+    /**
+     * Shows the full picture and a delete button in the queue.
+     */
+    function addQueueItemToUI(fileData) {
         const queue = document.getElementById('queue-container');
         const item = document.createElement('div');
-        const previewUrl = URL.createObjectURL(file); // Create local preview URL
+        const previewUrl = URL.createObjectURL(fileData.file);
         
-        item.className = "bg-white border border-slate-200 rounded-xl p-2 flex items-center gap-3 shadow-sm animate-fadeInLeft";
+        item.id = `queue-${fileData.id}`;
+        item.className = "bg-white border border-slate-200 rounded-xl p-2 flex items-center gap-3 shadow-sm animate-fadeInLeft group relative";
         item.innerHTML = `
-            <div class="w-12 h-12 bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
+            <div class="w-12 h-12 bg-slate-50 rounded-lg overflow-hidden border border-slate-100 flex-shrink-0">
                 <img src="${previewUrl}" class="w-full h-full object-cover">
             </div>
-            <div class="overflow-hidden">
-                <p class="text-[10px] font-bold text-slate-700 truncate w-32">${file.name}</p>
+            <div class="overflow-hidden flex-grow">
+                <p class="text-[10px] font-bold text-slate-700 truncate pr-6">${fileData.file.name}</p>
                 <p class="text-[9px] text-[#00d1b2] font-black uppercase">Ready</p>
             </div>
+            <button onclick="removeFromQueue('${fileData.id}')" class="absolute right-2 text-slate-300 hover:text-red-500 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
         `;
         queue.append(item);
     }
 
+    function removeFromQueue(fileId) {
+        fileQueue = fileQueue.filter(item => item.id !== fileId);
+        document.getElementById(`queue-${fileId}`).remove();
+        updateGoButton();
+    }
+
     function updateGoButton() {
         const btn = document.getElementById('go-button');
-        if (fileQueue.length > 0) {
-            btn.innerText = `🚀 Pixify! [${fileQueue.length}]`;
-            btn.classList.remove('hidden');
-        } else {
-            btn.classList.add('hidden');
-        }
+        btn.innerText = `🚀 Pixify! [${fileQueue.length}]`;
+        btn.classList.toggle('hidden', fileQueue.length === 0);
     }
 
     /**
-     * Batch processes the queue, aligning originals and AI results side-by-side.
+     * Batch processes the queue.
      */
     async function startBatchProcess() {
         const activeBatch = [...fileQueue];
@@ -99,12 +113,12 @@
         updateGoButton();
         document.getElementById('download-selected').classList.remove('hidden');
 
-        for (let file of activeBatch) {
-            const originalPreviewUrl = URL.createObjectURL(file);
-            const rowId = createResultRow(file, originalPreviewUrl);
+        for (let item of activeBatch) {
+            const originalPreviewUrl = URL.createObjectURL(item.file);
+            const rowId = createResultRow(item.file, originalPreviewUrl);
             
             const formData = new FormData();
-            formData.append('image', file);
+            formData.append('image', item.file);
             formData.append('franchise_id', fid);
 
             try {
@@ -184,25 +198,16 @@
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                }, index * 300); // Staggered to avoid browser blocks
+                }, index * 300);
             }
         });
     }
 </script>
 
 <style>
-    @keyframes fadeInLeft {
-        from { opacity: 0; transform: translateX(-10px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes slideDown {
-        from { opacity: 0; transform: translateY(-15px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
+    @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .animate-fadeInLeft { animation: fadeInLeft 0.3s ease-out forwards; }
     .animate-slideDown { animation: slideDown 0.4s ease-out forwards; }
     .animate-fadeIn { animation: fadeIn 0.6s ease-in forwards; }
