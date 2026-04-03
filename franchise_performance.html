@@ -11,6 +11,8 @@
                 <div class="flex gap-2 text-[8px] font-black uppercase text-slate-300">
                     <span class="w-8 text-right">Curr</span>
                     <span class="w-8 text-right text-red-400/50">Wth</span>
+                    <span class="w-8 text-right">Prev</span>
+                    <span class="w-8 text-right text-red-400/50">Wth</span>
                 </div>
             </div>
             <div class="space-y-3">
@@ -19,6 +21,8 @@
                     <div class="flex gap-2">
                         <div class="w-8 text-right"><span id="perf-today-active" class="text-sm font-black text-slate-800">0</span></div>
                         <div class="w-8 text-right"><span id="perf-today-wth" class="text-sm font-black text-red-500">0</span></div>
+                        <div class="w-8 text-right"><span id="perf-prev-day-active" class="text-sm font-black text-slate-200">0</span></div>
+                        <div class="w-8 text-right"><span id="perf-prev-day-wth" class="text-sm font-black text-red-200">0</span></div>
                     </div>
                 </div>
                 <div class="flex justify-between items-center">
@@ -26,6 +30,17 @@
                     <div class="flex gap-2">
                         <div class="w-8 text-right"><span id="perf-week-active" class="text-sm font-black text-slate-800">0</span></div>
                         <div class="w-8 text-right"><span id="perf-week-wth" class="text-sm font-black text-red-500">0</span></div>
+                        <div class="w-8 text-right"><span id="perf-prev-week-active" class="text-sm font-black text-slate-200">0</span></div>
+                        <div class="w-8 text-right"><span id="perf-prev-week-wth" class="text-sm font-black text-red-200">0</span></div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-tight">Monthly</span>
+                    <div class="flex gap-2">
+                        <div class="w-8 text-right"><span id="perf-month-active" class="text-sm font-black text-slate-800">0</span></div>
+                        <div class="w-8 text-right"><span id="perf-month-wth" class="text-sm font-black text-red-500">0</span></div>
+                        <div class="w-8 text-right"><span id="perf-prev-month-active" class="text-sm font-black text-slate-200">0</span></div>
+                        <div class="w-8 text-right"><span id="perf-prev-month-wth" class="text-sm font-black text-red-200">0</span></div>
                     </div>
                 </div>
                 <div class="flex justify-between items-end pt-3 border-t border-slate-50">
@@ -118,16 +133,16 @@
     </div>
 
     <div class="w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div class="flex justify-between items-start md:items-center mb-6 gap-4">
             <div class="text-left">
                 <h2 class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                     <span>💎</span> Payback Intelligence
                 </h2>
                 <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter italic">Real-time recovery tracking</p>
             </div>
-            <div class="flex gap-2 w-full md:w-auto">
-                <button onclick="document.getElementById('investment-modal').classList.remove('hidden')" class="flex-1 md:flex-none text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">Investment</button>
-                <button onclick="document.getElementById('expense-modal').classList.remove('hidden')" class="flex-1 md:flex-none text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">Expenses</button>
+            <div class="flex gap-2">
+                <button onclick="document.getElementById('investment-modal').classList.remove('hidden')" class="text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl">Investment</button>
+                <button onclick="document.getElementById('expense-modal').classList.remove('hidden')" class="text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl">Expenses</button>
             </div>
         </div>
         
@@ -151,7 +166,6 @@
 
 <script>
     async function initPerformance() {
-        // FIXED: Restore franchise identity retrieval
         const getIdentity = () => {
             return new Promise((resolve) => {
                 let attempts = 0;
@@ -173,7 +187,6 @@
         const { fid, endpoints } = identity;
 
         try {
-            // FIXED: Added ?franchise_id=${fid} back to all calls
             const [sessionRes, studentRes, profileRes, parentRes] = await Promise.all([
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`),
@@ -181,51 +194,62 @@
                 fetch(`${endpoints.parent.list}?franchise_id=${fid}`)
             ]);
 
-            const sessionsRaw = await sessionRes.json();
-            const studentsRaw = await studentRes.json();
-            const profilesRaw = await profileRes.json();
-            const parentsRaw = await parentRes.json();
-            
-            const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : (sessionsRaw.items || []);
-            const students = Array.isArray(studentsRaw) ? studentsRaw : (studentsRaw.items || []);
-            const profiles = Array.isArray(profilesRaw) ? profilesRaw : (profilesRaw.items || []);
-            const parents = Array.isArray(parentsRaw) ? parentsRaw : (parentsRaw.items || []);
+            const sessions = (await sessionRes.json()).items || (await sessionRes.json());
+            const students = (await studentRes.json()).items || (await studentRes.json());
+            const profiles = (await profileRes.json()).items || (await profileRes.json());
+            const parents = (await parentRes.json()).items || (await parentRes.json());
 
             const now = new Date();
             const oneDay = 24 * 60 * 60 * 1000;
+            const oneWeek = 7 * oneDay;
             const oneMonth = 30 * oneDay;
 
             const activeStudents = students.filter(s => s.is_active === true);
+            const withdrawnStudents = students.filter(s => s.is_active === false);
+            
             const getCount = (list, minAge, maxAge) => list.filter(s => {
                 const age = now - s.created_at;
                 return age >= minAge && age < maxAge;
             }).length;
 
-            // UI Pulse Updates
+            // RESTORED ENROLLMENT PULSE LOGIC
             document.getElementById('perf-today-active').innerText = getCount(activeStudents, 0, oneDay);
-            document.getElementById('perf-week-active').innerText = getCount(activeStudents, 0, (oneDay * 7));
+            document.getElementById('perf-today-wth').innerText = getCount(withdrawnStudents, 0, oneDay);
+            document.getElementById('perf-prev-day-active').innerText = getCount(activeStudents, oneDay, oneDay * 2);
+            document.getElementById('perf-prev-day-wth').innerText = getCount(withdrawnStudents, oneDay, oneDay * 2);
+
+            document.getElementById('perf-week-active').innerText = getCount(activeStudents, 0, oneWeek);
+            document.getElementById('perf-week-wth').innerText = getCount(withdrawnStudents, 0, oneWeek);
+            document.getElementById('perf-prev-week-active').innerText = getCount(activeStudents, oneWeek, oneWeek * 2);
+            document.getElementById('perf-prev-week-wth').innerText = getCount(withdrawnStudents, oneWeek, oneWeek * 2);
+
+            document.getElementById('perf-month-active').innerText = getCount(activeStudents, 0, oneMonth);
+            document.getElementById('perf-month-wth').innerText = getCount(withdrawnStudents, 0, oneMonth);
+            document.getElementById('perf-prev-month-active').innerText = getCount(activeStudents, oneMonth, oneMonth * 2);
+            document.getElementById('perf-prev-month-wth').innerText = getCount(withdrawnStudents, oneMonth, oneMonth * 2);
+            
             document.getElementById('perf-total-active').innerText = activeStudents.length;
 
-            // Messenger Updates
+            // Messenger 
             const getMsgCount = (list, type, minAge) => list.filter(m => (m.status === type && (now - m.created_at) < minAge)).length;
-            document.getElementById('msg-week-inquiry').innerText = getMsgCount(profiles, 'inquiry', (oneDay * 7));
-            document.getElementById('msg-week-ready').innerText = getMsgCount(profiles, 'ready', (oneDay * 7));
+            document.getElementById('msg-week-inquiry').innerText = getMsgCount(profiles, 'inquiry', oneWeek);
+            document.getElementById('msg-week-ready').innerText = getMsgCount(profiles, 'ready', oneWeek);
+            document.getElementById('msg-month-inquiry').innerText = getMsgCount(profiles, 'inquiry', oneMonth);
+            document.getElementById('msg-month-ready').innerText = getMsgCount(profiles, 'ready', oneMonth);
             
             const totalInq = profiles.filter(p => p.status === 'inquiry').length;
             const totalReady = profiles.filter(p => p.status === 'ready').length;
             const rate = totalInq > 0 ? Math.round((totalReady / totalInq) * 100) : 0;
             document.getElementById('msg-conversion-rate').innerText = rate + "%";
 
-            // Revenue Updates
+            // Revenue
             document.getElementById('rev-daily').innerText = (getCount(activeStudents, 0, oneDay) * 3500).toLocaleString();
             document.getElementById('rev-monthly').innerText = (getCount(activeStudents, 0, oneMonth) * 3500).toLocaleString();
 
             // Billing List Render
             const billingContainer = document.getElementById('billing-list');
             billingContainer.innerHTML = '';
-            const sortedParents = parents.sort((a, b) => (a.first_name || '').localeCompare(b.first_name || ''));
-            
-            sortedParents.forEach(p => {
+            parents.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || '')).forEach(p => {
                 billingContainer.insertAdjacentHTML('beforeend', `
                     <div class="flex justify-between items-center border-b border-slate-50 pb-1 last:border-0">
                         <span class="text-[9px] font-bold text-slate-600 truncate w-24">${p.first_name} ${p.last_name}</span>
@@ -240,12 +264,10 @@
             const sessionCounts = {};
             activeStudents.forEach(s => { if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1; });
 
-            const displaySessions = sessions.filter(s => s.display === true);
-            displaySessions.forEach(session => {
+            sessions.filter(s => s.display === true).forEach(session => {
                 const count = sessionCounts[session.id] || 0;
                 const max = session.max_students || 15;
                 const percent = Math.min((count / max) * 100, 100);
-                
                 grid.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-100 p-3 rounded-xl shadow-sm hover:shadow-md transition-all">
                         <div class="flex justify-between items-start mb-2">
@@ -268,7 +290,6 @@
         } catch (e) { console.error("Identity Sync Error:", e); }
     }
 
-    // ROI Restored Logic
     window.calculateROI = () => {
         const fee = parseFloat(document.getElementById('inv-fee')?.value) || 350000;
         const totalActiveCount = parseInt(document.getElementById('perf-total-active').innerText) || 0;
