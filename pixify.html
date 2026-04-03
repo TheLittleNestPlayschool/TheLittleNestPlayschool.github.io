@@ -52,27 +52,40 @@
 </div>
  
 <div id="download-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-slate-100 animate-fadeIn">
-        <h3 class="text-2xl font-black text-slate-800 mb-1.5">Confirm Download</h3>
-        <p class="text-slate-500 text-sm mb-6">These items will be added to your monthly bill.</p>
-        
-        <div id="modal-image-queue" class="flex items-center gap-3 overflow-x-auto pb-4 mb-8 border-b border-slate-100 scroll-smooth">
-           </div>
- 
-        <div class="bg-slate-50 rounded-2xl p-5 space-y-3 mb-8">
-            <div class="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-tighter">
-               <span>Items to Unlock</span>
-               <span id="modal-count">0 Images</span>
-           </div>
-            <div class="flex justify-between text-xl font-black text-slate-900 border-t border-slate-200 pt-3.5">
-               <span>Total Billing</span>
-               <span id="modal-cost">0 Credits</span>
-           </div>
+    <div id="modal-content-wrapper" class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-slate-100 animate-fadeIn">
+        <div id="modal-initial-state">
+            <h3 class="text-2xl font-black text-slate-800 mb-1.5">Confirm Download</h3>
+            <p class="text-slate-500 text-sm mb-6">These items will be added to your monthly bill.</p>
+            
+            <div id="modal-image-queue" class="flex items-center gap-3 overflow-x-auto pb-4 mb-8 border-b border-slate-100 scroll-smooth">
+            </div>
+    
+            <div class="bg-slate-50 rounded-2xl p-5 space-y-3 mb-8">
+                <div class="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                <span>Items to Unlock</span>
+                <span id="modal-count">0 Images</span>
+            </div>
+                <div class="flex justify-between text-xl font-black text-slate-900 border-t border-slate-200 pt-3.5">
+                <span>Total Billing</span>
+                <span id="modal-cost">0 Credits</span>
+            </div>
+            </div>
+    
+            <div class="flex gap-4">
+                <button id="modal-cancel-btn" onclick="closeDownloadModal()" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancel</button>
+                <button id="modal-confirm-btn" onclick="executeBatchDownload()" class="flex-1 bg-[#00d1b2] text-white py-3 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-[#00d1b2]/20">Confirm & Save</button>
+            </div>
         </div>
- 
-        <div class="flex gap-4">
-            <button onclick="closeDownloadModal()" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancel</button>
-            <button onclick="executeBatchDownload()" class="flex-1 bg-[#00d1b2] text-white py-3 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-[#00d1b2]/20">Confirm & Save</button>
+
+        <div id="modal-finished-state" class="hidden text-center py-10">
+            <div class="w-20 h-20 bg-[#00d1b2]/10 text-[#00d1b2] rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h3 class="text-3xl font-black text-slate-800 mb-2">Downloads Complete!</h3>
+            <p class="text-slate-500 text-sm mb-8">All selected images have been saved to your device.</p>
+            <button onclick="closeDownloadModal()" class="w-full bg-[#0f172a] text-white py-4 rounded-xl font-black uppercase tracking-widest hover:scale-[1.02] transition-all">OK</button>
         </div>
     </div>
 </div>
@@ -309,7 +322,15 @@
     function showDownloadModal() {
         const checked = document.querySelectorAll('.download-checkbox:checked');
         const imgQueue = document.getElementById('modal-image-queue');
-       imgQueue.innerHTML = '';
+        
+        // Reset modal to initial state
+        document.getElementById('modal-initial-state').classList.remove('hidden');
+        document.getElementById('modal-finished-state').classList.add('hidden');
+        document.getElementById('modal-cancel-btn').disabled = false;
+        document.getElementById('modal-confirm-btn').disabled = false;
+        document.getElementById('modal-confirm-btn').innerText = "Confirm & Save";
+        
+        imgQueue.innerHTML = '';
         
        checked.forEach(cb => {
             const item = processedResults.find(r => r.id == cb.value);
@@ -336,7 +357,12 @@
     async function executeBatchDownload() {
         const checked = document.querySelectorAll('.download-checkbox:checked');
         const ids = Array.from(checked).map(cb => cb.value);
-       closeDownloadModal();
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+
+        confirmBtn.disabled = true;
+        cancelBtn.disabled = true;
+        confirmBtn.innerText = "Processing...";
  
         for (let id of ids) {
             const item = processedResults.find(r => r.id == id);
@@ -377,8 +403,10 @@
             } catch (err) { console.error(err); }
         }
         
-        alert("Downloads Complete!");
-       updateBatchUI();
+        // Update modal state to finished instead of alert
+        document.getElementById('modal-initial-state').classList.add('hidden');
+        document.getElementById('modal-finished-state').classList.remove('hidden');
+        updateBatchUI();
     }
  
     function removeFromWorkspace(id) {
