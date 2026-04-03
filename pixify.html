@@ -3,19 +3,18 @@
     <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between gap-6">
         <div>
             <h2 class="text-3xl font-black text-slate-800 tracking-tight">Pixify! AI Intelligence</h2>
-            <p class="text-slate-500 font-medium">Transform classroom photos into privacy-safe Pixar art.</p>
+            <div class="flex gap-3 mt-1">
+                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold uppercase tracking-wider">Process: 3 Credits</span>
+                <span class="text-[10px] bg-[#00d1b2]/10 text-[#00d1b2] px-2 py-1 rounded font-bold uppercase tracking-wider">Download: 6 Credits</span>
+            </div>
         </div>
         
         <div class="flex items-center gap-4">
-            <span class="bg-[#00d1b2]/10 text-[#00d1b2] px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest">
-                Rate: ₱8.00 / Image
-            </span>
-            
             <button onclick="document.getElementById('fileInput').click()" class="bg-slate-100 text-slate-700 px-5 py-3 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors">
                 ➕ Add Photos
             </button>
             
-            <button id="go-button" onclick="startUnifiedProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all animate-pulse">
+            <button id="go-button" onclick="startUnifiedProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all">
                 🚀 Pixify! [0]
             </button>
         </div>
@@ -24,7 +23,7 @@
     </div>
 
     <div class="space-y-4">
-        <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Workspace & Results</h4>
+        <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Active Workspace</h4>
         <div id="unified-container" class="space-y-4">
             </div>
     </div>
@@ -32,11 +31,14 @@
 
 <script>
     const PIXIFY_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify";
+    const DOWNLOAD_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_download"; 
     const fid = localStorage.getItem('locked_franchise_id');
     
-    // Internal state to manage queued vs. processing cards
     let fileQueue = []; 
 
+    /**
+     * Handles file selection and adds them to the visual queue immediately.
+     */
     function handleSelection(event) {
         const files = Array.from(event.target.files);
         if (!files.length) return;
@@ -45,19 +47,16 @@
             const fileId = 'pix-' + Math.random().toString(36).substr(2, 9);
             const fileData = { id: fileId, file: file };
             
-            // 1. Store the data for processing
             fileQueue.push(fileData);
-            
-            // 2. Create the "Queued" card immediately
             addQueuedCardToWorkspace(fileData);
         });
         
         updateGoButton();
-        event.target.value = ''; // Reset input
+        event.target.value = ''; 
     }
 
     /**
-     * Step 1: Creates the initial "Input" row in the main workspace.
+     * Creates the initial row in the workspace.
      */
     function addQueuedCardToWorkspace(fileData) {
         const workspace = document.getElementById('unified-container');
@@ -68,25 +67,23 @@
         card.id = cardId;
         card.className = "flex items-center gap-6 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm animate-fadeInLeft relative";
         card.innerHTML = `
-            <div class="w-40 aspect-video bg-slate-50 rounded-lg overflow-hidden border border-slate-100 relative">
+            <div class="w-40 aspect-video bg-slate-50 rounded-lg overflow-hidden border border-slate-100 relative flex-shrink-0">
                 <img src="${originalUrl}" class="w-full h-full object-cover">
                 <div class="absolute top-1 left-1 bg-black/40 text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-bold">Original</div>
             </div>
 
-            <div id="${cardId}-right" class="w-40 aspect-video bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-100 relative">
+            <div id="${cardId}-right" class="w-40 aspect-video bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-100 relative flex-shrink-0">
                 <span class="text-[8px] font-black text-slate-300 uppercase">Ready</span>
             </div>
             
             <div id="${cardId}-meta" class="flex-grow">
-                <p class="text-[11px] font-bold text-slate-700 truncate max-w-[150px]">${fileData.file.name}</p>
-                <p class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tight">Queued for AI</p>
+                <p class="text-[11px] font-bold text-slate-700 truncate max-w-[200px]">${fileData.file.name}</p>
+                <p class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tight">Cost: 3 Credits to Pixify</p>
             </div>
 
-            <div id="${cardId}-actions" class="flex items-center gap-4 border-l border-slate-100 pl-6 h-full pt-4">
-                <button onclick="removeFromWorkspace('${fileData.id}')" class="text-slate-300 hover:text-red-500 transition-colors pt-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+            <div id="${cardId}-actions" class="flex items-center gap-4 border-l border-slate-100 pl-6">
+                <button onclick="removeFromWorkspace('${fileData.id}')" class="bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors">
+                    Del
                 </button>
             </div>
         `;
@@ -95,7 +92,8 @@
 
     function removeFromWorkspace(fileId) {
         fileQueue = fileQueue.filter(item => item.id !== fileId);
-        document.getElementById(`row-${fileId}`).remove();
+        const el = document.getElementById(`row-${fileId}`);
+        if(el) el.remove();
         updateGoButton();
     }
 
@@ -106,32 +104,28 @@
     }
 
     /**
-     * Step 2: Batch process the queued files.
+     * Loops through the queue and triggers the Xano AI function.
      */
     async function startUnifiedProcess() {
         const activeBatch = [...fileQueue];
-        fileQueue = [];
+        fileQueue = []; // Clear the visual queue to prevent double-processing
         updateGoButton();
 
         for (let item of activeBatch) {
             const cardId = `row-${item.id}`;
-            
-            // Transform card state: Show spinner on right, update meta
             transformCardToLoading(cardId);
             
             const formData = new FormData();
             formData.append('image', item.file);
             formData.append('franchise_id', fid);
+            // In Xano, your 'pixify' function should now deduct 3 credits upon success
 
             try {
                 const res = await fetch(PIXIFY_API, { method: 'POST', body: formData });
                 const data = await res.json();
-                
-                // Finalize card state: Show result, enable Download button
                 finalizeCardState(cardId, data.pixar_url);
             } catch (e) {
-                console.error("Unified Process Failed", e);
-                document.getElementById(`${cardId}-right`).innerHTML = `<span class="text-[8px] text-red-500 font-bold">Error</span>`;
+                document.getElementById(`${cardId}-right`).innerHTML = `<span class="text-[8px] text-red-500 font-bold">Failed</span>`;
             }
         }
     }
@@ -141,17 +135,13 @@
         const metaBox = document.getElementById(`${cardId}-meta`);
         const actionsBox = document.getElementById(`${cardId}-actions`);
         
-        // Show spinner
         rightBox.className = "w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center relative border-2 border-dashed border-slate-200";
         rightBox.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>`;
         
-        // Update Meta
-        metaBox.querySelector('p:last-child').innerText = "AI Rendering...";
-        metaBox.querySelector('p:last-child').className = "text-[9px] text-slate-400 font-bold uppercase tracking-tight animate-pulse";
+        metaBox.querySelector('p:last-child').innerText = "Deducting 3 Credits...";
+        metaBox.querySelector('p:last-child').className = "text-[9px] text-orange-400 font-bold uppercase tracking-tight animate-pulse";
         
-        // Prep actions area for the new buttons, but keep it empty while processing
-        actionsBox.innerHTML = '';
-        actionsBox.className = "flex items-center gap-4 border-l border-slate-100 pl-6 h-full";
+        actionsBox.innerHTML = ''; // Lock actions during processing
     }
 
     function finalizeCardState(cardId, pixarUrl) {
@@ -159,39 +149,72 @@
         const metaBox = document.getElementById(`${cardId}-meta`);
         const actionsBox = document.getElementById(`${cardId}-actions`);
 
-        // Update Right Image Slot with Pixar result
+        // Show blurred result to protect the "product" until paid
         rightBox.innerHTML = `
-            <img src="${pixarUrl}" class="w-full h-full object-cover animate-fadeIn">
-            <div class="absolute top-1 right-1 bg-[#00d1b2] text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-bold">Pixar AI</div>
+            <img src="${pixarUrl}" class="w-full h-full object-cover blur-md opacity-40 animate-fadeIn">
+            <div class="absolute inset-0 flex items-center justify-center">
+                <span class="bg-black/60 text-white text-[7px] px-2 py-1 rounded-full font-bold uppercase tracking-widest shadow-xl">Preview</span>
+            </div>
         `;
         rightBox.className = "w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden relative";
 
-        // Update Metadata (Done)
-        metaBox.querySelector('p:last-child').innerText = "Identity Locked";
-        metaBox.querySelector('p:last-child').className = "text-[9px] text-slate-400 font-bold uppercase tracking-tight";
-        metaBox.querySelector('p:last-child').classList.remove('animate-pulse');
+        metaBox.innerHTML = `
+            <p class="text-[11px] font-bold text-slate-700 truncate">Identity Protected</p>
+            <p class="text-[9px] text-orange-500 font-black uppercase tracking-tight">Unlock for 6 Credits</p>
+        `;
 
-        // Inject Final Actions (Download + Delete Result)
         actionsBox.innerHTML = `
-            <button onclick="downloadResult('${pixarUrl}')" class="bg-[#0f172a] text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">
+            <button onclick="purchaseDownload('${cardId}', '${pixarUrl}')" class="bg-[#0f172a] text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all">
                 Download
             </button>
-            
             <button onclick="document.getElementById('${cardId}').remove()" class="text-slate-300 hover:text-red-500 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <span class="text-[10px] font-bold px-2">Del</span>
             </button>
         `;
     }
 
-    function downloadResult(url) {
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Pixify_${Date.now()}.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    /**
+     * Handles the 6-credit purchase and final file download.
+     */
+    async function purchaseDownload(cardId, url) {
+        const btn = event.currentTarget;
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+
+        try {
+            const response = await fetch(DOWNLOAD_API, {
+                method: 'POST',
+                body: JSON.stringify({ franchise_id: fid, image_url: url }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                // Trigger Download
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `Pixify_${Date.now()}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Reveal image in UI
+                const rightBox = document.getElementById(`${cardId}-right`);
+                rightBox.querySelector('img').classList.remove('blur-md', 'opacity-40');
+                rightBox.querySelector('div').innerHTML = `<span class="bg-[#00d1b2] text-white text-[7px] px-2 py-1 rounded-full font-bold uppercase tracking-widest">Unlocked</span>`;
+                
+                btn.innerText = "Downloaded";
+                btn.className = "bg-slate-100 text-slate-400 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-default";
+                btn.onclick = null;
+            } else {
+                alert("Insufficient Credits. Please top up your dashboard.");
+                btn.disabled = false;
+                btn.innerText = "Download";
+            }
+        } catch (e) {
+            console.error(e);
+            btn.disabled = false;
+            btn.innerText = "Download";
+        }
     }
 </script>
 
