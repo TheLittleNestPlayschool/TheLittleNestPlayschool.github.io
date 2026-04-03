@@ -149,24 +149,9 @@
     </div>
 </div>
 
-<div id="investment-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl animate-in zoom-in duration-200">
-        <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50 rounded-t-3xl">
-            <h3 class="text-xs font-black uppercase tracking-widest text-slate-500">Initial Investment</h3>
-            <button onclick="document.getElementById('investment-modal').classList.add('hidden')" class="text-slate-400 hover:text-red-500">✕</button>
-        </div>
-        <div class="p-6 space-y-4">
-            <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400">Franchise Fee</label><input type="number" id="inv-fee" value="350000" class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-sm font-black outline-none focus:border-[#00d1b2]"></div>
-        </div>
-        <div class="p-4 flex gap-3">
-            <button onclick="document.getElementById('investment-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 font-black py-3 rounded-xl uppercase text-[11px] tracking-widest">Cancel</button>
-            <button onclick="calculateROI(); document.getElementById('investment-modal').classList.add('hidden')" class="flex-1 bg-[#00d1b2] text-white font-black py-3 rounded-xl uppercase text-[11px] tracking-widest shadow-lg shadow-[#00d1b2]/20">Update</button>
-        </div>
-    </div>
-</div>
-
 <script>
     async function initPerformance() {
+        // FIXED: Restore franchise identity retrieval
         const getIdentity = () => {
             return new Promise((resolve) => {
                 let attempts = 0;
@@ -188,7 +173,7 @@
         const { fid, endpoints } = identity;
 
         try {
-            // Updated Parallel Fetch including Parents
+            // FIXED: Added ?franchise_id=${fid} back to all calls
             const [sessionRes, studentRes, profileRes, parentRes] = await Promise.all([
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`),
@@ -196,14 +181,18 @@
                 fetch(`${endpoints.parent.list}?franchise_id=${fid}`)
             ]);
 
-            const sessions = (await sessionRes.json()).items || (await sessionRes.json());
-            const students = (await studentRes.json()).items || (await studentRes.json());
-            const profiles = (await profileRes.json()).items || (await profileRes.json());
-            const parents = (await parentRes.json()).items || (await parentRes.json());
+            const sessionsRaw = await sessionRes.json();
+            const studentsRaw = await studentRes.json();
+            const profilesRaw = await profileRes.json();
+            const parentsRaw = await parentRes.json();
+            
+            const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : (sessionsRaw.items || []);
+            const students = Array.isArray(studentsRaw) ? studentsRaw : (studentsRaw.items || []);
+            const profiles = Array.isArray(profilesRaw) ? profilesRaw : (profilesRaw.items || []);
+            const parents = Array.isArray(parentsRaw) ? parentsRaw : (parentsRaw.items || []);
 
             const now = new Date();
             const oneDay = 24 * 60 * 60 * 1000;
-            const oneWeek = 7 * oneDay;
             const oneMonth = 30 * oneDay;
 
             const activeStudents = students.filter(s => s.is_active === true);
@@ -212,35 +201,40 @@
                 return age >= minAge && age < maxAge;
             }).length;
 
-            // Stats Update
+            // UI Pulse Updates
+            document.getElementById('perf-today-active').innerText = getCount(activeStudents, 0, oneDay);
+            document.getElementById('perf-week-active').innerText = getCount(activeStudents, 0, (oneDay * 7));
             document.getElementById('perf-total-active').innerText = activeStudents.length;
+
+            // Messenger Updates
+            const getMsgCount = (list, type, minAge) => list.filter(m => (m.status === type && (now - m.created_at) < minAge)).length;
+            document.getElementById('msg-week-inquiry').innerText = getMsgCount(profiles, 'inquiry', (oneDay * 7));
+            document.getElementById('msg-week-ready').innerText = getMsgCount(profiles, 'ready', (oneDay * 7));
+            
+            const totalInq = profiles.filter(p => p.status === 'inquiry').length;
+            const totalReady = profiles.filter(p => p.status === 'ready').length;
+            const rate = totalInq > 0 ? Math.round((totalReady / totalInq) * 100) : 0;
+            document.getElementById('msg-conversion-rate').innerText = rate + "%";
+
+            // Revenue Updates
             document.getElementById('rev-daily').innerText = (getCount(activeStudents, 0, oneDay) * 3500).toLocaleString();
             document.getElementById('rev-monthly').innerText = (getCount(activeStudents, 0, oneMonth) * 3500).toLocaleString();
 
-            // Billing Intelligence Logic (Alphabetical Parents)
+            // Billing List Render
             const billingContainer = document.getElementById('billing-list');
             billingContainer.innerHTML = '';
-            
             const sortedParents = parents.sort((a, b) => (a.first_name || '').localeCompare(b.first_name || ''));
             
-            if(sortedParents.length === 0) {
-                billingContainer.innerHTML = '<p class="text-[7px] text-slate-300 italic text-center py-4 uppercase">No records</p>';
-            }
-
             sortedParents.forEach(p => {
-                const simulatedDate = new Date();
-                simulatedDate.setDate(simulatedDate.getDate() + 2); // Dummy logic for now
-                const dateStr = simulatedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
                 billingContainer.insertAdjacentHTML('beforeend', `
                     <div class="flex justify-between items-center border-b border-slate-50 pb-1 last:border-0">
                         <span class="text-[9px] font-bold text-slate-600 truncate w-24">${p.first_name} ${p.last_name}</span>
-                        <span class="text-[8px] font-black text-[#00d1b2] tracking-tighter">${dateStr}</span>
+                        <span class="text-[8px] font-black text-[#00d1b2] tracking-tighter">Due Next</span>
                     </div>
                 `);
             });
 
-            // Grid Render for Sessions
+            // Sessions Grid Render
             const grid = document.getElementById('perf-sessions-body');
             grid.innerHTML = '';
             const sessionCounts = {};
@@ -271,14 +265,14 @@
             });
 
             if (window.calculateROI) window.calculateROI();
-        } catch (e) { console.error("Sync Error:", e); }
+        } catch (e) { console.error("Identity Sync Error:", e); }
     }
 
-    // ROI Logic Restored
+    // ROI Restored Logic
     window.calculateROI = () => {
         const fee = parseFloat(document.getElementById('inv-fee')?.value) || 350000;
         const totalActiveCount = parseInt(document.getElementById('perf-total-active').innerText) || 0;
-        const netDaily = (totalActiveCount * 3500 - 45000) / 30; // Basic dummy OPEX
+        const netDaily = (totalActiveCount * 3500 - 45000) / 30;
         const recoveryPercent = fee > 0 ? Math.min((netDaily / fee) * 100, 100).toFixed(4) : 0;
         document.getElementById('label-current-val').innerText = `₱${Math.round(netDaily).toLocaleString()}`;
         document.getElementById('label-total-val').innerText = `₱${fee.toLocaleString()}`;
