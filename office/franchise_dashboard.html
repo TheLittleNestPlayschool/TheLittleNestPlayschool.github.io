@@ -1,6 +1,9 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
+<link rel="stylesheet" href="nest-style.css">
+<script src="api_config.js"></script>
+
 <div class="flex h-screen w-full bg-[#f8fafc] overflow-hidden font-['Inter',_sans-serif]">
     <aside class="w-[260px] bg-[#0f172a] flex-shrink-0 flex flex-col border-r border-[#1e293b] z-50">
         <div class="p-8">
@@ -100,14 +103,17 @@
                 select.appendChild(opt);
             });
 
-            // LOGIC FIX: Always require a fresh selection on initialization 
-            // unless we are specifically returning from an internal module view.
-            // This prevents the "Sariaya" auto-lock from previous sessions.
-            localStorage.removeItem('locked_franchise_id');
-            localStorage.removeItem('locked_franchise_name');
-            
-            select.value = "";
-            document.getElementById('status-text').innerText = "Please select a branch to initialize portal.";
+            // LOGIC: Check for existing selection but allow re-selection
+            const savedFid = localStorage.getItem('locked_franchise_id');
+            if (savedFid) {
+                const optionExists = Array.from(select.options).some(opt => opt.value == savedFid);
+                if (optionExists) {
+                    select.value = savedFid;
+                    unlockDashboard();
+                }
+            } else {
+                document.getElementById('status-text').innerText = "Please select a branch to initialize portal.";
+            }
 
         } catch (e) { console.error("Identity initialization failed", e); }
     }
@@ -123,11 +129,9 @@
 
         const fname = select.options[select.selectedIndex].text;
         
-        // Lock the identity for the session
         localStorage.setItem('locked_franchise_id', fid);
         localStorage.setItem('locked_franchise_name', fname);
         
-        // UI Transition
         select.classList.add('hidden');
         branchDisplay.innerText = fname;
         branchDisplay.classList.remove('hidden');
@@ -146,6 +150,7 @@
         if(breadcrumbText) breadcrumbText.innerText = title;
 
         try {
+            // Force cache bust with Date.now() for slow connections/stale files
             const res = await fetch(GITHUB_ROOT + file + '?v=' + Date.now());
             const html = await res.text();
             workspace.innerHTML = `<div class="p-12">${html}</div>`;
@@ -154,11 +159,17 @@
             const scripts = workspace.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
-                if (oldScript.src) newScript.src = oldScript.src;
-                else newScript.text = oldScript.text;
+                if (oldScript.src) {
+                    // Remove /office/ from any child scripts if they exist
+                    newScript.src = oldScript.src.replace('/office/', '');
+                } else {
+                    newScript.text = oldScript.text;
+                }
                 document.head.appendChild(newScript).parentNode.removeChild(newScript);
             });
-        } catch (e) { workspace.innerHTML = `<div class="p-20 text-red-500 font-bold">${e.message}</div>`; }
+        } catch (e) { 
+            workspace.innerHTML = `<div class="p-20 text-red-500 font-bold">${e.message}</div>`; 
+        }
     }
 
     init();
