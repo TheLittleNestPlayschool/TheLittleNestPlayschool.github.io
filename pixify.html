@@ -1,24 +1,32 @@
 <div class="max-w-7xl mx-auto space-y-10">
     
     <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between gap-6">
-        <div>
-            <h2 class="text-3xl font-black text-slate-800 tracking-tight">Pixify! AI Intelligence</h2>
-            <div class="flex gap-3 mt-1.5">
-                <span class="text-[10px] bg-slate-100 text-slate-500 px-2.5 py-1.5 rounded-full font-extrabold uppercase tracking-wider">Render: 3 Credits</span>
-                <span class="text-[10px] bg-[#00d1b2]/10 text-[#00d1b2] px-2.5 py-1.5 rounded-full font-extrabold uppercase tracking-wider">Download: 6 Credits</span>
+        <div class="flex items-center gap-8">
+            <div>
+                <h2 class="text-3xl font-black text-slate-800 tracking-tight">Pixify! AI</h2>
+                <div class="flex gap-3 mt-1.5">
+                    <span class="text-[10px] bg-slate-100 text-slate-500 px-2.5 py-1.5 rounded-full font-extrabold uppercase tracking-wider">Render: 3 Credits</span>
+                    <span class="text-[10px] bg-[#00d1b2]/10 text-[#00d1b2] px-2.5 py-1.5 rounded-full font-extrabold uppercase tracking-wider">Download: 6 Credits</span>
+                </div>
             </div>
+
+            <nav class="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+                <button id="nav-create" onclick="switchTab('create')" class="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-white shadow-sm text-slate-800">Create New</button>
+                <button id="nav-saved" onclick="switchTab('saved')" class="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-slate-400 hover:text-slate-600">Pixify Saved!</button>
+            </nav>
         </div>
         
-        <div class="flex items-center gap-4">
+        <div id="create-controls" class="flex items-center gap-4">
             <button id="add-photos-btn" onclick="document.getElementById('fileInput').click()" class="bg-slate-100 text-slate-700 px-5 py-3 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors flex items-center gap-2">
                 ➕ Add Photos
             </button>
-            
             <button id="go-button" onclick="startUnifiedProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:scale-105 transition-all">
                 🚀 Pixify! [0]
             </button>
+        </div>
 
-            <button id="batch-download-btn" onclick="showDownloadModal()" class="hidden bg-[#0f172a] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:scale-105 transition-all">
+        <div id="saved-controls" class="hidden">
+             <button id="batch-download-btn" onclick="showDownloadModal()" class="bg-[#0f172a] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:scale-105 transition-all">
                 📥 Download Selected
             </button>
         </div>
@@ -28,7 +36,7 @@
 
     <div class="space-y-4">
         <div class="flex justify-between items-center px-2">
-            <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Active Workspace (Max 10)</h4>
+            <h4 id="workspace-title" class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Active Workspace (Max 10)</h4>
             <div id="selection-counter" class="hidden text-[10px] font-bold text-[#00d1b2] uppercase tracking-wider">0 Selected</div>
         </div>
         <div id="unified-container" class="space-y-4">
@@ -57,44 +65,87 @@
 
         <div class="flex gap-4">
             <button onclick="closeDownloadModal()" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancel</button>
-            <button onclick="executeBatchDownload()" class="flex-1 bg-[#00d1b2] text-white py-3 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-[#00d1b2]/20 hover:scale-105 transition-all">Confirm & Save</button>
+            <button onclick="executeBatchDownload()" class="flex-1 bg-[#00d1b2] text-white py-3 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-[#00d1b2]/20">Confirm & Save</button>
         </div>
     </div>
 </div>
 
 <script>
     const PIXIFY_RENDER_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_render";
-    const PIXIFY_BILLING_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_download"; 
+    const PIXIFY_BILLING_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_download";
+    const PIXIFY_GET_SAVED = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_history"; 
     
     const fid = localStorage.getItem('locked_franchise_id');
     let fileQueue = []; 
     let processedResults = [];
+    let currentTab = 'create';
+
+    function switchTab(tab) {
+        currentTab = tab;
+        const createBtn = document.getElementById('nav-create');
+        const savedBtn = document.getElementById('nav-saved');
+        const createControls = document.getElementById('create-controls');
+        const savedControls = document.getElementById('saved-controls');
+        const container = document.getElementById('unified-container');
+
+        container.innerHTML = ''; // Clear workspace
+        
+        if (tab === 'create') {
+            createBtn.className = "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-white shadow-sm text-slate-800";
+            savedBtn.className = "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-slate-400 hover:text-slate-600";
+            createControls.classList.remove('hidden');
+            savedControls.classList.add('hidden');
+            document.getElementById('workspace-title').innerText = "Active Workspace (Max 10)";
+        } else {
+            savedBtn.className = "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-white shadow-sm text-slate-800";
+            createBtn.className = "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-slate-400 hover:text-slate-600";
+            createControls.classList.add('hidden');
+            savedControls.classList.remove('hidden');
+            document.getElementById('workspace-title').innerText = "Previously Created (Identity Locked)";
+            loadSavedImages();
+        }
+        updateBatchUI();
+    }
+
+    async function loadSavedImages() {
+        const container = document.getElementById('unified-container');
+        container.innerHTML = '<div class="text-center p-10 text-slate-400 font-bold animate-pulse">Loading your vault...</div>';
+        
+        try {
+            const res = await fetch(`${PIXIFY_GET_SAVED}?franchise_id=${fid}&is_downloaded=false`);
+            const data = await res.json();
+            container.innerHTML = '';
+            
+            if(data.length === 0) {
+                container.innerHTML = '<div class="text-center p-20 text-slate-300 font-bold uppercase tracking-widest text-xs">No pending downloads found.</div>';
+                return;
+            }
+
+            data.forEach(item => {
+                // Re-cache for modal
+                processedResults.push({ id: item.id, url: item.pixar_url, name: "Saved Image" });
+                finalizeCardPreview(`row-${item.id}`, item.pixar_url, item.id);
+            });
+        } catch (e) { console.error(e); }
+    }
 
     function handleSelection(event) {
         const files = Array.from(event.target.files);
-        if (!files.length) return;
-
         const addBtn = document.getElementById('add-photos-btn');
         addBtn.disabled = true;
-        addBtn.classList.add('opacity-50', 'cursor-not-allowed');
-
         const currentCount = document.querySelectorAll('#unified-container > div').length;
         const availableSlots = 10 - currentCount;
         const toProcess = files.slice(0, availableSlots);
 
         toProcess.forEach(file => {
             const fileId = 'pix-' + Math.random().toString(36).substr(2, 9);
-            const fileData = { id: fileId, file: file };
-            fileQueue.push(fileData);
-            addQueuedCard(fileData);
+            fileQueue.push({ id: fileId, file: file });
+            addQueuedCard({ id: fileId, file: file });
         });
         
         updateGoButton();
         event.target.value = '';
-        setTimeout(() => {
-            addBtn.disabled = false;
-            addBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        }, 500);
+        setTimeout(() => { addBtn.disabled = false; }, 500);
     }
 
     function addQueuedCard(fileData) {
@@ -108,18 +159,17 @@
         card.innerHTML = `
             <div class="w-40 aspect-video bg-slate-50 rounded-lg overflow-hidden border border-slate-100 relative">
                 <img src="${originalUrl}" class="w-full h-full object-cover">
-                <div class="absolute top-1 left-1 bg-black/40 text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-bold">Original</div>
             </div>
             <div id="${cardId}-right" class="w-40 aspect-video bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-200 relative">
                 <span class="text-[8px] font-black text-slate-300 uppercase">Ready</span>
             </div>
             <div id="${cardId}-meta" class="flex-grow">
                 <p class="text-[11px] font-bold text-slate-700 truncate max-w-[200px]">${fileData.file.name}</p>
-                <p class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tight">Queued (3 Credits)</p>
+                <p class="text-[9px] text-[#00d1b2] font-black uppercase">Render: 3 Credits</p>
             </div>
-            <div id="${cardId}-actions" class="flex items-center gap-4 border-l border-slate-100 pl-6 h-full pt-4 flex-shrink-0">
-                <button onclick="removeFromWorkspace('${fileData.id}')" class="text-red-300 hover:text-red-500 transition-colors">
-                    <span class="text-[10px] font-bold px-2">Del</span>
+            <div id="${cardId}-actions" class="flex items-center gap-4 border-l border-slate-100 pl-6 h-full pt-4">
+                <button onclick="removeFromWorkspace('${fileData.id}')" class="text-red-400 hover:text-red-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
             </div>
         `;
@@ -135,11 +185,8 @@
             const cardId = `row-${item.id}`;
             const rightBox = document.getElementById(`${cardId}-right`);
             const metaBox = document.getElementById(`${cardId}-meta`);
-            const actionsBox = document.getElementById(`${cardId}-actions`);
             
             rightBox.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>`;
-            metaBox.querySelector('p:last-child').innerText = "Processing...";
-            actionsBox.innerHTML = '';
             
             const formData = new FormData();
             formData.append('image', item.file);
@@ -155,36 +202,38 @@
     }
 
     function finalizeCardPreview(cardId, pixarUrl, fileId) {
-        const rightBox = document.getElementById(`${cardId}-right`);
-        const metaBox = document.getElementById(`${cardId}-meta`);
-        const actionsBox = document.getElementById(`${cardId}-actions`);
+        const container = document.getElementById('unified-container');
+        let card = document.getElementById(cardId);
+        
+        // If loading from Saved tab, create card skeleton
+        if(!card) {
+            card = document.createElement('div');
+            card.id = cardId;
+            card.className = "flex items-center gap-6 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm animate-fadeInLeft relative";
+            container.appendChild(card);
+        }
 
-        // Correct banner placement over image
-        rightBox.innerHTML = `
-            <img src="${pixarUrl}" class="w-full h-full object-cover blur-sm opacity-50">
-            <div class="absolute inset-0 flex items-center justify-center transform rotate-[-20deg] pointer-events-none">
-                <span class="text-[7px] font-black text-black/60 uppercase tracking-[0.2em] px-3 py-1.5 border border-dashed border-black/30 rounded-md">Nest Internal</span>
+        card.innerHTML = `
+            <div class="w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden relative shadow-inner">
+                <img src="${pixarUrl}" class="w-full h-full object-cover blur-sm opacity-50">
+                <div class="absolute inset-0 flex items-center justify-center transform rotate-[-20deg] pointer-events-none">
+                    <span class="text-[7px] font-black text-black/60 uppercase tracking-[0.2em] px-3 py-1.5 border border-dashed border-black/30 rounded-md">Nest Internal</span>
+                </div>
+            </div>
+            <div class="flex-grow">
+                <p class="text-[11px] font-bold text-slate-700">Identity Locked</p>
+                <p class="text-[9px] text-slate-400 font-bold uppercase">Ready for Download (6 Credits)</p>
+            </div>
+            <div class="flex items-center gap-6 border-l border-slate-100 pl-6 h-full pt-4">
+                <div class="flex flex-col items-center gap-1">
+                    <span class="text-[7px] font-black text-slate-300 uppercase tracking-widest">Download</span>
+                    <input type="checkbox" value="${fileId}" onchange="updateBatchUI()" class="download-checkbox w-6 h-6 rounded-lg border-slate-300 text-[#00d1b2] cursor-pointer">
+                </div>
+                <button onclick="document.getElementById('${cardId}').remove(); updateBatchUI();" class="text-red-400 hover:text-red-600 transition-colors pt-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
             </div>
         `;
-        rightBox.className = "w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden relative shadow-inner";
-
-        metaBox.innerHTML = `
-            <p class="text-[11px] font-bold text-slate-700 truncate">Identity Locked</p>
-            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Rendered (3 Credits Paid)</p>
-        `;
-
-        // Selection column with "Download" header
-        actionsBox.className = "flex items-center gap-6 border-l border-slate-100 pl-6 h-full pt-4 flex-shrink-0";
-        actionsBox.innerHTML = `
-            <div class="flex flex-col items-center gap-1">
-                <span class="text-[7px] font-black text-slate-300 uppercase tracking-widest">Download</span>
-                <input type="checkbox" value="${fileId}" onchange="updateBatchUI()" class="download-checkbox w-6 h-6 rounded-lg border-slate-300 text-[#00d1b2] cursor-pointer">
-            </div>
-            <button onclick="document.getElementById('${cardId}').remove(); updateBatchUI();" class="text-red-300 hover:text-red-500 transition-colors pt-2">
-                <span class="text-[10px] font-bold px-2">Del</span>
-            </button>
-        `;
-        updateBatchUI();
     }
 
     function updateBatchUI() {
@@ -192,7 +241,7 @@
         const btn = document.getElementById('batch-download-btn');
         const counter = document.getElementById('selection-counter');
         
-        btn.classList.toggle('hidden', checked.length === 0);
+        btn.parentElement.classList.toggle('hidden', checked.length === 0);
         counter.classList.toggle('hidden', checked.length === 0);
         counter.innerText = `${checked.length} Selected`;
     }
@@ -203,10 +252,9 @@
         imgQueue.innerHTML = '';
         
         checked.forEach(cb => {
-            const item = processedResults.find(r => r.id === cb.value);
+            const item = processedResults.find(r => r.id == cb.value);
             const thumb = document.createElement('div');
             thumb.className = "w-28 aspect-video rounded-lg overflow-hidden flex-shrink-0 border border-slate-200 bg-slate-100 relative";
-            // Banner over images in popup
             thumb.innerHTML = `
                 <img src="${item.url}" class="w-full h-full object-cover blur-[1.5px] opacity-60">
                 <div class="absolute inset-0 flex items-center justify-center transform rotate-[-20deg] pointer-events-none">
@@ -231,7 +279,7 @@
         closeDownloadModal();
 
         for (let id of ids) {
-            const item = processedResults.find(r => r.id === id);
+            const item = processedResults.find(r => r.id == id);
             const cardId = `row-${id}`;
             
             await fetch(PIXIFY_BILLING_API, {
@@ -247,13 +295,7 @@
             link.click();
             document.body.removeChild(link);
 
-            const imgSlot = document.getElementById(`${cardId}-right`);
-            imgSlot.querySelector('img').classList.remove('blur-sm', 'opacity-50');
-            const banner = imgSlot.querySelector('.absolute');
-            if(banner) banner.remove();
-            
-            const actionArea = document.getElementById(cardId).querySelector('.flex-col');
-            actionArea.innerHTML = `<span class="text-[#00d1b2] text-[8px] font-black uppercase tracking-widest mt-1">Unlocked</span>`;
+            document.getElementById(cardId).remove();
         }
         updateBatchUI();
     }
@@ -277,6 +319,5 @@
     .animate-fadeInLeft { animation: fadeInLeft 0.3s ease-out forwards; }
     .animate-fadeIn { animation: fadeIn 0.4s ease-in forwards; }
     #modal-image-queue::-webkit-scrollbar { height: 4px; }
-    #modal-image-queue::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
     #modal-image-queue::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
 </style>
