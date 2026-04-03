@@ -1,4 +1,5 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://thelittlenestplayschool.github.io/api_config.js"></script>
 <link rel="stylesheet" href="https://thelittlenestplayschool.github.io/nest_style.css">
 
 <style>
@@ -194,18 +195,7 @@
 
 <script>
 (function() {
-    const API_BASE = "https://x8ki-letl-twmt.n7.xano.io/api";
-    const ENDPOINTS = {
-        franchise: `${API_BASE}:mXEfdJlg/franchise`, 
-        parent: `${API_BASE}:8Je8Zszx/parent`, 
-        student: `${API_BASE}:iEHfqd-N/student`,
-        teacher: `${API_BASE}:xLIeVP2e/teacher`,
-        questions: `${API_BASE}:ptE37CdX/student_assessment_questions`,
-        pickup: `${API_BASE}:Mg8y2ES9/student_authorized_pickup`,
-        enrollment: `${API_BASE}:IwtDgUwD/session_enrollment`,
-        session: `${API_BASE}:mUsV7Zqx/session`,
-        assessment_submit: `${API_BASE}:ptE37CdX/student_assessment`
-    };
+    // API_BASE is now handled by api_config.js using window.NEST_ENDPOINTS
 
     let state = { 
         currentParentId: null, currentStudentId: null, currentFranchiseId: null, 
@@ -235,7 +225,7 @@
 
     async function initNetwork() {
         try {
-            const res = await fetch(ENDPOINTS.franchise);
+            const res = await fetch(window.NEST_ENDPOINTS.franchise);
             const franchises = await res.json();
             const sel = document.getElementById('ho_franchise_selector');
             const initBtn = document.getElementById('init-btn');
@@ -259,7 +249,13 @@
             }
         } catch(e) { console.error("Identity Sync failed", e); }
     }
-    initNetwork();
+    
+    // Safety check for api_config load
+    if (window.NEST_ENDPOINTS) {
+        initNetwork();
+    } else {
+        window.addEventListener('load', initNetwork);
+    }
 
     window.lockLocation = async () => {
         const val = document.getElementById('ho_franchise_selector').value;
@@ -272,10 +268,10 @@
     async function fetchBranchData() {
         try {
             const [p, t, q, s] = await Promise.all([
-                fetch(ENDPOINTS.parent).then(r => r.json()),
-                fetch(ENDPOINTS.teacher).then(r => r.json()),
-                fetch(ENDPOINTS.questions).then(r => r.json()),
-                fetch(ENDPOINTS.session).then(r => r.json())
+                fetch(window.NEST_ENDPOINTS.parent).then(r => r.json()),
+                fetch(window.NEST_ENDPOINTS.teacher).then(r => r.json()),
+                fetch(window.NEST_ENDPOINTS.assessment_questions).then(r => r.json()),
+                fetch(window.NEST_ENDPOINTS.session).then(r => r.json())
             ]);
             state.allParents = p.filter(x => x.franchise_id === state.currentFranchiseId);
             renderParentList(state.allParents);
@@ -315,7 +311,7 @@
         sSel.innerHTML = '<option value="">-- Select Child --</option>';
 
         if (isNew) {
-            const res = await fetch(ENDPOINTS.parent, {
+            const res = await fetch(window.NEST_ENDPOINTS.parent, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -345,9 +341,9 @@
         } else {
             state.currentParentId = parseInt(document.getElementById('p_select_id').value);
             if (!state.currentParentId) return alert("Select parent");
-            const data = await fetch(`${ENDPOINTS.parent}/${state.currentParentId}`).then(r => r.json());
+            const data = await fetch(`${window.NEST_ENDPOINTS.parent}/${state.currentParentId}`).then(r => r.json());
             updateParentSummary(data);
-            const children = await fetch(`${ENDPOINTS.student}?parent_id=${state.currentParentId}`).then(r => r.json());
+            const children = await fetch(`${window.NEST_ENDPOINTS.student}?parent_id=${state.currentParentId}`).then(r => r.json());
             const linkedChildren = children.filter(c => c.parent_id === state.currentParentId);
             if (linkedChildren.length > 0) {
                 linkedChildren.forEach(c => sSel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
@@ -358,6 +354,7 @@
                 document.getElementById('student-create-mode').style.display = 'block';
             }
         }
+
         document.querySelector('#step-parent .step-content').style.display = 'none';
         document.getElementById('parent-profile-view').style.display = 'grid';
         moveToStep('step-parent', 'step-student', 2);
@@ -372,7 +369,7 @@
     window.processStudentStep = async () => {
         const isNewMode = document.getElementById('student-create-mode').style.display === 'block';
         if (isNewMode) {
-            const res = await fetch(ENDPOINTS.student, {
+            const res = await fetch(window.NEST_ENDPOINTS.student, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -393,9 +390,10 @@
         } else {
             state.currentStudentId = parseInt(document.getElementById('s_select_id').value);
             if (!state.currentStudentId) return alert("Select student");
-            const data = await fetch(`${ENDPOINTS.student}/${state.currentStudentId}`).then(r => r.json());
+            const data = await fetch(`${window.NEST_ENDPOINTS.student}/${state.currentStudentId}`).then(r => r.json());
             updateStudentSummary(data);
         }
+
         document.querySelector('#step-student .step-content').style.display = 'none';
         document.getElementById('student-profile-view').style.display = 'grid';
         moveToStep('step-student', 'step-assessment', 3);
@@ -417,19 +415,23 @@
         const teacherId = document.getElementById('a_teacher_id').value;
         const date = document.getElementById('a_assessment_date').value;
         if(!teacherId || !date) return alert("Missing assessment details");
+        
         const selectedRows = document.querySelectorAll('.qa-row.selected');
         const resultsContainer = document.getElementById('disp-a-results-list');
         resultsContainer.innerHTML = '';
+
         for(let row of selectedRows) {
             const qid = row.querySelector('input').dataset.qid;
             const qText = row.dataset.questionText;
             const ans = row.querySelector('.ans-val').value;
+            
             resultsContainer.innerHTML += `
                 <div class="assessment-summary-item">
                     <strong>${qText}</strong><br>
                     <span style="color:var(--nest-teal); font-weight:700;">➔ ${ans}</span>
                 </div>`;
-            await fetch(ENDPOINTS.assessment_submit, {
+
+            await fetch(window.NEST_ENDPOINTS.assessment_submit, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     student_id: state.currentStudentId, teacher_id: parseInt(teacherId),
@@ -437,6 +439,7 @@
                 })
             });
         }
+        
         document.getElementById('disp-a-teacher').innerText = document.getElementById('a_teacher_id').options[document.getElementById('a_teacher_id').selectedIndex].text;
         document.querySelector('#step-assessment .step-content').style.display = 'none';
         document.getElementById('assessment-summary-view').style.display = 'grid';
@@ -494,7 +497,8 @@
                 start_date: document.getElementById('final_start_date').value,
                 franchise_id: state.currentFranchiseId
             };
-            await fetch(`${ENDPOINTS.student}/${state.currentStudentId}`, {
+            
+            await fetch(`${window.NEST_ENDPOINTS.student}/${state.currentStudentId}`, {
                 method: 'PATCH',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -503,11 +507,14 @@
                     enrolled_date: enrollPayload.enrollment_date
                 })
             });
-            await fetch(ENDPOINTS.enrollment, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(enrollPayload) });
+
+            await fetch(window.NEST_ENDPOINTS.enrollment, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(enrollPayload) });
             for (let c of state.pickupContacts) {
-                await fetch(ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) });
+                await fetch(window.NEST_ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) });
             }
+            
             showModal("Master File Generated", "Student enrollment has been successfully logged to the network.");
+            
         } catch(e) { console.error(e); }
     };
 
