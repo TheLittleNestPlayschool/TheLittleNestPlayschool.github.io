@@ -88,11 +88,22 @@
             const res = await fetch(XANO_FRANCHISE_API);
             const data = await res.json();
             const select = document.getElementById('branch-select');
+            
+            // Populate Dropdown
+            select.innerHTML = '<option value="">-- Select Branch --</option>';
             data.forEach(f => {
                 let opt = document.createElement('option');
-                opt.value = f.id; opt.innerText = f.name;
+                opt.value = f.id; 
+                opt.innerText = f.name;
                 select.appendChild(opt);
             });
+
+            // Check Local Storage AFTER population
+            const savedFid = localStorage.getItem('locked_franchise_id');
+            if (savedFid) {
+                select.value = savedFid;
+                unlockDashboard();
+            }
         } catch (e) { console.error("Identity Lock failed", e); }
     }
 
@@ -100,9 +111,12 @@
         const select = document.getElementById('branch-select');
         const branchDisplay = document.getElementById('active-branch-name');
         const breadcrumbBox = document.getElementById('breadcrumb-container');
+        const statusText = document.getElementById('status-text');
+        
         const fid = select.value;
-        const fname = select.options[select.selectedIndex].text;
         if(!fid) return;
+
+        const fname = select.options[select.selectedIndex].text;
         
         localStorage.setItem('locked_franchise_id', fid);
         localStorage.setItem('locked_franchise_name', fname);
@@ -112,7 +126,8 @@
         branchDisplay.classList.remove('hidden');
         breadcrumbBox.classList.remove('hidden'); 
         document.getElementById('nav-menu').classList.remove('hidden');
-        document.getElementById('status-text').innerText = "Identity Verified.";
+        
+        if(statusText) statusText.innerText = "Identity Verified.";
     }
 
     async function loadModule(file, title) {
@@ -137,5 +152,6 @@
             });
         } catch (e) { workspace.innerHTML = `<div class="p-20 text-red-500 font-bold">${e.message}</div>`; }
     }
+
     init();
 </script>
