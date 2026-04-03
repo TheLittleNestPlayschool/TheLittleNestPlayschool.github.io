@@ -241,16 +241,16 @@ const NEST_ENDPOINTS = {
 
     // --- BLOG (API Group #330305 | Workspace: zmxHunN9) ---
     blog: {
-        post:          "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_post",
-        post_id:       "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_post/{blog_post_id}",
-        category:      "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_category",
-        category_id:   "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_category/{blog_category_id}",
-        comment:       "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_comment",
-        comment_id:    "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_comment/{blog_comment_id}",
-        image:         "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_image",
-        image_id:      "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_image/{blog_image_id}",
-        analytics:     "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_analytics",
-        analytics_id:  "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_analytics/{blog_analytics_id}"
+        post:           "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_post",
+        post_id:        "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_post/{blog_post_id}",
+        category:       "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_category",
+        category_id:    "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_category/{blog_category_id}",
+        comment:        "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_comment",
+        comment_id:     "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_comment/{blog_comment_id}",
+        image:          "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_image",
+        image_id:       "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_image/{blog_image_id}",
+        analytics:      "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_analytics",
+        analytics_id:   "https://x8ki-letl-twmt.n7.xano.io/api:zmxHunN9/blog_analytics/{blog_analytics_id}"
     }
 };
 
