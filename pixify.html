@@ -161,12 +161,13 @@
                 <img src="${originalUrl}" class="w-full h-full object-cover">
                 <div class="absolute top-2 left-2 bg-black/40 text-[7px] text-white px-1.5 py-0.5 rounded-md font-black uppercase">Original</div>
             </div>
-            <div id="${cardId}-right" class="w-40 aspect-video bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-200 relative">
-                <span class="text-[8px] font-black text-slate-300 uppercase">Awaiting Render</span>
+            <div id="${cardId}-right" class="w-40 aspect-video bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-200 relative overflow-hidden">
+                <span class="text-[8px] font-black text-slate-300 uppercase z-10">Awaiting Render</span>
+                <div id="${cardId}-progress-bar" class="absolute bottom-0 left-0 h-1 bg-[#00d1b2] transition-all duration-500" style="width: 0%"></div>
             </div>
             <div id="${cardId}-meta" class="flex-grow">
                 <p class="text-[11px] font-bold text-slate-700 truncate max-w-[200px]">${fileData.file.name}</p>
-                <p class="text-[9px] text-[#00d1b2] font-black uppercase">Render: 3 Credits</p>
+                <p id="${cardId}-status-text" class="text-[9px] text-[#00d1b2] font-black uppercase">Render: 3 Credits</p>
             </div>
             <div id="${cardId}-actions" class="flex items-center gap-4 border-l border-slate-100 pl-6 h-full pt-4">
                 <button onclick="removeFromWorkspace('${fileData.id}')" class="text-red-400 hover:text-red-600 transition-colors">
@@ -185,9 +186,14 @@
         for (let item of activeBatch) {
             const cardId = `row-${item.id}`;
             const rightBox = document.getElementById(`${cardId}-right`);
+            const progressBar = document.getElementById(`${cardId}-progress-bar`);
+            const statusText = document.getElementById(`${cardId}-status-text`);
             const localOriginal = URL.createObjectURL(item.file);
             
-            rightBox.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>`;
+            // Visual feedback for starting
+            rightBox.querySelector('span').innerText = "Pixifying... 20%";
+            progressBar.style.width = "20%";
+            statusText.innerText = "Processing Image...";
             
             const formData = new FormData();
             formData.append('image', item.file);
@@ -195,8 +201,15 @@
 
             try {
                 const res = await fetch(PIXIFY_RENDER_API, { method: 'POST', body: formData });
+                
+                progressBar.style.width = "60%";
+                rightBox.querySelector('span').innerText = "Pixifying... 60%";
+                
                 const data = await res.json();
                 
+                progressBar.style.width = "85%";
+                rightBox.querySelector('span').innerText = "Finalizing... 85%";
+
                 const historyRes = await fetch(PIXIFY_HISTORY_API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -209,9 +222,15 @@
                 });
                 const historyData = await historyRes.json();
 
+                progressBar.style.width = "100%";
+                
                 processedResults.push({ id: historyData.id, url: data.pixar_url, name: item.file.name, originalUrl: data.original_url || localOriginal });
                 finalizeCardPreview(cardId, data.pixar_url, historyData.id, data.original_url || localOriginal);
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error(e); 
+                rightBox.querySelector('span').innerText = "Error";
+                progressBar.classList.replace('bg-[#00d1b2]', 'bg-red-400');
+            }
         }
     }
 
