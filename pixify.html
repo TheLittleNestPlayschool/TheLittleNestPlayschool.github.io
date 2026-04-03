@@ -49,7 +49,7 @@
     let fileQueue = [];
 
     /**
-     * Handles initial file selection and populates the left-hand queue.
+     * Handles initial file selection and populates the left-hand queue with previews.
      */
     function handleSelection(event) {
         const files = event.target.files;
@@ -65,12 +65,16 @@
     function addQueueItemToUI(file) {
         const queue = document.getElementById('queue-container');
         const item = document.createElement('div');
-        item.className = "bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-3 shadow-sm animate-fadeInLeft";
+        const previewUrl = URL.createObjectURL(file); // Create local preview URL
+        
+        item.className = "bg-white border border-slate-200 rounded-xl p-2 flex items-center gap-3 shadow-sm animate-fadeInLeft";
         item.innerHTML = `
-            <div class="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center text-lg">🖼️</div>
+            <div class="w-12 h-12 bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
+                <img src="${previewUrl}" class="w-full h-full object-cover">
+            </div>
             <div class="overflow-hidden">
-                <p class="text-[11px] font-bold text-slate-700 truncate">${file.name}</p>
-                <p class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tighter">Ready to Process</p>
+                <p class="text-[10px] font-bold text-slate-700 truncate w-32">${file.name}</p>
+                <p class="text-[9px] text-[#00d1b2] font-black uppercase">Ready</p>
             </div>
         `;
         queue.append(item);
@@ -96,7 +100,6 @@
         document.getElementById('download-selected').classList.remove('hidden');
 
         for (let file of activeBatch) {
-            // Create local preview for immediate display of original
             const originalPreviewUrl = URL.createObjectURL(file);
             const rowId = createResultRow(file, originalPreviewUrl);
             
@@ -107,8 +110,6 @@
             try {
                 const res = await fetch(PIXIFY_API, { method: 'POST', body: formData });
                 const data = await res.json();
-                
-                // Update the right side with the Pixar result
                 finalizeRow(rowId, data.pixar_url);
             } catch (e) {
                 console.error("AI Generation Failed", e);
@@ -125,28 +126,31 @@
         
         row.className = "flex items-center gap-6 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm animate-slideDown";
         row.innerHTML = `
-            <div class="w-44 aspect-video bg-slate-50 rounded-lg overflow-hidden border border-slate-100 relative group">
+            <div class="w-40 aspect-video bg-slate-50 rounded-lg overflow-hidden border border-slate-100 relative">
                 <img src="${originalUrl}" class="w-full h-full object-cover">
-                <div class="absolute top-2 left-2 bg-black/50 backdrop-blur-sm text-[8px] text-white px-2 py-0.5 rounded uppercase font-bold tracking-widest">Original</div>
+                <div class="absolute top-1 left-1 bg-black/40 text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-bold">Original</div>
             </div>
 
-            <div id="${rowId}-img-right" class="w-44 aspect-video bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center relative border-2 border-dashed border-slate-200">
-                <div class="text-center">
-                    <div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full mx-auto mb-2"></div>
-                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter">AI Rendering...</p>
-                </div>
+            <div id="${rowId}-img-right" class="w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center relative border-2 border-dashed border-slate-200">
+                <div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>
             </div>
             
             <div class="flex-grow">
-                <p class="text-[11px] font-bold text-slate-700 truncate max-w-[180px]">${file.name}</p>
-                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Identity Locked • Optimized for Ads</p>
+                <p class="text-[11px] font-bold text-slate-700 truncate max-w-[150px]">${file.name}</p>
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Identity Locked</p>
             </div>
 
-            <div class="flex items-center gap-3 border-l border-slate-100 pl-6 h-full">
+            <div class="flex items-center gap-6 border-l border-slate-100 pl-6">
                 <div class="text-center">
                     <p class="text-[8px] font-black text-slate-300 uppercase mb-1">Select</p>
-                    <input type="checkbox" data-url="" id="${rowId}-check" disabled class="w-6 h-6 rounded-lg border-slate-300 text-[#00d1b2] focus:ring-[#00d1b2] cursor-pointer transition-all disabled:opacity-30">
+                    <input type="checkbox" data-url="" id="${rowId}-check" disabled class="w-5 h-5 rounded border-slate-300 text-[#00d1b2] cursor-pointer">
                 </div>
+                
+                <button onclick="document.getElementById('${rowId}').remove()" class="text-slate-300 hover:text-red-500 transition-colors pt-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
             </div>
         `;
         container.prepend(row);
@@ -176,11 +180,11 @@
                 setTimeout(() => {
                     const link = document.createElement('a');
                     link.href = cb.dataset.url;
-                    link.download = `NestMind_Pixify_${Date.now()}.jpg`;
+                    link.download = `Pixify_Export_${index}.jpg`;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                }, index * 300); // Staggered download to avoid browser blocks
+                }, index * 300); // Staggered to avoid browser blocks
             }
         });
     }
