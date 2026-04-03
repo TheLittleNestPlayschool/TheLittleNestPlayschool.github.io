@@ -2,18 +2,20 @@
 <link rel="stylesheet" href="https://thelittlenestplayschool.github.io/nest_style.css">
 
 <style>
-    /* Module-specific layout overrides for the enrollment flow */
+    /* Layout specific to the Enrollment Stepper */
     .enrollment-wrapper { width: 100%; max-width: 900px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
     .progress-bar { text-align: right; font-size: 0.7rem; font-weight: 800; color: var(--nest-text-muted); margin-bottom: 12px; text-transform: uppercase; }
-    .profile-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #fff; padding: 15px; border-radius: var(--nest-radius-sm); border: 1px solid var(--nest-border); margin-top: 10px; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; box-sizing: border-box; }
+    .profile-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid var(--nest-border); margin-top: 10px; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; box-sizing: border-box; }
     .profile-item { display: flex; flex-direction: column; }
-    .edit-pill { position: absolute; top: 10px; right: 10px; background: var(--nest-bg); color: var(--nest-text-muted); border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
-    .qa-row { display: grid; grid-template-columns: 40px 2fr 1.5fr; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid var(--nest-bg); font-size: 0.85rem; }
+    .profile-value { font-size: 0.85rem; color: #334155; font-weight: 600; }
+    .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+    .qa-row { display: grid; grid-template-columns: 40px 2fr 1.5fr; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
     .qa-row.selected { background: #f0fdfa; }
     .q-select-ans { visibility: hidden; }
     .qa-row.selected .q-select-ans { visibility: visible; }
-    .pickup-card { background: #fff; border: 1px solid var(--nest-border); padding: 10px; border-radius: var(--nest-radius-sm); margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+    .pickup-card { background: #fff; border: 1px solid var(--nest-border); padding: 10px; border-radius: 6px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
     .full-width-summary { grid-column: 1 / -1; }
+    .assessment-summary-item { font-size: 0.8rem; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
 </style>
 
 <div id="enrollment-ui" class="enrollment-wrapper">
@@ -32,9 +34,9 @@
         <h2 class="nest-header"><span class="badge-step">1</span> Parent Profile</h2>
         <div id="parent-profile-view" style="display:none;" class="profile-display">
             <button class="edit-pill" onclick="unlockStep('step-parent', 'parent-profile-view')">Modify</button>
-            <div class="profile-item"><div class="nest-label">Name</div><div id="disp-p-name" class="profile-value font-semibold text-sm"></div></div>
-            <div class="profile-item"><div class="nest-label">Email</div><div id="disp-p-email" class="profile-value font-semibold text-sm"></div></div>
-            <div class="profile-item"><div class="nest-label">Phone</div><div id="disp-p-phone" class="profile-value font-semibold text-sm"></div></div>
+            <div class="profile-item"><div class="nest-label">Name</div><div id="disp-p-name" class="profile-value"></div></div>
+            <div class="profile-item"><div class="nest-label">Email</div><div id="disp-p-email" class="profile-value"></div></div>
+            <div class="profile-item"><div class="nest-label">Phone</div><div id="disp-p-phone" class="profile-value"></div></div>
         </div>
         <div class="step-content">
             <div id="parent-select-mode">
@@ -44,37 +46,37 @@
             </div>
             <div id="parent-create-mode" style="display:none;">
                 <div class="nest-header text-[0.7rem] text-[#00d1b2] uppercase mt-4 border-b border-slate-100 pb-1">Primary Parent Info</div>
-                <div class="grid grid-cols-2 gap-2 mt-2">
-                    <div><label class="nest-label">First Name</label><input type="text" id="p_fn" class="nest-input"></div>
-                    <div><label class="nest-label">Last Name</label><input type="text" id="p_ln" class="nest-input"></div>
+                <div class="flex gap-2 mt-2">
+                    <div class="flex-1"><label class="nest-label">First Name</label><input type="text" id="p_fn" class="nest-input"></div>
+                    <div class="flex-1"><label class="nest-label">Last Name</label><input type="text" id="p_ln" class="nest-input"></div>
                 </div>
-                <div class="grid grid-cols-2 gap-2 mt-2">
-                    <div><label class="nest-label">Phone Number</label><input type="text" id="p_phone" class="nest-input"></div>
-                    <div><label class="nest-label">Email Address</label><input type="email" id="p_email" class="nest-input"></div>
+                <div class="flex gap-2 mt-2">
+                    <div class="flex-1"><label class="nest-label">Phone Number</label><input type="text" id="p_phone" class="nest-input"></div>
+                    <div class="flex-1"><label class="nest-label">Email Address</label><input type="email" id="p_email" class="nest-input"></div>
                 </div>
                 <label class="nest-label mt-2">Home Address</label><input type="text" id="p_address" class="nest-input">
 
                 <div class="nest-header text-[0.7rem] text-[#00d1b2] uppercase mt-4 border-b border-slate-100 pb-1">Second Parent / Partner</div>
-                <div class="grid grid-cols-2 gap-2 mt-2">
-                    <div><label class="nest-label">Full Name</label><input type="text" id="p_p2_name" class="nest-input"></div>
-                    <div><label class="nest-label">Relationship</label><input type="text" id="p_p2_rel" class="nest-input"></div>
+                <div class="flex gap-2 mt-2">
+                    <div class="flex-1"><label class="nest-label">Full Name</label><input type="text" id="p_p2_name" class="nest-input"></div>
+                    <div class="flex-1"><label class="nest-label">Relationship</label><input type="text" id="p_p2_rel" class="nest-input"></div>
                 </div>
-                <div class="grid grid-cols-2 gap-2 mt-2">
-                    <div><label class="nest-label">Phone Number</label><input type="text" id="p_p2_phone" class="nest-input"></div>
-                    <div><label class="nest-label">Email Address</label><input type="email" id="p_p2_email" class="nest-input"></div>
+                <div class="flex gap-2 mt-2">
+                    <div class="flex-1"><label class="nest-label">Phone Number</label><input type="text" id="p_p2_phone" class="nest-input"></div>
+                    <div class="flex-1"><label class="nest-label">Email Address</label><input type="email" id="p_p2_email" class="nest-input"></div>
                 </div>
                 <label class="nest-label mt-2">Home Address (if different)</label><input type="text" id="p_p2_address" class="nest-input">
 
                 <div class="nest-header text-[0.7rem] text-[#00d1b2] uppercase mt-4 border-b border-slate-100 pb-1">Emergency Contacts</div>
-                <div class="grid grid-cols-3 gap-2 mt-2">
-                    <div><label class="nest-label">EC1 Name</label><input type="text" id="p_e1_name" class="nest-input"></div>
-                    <div><label class="nest-label">Relation</label><input type="text" id="p_e1_rel" class="nest-input"></div>
-                    <div><label class="nest-label">Phone</label><input type="text" id="p_e1_phone" class="nest-input"></div>
+                <div class="flex gap-2 mt-2">
+                    <div class="flex-[1.5]"><label class="nest-label">Contact 1 Name</label><input type="text" id="p_e1_name" class="nest-input"></div>
+                    <div class="flex-1"><label class="nest-label">Relationship</label><input type="text" id="p_e1_rel" class="nest-input"></div>
+                    <div class="flex-1"><label class="nest-label">Phone</label><input type="text" id="p_e1_phone" class="nest-input"></div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 mt-2">
-                    <div><label class="nest-label">EC2 Name</label><input type="text" id="p_e2_name" class="nest-input"></div>
-                    <div><label class="nest-label">Relation</label><input type="text" id="p_e2_rel" class="nest-input"></div>
-                    <div><label class="nest-label">Phone</label><input type="text" id="p_e2_phone" class="nest-input"></div>
+                <div class="flex gap-2 mt-2">
+                    <div class="flex-[1.5]"><label class="nest-label">Contact 2 Name</label><input type="text" id="p_e2_name" class="nest-input"></div>
+                    <div class="flex-1"><label class="nest-label">Relationship</label><input type="text" id="p_e2_rel" class="nest-input"></div>
+                    <div class="flex-1"><label class="nest-label">Phone</label><input type="text" id="p_e2_phone" class="nest-input"></div>
                 </div>
             </div>
             <button class="nest-btn nest-btn-secondary w-full mt-4" onclick="toggleParentMode()">Toggle New/Existing</button>
@@ -86,8 +88,8 @@
         <h2 class="nest-header"><span class="badge-step">2</span> Student Profile</h2>
         <div id="student-profile-view" style="display:none;" class="profile-display">
             <button class="edit-pill" onclick="unlockStep('step-student', 'student-profile-view')">Modify</button>
-            <div class="profile-item"><div class="nest-label">Student</div><div id="disp-s-name" class="profile-value font-semibold text-sm"></div></div>
-            <div class="profile-item"><div class="nest-label">DOB</div><div id="disp-s-dob" class="profile-value font-semibold text-sm"></div></div>
+            <div class="profile-item"><div class="nest-label">Student</div><div id="disp-s-name" class="profile-value"></div></div>
+            <div class="profile-item"><div class="nest-label">DOB</div><div id="disp-s-dob" class="profile-value"></div></div>
         </div>
         <div class="step-content">
             <div id="student-select-mode">
@@ -95,18 +97,18 @@
                 <select id="s_select_id" class="nest-select"></select>
             </div>
             <div id="student-create-mode" style="display:none;">
-                <div class="grid grid-cols-2 gap-2">
-                    <div><label class="nest-label">Full Legal Name</label><input type="text" id="s_name_new" class="nest-input"></div>
-                    <div><label class="nest-label">Preferred Name</label><input type="text" id="s_pref_name" class="nest-input"></div>
+                <div class="flex gap-2">
+                    <div class="flex-[1.5]"><label class="nest-label">Full Legal Name</label><input type="text" id="s_name_new" class="nest-input"></div>
+                    <div class="flex-1"><label class="nest-label">Preferred Name</label><input type="text" id="s_pref_name" class="nest-input"></div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 mt-2">
-                    <div><label class="nest-label">Date of Birth</label><input type="date" id="s_dob_new" class="nest-input"></div>
-                    <div><label class="nest-label">Gender</label><input type="text" id="s_gender" class="nest-input"></div>
-                    <div><label class="nest-label">Nationality</label><input type="text" id="s_nat" class="nest-input"></div>
+                <div class="flex gap-2 mt-2">
+                    <div class="flex-1"><label class="nest-label">Date of Birth</label><input type="date" id="s_dob_new" class="nest-input"></div>
+                    <div class="flex-1"><label class="nest-label">Gender</label><input type="text" id="s_gender" class="nest-input"></div>
+                    <div class="flex-1"><label class="nest-label">Nationality</label><input type="text" id="s_nat" class="nest-input"></div>
                 </div>
-                <div class="grid grid-cols-2 gap-2 mt-2">
-                    <div><label class="nest-label">Primary Language</label><input type="text" id="s_lang" class="nest-input"></div>
-                    <div><label class="nest-label">Home Address</label><input type="text" id="s_address" class="nest-input"></div>
+                <div class="flex gap-2 mt-2">
+                    <div class="flex-1"><label class="nest-label">Primary Language</label><input type="text" id="s_lang" class="nest-input"></div>
+                    <div class="flex-[1.5]"><label class="nest-label">Home Address</label><input type="text" id="s_address" class="nest-input"></div>
                 </div>
             </div>
             <button id="student-toggle-btn" class="nest-btn nest-btn-secondary w-full mt-4" onclick="toggleStudentMode()">Toggle New/Existing</button>
@@ -118,7 +120,7 @@
         <h2 class="nest-header"><span class="badge-step">3</span> Nest Assessment</h2>
         <div id="assessment-summary-view" style="display:none;" class="profile-display">
             <button class="edit-pill" onclick="unlockStep('step-assessment', 'assessment-summary-view')">Modify</button>
-            <div class="profile-item"><div class="nest-label">Teacher</div><div id="disp-a-teacher" class="profile-value font-semibold text-sm"></div></div>
+            <div class="profile-item"><div class="nest-label">Teacher</div><div id="disp-a-teacher" class="profile-value"></div></div>
             <div class="profile-item full-width-summary" style="margin-top:10px;">
                 <div class="nest-label">Evaluation Results</div>
                 <div id="disp-a-results-list" style="margin-top:5px;"></div>
@@ -136,7 +138,7 @@
     <div id="step-session" class="nest-step-container nest-step-locked">
         <h2 class="nest-header"><span class="badge-step">4</span> Academic Session</h2>
         <div id="session-profile-view" style="display:none;" class="profile-display">
-            <div class="profile-item"><div class="nest-label">Session Slot</div><div id="disp-sess-name" class="profile-value font-semibold text-sm"></div></div>
+            <div class="profile-item"><div class="nest-label">Session Slot</div><div id="disp-sess-name" class="profile-value"></div></div>
         </div>
         <div class="step-content">
             <label class="nest-label">Select Session</label>
@@ -160,7 +162,7 @@
                 <label class="nest-label">Authorized Name</label><input type="text" id="pu_name" class="nest-input">
                 <label class="nest-label mt-2">Relationship</label><input type="text" id="pu_rel" class="nest-input">
                 <label class="nest-label mt-2">Phone Number</label><input type="text" id="pu_phone" class="nest-input">
-                <button onclick="addPickupLocal()" class="nest-btn nest-btn-secondary mt-4">+ Add Contact</button>
+                <button onclick="addPickupLocal()" class="nest-btn nest-btn-secondary mt-4" style="width:auto; padding: 10px 20px;">+ Add Contact</button>
             </div>
             <button onclick="finalizePickups()" class="nest-btn nest-btn-teal w-full mt-4">Finalize Pickup List</button>
         </div>
@@ -169,9 +171,9 @@
     <div id="step-final" class="nest-step-container nest-step-locked">
         <h2 class="nest-header"><span class="badge-step">6</span> Finalize Enrollment</h2>
         <div class="step-content">
-            <div class="grid grid-cols-2 gap-4">
-                <div><label class="nest-label">Enrollment Date</label><input type="date" id="final_enrolled_date" class="nest-input"></div>
-                <div><label class="nest-label">Projected Start Date</label><input type="date" id="final_start_date" class="nest-input"></div>
+            <div class="flex gap-4">
+                <div class="flex-1"><label class="nest-label">Enrollment Date</label><input type="date" id="final_enrolled_date" class="nest-input"></div>
+                <div class="flex-1"><label class="nest-label">Projected Start Date</label><input type="date" id="final_start_date" class="nest-input"></div>
             </div>
             <button onclick="submitFinalEnrollment()" class="nest-btn nest-btn-secondary w-full mt-6" style="background:var(--nest-dark);">GENERATE MASTER FILE & ENROLL</button>
         </div>
@@ -265,8 +267,8 @@
                 qGrid.innerHTML += `
                     <div class="qa-row" data-question-text="${item.the_question}">
                         <div><input type="checkbox" data-qid="${item.id}" onchange="handleQS(this)"></div>
-                        <div class="question-label font-medium">${item.the_question}</div>
-                        <div class="q-select-ans"><select class="ans-val nest-select py-1 text-xs">${optionsHtml}</select></div>
+                        <div class="question-label">${item.the_question}</div>
+                        <div class="q-select-ans"><select class="ans-val">${optionsHtml}</select></div>
                     </div>`;
             });
         } catch(e) { console.error("Sync failed", e); }
