@@ -247,23 +247,36 @@
         const fid = localStorage.getItem('locked_franchise_id');
         if (!fid) return;
 
-        // Ensure NEST_ENDPOINTS is loaded from external script
-        if (typeof NEST_ENDPOINTS === 'undefined') {
-            await new Promise(resolve => setTimeout(resolve, 500)); // Brief wait for script
-            if (typeof NEST_ENDPOINTS === 'undefined') return console.error("api_config.js load failed.");
-        }
+        // 1. Robust check for NEST_ENDPOINTS from api_config.js
+        const getEndpoints = () => {
+            return new Promise((resolve) => {
+                if (window.NEST_ENDPOINTS) return resolve(window.NEST_ENDPOINTS);
+                const interval = setInterval(() => {
+                    if (window.NEST_ENDPOINTS) {
+                        clearInterval(interval);
+                        resolve(window.NEST_ENDPOINTS);
+                    }
+                }, 100);
+                setTimeout(() => { clearInterval(interval); resolve(null); }, 3000);
+            });
+        };
+
+        const endpoints = await getEndpoints();
+        if (!endpoints) return console.error("api_config.js endpoints not loaded.");
 
         try {
-            const endpoints = NEST_ENDPOINTS;
+            // 2. Fetch Data
             const [sessionRes, studentRes] = await Promise.all([
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`)
             ]);
 
-            let sessions = await sessionRes.json();
-            let students = await studentRes.json();
-            if (!Array.isArray(sessions)) sessions = [];
-            if (!Array.isArray(students)) students = [];
+            let sessionsRaw = await sessionRes.json();
+            let studentsRaw = await studentRes.json();
+            
+            // Handle Xano's possible object wrapping
+            let sessions = Array.isArray(sessionsRaw) ? sessionsRaw : (sessionsRaw.items || []);
+            let students = Array.isArray(studentsRaw) ? studentsRaw : (studentsRaw.items || []);
 
             const now = new Date();
             const oneDay = 24 * 60 * 60 * 1000;
@@ -272,17 +285,18 @@
 
             const activeStudents = students.filter(s => s.is_active === true);
             const withdrawnStudents = students.filter(s => s.is_active === false);
-            const totalActiveCount = activeStudents.length;
             
             const sessionCounts = {};
-            activeStudents.forEach(s => { if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1; });
+            activeStudents.forEach(s => { 
+                if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1; 
+            });
 
             const getCount = (list, minAge, maxAge) => list.filter(s => {
                 const age = now - s.created_at;
                 return age >= minAge && age < maxAge;
             }).length;
 
-            // ENROLLMENT & WITHDRAWAL PULSE
+            // 3. Update Enrollment Metrics
             document.getElementById('perf-today-active').innerText = getCount(activeStudents, 0, oneDay);
             document.getElementById('perf-today-wth').innerText = getCount(withdrawnStudents, 0, oneDay);
             document.getElementById('perf-prev-day-active').innerText = getCount(activeStudents, oneDay, oneDay * 2);
@@ -290,82 +304,98 @@
 
             document.getElementById('perf-week-active').innerText = getCount(activeStudents, 0, oneWeek);
             document.getElementById('perf-week-wth').innerText = getCount(withdrawnStudents, 0, oneWeek);
-            document.getElementById('perf-prev-week-active').innerText = getCount(activeStudents, oneWeek, oneWeek * 2);
-            document.getElementById('perf-prev-week-wth').innerText = getCount(withdrawnStudents, oneWeek, oneWeek * 2);
-
             document.getElementById('perf-month-active').innerText = getCount(activeStudents, 0, oneMonth);
             document.getElementById('perf-month-wth').innerText = getCount(withdrawnStudents, 0, oneMonth);
-            document.getElementById('perf-prev-month-active').innerText = getCount(activeStudents, oneMonth, oneMonth * 2);
-            document.getElementById('perf-prev-month-wth').innerText = getCount(withdrawnStudents, oneMonth, oneMonth * 2);
+            document.getElementById('perf-total-active').innerText = activeStudents.length;
 
-            document.getElementById('perf-total-active').innerText = totalActiveCount;
-
-            // REVENUE ANALYTICS
+            // 4. Update Revenue Analytics
             const TUITION = 3500;
             document.getElementById('rev-daily').innerText = (getCount(activeStudents, 0, oneDay) * TUITION).toLocaleString();
             document.getElementById('rev-prev-daily').innerText = (getCount(activeStudents, oneDay, oneDay * 2) * TUITION).toLocaleString();
             document.getElementById('rev-weekly').innerText = (getCount(activeStudents, 0, oneWeek) * TUITION).toLocaleString();
-            document.getElementById('rev-prev-weekly').innerText = (getCount(activeStudents, oneWeek, oneWeek * 2) * TUITION).toLocaleString();
             document.getElementById('rev-monthly').innerText = (getCount(activeStudents, 0, oneMonth) * TUITION).toLocaleString();
-            document.getElementById('rev-prev-monthly').innerText = (getCount(activeStudents, oneMonth, oneMonth * 2) * TUITION).toLocaleString();
 
-            window.calculateROI = () => {
-                const fee = parseFloat(document.getElementById('inv-fee')?.value) || 350000;
-                const wages = parseFloat(document.getElementById('exp-wages')?.value) || 0;
-                const extraWages = wages * 0.10;
-                const totalMonthlyRev = totalActiveCount * TUITION;
-                const royalties = totalMonthlyRev * 0.08;
-                
-                const totalMonthlyOpex = (parseFloat(document.getElementById('exp-rent')?.value) || 0) + wages + 
-                                       (parseFloat(document.getElementById('exp-power')?.value) || 0) + 
-                                       (parseFloat(document.getElementById('exp-water')?.value) || 0) + 
-                                       (parseFloat(document.getElementById('exp-ads')?.value) || 0) + 
-                                       (parseFloat(document.getElementById('exp-other')?.value) || 0) + 
-                                       extraWages + royalties;
-
-                const dailyOpex = totalMonthlyOpex / 30;
-                const totalDailyRev = totalMonthlyRev / 30;
-                const netDaily = totalDailyRev - dailyOpex;
-                const recoveryPercent = fee > 0 ? Math.min((netDaily / fee) * 100, 100).toFixed(4) : 0;
-
-                if (document.getElementById('calc-extra-wages')) document.getElementById('calc-extra-wages').innerText = "₱" + Math.round(extraWages).toLocaleString();
-                if (document.getElementById('calc-royalties')) document.getElementById('calc-royalties').innerText = "₱" + Math.round(royalties).toLocaleString();
-                
-                document.getElementById('label-current-val').innerText = `₱${Math.round(netDaily).toLocaleString()}`;
-                document.getElementById('label-total-val').innerText = `₱${fee.toLocaleString()}`;
-                document.getElementById('recovery-bar').style.width = Math.max(recoveryPercent * 10, 0.5) + "%";
-            };
-
-            window.calculateROI();
-            
+            // 5. Render Session Monitor (Filtered by Display: Yes)
             const tbody = document.getElementById('perf-sessions-body');
-            tbody.innerHTML = '';
-            sessions.forEach(session => {
+            tbody.innerHTML = ''; 
+
+            const displaySessions = sessions.filter(s => s.display === 'yes');
+
+            if (displaySessions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-[10px] font-black text-slate-300 uppercase italic">No sessions marked for display</td></tr>';
+            }
+
+            displaySessions.forEach(session => {
                 const count = sessionCounts[session.id] || 0;
                 const max = session.max_students || 15;
                 const percent = Math.min((count / max) * 100, 100);
-                const barColor = percent >= 100 ? 'bg-red-500' : (percent > 80 ? 'bg-orange-400' : 'bg-[#00d1b2]');
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-6 py-2">
-                            <div class="flex flex-col">
-                                <span class="text-[10px] font-black text-slate-700 uppercase leading-none">${session.name}</span>
-                                <span class="text-[8px] font-bold text-slate-400 uppercase mt-0.5 tracking-tighter italic">${session.start_time_text || '--:--'} - ${session.end_time_text || '--:--'}</span>
+                
+                let barColor = 'bg-[#00d1b2]';
+                if (percent >= 100) barColor = 'bg-red-500';
+                else if (percent > 80) barColor = 'bg-orange-400';
+
+                const row = `
+                    <tr class="hover:bg-slate-50/50 transition-colors border-b border-slate-50">
+                        <td class="px-6 py-3">
+                            <div class="flex flex-col text-left">
+                                <span class="text-[10px] font-black text-slate-700 uppercase leading-none">${session.name || 'Unnamed'}</span>
+                                <span class="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-tighter italic">${session.start_time_text || '--'} - ${session.end_time_text || '--'}</span>
                             </div>
                         </td>
-                        <td class="px-6 py-2 text-center">
+                        <td class="px-6 py-3 text-center">
                             <span class="text-[10px] font-black text-slate-800">${count}</span>
                             <span class="text-[9px] font-bold text-slate-300">/ ${max}</span>
                         </td>
-                        <td class="px-6 py-2">
+                        <td class="px-6 py-3">
                             <div class="flex items-center gap-3">
-                                <div class="flex-grow h-1 bg-slate-100 rounded-full overflow-hidden"><div class="h-full ${barColor} transition-all duration-500" style="width: ${percent}%"></div></div>
-                                <span class="text-[9px] font-black text-slate-400 w-6 text-right">${Math.round(percent)}%</span>
+                                <div class="flex-grow h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full ${barColor} transition-all duration-700 shadow-sm" style="width: ${percent}%"></div>
+                                </div>
+                                <span class="text-[9px] font-black text-slate-400 w-8 text-right">${Math.round(percent)}%</span>
                             </div>
                         </td>
                     </tr>`;
+                tbody.insertAdjacentHTML('beforeend', row);
             });
-        } catch (e) { console.error("Sync Failure:", e); }
+
+            // Trigger ROI Calc logic if function exists
+            if (window.calculateROI) window.calculateROI();
+
+        } catch (e) { 
+            console.error("Dashboard Sync Failure:", e);
+            document.getElementById('perf-sessions-body').innerHTML = '<tr><td colspan="3" class="p-10 text-center text-red-300 text-[9px] font-bold uppercase tracking-widest">Sync Failure</td></tr>';
+        }
     }
+
+    // Existing calculateROI function definition
+    window.calculateROI = () => {
+        const fee = parseFloat(document.getElementById('inv-fee')?.value) || 350000;
+        const wages = parseFloat(document.getElementById('exp-wages')?.value) || 0;
+        const extraWages = wages * 0.10;
+        // Calculation assumes TUITION is constant 3500
+        const totalActiveCount = parseInt(document.getElementById('perf-total-active').innerText) || 0;
+        const totalMonthlyRev = totalActiveCount * 3500;
+        const royalties = totalMonthlyRev * 0.08;
+        
+        const totalMonthlyOpex = (parseFloat(document.getElementById('exp-rent')?.value) || 0) + wages + 
+                                (parseFloat(document.getElementById('exp-power')?.value) || 0) + 
+                                (parseFloat(document.getElementById('exp-water')?.value) || 0) + 
+                                (parseFloat(document.getElementById('exp-ads')?.value) || 0) + 
+                                (parseFloat(document.getElementById('exp-other')?.value) || 0) + 
+                                extraWages + royalties;
+
+        const dailyOpex = totalMonthlyOpex / 30;
+        const totalDailyRev = totalMonthlyRev / 30;
+        const netDaily = totalDailyRev - dailyOpex;
+        const recoveryPercent = fee > 0 ? Math.min((netDaily / fee) * 100, 100).toFixed(4) : 0;
+
+        if (document.getElementById('calc-extra-wages')) document.getElementById('calc-extra-wages').innerText = "₱" + Math.round(extraWages).toLocaleString();
+        if (document.getElementById('calc-royalties')) document.getElementById('calc-royalties').innerText = "₱" + Math.round(royalties).toLocaleString();
+        
+        document.getElementById('label-current-val').innerText = `₱${Math.round(netDaily).toLocaleString()}`;
+        document.getElementById('label-total-val').innerText = `₱${fee.toLocaleString()}`;
+        document.getElementById('recovery-bar').style.width = Math.max(recoveryPercent * 10, 0.5) + "%";
+    };
+
     initPerformance();
 </script>
