@@ -136,8 +136,6 @@
             </div>
             <div class="flex gap-2 w-full md:w-auto justify-end">
                 <button class="whitespace-nowrap text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2 rounded-xl shadow-sm hover:shadow-md transition-all">Create Session Listing</button>
-                <button class="whitespace-nowrap text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2 rounded-xl shadow-sm hover:shadow-md transition-all">Button 2</button>
-                <button class="whitespace-nowrap text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2 rounded-xl shadow-sm hover:shadow-md transition-all">Button 3</button>
             </div>
         </div>
         
@@ -198,7 +196,10 @@
             <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400">Rent Deposits</label><input type="number" id="inv-rent-dep" value="45000" class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-sm font-bold outline-none focus:border-[#00d1b2]"></div>
             <div class="space-y-1"><label class="text-[9px] font-black uppercase text-slate-400">Utility Deposits</label><input type="number" id="inv-util-dep" value="10000" class="w-full bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-sm font-bold outline-none focus:border-[#00d1b2]"></div>
         </div>
-        <div class="p-4 flex gap-3"><button onclick="document.getElementById('investment-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 font-black py-3 rounded-xl uppercase text-[11px] tracking-widest hover:bg-slate-200 transition-all">Cancel</button><button onclick="calculateROI(); document.getElementById('investment-modal').classList.add('hidden')" class="flex-1 bg-[#00d1b2] text-white font-black py-3 rounded-xl uppercase text-[11px] tracking-widest shadow-lg shadow-[#00d1b2]/20 hover:shadow-[#00d1b2]/40 transition-all">Update Data</button></div>
+        <div class="p-4 flex gap-3">
+            <button onclick="document.getElementById('investment-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 font-black py-3 rounded-xl uppercase text-[11px] tracking-widest hover:bg-slate-200 transition-all">Cancel</button>
+            <button onclick="calculateROI(); document.getElementById('investment-modal').classList.add('hidden')" class="flex-1 bg-[#00d1b2] text-white font-black py-3 rounded-xl uppercase text-[11px] tracking-widest shadow-lg shadow-[#00d1b2]/20 hover:shadow-[#00d1b2]/40 transition-all">Update Data</button>
+        </div>
     </div>
 </div>
 
@@ -223,27 +224,45 @@
                 <div class="flex justify-between text-[10px] font-bold text-blue-600"><span>Royalties (8%):</span><span id="calc-royalties">₱0</span></div>
             </div>
         </div>
-        <div class="p-4 flex gap-3"><button onclick="document.getElementById('expense-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 font-black py-3 rounded-xl uppercase text-[11px] tracking-widest hover:bg-slate-200 transition-all">Cancel</button><button onclick="calculateROI(); document.getElementById('expense-modal').classList.add('hidden')" class="flex-1 bg-[#00d1b2] text-white font-black py-3 rounded-xl uppercase text-[11px] tracking-widest shadow-lg shadow-[#00d1b2]/20 hover:shadow-[#00d1b2]/40 transition-all">Update Data</button></div>
+        <div class="p-4 flex gap-3">
+            <button onclick="document.getElementById('expense-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 font-black py-3 rounded-xl uppercase text-[11px] tracking-widest hover:bg-slate-200 transition-all">Cancel</button>
+            <button onclick="calculateROI(); document.getElementById('expense-modal').classList.add('hidden')" class="flex-1 bg-[#00d1b2] text-white font-black py-3 rounded-xl uppercase text-[11px] tracking-widest shadow-lg shadow-[#00d1b2]/20 hover:shadow-[#00d1b2]/40 transition-all">Update Data</button>
+        </div>
     </div>
 </div>
 
 <script>
     async function initPerformance() {
-        const fid = localStorage.getItem('locked_franchise_id');
-        if (!fid) return;
-
-        const getEndpoints = () => {
+        // 1. REINFORCED WAIT: Ensure ID exists and api_config is ready
+        const getIdentity = () => {
             return new Promise((resolve) => {
-                if (window.NEST_ENDPOINTS) return resolve(window.NEST_ENDPOINTS);
+                let attempts = 0;
                 const interval = setInterval(() => {
-                    if (window.NEST_ENDPOINTS) { clearInterval(interval); resolve(window.NEST_ENDPOINTS); }
+                    const fid = localStorage.getItem('locked_franchise_id');
+                    const endpoints = window.NEST_ENDPOINTS;
+                    if (fid && endpoints) {
+                        clearInterval(interval);
+                        resolve({ fid, endpoints });
+                    }
+                    if (attempts > 50) { // Timeout after 5 seconds
+                        clearInterval(interval);
+                        resolve(null);
+                    }
+                    attempts++;
                 }, 100);
             });
         };
 
-        const endpoints = await getEndpoints();
+        const identity = await getIdentity();
+        if (!identity) {
+            console.error("Identity Lock failure in Performance Module.");
+            return;
+        }
+
+        const { fid, endpoints } = identity;
 
         try {
+            // 2. Fetch Data
             const [sessionRes, studentRes] = await Promise.all([
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`)
@@ -270,7 +289,7 @@
                 return age >= minAge && age < maxAge;
             }).length;
 
-            // Updates
+            // 3. Update Text Metrics
             document.getElementById('perf-today-active').innerText = getCount(activeStudents, 0, oneDay);
             document.getElementById('perf-today-wth').innerText = getCount(withdrawnStudents, 0, oneDay);
             document.getElementById('perf-week-active').innerText = getCount(activeStudents, 0, oneWeek);
@@ -287,13 +306,14 @@
             document.getElementById('rev-monthly').innerText = (getCount(activeStudents, 0, oneMonth) * TUITION).toLocaleString();
             document.getElementById('rev-prev-monthly').innerText = (getCount(activeStudents, oneMonth, oneMonth * 2) * TUITION).toLocaleString();
 
+            // 4. Render Session Monitor (BOOLEAN FIX)
             const tbody = document.getElementById('perf-sessions-body');
             tbody.innerHTML = ''; 
 
             const displaySessions = sessions.filter(s => s.display === true);
 
             if (displaySessions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-[10px] font-black text-slate-300 uppercase italic">No sessions set to Display</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-[10px] font-black text-slate-300 uppercase italic">No sessions marked for display.</td></tr>';
             }
 
             displaySessions.forEach(session => {
@@ -307,11 +327,18 @@
                         <td class="px-6 py-3">
                             <div class="flex flex-col text-left">
                                 <span class="text-[10px] font-black text-slate-700 uppercase leading-none">${session.name}</span>
-                                <span class="text-[8px] font-bold text-slate-400 uppercase mt-1 italic">${session.start_time_text || '--'}</span>
+                                <span class="text-[8px] font-bold text-slate-400 uppercase mt-1 italic">${session.start_time_text || '--'} - ${session.end_time_text || '--'}</span>
                             </div>
                         </td>
-                        <td class="px-6 py-3 text-center"><span class="text-[10px] font-black text-slate-800">${count}</span> <span class="text-[9px] font-bold text-slate-300">/ ${max}</span></td>
-                        <td class="px-6 py-3"><div class="flex items-center gap-3"><div class="flex-grow h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full ${barColor} transition-all duration-700" style="width: ${percent}%"></div></div><span class="text-[9px] font-black text-slate-400 w-8 text-right">${Math.round(percent)}%</span></div></td>
+                        <td class="px-6 py-3 text-center text-[10px] font-black">${count} / ${max}</td>
+                        <td class="px-6 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="flex-grow h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full ${barColor} transition-all duration-700" style="width: ${percent}%"></div>
+                                </div>
+                                <span class="text-[9px] font-black text-slate-400 w-8 text-right">${Math.round(percent)}%</span>
+                            </div>
+                        </td>
                     </tr>`);
             });
 
