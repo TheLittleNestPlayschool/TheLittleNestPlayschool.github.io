@@ -160,6 +160,26 @@ const NEST_ENDPOINTS = {
         meta:   "https://x8ki-letl-twmt.n7.xano.io/api:535aM7Wn/student_progress_questions/{student_progress_questions_id}"
     },
 
+    // --- PIXIFY DOWNLOADED (API Group #405102 | Workspace: LjfD10pY) ---
+    pixify_downloaded: {
+        list:   "https://x8ki-letl-twmt.n7.xano.io/api:LjfD10pY/pixify_downloaded",
+        post:   "https://x8ki-letl-twmt.n7.xano.io/api:LjfD10pY/pixify_downloaded",
+        get:    "https://x8ki-letl-twmt.n7.xano.io/api:LjfD10pY/pixify_downloaded/{pixify_downloaded_id}",
+        patch:  "https://x8ki-letl-twmt.n7.xano.io/api:LjfD10pY/pixify_downloaded/{pixify_downloaded_id}",
+        delete: "https://x8ki-letl-twmt.n7.xano.io/api:LjfD10pY/pixify_downloaded/{pixify_downloaded_id}",
+        meta:   "https://x8ki-letl-twmt.n7.xano.io/api:LjfD10pY/pixify_downloaded/{pixify_downloaded_id}"
+    },
+
+    // --- PIXIFY HISTORY (API Group #405103 | Workspace: SHRYwhhe) ---
+    pixify_history: {
+        list:   "https://x8ki-letl-twmt.n7.xano.io/api:SHRYwhhe/pixify_history",
+        post:   "https://x8ki-letl-twmt.n7.xano.io/api:SHRYwhhe/pixify_history",
+        get:    "https://x8ki-letl-twmt.n7.xano.io/api:SHRYwhhe/pixify_history/{pixify_history_id}",
+        patch:  "https://x8ki-letl-twmt.n7.xano.io/api:SHRYwhhe/pixify_history/{pixify_history_id}",
+        delete: "https://x8ki-letl-twmt.n7.xano.io/api:SHRYwhhe/pixify_history/{pixify_history_id}",
+        meta:   "https://x8ki-letl-twmt.n7.xano.io/api:SHRYwhhe/pixify_history/{pixify_history_id}"
+    },
+
     // --- UPLOADER (API Group #342919 | Workspace: I12II1nL) ---
     uploader: {
         register:        "https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/uploader_register",
