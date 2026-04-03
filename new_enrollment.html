@@ -195,8 +195,6 @@
 
 <script>
 (function() {
-    // API_BASE is now handled by api_config.js using window.NEST_ENDPOINTS
-
     let state = { 
         currentParentId: null, currentStudentId: null, currentFranchiseId: null, 
         pickupContacts: [], allParents: [], selectedQuestionCount: 0 
@@ -224,6 +222,13 @@
     };
 
     async function initNetwork() {
+        // POLL FOR ENDPOINTS: Ensures api_config.js is fully loaded before execution
+        if (!window.NEST_ENDPOINTS) {
+            console.log("Waiting for Config...");
+            setTimeout(initNetwork, 100);
+            return;
+        }
+
         try {
             const res = await fetch(window.NEST_ENDPOINTS.franchise);
             const franchises = await res.json();
@@ -250,12 +255,8 @@
         } catch(e) { console.error("Identity Sync failed", e); }
     }
     
-    // Safety check for api_config load
-    if (window.NEST_ENDPOINTS) {
-        initNetwork();
-    } else {
-        window.addEventListener('load', initNetwork);
-    }
+    // Start Initialization immediately
+    initNetwork();
 
     window.lockLocation = async () => {
         const val = document.getElementById('ho_franchise_selector').value;
