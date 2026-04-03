@@ -87,7 +87,7 @@
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
             <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-2">
                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Revenue Analytics</p>
-                <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest">Current / Prev</span>
+                <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest text-right">Current / Prev</span>
             </div>
             <div class="space-y-3">
                 <div class="flex justify-between items-center">
@@ -119,8 +119,8 @@
                     <option value="7">7 Days</option>
                 </select>
             </div>
-            <div id="billing-list" class="space-y-1.5 max-h-[100px] overflow-y-auto pr-1 custom-scrollbar">
-                <p class="text-[8px] text-slate-300 italic text-center py-4">Synchronizing parents...</p>
+            <div id="billing-list" class="space-y-1.5 max-h-[100px] overflow-y-auto pr-1 custom-scrollbar text-left">
+                <p class="text-[8px] text-slate-300 italic text-center py-4 uppercase">Syncing...</p>
             </div>
         </div>
     </div>
@@ -147,12 +147,12 @@
             </div>
             <div class="flex gap-2">
                 <button onclick="document.getElementById('investment-modal').classList.remove('hidden')" class="text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl shadow-sm transition-all">Investment</button>
-                <button onclick="document.getElementById('expense-modal').classList.remove('hidden')" class="text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl shadow-sm transition-all">Expenses</button>
+                <button onclick="document.getElementById('expense-modal').classList.add('hidden')" class="text-[9px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-4 py-2.5 rounded-xl shadow-sm transition-all">Expenses</button>
             </div>
         </div>
         <div class="space-y-4">
             <div class="h-5 bg-slate-50 border border-slate-100 rounded-full overflow-hidden p-1">
-                <div id="recovery-bar" class="h-full bg-gradient-to-r from-[#00d1b2] to-[#00b89c] rounded-full transition-all duration-1000" style="width: 0.5%"></div>
+                <div id="recovery-bar" class="h-full bg-gradient-to-r from-[#00d1b2] to-[#00b89c] rounded-full transition-all duration-1000 shadow-sm" style="width: 0.5%"></div>
             </div>
             <div class="flex justify-between items-start px-1 mt-[-8px]">
                 <div class="flex flex-col text-left">
@@ -169,147 +169,126 @@
 </div>
 
 <script>
-    (function() {
-        async function runInit() {
-            const getIdentity = () => {
-                return new Promise((resolve) => {
-                    let attempts = 0;
-                    const interval = setInterval(() => {
-                        const fid = localStorage.getItem('locked_franchise_id');
-                        const endpoints = window.NEST_ENDPOINTS;
-                        
-                        // Wait specifically for the endpoints object to have data
-                        if (fid && endpoints && Object.keys(endpoints).length > 0) {
-                            clearInterval(interval);
-                            resolve({ fid, endpoints });
-                        }
-                        if (attempts > 50) { 
-                            clearInterval(interval); 
-                            resolve(null); 
-                        }
-                        attempts++;
-                    }, 100);
-                });
-            };
+    // Direct Global Execution - No wrapper Bullshit
+    async function initPerformance() {
+        // Ensure constants exist
+        const fid = localStorage.getItem('locked_franchise_id');
+        const endpoints = window.NEST_ENDPOINTS;
 
-            const identity = await getIdentity();
-            if (!identity) return;
-            const { fid, endpoints } = identity;
-
-            try {
-                const [sessionRes, studentRes, profileRes, parentRes] = await Promise.all([
-                    fetch(`${endpoints.session.list}?franchise_id=${fid}`),
-                    fetch(`${endpoints.student.list}?franchise_id=${fid}`),
-                    fetch(`${endpoints.lead_profile.list}?franchise_id=${fid}`),
-                    fetch(`${endpoints.parent.list}?franchise_id=${fid}`)
-                ]);
-
-                const sessions = (await sessionRes.json()).items || (await sessionRes.json());
-                const students = (await studentRes.json()).items || (await studentRes.json());
-                const profiles = (await profileRes.json()).items || (await profileRes.json());
-                const parents = (await parentRes.json()).items || (await parentRes.json());
-
-                const now = new Date();
-                const oneDay = 24 * 60 * 60 * 1000;
-                const oneWeek = 7 * oneDay;
-                const oneMonth = 30 * oneDay;
-
-                const activeStudents = Array.isArray(students) ? students.filter(s => s.is_active === true) : [];
-                const withdrawnStudents = Array.isArray(students) ? students.filter(s => s.is_active === false) : [];
-                
-                const getCount = (list, minAge, maxAge) => list.filter(s => {
-                    const age = now - s.created_at;
-                    return age >= minAge && age < maxAge;
-                }).length;
-
-                // Pulse Metrics
-                document.getElementById('perf-today-active').innerText = getCount(activeStudents, 0, oneDay);
-                document.getElementById('perf-today-wth').innerText = getCount(withdrawnStudents, 0, oneDay);
-                document.getElementById('perf-prev-day-active').innerText = getCount(activeStudents, oneDay, oneDay * 2);
-                document.getElementById('perf-prev-day-wth').innerText = getCount(withdrawnStudents, oneDay, oneDay * 2);
-
-                document.getElementById('perf-week-active').innerText = getCount(activeStudents, 0, oneWeek);
-                document.getElementById('perf-week-wth').innerText = getCount(withdrawnStudents, 0, oneWeek);
-                document.getElementById('perf-prev-week-active').innerText = getCount(activeStudents, oneWeek, oneWeek * 2);
-                document.getElementById('perf-prev-week-wth').innerText = getCount(withdrawnStudents, oneWeek, oneWeek * 2);
-
-                document.getElementById('perf-month-active').innerText = getCount(activeStudents, 0, oneMonth);
-                document.getElementById('perf-month-wth').innerText = getCount(withdrawnStudents, 0, oneMonth);
-                document.getElementById('perf-prev-month-active').innerText = getCount(activeStudents, oneMonth, oneMonth * 2);
-                document.getElementById('perf-prev-month-wth').innerText = getCount(withdrawnStudents, oneMonth, oneMonth * 2);
-                
-                document.getElementById('perf-total-active').innerText = activeStudents.length;
-
-                // Revenue
-                const TUITION = 3500;
-                document.getElementById('rev-daily').innerText = (getCount(activeStudents, 0, oneDay) * TUITION).toLocaleString();
-                document.getElementById('rev-prev-daily').innerText = (getCount(activeStudents, oneDay, oneDay * 2) * TUITION).toLocaleString();
-                document.getElementById('rev-monthly').innerText = (getCount(activeStudents, 0, oneMonth) * TUITION).toLocaleString();
-                document.getElementById('rev-prev-monthly').innerText = (getCount(activeStudents, oneMonth, oneMonth * 2) * TUITION).toLocaleString();
-
-                // Messenger Intelligence
-                const getMsgCount = (list, type, minAge) => list.filter(m => (m.status === type && (now - m.created_at) < minAge)).length;
-                document.getElementById('msg-week-inquiry').innerText = getMsgCount(profiles, 'inquiry', oneWeek);
-                document.getElementById('msg-week-ready').innerText = getMsgCount(profiles, 'ready', oneWeek);
-                document.getElementById('msg-month-inquiry').innerText = getMsgCount(profiles, 'inquiry', oneMonth);
-                document.getElementById('msg-month-ready').innerText = getMsgCount(profiles, 'ready', oneMonth);
-                
-                const totalInq = profiles.filter(p => p.status === 'inquiry').length;
-                const totalReady = profiles.filter(p => p.status === 'ready').length;
-                const rate = totalInq > 0 ? Math.round((totalReady / totalInq) * 100) : 0;
-                document.getElementById('msg-conversion-rate').innerText = rate + "%";
-
-                // Billing List
-                const billingContainer = document.getElementById('billing-list');
-                billingContainer.innerHTML = '';
-                parents.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || '')).forEach(p => {
-                    billingContainer.insertAdjacentHTML('beforeend', `
-                        <div class="flex justify-between items-center border-b border-slate-50 pb-1 last:border-0">
-                            <span class="text-[9px] font-bold text-slate-600 truncate w-24">${p.first_name} ${p.last_name}</span>
-                            <span class="text-[8px] font-black text-[#00d1b2] tracking-tighter">Due Next</span>
-                        </div>
-                    `);
-                });
-
-                // Session Grid
-                const grid = document.getElementById('perf-sessions-body');
-                grid.innerHTML = '';
-                const sessionCounts = {};
-                activeStudents.forEach(s => { if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1; });
-
-                sessions.filter(s => s.display === true).forEach(session => {
-                    const count = sessionCounts[session.id] || 0;
-                    const max = session.max_students || 15;
-                    const percent = Math.min((count / max) * 100, 100);
-                    grid.insertAdjacentHTML('beforeend', `
-                        <div class="bg-white border border-slate-100 p-3 rounded-xl shadow-sm hover:shadow-md transition-all">
-                            <div class="flex justify-between items-start mb-2">
-                                <div class="flex flex-col">
-                                    <span class="text-[9px] font-black text-slate-700 uppercase leading-tight truncate w-32">${session.name}</span>
-                                    <span class="text-[7px] font-bold text-slate-400 italic">${session.start_time_text || '--'}</span>
-                                </div>
-                                <span class="text-[9px] font-black text-slate-800">${count}/${max}</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="flex-grow h-1 bg-slate-50 rounded-full overflow-hidden">
-                                    <div class="h-full bg-[#00d1b2] transition-all duration-700" style="width: ${percent}%"></div>
-                                </div>
-                                <span class="text-[8px] font-black text-slate-400 w-6 text-right">${Math.round(percent)}%</span>
-                            </div>
-                        </div>`);
-                });
-
-                // Final ROI Refresh
-                if (window.calculateROI) window.calculateROI();
-            } catch (e) { 
-                console.error("Dashboard Data Sync Error:", e); 
-            }
+        if (!fid || !endpoints) {
+            // Re-fire in 200ms if not ready yet
+            setTimeout(initPerformance, 200);
+            return;
         }
-        
-        // Execute the anonymous wrapper immediately
-        runInit();
-    })();
 
+        try {
+            const [sessionRes, studentRes, profileRes, parentRes] = await Promise.all([
+                fetch(`${endpoints.session.list}?franchise_id=${fid}`),
+                fetch(`${endpoints.student.list}?franchise_id=${fid}`),
+                fetch(`${endpoints.lead_profile.list}?franchise_id=${fid}`),
+                fetch(`${endpoints.parent.list}?franchise_id=${fid}`)
+            ]);
+
+            const sessions = (await sessionRes.json()).items || (await sessionRes.json());
+            const students = (await studentRes.json()).items || (await studentRes.json());
+            const profiles = (await profileRes.json()).items || (await profileRes.json());
+            const parents = (await parentRes.json()).items || (await parentRes.json());
+
+            const now = new Date();
+            const oneDay = 24 * 60 * 60 * 1000;
+            const oneWeek = 7 * oneDay;
+            const oneMonth = 30 * oneDay;
+
+            const activeStudents = Array.isArray(students) ? students.filter(s => s.is_active === true) : [];
+            const withdrawnStudents = Array.isArray(students) ? students.filter(s => s.is_active === false) : [];
+            
+            const getCount = (list, minAge, maxAge) => list.filter(s => {
+                const age = now - s.created_at;
+                return age >= minAge && age < maxAge;
+            }).length;
+
+            // ENROLLMENT PULSE
+            document.getElementById('perf-today-active').innerText = getCount(activeStudents, 0, oneDay);
+            document.getElementById('perf-today-wth').innerText = getCount(withdrawnStudents, 0, oneDay);
+            document.getElementById('perf-prev-day-active').innerText = getCount(activeStudents, oneDay, oneDay * 2);
+            document.getElementById('perf-prev-day-wth').innerText = getCount(withdrawnStudents, oneDay, oneDay * 2);
+
+            document.getElementById('perf-week-active').innerText = getCount(activeStudents, 0, oneWeek);
+            document.getElementById('perf-week-wth').innerText = getCount(withdrawnStudents, 0, oneWeek);
+            document.getElementById('perf-prev-week-active').innerText = getCount(activeStudents, oneWeek, oneWeek * 2);
+            document.getElementById('perf-prev-week-wth').innerText = getCount(withdrawnStudents, oneWeek, oneWeek * 2);
+
+            document.getElementById('perf-month-active').innerText = getCount(activeStudents, 0, oneMonth);
+            document.getElementById('perf-month-wth').innerText = getCount(withdrawnStudents, 0, oneMonth);
+            document.getElementById('perf-prev-month-active').innerText = getCount(activeStudents, oneMonth, oneMonth * 2);
+            document.getElementById('perf-prev-month-wth').innerText = getCount(withdrawnStudents, oneMonth, oneMonth * 2);
+            
+            document.getElementById('perf-total-active').innerText = activeStudents.length;
+
+            // REVENUE
+            const TUITION = 3500;
+            document.getElementById('rev-daily').innerText = (getCount(activeStudents, 0, oneDay) * TUITION).toLocaleString();
+            document.getElementById('rev-prev-daily').innerText = (getCount(activeStudents, oneDay, oneDay * 2) * TUITION).toLocaleString();
+            document.getElementById('rev-monthly').innerText = (getCount(activeStudents, 0, oneMonth) * TUITION).toLocaleString();
+            document.getElementById('rev-prev-monthly').innerText = (getCount(activeStudents, oneMonth, oneMonth * 2) * TUITION).toLocaleString();
+
+            // MESSENGER
+            const getMsgCount = (list, type, minAge) => list.filter(m => (m.status === type && (now - m.created_at) < minAge)).length;
+            document.getElementById('msg-week-inquiry').innerText = getMsgCount(profiles, 'inquiry', oneWeek);
+            document.getElementById('msg-week-ready').innerText = getMsgCount(profiles, 'ready', oneWeek);
+            document.getElementById('msg-month-inquiry').innerText = getMsgCount(profiles, 'inquiry', oneMonth);
+            document.getElementById('msg-month-ready').innerText = getMsgCount(profiles, 'ready', oneMonth);
+            
+            const totalInq = profiles.filter(p => p.status === 'inquiry').length;
+            const totalReady = profiles.filter(p => p.status === 'ready').length;
+            const rate = totalInq > 0 ? Math.round((totalReady / totalInq) * 100) : 0;
+            document.getElementById('msg-conversion-rate').innerText = rate + "%";
+
+            // BILLING
+            const billingContainer = document.getElementById('billing-list');
+            billingContainer.innerHTML = '';
+            parents.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || '')).forEach(p => {
+                billingContainer.insertAdjacentHTML('beforeend', `
+                    <div class="flex justify-between items-center border-b border-slate-50 pb-1 last:border-0">
+                        <span class="text-[9px] font-bold text-slate-600 truncate w-24">${p.first_name} ${p.last_name}</span>
+                        <span class="text-[8px] font-black text-[#00d1b2] tracking-tighter">DUE NEXT</span>
+                    </div>
+                `);
+            });
+
+            // SESSION GRID
+            const grid = document.getElementById('perf-sessions-body');
+            grid.innerHTML = '';
+            const sessionCounts = {};
+            activeStudents.forEach(s => { if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1; });
+
+            sessions.filter(s => s.display === true).forEach(session => {
+                const count = sessionCounts[session.id] || 0;
+                const max = session.max_students || 15;
+                const percent = Math.min((count / max) * 100, 100);
+                grid.insertAdjacentHTML('beforeend', `
+                    <div class="bg-white border border-slate-100 p-3 rounded-xl shadow-sm hover:shadow-md transition-all">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex flex-col">
+                                <span class="text-[9px] font-black text-slate-700 uppercase leading-tight truncate w-32">${session.name}</span>
+                                <span class="text-[7px] font-bold text-slate-400 italic">${session.start_time_text || '--'}</span>
+                            </div>
+                            <span class="text-[9px] font-black text-slate-800">${count}/${max}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex-grow h-1 bg-slate-50 rounded-full overflow-hidden">
+                                <div class="h-full bg-[#00d1b2] transition-all duration-700" style="width: ${percent}%"></div>
+                            </div>
+                            <span class="text-[8px] font-black text-slate-400 w-6 text-right">${Math.round(percent)}%</span>
+                        </div>
+                    </div>`);
+            });
+
+            if (window.calculateROI) window.calculateROI();
+        } catch (e) { console.error("Identity Data Sync Error:", e); }
+    }
+
+    // ROI
     window.calculateROI = () => {
         const fee = 350000;
         const totalActiveCount = parseInt(document.getElementById('perf-total-active').innerText) || 0;
@@ -319,6 +298,9 @@
         document.getElementById('label-total-val').innerText = `₱${fee.toLocaleString()}`;
         document.getElementById('recovery-bar').style.width = Math.max(recoveryPercent * 10, 0.5) + "%";
     };
+
+    // INITIAL TRIGGER
+    initPerformance();
 </script>
 
 <style>
