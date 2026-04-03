@@ -1,120 +1,194 @@
-<div class="max-w-6xl mx-auto space-y-8">
-    <div class="flex justify-between items-end border-b border-slate-200 pb-6">
+<div class="max-w-7xl mx-auto space-y-10">
+    
+    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between gap-6">
         <div>
             <h2 class="text-3xl font-black text-slate-800 tracking-tight">Pixify! AI Intelligence</h2>
             <p class="text-slate-500 font-medium">Transform classroom photos into privacy-safe Pixar art.</p>
         </div>
-        <div class="text-right">
+        
+        <div class="flex items-center gap-4">
             <span class="bg-[#00d1b2]/10 text-[#00d1b2] px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest">
                 Rate: ₱8.00 / Image
             </span>
+            
+            <button onclick="document.getElementById('fileInput').click()" class="bg-slate-100 text-slate-700 px-5 py-3 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors flex items-center gap-2">
+                <span>➕</span> Add Photos
+            </button>
+            
+            <button id="go-button" onclick="startBatchProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg hover:shadow-xl hover:scale-105 transition-all animate-pulse">
+                🚀 Pixify! [0]
+            </button>
         </div>
-    </div>
 
-    <div id="upload-container" class="relative group border-2 border-dashed border-slate-300 rounded-3xl p-12 transition-all hover:border-[#00d1b2] hover:bg-[#00d1b2]/5 flex flex-col items-center justify-center text-center cursor-pointer" onclick="document.getElementById('fileInput').click()">
         <input type="file" id="fileInput" multiple accept="image/*" class="hidden" onchange="handleSelection(event)">
-        <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <span class="text-3xl">✨</span>
+    </div>
+
+    <div class="grid grid-cols-12 gap-8">
+        
+        <div class="col-span-5 space-y-4">
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest px-4">Input Queue</h4>
+            <div id="queue-container" class="space-y-4">
+                </div>
         </div>
-        <h3 class="text-lg font-bold text-slate-700">Drop classroom photos here</h3>
-        <p class="text-slate-400 text-sm">or click to browse your device (Supports multiple images)</p>
-    </div>
 
-    <div id="processing-area" class="hidden space-y-4">
-        <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest">Active Processing</h4>
-        <div id="queue-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            </div>
-    </div>
-
-    <div class="space-y-4">
-        <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest">Processed Gallery</h4>
-        <div id="history-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            </div>
+        <div class="col-span-7 space-y-4 border-l border-slate-200 pl-8">
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest px-4">Comparison & Results</h4>
+            <div id="compare-container" class="space-y-6">
+                </div>
+        </div>
     </div>
 </div>
 
 <script>
     // Configuration
-    const PIXIFY_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify"; // Update to your actual endpoint
+    const PIXIFY_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify";
     const fid = localStorage.getItem('locked_franchise_id');
+    
+    // Internal Queue to manage the "GO!" batch
+    let fileQueue = [];
 
-    async function handleSelection(event) {
+    function handleSelection(event) {
         const files = event.target.files;
         if (!files.length) return;
 
-        document.getElementById('processing-area').classList.remove('hidden');
-        
         for (let file of files) {
-            processImage(file);
+            // Add file object to local array
+            fileQueue.push(file);
+            
+            // 1. Create a queue item (left side)
+            addQueueItemToUI(file);
         }
+        
+        // 2. Update the "GO!" button
+        updateGoButton();
     }
 
-    async function processImage(file) {
-        const queueGrid = document.getElementById('queue-grid');
-        const tempId = 'tmp-' + Math.random().toString(36).substr(2, 9);
-
-        // 1. Create Loading Placeholder
-        const placeholder = document.createElement('div');
-        placeholder.id = tempId;
-        placeholder.className = "bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm animate-pulse";
-        placeholder.innerHTML = `
-            <div class="aspect-video bg-slate-100 flex items-center justify-center">
-                <div class="text-center">
-                    <div class="w-8 h-8 border-4 border-[#00d1b2] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">AI Rendering...</p>
-                </div>
+    function addQueueItemToUI(file) {
+        const queue = document.getElementById('queue-container');
+        const tempId = 'q-' + Math.random().toString(36).substr(2, 9);
+        
+        // Create a basic card with a generic "Image" thumbnail
+        const item = document.createElement('div');
+        item.id = tempId;
+        item.dataset.fileName = file.name; // Keep filename for association later
+        item.className = "bg-white border border-slate-200 rounded-2xl p-3 flex items-center gap-4 animate-slideInLeft";
+        item.innerHTML = `
+            <div class="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center">
+                <span class="text-xl">📄</span>
+            </div>
+            <div class="flex-grow">
+                <p class="text-sm font-bold text-slate-700 truncate">${file.name}</p>
+                <p class="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Queued</p>
             </div>
         `;
-        queueGrid.prepend(placeholder);
+        queue.append(item);
+    }
 
-        // 2. Prepare Data
-        const formData = new FormData();
-        formData.append('image', file);
-        formData.append('franchise_id', fid);
-
-        try {
-            // 3. Call Xano
-            const res = await fetch(PIXIFY_API, { method: 'POST', body: formData });
-            const data = await res.json();
-
-            // 4. Move to Processed Gallery
-            placeholder.remove();
-            addToGallery(data.original_url, data.pixar_url);
-        } catch (e) {
-            console.error("Pixify Failed", e);
-            placeholder.innerHTML = `<div class="p-4 text-red-500 text-xs font-bold">Error: ${e.message}</div>`;
+    function updateGoButton() {
+        const btn = document.getElementById('go-button');
+        if (fileQueue.length > 0) {
+            btn.innerText = `🚀 Pixify! [${fileQueue.length}]`;
+            btn.classList.remove('hidden');
+        } else {
+            btn.classList.add('hidden');
         }
     }
 
-    function addToGallery(original, pixar) {
-        const gallery = document.getElementById('history-grid');
-        const card = document.createElement('div');
-        card.className = "group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all";
-        card.innerHTML = `
-            <div class="relative aspect-video overflow-hidden bg-slate-900">
-                <img src="${original}" class="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-40 transition-opacity duration-300">
-                <img src="${pixar}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+    async function startBatchProcess() {
+        // 1. Hide the queue and GO button to start
+        document.getElementById('queue-container').innerHTML = ''; // Clear queue UI
+        document.getElementById('go-button').classList.add('hidden');
+        
+        // Copy the queue so we can empty the main one
+        const activeBatch = [...fileQueue];
+        fileQueue = []; // Reset queue for next batch
+
+        for (let file of activeBatch) {
+            // Step 2: Create the comparison row (right side) with loading state
+            const rowId = createComparisonRowWithLoading(file);
+            
+            // Step 3: Run the API call
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('franchise_id', fid);
+
+            try {
+                const res = await fetch(PIXIFY_API, { method: 'POST', body: formData });
+                const data = await res.json();
                 
-                <div class="absolute bottom-3 left-3">
-                    <span class="bg-black/50 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-md font-bold uppercase tracking-widest">Pixar AI Safe</span>
+                // Step 4: Update the row with the results (Original and Pixar)
+                finalizeComparisonRow(rowId, data.original_url, data.pixar_url);
+            } catch (e) {
+                console.error("Pixify Row Failed", e);
+                // (Optional: update row with error state)
+            }
+        }
+    }
+
+    function createComparisonRowWithLoading(file) {
+        const compare = document.getElementById('compare-container');
+        const tempId = 'comp-' + Math.random().toString(36).substr(2, 9);
+        
+        const row = document.createElement('div');
+        row.id = tempId;
+        row.className = "bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm animate-fadeInDown";
+        row.innerHTML = `
+            <div class="grid grid-cols-2 gap-px bg-slate-200">
+                <div class="aspect-video bg-slate-50 flex flex-col items-center justify-center text-center">
+                    <span class="text-3xl mb-2">📸</span>
+                    <p class="text-sm font-bold text-slate-700">${file.name}</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-tight">Original</p>
+                </div>
+                <div id="${tempId}-pixar-box" class="aspect-video bg-slate-100 flex items-center justify-center">
+                    <div class="text-center animate-pulse">
+                        <div class="w-8 h-8 border-4 border-[#00d1b2] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AI Rendering...</p>
+                    </div>
                 </div>
             </div>
-            <div class="p-4 flex justify-between items-center">
+            <div class="p-4 flex items-center justify-between border-t border-slate-200">
                 <div class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Classroom Identity Protected</div>
-                <a href="${pixar}" download target="_blank" class="text-xs font-bold text-[#00d1b2] hover:underline">Download HD</a>
+                <div id="${tempId}-download-box" class="text-slate-300 text-sm font-bold italic">Waiting for result...</div>
             </div>
         `;
-        gallery.prepend(card);
+        compare.prepend(row);
+        return tempId;
+    }
+
+    function finalizeComparisonRow(rowId, originalUrl, pixarUrl) {
+        const pixarBox = document.getElementById(`${rowId}-pixar-box`);
+        const downloadBox = document.getElementById(`${rowId}-download-box`);
+
+        // Update the Pixar slot with the generated image
+        pixarBox.innerHTML = `
+            <img src="${pixarUrl}" class="w-full h-full object-cover">
+            <div class="absolute bottom-2 right-2">
+                <span class="bg-black/50 backdrop-blur-md text-white text-[9px] px-2 py-1 rounded-md font-bold uppercase tracking-widest">Pixar AI</span>
+            </div>
+        `;
+        // Make the Pixar image slot relative so the "Pixar AI" tag anchors correctly
+        pixarBox.classList.add('relative');
+
+        // Update the Download area
+        downloadBox.innerHTML = `
+            <a href="${pixarUrl}" download target="_blank" class="bg-[#00d1b2] text-white px-4 py-1.5 rounded-lg text-xs font-black uppercase hover:scale-105 hover:shadow-lg transition-all flex items-center gap-1.5">
+                <span>⬇️</span> Download HD Pixar
+            </a>
+        `;
+        downloadBox.classList.remove('text-slate-300', 'font-bold', 'italic', 'text-sm');
     }
 </script>
 
 <style>
-    /* Smooth transition for the gallery cards */
-    #history-grid > div {
-        animation: slideUp 0.4s ease-out forwards;
+    /* Unique animation timings for the different elements */
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-30px); }
+        to { opacity: 1; transform: translateX(0); }
     }
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-20px); }
         to { opacity: 1; transform: translateY(0); }
     }
+    .animate-slideInLeft { animation: slideInLeft 0.3s ease-out forwards; }
+    .animate-fadeInDown { animation: fadeInDown 0.4s ease-out forwards; }
 </style>
