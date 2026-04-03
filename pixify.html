@@ -89,6 +89,7 @@
         const container = document.getElementById('unified-container');
 
         container.innerHTML = '';
+        processedResults = [];
         
         if (tab === 'create') {
             createBtn.className = "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-white shadow-sm text-slate-800";
@@ -122,7 +123,7 @@
             }
 
             data.forEach(item => {
-                processedResults.push({ id: item.id, url: item.pixar_url, name: "Saved Image" });
+                processedResults.push({ id: item.id, url: item.pixar_url, name: "Saved Image", originalUrl: item.original_url });
                 finalizeCardPreview(`row-${item.id}`, item.pixar_url, item.id, item.original_url);
             });
         } catch (e) { console.error(e); }
@@ -184,6 +185,7 @@
         for (let item of activeBatch) {
             const cardId = `row-${item.id}`;
             const rightBox = document.getElementById(`${cardId}-right`);
+            const localOriginal = URL.createObjectURL(item.file);
             
             rightBox.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>`;
             
@@ -195,22 +197,20 @@
                 const res = await fetch(PIXIFY_RENDER_API, { method: 'POST', body: formData });
                 const data = await res.json();
                 
-                // Log to History Table INCLUDING the original URL from Xano's response if available, 
-                // or the rendered original if the API returns it.
                 const historyRes = await fetch(PIXIFY_HISTORY_API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         franchise_id: fid,
                         pixar_url: data.pixar_url,
-                        original_url: data.original_url || "", // Save original if your backend stores it
+                        original_url: data.original_url || localOriginal,
                         is_downloaded: false
                     })
                 });
                 const historyData = await historyRes.json();
 
-                processedResults.push({ id: historyData.id, url: data.pixar_url, name: item.file.name });
-                finalizeCardPreview(cardId, data.pixar_url, historyData.id, data.original_url);
+                processedResults.push({ id: historyData.id, url: data.pixar_url, name: item.file.name, originalUrl: data.original_url || localOriginal });
+                finalizeCardPreview(cardId, data.pixar_url, historyData.id, data.original_url || localOriginal);
             } catch (e) { console.error(e); }
         }
     }
@@ -219,6 +219,11 @@
         const container = document.getElementById('unified-container');
         let card = document.getElementById(cardId);
         
+        if (!originalUrl) {
+            const fallback = processedResults.find(r => r.id == fileId);
+            originalUrl = fallback ? fallback.originalUrl : "";
+        }
+
         if(!card) {
             card = document.createElement('div');
             card.id = cardId;
@@ -228,10 +233,10 @@
 
         card.innerHTML = `
             <div class="flex items-center gap-2">
-                <div class="w-16 h-16 bg-slate-50 rounded-lg overflow-hidden border border-slate-100 grayscale opacity-40">
-                    <img src="${originalUrl}" class="w-full h-full object-cover">
+                <div class="w-16 h-16 bg-slate-50 rounded-lg overflow-hidden border border-slate-100 grayscale opacity-60">
+                    <img src="${originalUrl}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/64x64?text=Original'">
                 </div>
-                <div class="text-slate-300">➜</div>
+                <div class="text-slate-300 font-bold">➜</div>
                 <div class="w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden relative shadow-inner">
                     <img src="${pixarUrl}" class="w-full h-full object-cover blur-sm opacity-50">
                     <div class="absolute inset-0 flex items-center justify-center transform rotate-[-20deg] pointer-events-none">
@@ -239,16 +244,16 @@
                     </div>
                 </div>
             </div>
-            <div class="flex-grow">
+            <div class="flex-grow ml-4">
                 <p class="text-[11px] font-bold text-slate-700">Identity Locked</p>
                 <p class="text-[9px] text-slate-400 font-bold uppercase">Ready for Download (6 Credits)</p>
             </div>
-            <div class="flex items-center gap-6 border-l border-slate-100 pl-6 h-full pt-4">
+            <div class="flex items-center gap-6 border-l border-slate-100 pl-6 h-full">
                 <div class="flex flex-col items-center gap-1">
-                    <span class="text-[7px] font-black text-slate-300 uppercase tracking-widest">Download</span>
+                    <span class="text-[7px] font-black text-slate-300 uppercase tracking-widest">Select</span>
                     <input type="checkbox" value="${fileId}" onchange="updateBatchUI()" class="download-checkbox w-6 h-6 rounded-lg border-slate-300 text-[#00d1b2] cursor-pointer">
                 </div>
-                <button onclick="document.getElementById('${cardId}').remove(); updateBatchUI();" class="text-red-400 hover:text-red-600 transition-colors pt-2">
+                <button onclick="document.getElementById('${cardId}').remove(); updateBatchUI();" class="text-red-400 hover:text-red-600 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
             </div>
@@ -300,27 +305,40 @@
         for (let id of ids) {
             const item = processedResults.find(r => r.id == id);
             const cardId = `row-${id}`;
+            const card = document.getElementById(cardId);
             
-            await fetch(PIXIFY_DOWNLOADED_API, {
-                method: 'POST',
-                body: JSON.stringify({ franchise_id: fid, pixify_history_id: id, amount: 6 }),
-                headers: { 'Content-Type': 'application/json' }
-            });
+            if(card) card.style.opacity = "0.5";
 
-            await fetch(`${PIXIFY_HISTORY_API}/${id}`, {
-                method: 'PATCH',
-                body: JSON.stringify({ is_downloaded: true }),
-                headers: { 'Content-Type': 'application/json' }
-            });
+            try {
+                await fetch(PIXIFY_DOWNLOADED_API, {
+                    method: 'POST',
+                    body: JSON.stringify({ franchise_id: fid, pixify_history_id: id, amount: 6 }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
 
-            const link = document.createElement('a');
-            link.href = item.url;
-            link.download = `Pixify_${id}.jpg`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+                await fetch(`${PIXIFY_HISTORY_API}/${id}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ is_downloaded: true }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
 
-            document.getElementById(cardId).remove();
+                const link = document.createElement('a');
+                link.href = item.url;
+                link.download = `Pixify_${id}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                if(card) {
+                    card.style.opacity = "1";
+                    card.querySelector('.flex-grow').innerHTML = `
+                        <p class="text-[11px] font-bold text-[#00d1b2]">✓ Downloaded</p>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase">Saved to your device</p>
+                    `;
+                    const cb = card.querySelector('.download-checkbox');
+                    if(cb) cb.remove();
+                }
+            } catch (err) { console.error(err); }
         }
         updateBatchUI();
     }
