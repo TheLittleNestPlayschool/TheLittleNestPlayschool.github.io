@@ -3,18 +3,18 @@
     <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between gap-6">
         <div>
             <h2 class="text-3xl font-black text-slate-800 tracking-tight">Pixify! AI Intelligence</h2>
-            <div class="flex gap-3 mt-1">
-                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold uppercase tracking-wider">Process: 3 Credits</span>
-                <span class="text-[10px] bg-[#00d1b2]/10 text-[#00d1b2] px-2 py-1 rounded font-bold uppercase tracking-wider">Download: 6 Credits</span>
+            <div class="flex gap-3 mt-1.5">
+                <span class="text-[10px] bg-slate-100 text-slate-500 px-2.5 py-1.5 rounded-full font-extrabold uppercase tracking-wider"> Render: 3 Credits</span>
+                <span class="text-[10px] bg-[#00d1b2]/10 text-[#00d1b2] px-2.5 py-1.5 rounded-full font-extrabold uppercase tracking-wider"> Download: 6 Credits</span>
             </div>
         </div>
         
         <div class="flex items-center gap-4">
-            <button onclick="document.getElementById('fileInput').click()" class="bg-slate-100 text-slate-700 px-5 py-3 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors">
+            <button onclick="document.getElementById('fileInput').click()" class="bg-slate-100 text-slate-700 px-5 py-3 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors flex items-center gap-2">
                 ➕ Add Photos
             </button>
             
-            <button id="go-button" onclick="startUnifiedProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all">
+            <button id="go-button" onclick="startUnifiedProcess()" class="hidden bg-[#00d1b2] text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:scale-105 transition-all">
                 🚀 Pixify! [0]
             </button>
         </div>
@@ -30,15 +30,13 @@
 </div>
 
 <script>
-    const PIXIFY_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify";
-    const DOWNLOAD_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_download"; 
-    const fid = localStorage.getItem('locked_franchise_id');
+    // Developer: Replace these with your actual Xano Endpoints
+    const PIXIFY_RENDER_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_render";
+    const PIXIFY_DOWNLOAD_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/pixify_download"; 
     
+    const fid = localStorage.getItem('locked_franchise_id');
     let fileQueue = []; 
 
-    /**
-     * Handles file selection and adds them to the visual queue immediately.
-     */
     function handleSelection(event) {
         const files = Array.from(event.target.files);
         if (!files.length) return;
@@ -46,19 +44,14 @@
         files.forEach(file => {
             const fileId = 'pix-' + Math.random().toString(36).substr(2, 9);
             const fileData = { id: fileId, file: file };
-            
             fileQueue.push(fileData);
-            addQueuedCardToWorkspace(fileData);
+            addQueuedCard(fileData);
         });
-        
         updateGoButton();
-        event.target.value = ''; 
+        event.target.value = '';
     }
 
-    /**
-     * Creates the initial row in the workspace.
-     */
-    function addQueuedCardToWorkspace(fileData) {
+    function addQueuedCard(fileData) {
         const workspace = document.getElementById('unified-container');
         const cardId = `row-${fileData.id}`;
         const card = document.createElement('div');
@@ -67,23 +60,23 @@
         card.id = cardId;
         card.className = "flex items-center gap-6 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm animate-fadeInLeft relative";
         card.innerHTML = `
-            <div class="w-40 aspect-video bg-slate-50 rounded-lg overflow-hidden border border-slate-100 relative flex-shrink-0">
+            <div class="w-40 aspect-video bg-slate-50 rounded-lg overflow-hidden border border-slate-100 relative">
                 <img src="${originalUrl}" class="w-full h-full object-cover">
                 <div class="absolute top-1 left-1 bg-black/40 text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-bold">Original</div>
             </div>
 
-            <div id="${cardId}-right" class="w-40 aspect-video bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-100 relative flex-shrink-0">
+            <div id="${cardId}-right" class="w-40 aspect-video bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-100">
                 <span class="text-[8px] font-black text-slate-300 uppercase">Ready</span>
             </div>
             
             <div id="${cardId}-meta" class="flex-grow">
-                <p class="text-[11px] font-bold text-slate-700 truncate max-w-[200px]">${fileData.file.name}</p>
-                <p class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tight">Cost: 3 Credits to Pixify</p>
+                <p class="text-[11px] font-bold text-slate-700 truncate">${fileData.file.name}</p>
+                <p class="text-[9px] text-[#00d1b2] font-black uppercase tracking-tight">Queued (3 Credits to render)</p>
             </div>
 
-            <div id="${cardId}-actions" class="flex items-center gap-4 border-l border-slate-100 pl-6">
-                <button onclick="removeFromWorkspace('${fileData.id}')" class="bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors">
-                    Del
+            <div id="${cardId}-actions" class="flex items-center gap-4 border-l border-slate-100 pl-6 h-full pt-4">
+                <button onclick="removeFromWorkspace('${fileData.id}')" class="text-slate-300 hover:text-red-500 transition-colors">
+                    <span class="text-[10px] font-bold px-2">Del Queue</span>
                 </button>
             </div>
         `;
@@ -92,8 +85,7 @@
 
     function removeFromWorkspace(fileId) {
         fileQueue = fileQueue.filter(item => item.id !== fileId);
-        const el = document.getElementById(`row-${fileId}`);
-        if(el) el.remove();
+        document.getElementById(`row-${fileId}`).remove();
         updateGoButton();
     }
 
@@ -104,106 +96,122 @@
     }
 
     /**
-     * Loops through the queue and triggers the Xano AI function.
+     * Tries to deduct 3 credits and calls Nano Banana 2.
      */
     async function startUnifiedProcess() {
         const activeBatch = [...fileQueue];
-        fileQueue = []; // Clear the visual queue to prevent double-processing
+        fileQueue = [];
         updateGoButton();
 
         for (let item of activeBatch) {
             const cardId = `row-${item.id}`;
-            transformCardToLoading(cardId);
+            const rightBox = document.getElementById(`${cardId}-right`);
+            const metaBox = document.getElementById(`${cardId}-meta`);
+            const actionsBox = document.getElementById(`${cardId}-actions`);
+            
+            // 1. Show processing state
+            rightBox.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>`;
+            rightBox.className = "w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center relative border-2 border-dashed border-slate-200";
+            
+            metaBox.querySelector('p:last-child').innerText = "Renderying (3 credits)...";
+            metaBox.querySelector('p:last-child').className = "text-[9px] text-orange-400 font-bold uppercase tracking-tight animate-pulse";
+            
+            // Lock actions area
+            actionsBox.innerHTML = '';
             
             const formData = new FormData();
             formData.append('image', item.file);
             formData.append('franchise_id', fid);
-            // In Xano, your 'pixify' function should now deduct 3 credits upon success
 
             try {
-                const res = await fetch(PIXIFY_API, { method: 'POST', body: formData });
+                // 2. Call Xano to render and deduct 3 credits
+                const res = await fetch(PIXIFY_RENDER_API, { method: 'POST', body: formData });
                 const data = await res.json();
-                finalizeCardState(cardId, data.pixar_url);
+                
+                // 3. Finalize the preview card with watermarking
+                finalizeCardPreview(cardId, data.pixar_url);
             } catch (e) {
-                document.getElementById(`${cardId}-right`).innerHTML = `<span class="text-[8px] text-red-500 font-bold">Failed</span>`;
+                console.error("Xano Render Failed", e);
+                document.getElementById(`${cardId}-meta`).innerHTML = `<div class="text-[9px] text-red-500">Error: ${e.message}</div>`;
             }
         }
     }
 
-    function transformCardToLoading(cardId) {
-        const rightBox = document.getElementById(`${cardId}-right`);
-        const metaBox = document.getElementById(`${cardId}-meta`);
-        const actionsBox = document.getElementById(`${cardId}-actions`);
-        
-        rightBox.className = "w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center relative border-2 border-dashed border-slate-200";
-        rightBox.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-[#00d1b2] border-t-transparent rounded-full"></div>`;
-        
-        metaBox.querySelector('p:last-child').innerText = "Deducting 3 Credits...";
-        metaBox.querySelector('p:last-child').className = "text-[9px] text-orange-400 font-bold uppercase tracking-tight animate-pulse";
-        
-        actionsBox.innerHTML = ''; // Lock actions during processing
-    }
-
-    function finalizeCardState(cardId, pixarUrl) {
+    /**
+     * Updates the card to show a watermarked Pixar preview.
+     */
+    function finalizeCardPreview(cardId, pixarUrl) {
         const rightBox = document.getElementById(`${cardId}-right`);
         const metaBox = document.getElementById(`${cardId}-meta`);
         const actionsBox = document.getElementById(`${cardId}-actions`);
 
-        // Show blurred result to protect the "product" until paid
+        // Apply "Identity Lock" Preview with watermarking
         rightBox.innerHTML = `
-            <img src="${pixarUrl}" class="w-full h-full object-cover blur-md opacity-40 animate-fadeIn">
-            <div class="absolute inset-0 flex items-center justify-center">
-                <span class="bg-black/60 text-white text-[7px] px-2 py-1 rounded-full font-bold uppercase tracking-widest shadow-xl">Preview</span>
+            <img src="${pixarUrl}" class="w-full h-full object-cover blur-sm opacity-50 animate-fadeIn">
+            
+            <div class="absolute inset-0 flex items-center justify-center transform rotate-[-20deg]">
+                <span class="text-[7px] font-black text-black/60 uppercase tracking-[0.2em] px-4 py-1.5 border border-dashed border-black/30 rounded-md shadow-inner">
+                    Nest Internal Preview
+                </span>
             </div>
+            
+            <div class="absolute top-1 right-1 bg-black/50backdrop-blur-sm text-[8px] text-white px-1.5 py-0.5 rounded uppercase font-bold tracking-widest">Preview</div>
         `;
-        rightBox.className = "w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden relative";
+        rightBox.className = "w-40 aspect-video bg-slate-100 rounded-lg overflow-hidden relative shadow-inner";
 
+        // Update Meta
         metaBox.innerHTML = `
-            <p class="text-[11px] font-bold text-slate-700 truncate">Identity Protected</p>
-            <p class="text-[9px] text-orange-500 font-black uppercase tracking-tight">Unlock for 6 Credits</p>
+            <p class="text-[11px] font-bold text-slate-700 truncate">Identity Locked • Optimized preview</p>
+            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Render: 3 Credits (Paid)</p>
         `;
 
+        // Inject Final Actions (Download & Remove Result)
+        actionsBox.className = "flex items-center gap-4 border-l border-slate-100 pl-6 h-full";
         actionsBox.innerHTML = `
-            <button onclick="purchaseDownload('${cardId}', '${pixarUrl}')" class="bg-[#0f172a] text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all">
+            <button onclick="purchaseDownload('${cardId}', '${pixarUrl}')" class="bg-[#0f172a] text-white px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all">
                 Download
             </button>
+            
             <button onclick="document.getElementById('${cardId}').remove()" class="text-slate-300 hover:text-red-500 transition-colors">
-                <span class="text-[10px] font-bold px-2">Del</span>
+                <span class="text-[10px] font-bold px-2">Clear</span>
             </button>
         `;
     }
 
     /**
-     * Handles the 6-credit purchase and final file download.
+     * Tries to deduct 6 credits and unlocks the final download.
      */
     async function purchaseDownload(cardId, url) {
         const btn = event.currentTarget;
         btn.disabled = true;
-        btn.innerText = "Processing...";
+        btn.innerText = "Verifying Ledger...";
 
         try {
-            const response = await fetch(DOWNLOAD_API, {
+            // 1. Call Xano to deduct 6 credits and update the monthly bill
+            const response = await fetch(PIXIFY_DOWNLOAD_API, {
                 method: 'POST',
                 body: JSON.stringify({ franchise_id: fid, image_url: url }),
                 headers: { 'Content-Type': 'application/json' }
             });
 
             if (response.ok) {
-                // Trigger Download
+                // 2. Trigger browser download of the clean image
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = `Pixify_${Date.now()}.jpg`;
+                link.download = `NestMind_Pixify_${Date.now()}.jpg`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
 
-                // Reveal image in UI
-                const rightBox = document.getElementById(`${cardId}-right`);
-                rightBox.querySelector('img').classList.remove('blur-md', 'opacity-40');
-                rightBox.querySelector('div').innerHTML = `<span class="bg-[#00d1b2] text-white text-[7px] px-2 py-1 rounded-full font-bold uppercase tracking-widest">Unlocked</span>`;
+                // 3. Clear watermarking from UI to show they "own" it now
+                const imgSlot = document.getElementById(`${cardId}-right`);
+                imgSlot.querySelector('img').classList.remove('blur-sm', 'opacity-50');
+                imgSlot.querySelector('div:not(.absolute)').remove(); // Remove the watermark banner
+                imgSlot.querySelector('div:first-of-type').innerHTML = `<span class="bg-[#00d1b2] text-white text-[8px] px-1.5 py-0.5 rounded uppercase font-bold tracking-widest">Unlocked</span>`;
                 
+                // 4. Update Button State
                 btn.innerText = "Downloaded";
-                btn.className = "bg-slate-100 text-slate-400 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-default";
+                btn.className = "bg-slate-100 text-slate-400 px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-default";
                 btn.onclick = null;
             } else {
                 alert("Insufficient Credits. Please top up your dashboard.");
