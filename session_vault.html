@@ -1,4 +1,15 @@
 <style>
+    /* Folder Card Styles */
+    .vault-card {
+        transition: all 0.2s ease;
+        border: 1px border-slate-200;
+    }
+    .vault-card:hover {
+        transform: translateY(-2px);
+        border-color: #00d1b2;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    
     /* Zebra striping for 3-column grid */
     #session-grid > div:nth-child(6n+4),
     #session-grid > div:nth-child(6n+5),
@@ -14,7 +25,6 @@
     .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
 
-    /* Progress Modal Styles */
     #vault-progress-overlay { 
         display: none; 
         position: fixed; 
@@ -37,31 +47,35 @@
         </div>
         
         <div id="file-list-debug" class="text-[10px] font-mono text-slate-400 bg-slate-50 p-3 rounded border border-slate-100 text-left max-h-32 overflow-y-auto custom-scrollbar mb-2">
-            </div>
+        </div>
         <p class="text-[9px] text-amber-600 font-bold uppercase italic">Please do not close this window until complete.</p>
     </div>
 </div>
 
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
-        <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Curriculum Vault</h1>
-        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Session Downloads • Linear Progression</p>
+        <div class="flex items-center gap-2 mb-1">
+            <button id="vault-back-btn" onclick="SessionModule.goBack()" class="hidden hover:bg-slate-200 p-1 rounded-md transition-colors">
+                ⬅️
+            </button>
+            <h1 id="vault-title" class="text-2xl font-black text-slate-800 uppercase tracking-tight">Resource Vault</h1>
+        </div>
+        <p id="vault-subtitle" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Select a category to begin</p>
     </div>
     
-    <div class="flex flex-wrap gap-2 w-full md:w-auto">
+    <div id="vault-controls" class="hidden flex flex-wrap gap-2 w-full md:w-auto">
         <div class="flex items-center gap-2 bg-white border border-slate-300 rounded-lg p-1 shadow-sm w-full md:w-auto">
             <label class="flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-md cursor-pointer hover:bg-slate-100 transition-all border border-slate-200">
                 <input type="checkbox" id="vault-select-all" class="w-3.5 h-3.5 accent-teal-500">
                 <span class="text-[10px] font-black text-slate-700 uppercase">All</span>
             </label>
 
-            <input type="text" id="vault-search" placeholder="Search sessions..." 
+            <input type="text" id="vault-search" placeholder="Search files..." 
                 class="pl-2 pr-2 py-1.5 text-xs outline-none w-32 md:w-48 bg-transparent">
             
             <select id="vault-sort" class="py-1.5 px-2 bg-slate-50 border-l border-slate-200 text-[10px] font-bold text-slate-600 outline-none rounded-r-md">
-                <option value="num_asc">1 → 300</option>
-                <option value="num_desc">300 → 1</option>
-                <option value="newest">Newest</option>
+                <option value="num_asc">Low → High</option>
+                <option value="num_desc">High → Low</option>
                 <option value="alpha">A-Z</option>
             </select>
         </div>
@@ -72,46 +86,118 @@
     </div>
 </div>
 
-<div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+<div id="vault-main-container" class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[400px]">
     <div id="session-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 max-h-[70vh] overflow-y-auto custom-scrollbar">
-        <div class="col-span-full p-20 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
-            Syncing NestMind Database...
         </div>
-    </div>
 </div>
 
 <script>
 (function() {
     const SessionModule = {
         data: [],
-        endpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details',
-        bulkEndpoint: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/get_bulk_sessions',
+        currentView: 'root', // root, curriculum_blocks, list
+        currentFilter: null,
+        endpoints: {
+            details: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details',
+            bulk: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/get_bulk_sessions'
+        },
 
         async init() {
             try {
-                const response = await fetch(this.endpoint);
+                const response = await fetch(this.endpoints.details);
                 this.data = await response.json();
-                this.render();
+                this.renderRoot();
                 this.setupListeners();
             } catch (err) {
                 document.getElementById('session-grid').innerHTML = '<div class="col-span-full p-10 text-center text-red-400 font-bold uppercase text-[10px]">Connection Error</div>';
             }
         },
 
-        render() {
+        renderRoot() {
+            this.currentView = 'root';
+            document.getElementById('vault-back-btn').classList.add('hidden');
+            document.getElementById('vault-controls').classList.add('hidden');
+            document.getElementById('vault-title').innerText = "Resource Vault";
+            document.getElementById('vault-subtitle').innerText = "Select a category to begin";
+
             const container = document.getElementById('session-grid');
+            container.className = "grid grid-cols-1 md:grid-cols-3 gap-6 p-8";
+            
+            container.innerHTML = `
+                <div onclick="SessionModule.showCurriculumBlocks()" class="vault-card cursor-pointer bg-slate-50 p-8 rounded-2xl text-center border-2 border-transparent">
+                    <div class="text-4xl mb-4">📚</div>
+                    <h3 class="font-black text-slate-800 uppercase tracking-tight">Curriculum</h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">Sessions 1 - 300</p>
+                </div>
+                <div onclick="SessionModule.showList('summer')" class="vault-card cursor-pointer bg-slate-50 p-8 rounded-2xl text-center border-2 border-transparent">
+                    <div class="text-4xl mb-4">☀️</div>
+                    <h3 class="font-black text-slate-800 uppercase tracking-tight">Summer Program</h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">Sessions S1 - S20</p>
+                </div>
+                <div onclick="SessionModule.showList('forms')" class="vault-card cursor-pointer bg-slate-50 p-8 rounded-2xl text-center border-2 border-transparent">
+                    <div class="text-4xl mb-4">📂</div>
+                    <h3 class="font-black text-slate-800 uppercase tracking-tight">Admin Forms</h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">Operations & HR</p>
+                </div>
+            `;
+        },
+
+        showCurriculumBlocks() {
+            this.currentView = 'curriculum_blocks';
+            document.getElementById('vault-back-btn').classList.remove('hidden');
+            document.getElementById('vault-title').innerText = "Curriculum Blocks";
+            
+            const container = document.getElementById('session-grid');
+            container.className = "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 p-8";
+            
+            let blocksHTML = '';
+            for(let i=0; i < 300; i += 20) {
+                const start = i + 1;
+                const end = i + 20;
+                blocksHTML += `
+                    <div onclick="SessionModule.showList('block', ${start}, ${end})" class="vault-card cursor-pointer bg-white p-4 rounded-xl text-center border border-slate-200">
+                        <div class="text-xl mb-2">📦</div>
+                        <h4 class="text-[11px] font-black text-slate-700 uppercase">Block</h4>
+                        <p class="text-[10px] text-teal-600 font-bold">${start}-${end}</p>
+                    </div>
+                `;
+            }
+            container.innerHTML = blocksHTML;
+        },
+
+        showList(type, start, end) {
+            this.currentView = 'list';
+            document.getElementById('vault-back-btn').classList.remove('hidden');
+            document.getElementById('vault-controls').classList.remove('hidden');
+            
+            if(type === 'block') document.getElementById('vault-title').innerText = `Sessions ${start}-${end}`;
+            if(type === 'summer') document.getElementById('vault-title').innerText = `Summer Program`;
+            if(type === 'forms') document.getElementById('vault-title').innerText = `Administrative Forms`;
+
+            const container = document.getElementById('session-grid');
+            container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 max-h-[70vh] overflow-y-auto custom-scrollbar";
+            
             const search = (document.getElementById('vault-search')?.value || '').toLowerCase();
             const sortVal = document.getElementById('vault-sort')?.value || 'num_asc';
             
-            let filtered = this.data.filter(s => 
-                (s.session_description || '').toLowerCase().includes(search) || 
-                s.session_num.toString().includes(search)
-            );
+            let filtered = this.data.filter(s => {
+                const matchesSearch = (s.session_description || '').toLowerCase().includes(search) || s.session_num.toString().includes(search);
+                
+                if (type === 'block') {
+                    return matchesSearch && s.session_num >= start && s.session_num <= end && !s.session_num.toString().startsWith('S');
+                }
+                if (type === 'summer') {
+                    return matchesSearch && s.session_num.toString().startsWith('S');
+                }
+                if (type === 'forms') {
+                    return matchesSearch && s.category === 'form'; // Assuming a 'category' field in Xano
+                }
+                return matchesSearch;
+            });
 
             filtered.sort((a, b) => {
                 if (sortVal === 'num_asc') return a.session_num - b.session_num;
                 if (sortVal === 'num_desc') return b.session_num - a.session_num;
-                if (sortVal === 'newest') return b.id - a.id;
                 if (sortVal === 'alpha') return (a.session_description || '').localeCompare(b.session_description || '');
                 return 0;
             });
@@ -120,7 +206,9 @@
                 <div class="session-vault-item flex items-start gap-3 p-4 border-b border-r border-slate-100 transition-all bg-white">
                     <input type="checkbox" class="session-row-check w-4 h-4 mt-0.5 accent-teal-500 cursor-pointer" value="${s.id}">
                     <div class="min-w-0">
-                        <span class="text-[10px] font-black text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 uppercase tracking-tighter">Session ${s.session_num}</span>
+                        <span class="text-[10px] font-black text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 uppercase tracking-tighter">
+                            ${s.session_num.toString().startsWith('S') ? 'Summer' : 'Session'} ${s.session_num}
+                        </span>
                         <p class="text-[11px] text-slate-600 font-medium leading-snug line-clamp-2 mt-1">
                             ${s.session_description || 'No description provided.'}
                         </p>
@@ -131,9 +219,17 @@
             this.updateDownloadUI();
         },
 
+        goBack() {
+            if (this.currentView === 'list' && document.getElementById('vault-title').innerText.includes('Sessions')) {
+                this.showCurriculumBlocks();
+            } else {
+                this.renderRoot();
+            }
+        },
+
         setupListeners() {
-            document.getElementById('vault-search').oninput = () => this.render();
-            document.getElementById('vault-sort').onchange = () => this.render();
+            document.getElementById('vault-search').oninput = () => this.refreshCurrentList();
+            document.getElementById('vault-sort').onchange = () => this.refreshCurrentList();
             
             document.getElementById('vault-select-all').onchange = (e) => {
                 const checks = document.querySelectorAll('.session-row-check');
@@ -143,7 +239,7 @@
 
             document.getElementById('session-grid').onchange = () => this.updateDownloadUI();
 
-            document.getElementById('vault-download-btn').onclick = async (e) => {
+            document.getElementById('vault-download-btn').onclick = async () => {
                 const selectedIds = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => parseInt(cb.value));
                 if (selectedIds.length === 0) return;
 
@@ -158,15 +254,13 @@
                 fileList.innerHTML = "";
 
                 try {
-                    const response = await fetch(this.bulkEndpoint, {
+                    const response = await fetch(this.endpoints.bulk, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ session_id: selectedIds })
                     });
                     
                     const data = await response.json();
-                    
-                    // Extract strings from Xano objects
                     const finalLinks = Array.isArray(data) 
                         ? data.map(item => (typeof item === 'object' && item.url) ? item.url : item)
                         : [];
@@ -194,8 +288,6 @@
                     }
 
                     statusText.innerText = "All Downloads Complete!";
-                    
-                    // Reset UI instead of full page reload
                     setTimeout(() => {
                         overlay.style.display = 'none';
                         document.querySelectorAll('.session-row-check').forEach(cb => cb.checked = false);
@@ -205,10 +297,23 @@
 
                 } catch (err) {
                     statusText.innerText = "Error during download.";
-                    console.error(err);
                     setTimeout(() => overlay.style.display = 'none', 3000);
                 }
             };
+        },
+
+        refreshCurrentList() {
+            // Helper to re-run the current list view with new search/sort
+            const title = document.getElementById('vault-title').innerText;
+            if (title.includes('Summer')) this.showList('summer');
+            else if (title.includes('Forms')) this.showList('forms');
+            else {
+                const range = title.match(/\d+-\d+/);
+                if (range) {
+                    const parts = range[0].split('-');
+                    this.showList('block', parseInt(parts[0]), parseInt(parts[1]));
+                }
+            }
         },
 
         updateDownloadUI() {
@@ -234,6 +339,7 @@
         }
     };
 
-    if (document.getElementById('session-grid')) SessionModule.init();
+    window.SessionModule = SessionModule; // Export for onclick handlers
+    SessionModule.init();
 })();
 </script>
