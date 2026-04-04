@@ -4,13 +4,13 @@
         --bg-color: #f4f7f6;
         --text-color: #333;
         --border-color: #e0e0e0;
-        --hover-shadow: 0 15px 30px rgba(0,0,0,0.1);
     }
 
     .vault-container {
         max-width: 1200px;
         margin: 0 auto;
         padding: 20px;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
 
     .vault-header {
@@ -31,7 +31,7 @@
         cursor: pointer;
         padding: 10px 18px;
         background: #f0f2f5;
-        border: none;
+        border: 1px solid #ddd;
         border-radius: 8px;
         font-weight: 600;
         color: #444;
@@ -71,7 +71,7 @@
 
     .vault-card:hover {
         transform: translateY(-8px);
-        box-shadow: var(--hover-shadow);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
         border-color: var(--primary-color);
     }
 
@@ -83,12 +83,14 @@
     .vault-card h3 {
         margin: 10px 0 5px 0;
         font-size: 18px;
+        color: #2d3748;
     }
 
     .vault-card p {
         font-size: 14px;
-        color: #666;
+        color: #718096;
         margin: 0;
+        line-height: 1.5;
     }
 
     .list-container {
@@ -97,6 +99,7 @@
         border-radius: 15px;
         padding: 25px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid var(--border-color);
     }
 
     .list-controls {
@@ -118,6 +121,12 @@
         border: 1px solid #ddd;
         border-radius: 8px;
         font-size: 14px;
+        transition: border-color 0.2s;
+    }
+
+    .search-box:focus {
+        outline: none;
+        border-color: var(--primary-color);
     }
 
     .search-wrapper i {
@@ -125,7 +134,7 @@
         left: 15px;
         top: 50%;
         transform: translateY(-50%);
-        color: #999;
+        color: #a0aec0;
     }
 
     .btn-download-bulk {
@@ -139,10 +148,15 @@
         display: flex;
         align-items: center;
         gap: 10px;
+        transition: background 0.2s;
+    }
+
+    .btn-download-bulk:hover {
+        background: #357ABD;
     }
 
     .btn-download-bulk:disabled {
-        background: #ccc;
+        background: #cbd5e0;
         cursor: not-allowed;
     }
 
@@ -168,22 +182,29 @@
         padding: 15px;
         border-bottom: 1px solid #edf2f7;
         vertical-align: middle;
+        color: #2d3748;
     }
 
     tr:hover td {
-        background-color: #fcfcfc;
+        background-color: #f7fafc;
     }
 
     .file-icon {
-        margin-right: 10px;
-        color: #718096;
+        margin-right: 12px;
+        color: #e53e3e;
     }
 
-    .action-btn {
-        padding: 8px;
+    .action-link {
         color: var(--primary-color);
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 600;
+        padding: 5px 10px;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+
+    .action-link:hover {
+        background: #ebf8ff;
     }
 
     #vault-progress-overlay {
@@ -195,7 +216,7 @@
         height: 100%;
         background: rgba(0,0,0,0.8);
         backdrop-filter: blur(4px);
-        z-index: 99999;
+        z-index: 999999;
         justify-content: center;
         align-items: center;
     }
@@ -205,103 +226,113 @@
         padding: 40px;
         border-radius: 20px;
         width: 90%;
-        max-width: 450px;
+        max-width: 480px;
         text-align: center;
-        box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.4);
     }
 
     .progress-bar-container {
         background: #edf2f7;
-        height: 12px;
-        border-radius: 6px;
-        margin: 25px 0;
+        height: 14px;
+        border-radius: 7px;
+        margin: 30px 0;
         overflow: hidden;
+        border: 1px solid #e2e8f0;
     }
 
     .progress-bar-fill {
         background: linear-gradient(90deg, #4A90E2, #63b3ed);
         width: 0%;
         height: 100%;
-        transition: width 0.4s ease;
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #progress-status {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a202c;
+        margin-bottom: 10px;
     }
 
     #progress-details {
         font-size: 14px;
-        color: #4a5568;
+        color: #718096;
         margin-bottom: 0;
     }
 </style>
 
 <div class="vault-container">
     <div class="vault-header">
-        <button id="vault-back-btn" class="vault-back-btn" onclick="handleBackNavigation()">
+        <button id="vault-back-btn" class="vault-back-btn" onclick="handleVaultBack()">
             <i class="fas fa-arrow-left"></i> Back
         </button>
         <h2 id="vault-title">Resource Vault</h2>
     </div>
 
-    <div id="vault-root" class="vault-grid">
-        <div class="vault-card" onclick="showCurriculumBlocks()">
+    <div id="vault-root-view" class="vault-grid">
+        <div class="vault-card" onclick="openCurriculumGroups()">
             <i class="fas fa-graduation-cap"></i>
             <h3>Curriculum</h3>
-            <p>Main educational sessions</p>
+            <p>Access the full Nest curriculum organized by session numbers.</p>
         </div>
-        <div class="vault-card" onclick="openDirectList('summer', 'Summer Program')">
+        <div class="vault-card" onclick="openListDirect('summer', 'Summer Program')">
             <i class="fas fa-umbrella-beach"></i>
             <h3>Summer Program</h3>
-            <p>Seasonal activities</p>
+            <p>Download special seasonal curriculum and event plans.</p>
         </div>
-        <div class="vault-card" onclick="openDirectList('forms', 'Admin Forms')">
-            <i class="fas fa-file-invoice"></i>
+        <div class="vault-card" onclick="openListDirect('forms', 'Admin Forms')">
+            <i class="fas fa-file-signature"></i>
             <h3>Admin Forms</h3>
-            <p>Templates and records</p>
+            <p>Operational templates, logs, and enrollment documents.</p>
         </div>
     </div>
 
-    <div id="curriculum-blocks" class="vault-grid" style="display: none;">
-        <div class="vault-card" onclick="openCategorizedList('1-20', 'Sessions 1-20')">
+    <div id="vault-curriculum-groups" class="vault-grid" style="display: none;">
+        <div class="vault-card" onclick="openListFromGroup('1-20', 'Sessions 1-20')">
             <i class="fas fa-folder-open"></i>
             <h3>Sessions 1-20</h3>
+            <p>Curriculum files for the first 20 sessions.</p>
         </div>
-        <div class="vault-card" onclick="openCategorizedList('21-40', 'Sessions 21-40')">
+        <div class="vault-card" onclick="openListFromGroup('21-40', 'Sessions 21-40')">
             <i class="fas fa-folder-open"></i>
             <h3>Sessions 21-40</h3>
+            <p>Curriculum files for sessions 21 through 40.</p>
         </div>
-        <div class="vault-card" onclick="openCategorizedList('41-60', 'Sessions 41-60')">
+        <div class="vault-card" onclick="openListFromGroup('41-60', 'Sessions 41-60')">
             <i class="fas fa-folder-open"></i>
             <h3>Sessions 41-60</h3>
         </div>
-        <div class="vault-card" onclick="openCategorizedList('61-80', 'Sessions 61-80')">
+        <div class="vault-card" onclick="openListFromGroup('61-80', 'Sessions 61-80')">
             <i class="fas fa-folder-open"></i>
             <h3>Sessions 61-80</h3>
         </div>
-        <div class="vault-card" onclick="openCategorizedList('81-100', 'Sessions 81-100')">
+        <div class="vault-card" onclick="openListFromGroup('81-100', 'Sessions 81-100')">
             <i class="fas fa-folder-open"></i>
             <h3>Sessions 81-100</h3>
         </div>
-        <div class="vault-card" onclick="openCategorizedList('101-120', 'Sessions 101-120')">
+        <div class="vault-card" onclick="openListFromGroup('101-120', 'Sessions 101-120')">
             <i class="fas fa-folder-open"></i>
             <h3>Sessions 101-120</h3>
         </div>
     </div>
 
-    <div id="list-view" class="list-container">
+    <div id="vault-list-view" class="list-container">
         <div class="list-controls">
             <div class="search-wrapper">
                 <i class="fas fa-search"></i>
-                <input type="text" id="vault-search" class="search-box" placeholder="Search sessions by name..." onkeyup="filterVaultTable()">
+                <input type="text" id="vault-search-input" class="search-box" placeholder="Search by session name..." onkeyup="runVaultSearch()">
             </div>
-            <button id="bulk-download-btn" class="btn-download-bulk" onclick="processBulkDownload()">
+            <button id="btn-bulk-download" class="btn-download-bulk" onclick="executeBulkDownload()">
                 <i class="fas fa-download"></i> Download Selected
             </button>
         </div>
-        <table id="vault-table">
+        <table id="vault-main-table">
             <thead>
                 <tr>
-                    <th style="width: 40px;"><input type="checkbox" id="master-checkbox" onclick="toggleAllCheckboxes(this)"></th>
+                    <th style="width: 45px;"><input type="checkbox" id="vault-select-all" onclick="toggleVaultSelection(this)"></th>
                     <th>Session Name</th>
-                    <th>Type</th>
-                    <th style="text-align: right;">Action</th>
+                    <th>File Type</th>
+                    <th style="text-align: right;">Options</th>
                 </tr>
             </thead>
             <tbody id="vault-table-body">
@@ -312,187 +343,187 @@
 
 <div id="vault-progress-overlay">
     <div class="progress-card">
-        <h3 id="progress-header">Zipping Files...</h3>
+        <h3 id="progress-status">Generating ZIP...</h3>
         <div class="progress-bar-container">
-            <div id="progress-bar-fill" class="progress-bar-fill"></div>
+            <div id="progress-bar-inner" class="progress-bar-fill"></div>
         </div>
-        <p id="progress-details">Starting download sequence...</p>
+        <p id="progress-details">Contacting Xano to bundle files...</p>
     </div>
 </div>
 
 <script>
-    // --- STATE TRACKING ---
-    let currentVaultState = 'root'; 
-    let currentCategory = ''; 
+    // NAVIGATION STATE
+    let activeVaultView = 'root'; 
+    let activeCategorySource = ''; 
 
-    // --- NAVIGATION FUNCTIONS ---
+    // --- VIEW TOGGLES ---
 
-    function showCurriculumBlocks() {
-        console.log("Navigating to Curriculum Blocks");
-        hideAllVaultSections();
-        document.getElementById('curriculum-blocks').style.display = 'grid';
-        document.getElementById('vault-title').innerText = 'Curriculum Blocks';
+    function openCurriculumGroups() {
+        console.log("Entering Curriculum Groups");
+        hideAllVaultViews();
+        document.getElementById('vault-curriculum-groups').style.display = 'grid';
+        document.getElementById('vault-title').innerText = 'Select Range';
         document.getElementById('vault-back-btn').style.display = 'flex';
-        currentVaultState = 'curriculum_blocks';
+        activeVaultView = 'groups';
     }
 
-    function openCategorizedList(range, title) {
-        console.log("Opening list for range:", range);
-        hideAllVaultSections();
-        document.getElementById('list-view').style.display = 'block';
+    function openListFromGroup(range, title) {
+        console.log("Opening session list for range: " + range);
+        hideAllVaultViews();
+        document.getElementById('vault-list-view').style.display = 'block';
         document.getElementById('vault-title').innerText = title;
         document.getElementById('vault-back-btn').style.display = 'flex';
-        currentVaultState = 'list_view';
-        currentCategory = 'curriculum';
-        loadVaultData(range);
+        activeVaultView = 'list';
+        activeCategorySource = 'curriculum';
+        fetchVaultData(range);
     }
 
-    function openDirectList(type, title) {
-        console.log("Opening direct list for:", type);
-        hideAllVaultSections();
-        document.getElementById('list-view').style.display = 'block';
+    function openListDirect(type, title) {
+        console.log("Opening direct list for: " + type);
+        hideAllVaultViews();
+        document.getElementById('vault-list-view').style.display = 'block';
         document.getElementById('vault-title').innerText = title;
         document.getElementById('vault-back-btn').style.display = 'flex';
-        currentVaultState = 'list_view';
-        currentCategory = type; 
-        loadVaultData(type);
+        activeVaultView = 'list';
+        activeCategorySource = type; 
+        fetchVaultData(type);
     }
 
-    function handleBackNavigation() {
-        console.log("Back clicked. Current state:", currentVaultState);
-        if (currentVaultState === 'list_view') {
-            if (currentCategory === 'curriculum') {
-                showCurriculumBlocks();
+    function handleVaultBack() {
+        console.log("Back triggered. Current View: " + activeVaultView);
+        if (activeVaultView === 'list') {
+            if (activeCategorySource === 'curriculum') {
+                openCurriculumGroups();
             } else {
-                resetToVaultRoot();
+                returnToVaultRoot();
             }
-        } else if (currentVaultState === 'curriculum_blocks') {
-            resetToVaultRoot();
+        } else if (activeVaultView === 'groups') {
+            returnToVaultRoot();
         }
     }
 
-    function resetToVaultRoot() {
-        hideAllVaultSections();
-        document.getElementById('vault-root').style.display = 'grid';
+    function returnToVaultRoot() {
+        hideAllVaultViews();
+        document.getElementById('vault-root-view').style.display = 'grid';
         document.getElementById('vault-title').innerText = 'Resource Vault';
         document.getElementById('vault-back-btn').style.display = 'none';
-        currentVaultState = 'root';
-        currentCategory = '';
+        activeVaultView = 'root';
+        activeCategorySource = '';
     }
 
-    function hideAllVaultSections() {
-        document.getElementById('vault-root').style.display = 'none';
-        document.getElementById('curriculum-blocks').style.display = 'none';
-        document.getElementById('list-view').style.display = 'none';
+    function hideAllVaultViews() {
+        document.getElementById('vault-root-view').style.display = 'none';
+        document.getElementById('vault-curriculum-groups').style.display = 'none';
+        document.getElementById('vault-list-view').style.display = 'none';
     }
 
-    // --- DATA LOADING LOGIC ---
+    // --- API FETCHING ---
 
-    async function loadVaultData(filterValue) {
-        const tableBody = document.getElementById('vault-table-body');
-        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 40px;">Loading sessions...</td></tr>';
+    async function fetchVaultData(filterValue) {
+        const body = document.getElementById('vault-table-body');
+        body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 60px;"><i class="fas fa-spinner fa-spin"></i> Loading resources...</td></tr>';
         
         try {
-            const response = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:u9989u/get_vault_items?filter=${filterValue}`);
-            const data = await response.json();
+            const apiCall = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:u9989u/get_vault_items?filter=${filterValue}`);
+            const results = await apiCall.json();
             
-            tableBody.innerHTML = '';
+            body.innerHTML = '';
             
-            if (!data || data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 40px;">No files found in this category.</td></tr>';
+            if (!results || results.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 60px;">No curriculum files found for this selection.</td></tr>';
                 return;
             }
 
-            data.forEach(item => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><input type="checkbox" class="session-checkbox" value="${item.id}"></td>
-                    <td><i class="far fa-file-pdf file-icon"></i> ${item.name}</td>
-                    <td style="color: #718096; font-size: 13px;">${item.type || 'PDF'}</td>
+            results.forEach(file => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><input type="checkbox" class="vault-item-cb" value="${file.id}"></td>
+                    <td><i class="far fa-file-pdf file-icon"></i> <strong>${file.name}</strong></td>
+                    <td style="color: #718096; font-size: 13px;">${file.type || 'PDF Document'}</td>
                     <td style="text-align: right;">
-                        <a href="${item.file_url}" target="_blank" class="action-btn"><i class="fas fa-eye"></i></a>
-                        <a href="${item.file_url}" download class="action-btn"><i class="fas fa-download"></i></a>
+                        <a href="${file.file_url}" target="_blank" class="action-link"><i class="fas fa-external-link-alt"></i> View</a>
+                        <a href="${file.file_url}" download class="action-link" style="margin-left: 10px;"><i class="fas fa-download"></i> Save</a>
                     </td>
                 `;
-                tableBody.appendChild(row);
+                body.appendChild(tr);
             });
-        } catch (error) {
-            console.error("Error loading vault data:", error);
-            tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: red; padding: 40px;">Error loading data. Please try again.</td></tr>';
+        } catch (err) {
+            console.error("Xano Fetch Error:", err);
+            body.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #e53e3e; padding: 60px;"><i class="fas fa-exclamation-triangle"></i> API Error: Could not connect to session database.</td></tr>';
         }
     }
 
-    // --- UTILITY FUNCTIONS ---
+    // --- TABLE UTILS ---
 
-    function toggleAllCheckboxes(master) {
-        const checkboxes = document.querySelectorAll('.session-checkbox');
-        checkboxes.forEach(cb => cb.checked = master.checked);
+    function toggleVaultSelection(source) {
+        const boxes = document.querySelectorAll('.vault-item-cb');
+        boxes.forEach(b => b.checked = source.checked);
     }
 
-    function filterVaultTable() {
-        const query = document.getElementById('vault-search').value.toLowerCase();
-        const rows = document.querySelectorAll('#vault-table-body tr');
+    function runVaultSearch() {
+        const val = document.getElementById('vault-search-input').value.toLowerCase();
+        const trs = document.querySelectorAll('#vault-table-body tr');
         
-        rows.forEach(row => {
-            const name = row.cells[1].innerText.toLowerCase();
-            row.style.display = name.includes(query) ? '' : 'none';
+        trs.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(val) ? '' : 'none';
         });
     }
 
-    // --- BULK DOWNLOAD LOGIC ---
+    // --- BULK DOWNLOAD ENGINE ---
 
-    async function processBulkDownload() {
-        const selectedIds = Array.from(document.querySelectorAll('.session-checkbox:checked')).map(cb => cb.value);
+    async function executeBulkDownload() {
+        const ids = Array.from(document.querySelectorAll('.vault-item-cb:checked')).map(i => i.value);
         
-        if (selectedIds.length === 0) {
-            alert("Please select at least one file to download.");
+        if (ids.length === 0) {
+            alert("Please select at least one session file to download.");
             return;
         }
 
-        const overlay = document.getElementById('vault-progress-overlay');
-        const bar = document.getElementById('progress-bar-fill');
-        const details = document.getElementById('progress-details');
+        const modal = document.getElementById('vault-progress-overlay');
+        const bar = document.getElementById('progress-bar-inner');
+        const detailText = document.getElementById('progress-details');
         
-        overlay.style.display = 'flex';
-        bar.style.width = '10%';
-        details.innerText = `Preparing request for ${selectedIds.length} files...`;
+        modal.style.display = 'flex';
+        bar.style.width = '15%';
+        detailText.innerText = `Requesting package for ${ids.length} files...`;
 
         try {
-            const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:u9989u/get_bulk_sessions', {
+            const xanoRes = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:u9989u/get_bulk_sessions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ session_ids: selectedIds })
+                body: JSON.stringify({ session_ids: ids })
             });
 
-            if (!response.ok) throw new Error("Server error during ZIP creation");
+            if (!xanoRes.ok) throw new Error("Bulk Download API Rejected");
 
-            const result = await response.json();
+            const payload = await xanoRes.json();
             
-            bar.style.width = '70%';
-            details.innerText = "Generating ZIP archive on server...";
+            bar.style.width = '75%';
+            detailText.innerText = "Zipping resources and preparing link...";
 
-            if (result.zip_url) {
+            if (payload.zip_url) {
                 bar.style.width = '100%';
-                details.innerText = "Download Ready!";
+                detailText.innerText = "Download beginning now.";
                 
-                const link = document.createElement('a');
-                link.href = result.zip_url;
-                link.download = `TheNest_Resources_${new Date().getTime()}.zip`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                const hiddenLink = document.createElement('a');
+                hiddenLink.href = payload.zip_url;
+                hiddenLink.download = `Nest_Curriculum_Package_${Date.now()}.zip`;
+                document.body.appendChild(hiddenLink);
+                hiddenLink.click();
+                document.body.removeChild(hiddenLink);
 
                 setTimeout(() => { 
-                    overlay.style.display = 'none'; 
+                    modal.style.display = 'none'; 
                     bar.style.width = '0%';
-                }, 2000);
+                }, 2500);
             } else {
-                throw new Error("No download URL returned from server.");
+                throw new Error("API did not return a valid ZIP URL");
             }
-        } catch (error) {
-            console.error("Bulk download error:", error);
-            alert("Bulk download failed. Please try downloading items individually or refresh the page.");
-            overlay.style.display = 'none';
+        } catch (exc) {
+            console.error("Bulk Process Failed:", exc);
+            alert("Sorry, the bulk download system encountered an error. Please download files individually.");
+            modal.style.display = 'none';
         }
     }
 </script>
