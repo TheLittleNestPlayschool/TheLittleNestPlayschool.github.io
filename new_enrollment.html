@@ -676,16 +676,20 @@
            
            alert("Enrollment Successful");
            
-           // CRITICAL FIX: Match the "Parent" module logic.
-           // Instead of redirecting the whole window, we just re-run the module logic
-           // or use the dashboard's internal router if available.
-           if (typeof window.init === 'function') {
-               window.init(); // Refresh dashboard if function exists
-           } else {
-               // If no dashboard init function, reload this module only
-               location.reload(); 
-           }
+           // BLANK OUT SCREEN AND SHOW NESTMIND LOGO (Mirroring Dashboard Start State)
+           const ui = document.getElementById('enrollment-ui');
+           ui.innerHTML = `
+                <div style="height: calc(100vh - 100px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                    <h1 style="font-size: 5rem; font-weight: 900; color: #1e293b; letter-spacing: -2px; margin: 0;">NestMind</h1>
+                    <p style="font-size: 0.8rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-top: 10px;">Please select a branch to initialize portal.</p>
+                </div>
+           `;
            
+           // If the dashboard has a global init or reset function, trigger it here to refresh sidebar/state
+           if (window.parent && typeof window.parent.init === 'function') {
+               window.parent.init();
+           }
+
         } catch(e) { console.error(e); }
     };
  
