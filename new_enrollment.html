@@ -386,7 +386,6 @@
             const franchises = await res.json();
             const sel = document.getElementById('ho_franchise_selector');
             
-            // Search for Sariaya or Lucena labels in the UI
             const idElement = document.querySelector('.sidebar-branch-name') ||
                              Array.from(document.querySelectorAll('div')).find(el => 
                                 el.textContent.trim() === 'Sariaya' || 
@@ -400,22 +399,18 @@
                sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
             });
  
-            // Always try to lock the branch if one is detected in the UI
             if (currentIdentityText && currentIdentityText.toLowerCase() !== "head office") {
                 const currentBranch = franchises.find(f => f.name.toLowerCase() === currentIdentityText.toLowerCase());
                 if (currentBranch) {
                    sel.value = currentBranch.id; 
                    sel.disabled = true;
                    state.currentFranchiseId = currentBranch.id;
-                   
-                   // Force the layout to lock and move to the next step immediately
                    await lockLocation(); 
                 }
             }
         } catch(e) { console.error("Identity Sync failed", e); }
     }
     
-    // Run initialization
     initNetwork();
  
    window.lockLocation = async () => {
@@ -423,14 +418,9 @@
         const val = sel.value;
         if(!val) return;
        state.currentFranchiseId = parseInt(val);
-       
-       // Change UI state
        moveToStep('step-location', 'step-parent', 1);
-       
-       // Lock the select visually
        sel.disabled = true;
        document.getElementById('init-btn').style.display = 'none';
-
         await fetchBranchData();
     };
  
@@ -664,7 +654,6 @@
                franchise_id: state.currentFranchiseId
             };
             
-            // Link back session to student record
             await fetch(`${ENDPOINTS.student}/${state.currentStudentId}`, {
                method: 'PATCH',
                headers: {'Content-Type': 'application/json'},
@@ -680,7 +669,8 @@
                 await fetch(ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) });
             }
            alert("Enrollment Successful");
-           location.reload();
+           // REDIRECT TO MENU - Logic matching parent.html behavior
+           window.location.href = '/'; 
         } catch(e) { console.error(e); }
     };
  
