@@ -398,13 +398,18 @@
            franchises.sort((a,b) => a.name.localeCompare(b.name)).forEach(f => {
                sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
             });
- 
-            if (currentIdentityText && currentIdentityText.toLowerCase() !== "head office") {
+
+            const savedFid = localStorage.getItem('locked_franchise_id');
+            if (savedFid) {
+                sel.value = savedFid;
+                state.currentFranchiseId = parseInt(savedFid);
+                await lockLocation();
+            } else if (currentIdentityText && currentIdentityText.toLowerCase() !== "head office") {
                 const currentBranch = franchises.find(f => f.name.toLowerCase() === currentIdentityText.toLowerCase());
                 if (currentBranch) {
                    sel.value = currentBranch.id; 
-                   sel.disabled = true;
                    state.currentFranchiseId = currentBranch.id;
+                   localStorage.setItem('locked_franchise_id', currentBranch.id);
                    await lockLocation(); 
                 }
             }
@@ -668,16 +673,17 @@
             for (let c of state.pickupContacts) {
                 await fetch(ENDPOINTS.pickup, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) });
             }
+           
            alert("Enrollment Successful");
            
-           // MATCHING PARENT.HTML LOGIC: 
-           // We don't refresh or redirect the whole browser window. 
-           // We simply trigger the dashboard's internal navigation back to the dashboard view.
-           if (window.loadModule) {
-               window.loadModule('franchise_dashboard.html');
+           // CRITICAL FIX: Match the "Parent" module logic.
+           // Instead of redirecting the whole window, we just re-run the module logic
+           // or use the dashboard's internal router if available.
+           if (typeof window.init === 'function') {
+               window.init(); // Refresh dashboard if function exists
            } else {
-               // Fallback if the loader isn't available
-               window.location.href = 'franchise_dashboard.html';
+               // If no dashboard init function, reload this module only
+               location.reload(); 
            }
            
         } catch(e) { console.error(e); }
