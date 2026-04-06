@@ -670,7 +670,11 @@
             }
            alert("Enrollment Successful");
            
-           // SPECIFIC REDIRECT: Redirect to the dashboard menu for the franchise
+           // CRITICAL FIX: Ensure local storage holds the current branch ID before returning
+           // This prevents the system from resetting to the "Select Branch" screen
+           localStorage.setItem('locked_franchise_id', state.currentFranchiseId);
+           
+           // Redirect back to dashboard
            window.location.href = 'franchise_dashboard.html'; 
            
         } catch(e) { console.error(e); }
