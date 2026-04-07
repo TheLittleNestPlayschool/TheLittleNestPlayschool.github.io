@@ -1,193 +1,321 @@
-<div class="nestmind-uploader">
+<div class="nestmind-vault-system">
     <style>
-        :root { --primary: #4a90e2; --success: #4caf50; --danger: #e74c3c; --text-dark: #2d3748; }
-        .nestmind-uploader { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 600px; margin: 30px auto; background: white; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); overflow: hidden; color: var(--text-dark); }
-        .uploader-header { background: var(--primary); color: white; padding: 30px 20px; text-align: center; border-bottom: 4px solid rgba(0,0,0,0.1); }
-        .uploader-header h2 { margin: 0; font-size: 26px; text-transform: uppercase; font-weight: 800; }
-        .uploader-setup { padding: 25px; border-bottom: 1px solid #edf2f7; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #fafbfc; }
-        .input-group { display: flex; flex-direction: column; gap: 8px; }
-        .input-group label { font-size: 11px; text-transform: uppercase; color: #718096; font-weight: 700; }
-        .uploader-setup select { padding: 14px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 15px; background: white; outline: none; }
-        .capture-area { padding: 50px 25px; text-align: center; }
-        .photo-trigger { border: 3px dashed #cbd5e0; border-radius: 20px; padding: 60px 20px; cursor: pointer; background: white; }
-        #preview-section { display: none; padding: 25px; }
-        .img-container { width: 100%; background: #1a202c; border-radius: 12px; overflow: hidden; }
-        #preview-img { width: 100%; max-height: 450px; object-fit: contain; }
-        .action-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
-        .btn-ui { padding: 18px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
-        .btn-confirm { background: var(--primary); color: white; }
-        .btn-cancel { background: #edf2f7; color: #4a5568; }
-        .upload-progress { margin-top: 25px; display: none; }
-        .bar-outer { height: 12px; background: #edf2f7; border-radius: 50px; overflow: hidden; }
-        .bar-inner { width: 0%; height: 100%; background: var(--success); transition: width 0.4s ease; }
-        .status-msg { font-size: 14px; margin-top: 10px; font-weight: 600; }
+        :root {
+            --primary-blue: #4a90e2;
+            --deep-blue: #357abd;
+            --success-green: #4caf50;
+            --error-red: #e74c3c;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --bg-light: #f8fafc;
+            --border-color: #cbd5e0;
+        }
+
+        .nestmind-vault-system {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            max-width: 650px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            overflow: hidden;
+            color: var(--text-main);
+            border: 1px solid #e2e8f0;
+        }
+
+        .vault-header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--deep-blue) 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .vault-header h2 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .vault-header p {
+            margin: 10px 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .vault-selectors {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            padding: 30px;
+            background: var(--bg-light);
+            border-bottom: 1px solid #edf2f7;
+        }
+        .select-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .select-group label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .vault-selectors select {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 16px;
+            outline: none;
+            cursor: pointer;
+        }
+        .vault-selectors select:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .capture-container {
+            padding: 60px 30px;
+            text-align: center;
+        }
+        .camera-trigger {
+            border: 4px dashed var(--border-color);
+            border-radius: 25px;
+            padding: 70px 30px;
+            cursor: pointer;
+            background: #ffffff;
+        }
+        .camera-trigger:hover {
+            border-color: var(--primary-blue);
+            background: #f0f7ff;
+        }
+        .camera-trigger span {
+            display: block;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        #vault-preview-wrap {
+            display: none;
+            padding: 30px;
+        }
+        .media-holder {
+            width: 100%;
+            background: #1a202c;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+        #preview-display {
+            width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+        }
+
+        .vault-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .vault-btn {
+            padding: 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .btn-sync { background: var(--primary-blue); color: white; }
+        .btn-reset { background: #edf2f7; color: #4a5568; }
+
+        .progress-box {
+            margin-bottom: 25px;
+            display: none;
+        }
+        .bar-bg {
+            height: 14px;
+            background: #edf2f7;
+            border-radius: 50px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            width: 0%;
+            height: 100%;
+            background: var(--success-green);
+            transition: width 0.4s ease;
+        }
+        .status-msg {
+            margin-top: 12px;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 550px) {
+            .vault-selectors { grid-template-columns: 1fr; }
+            .vault-actions { grid-template-columns: 1fr; }
+        }
     </style>
 
-    <div class="uploader-header">
-        <h2>NESTMIND VAULT</h2>
-        <p>Direct-to-S3 Debug Mode</p>
+    <div class="vault-header">
+        <h2>NestMind Vault</h2>
+        <p>Direct-to-S3 Media Management</p>
     </div>
 
-    <div class="uploader-setup">
-        <div class="input-group">
-            <label>Location</label>
-            <select id="franchise-dropdown" onchange="loadStudents(this.value)">
-                <option value="">Fetching Locations...</option>
+    <div class="vault-selectors">
+        <div class="select-group">
+            <label>1. Select School</label>
+            <select id="f-select" onchange="fetchStudents(this.value)">
+                <option value="">Loading Schools...</option>
             </select>
         </div>
-        <div class="input-group">
-            <label>Student</label>
-            <select id="student-dropdown" disabled>
-                <option value="">Select Location First</option>
+        <div class="select-group">
+            <label>2. Select Student</label>
+            <select id="s-select" disabled>
+                <option value="">Select School First</option>
             </select>
         </div>
     </div>
 
-    <div id="init-stage" class="capture-area">
-        <div class="photo-trigger" onclick="document.getElementById('camera-file').click()">
-            <span style="font-size: 50px;">📸</span><br>
-            <strong>Tap to Capture Work</strong>
-            <input type="file" id="camera-file" hidden accept="image/*" capture="environment" onchange="handleCapture(this)">
+    <div id="capture-stage" class="capture-container">
+        <div class="camera-trigger" onclick="document.getElementById('input-cam').click()">
+            <div style="font-size: 60px; margin-bottom: 15px;">📸</div>
+            <span>Take Student Photo</span>
+            <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="handleFileSelect(this)">
         </div>
     </div>
 
-    <div id="preview-section">
-        <div class="img-container"><img id="preview-img" src=""></div>
-        <div class="upload-progress" id="progress-ui">
-            <div class="bar-outer"><div class="bar-inner" id="progress-fill"></div></div>
-            <div class="status-msg" id="status-label">Ready...</div>
+    <div id="vault-preview-wrap">
+        <div class="media-holder">
+            <img id="preview-display" src="">
         </div>
-        <div class="action-bar">
-            <button class="btn-ui btn-cancel" onclick="resetApp()">Retake</button>
-            <button class="btn-ui btn-confirm" id="sync-btn" onclick="syncToVault()">Sync to Vault</button>
+
+        <div class="progress-box" id="ui-progress">
+            <div class="bar-bg"><div class="bar-fill" id="ui-bar"></div></div>
+            <div class="status-msg" id="ui-status">Initialised.</div>
+        </div>
+
+        <div class="vault-actions">
+            <button class="vault-btn btn-reset" onclick="resetVault()">Retake</button>
+            <button class="vault-btn btn-sync" id="sync-trigger" onclick="runS3Sync()">Sync to Vault</button>
         </div>
     </div>
 </div>
 
 <script>
-// --- DEBUG CONFIG ---
-const API_ROUTES = {
+const API_ENDPOINTS = {
     franchise: 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise',
     student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student',
-    // TO FIX THE 404: Paste your FULL get_upload_url address from the Xano endpoint page here:
-    handshake: 'PASTE_YOUR_FULL_URL_HERE' 
+    handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:uploader/get_upload_url' 
 };
 
-let activeImage = null;
+let vaultFile = null;
 
-// 1. Load Franchises
-window.onload = async () => {
-    console.log("Debug: Fetching Franchises...");
+// Load Schools
+window.addEventListener('DOMContentLoaded', async () => {
+    const fDropdown = document.getElementById('f-select');
     try {
-        const res = await fetch(API_ROUTES.franchise);
+        const res = await fetch(API_ENDPOINTS.franchise);
         const data = await res.json();
-        const fMenu = document.getElementById('franchise-dropdown');
-        fMenu.innerHTML = '<option value="">Select Location...</option>';
+        fDropdown.innerHTML = '<option value="">Select Location...</option>';
         data.forEach(item => {
             const opt = document.createElement('option');
             opt.value = item.id;
             opt.dataset.slug = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
             opt.textContent = item.name;
-            fMenu.appendChild(opt);
+            fDropdown.appendChild(opt);
         });
-        console.log("Debug: Franchises loaded", data);
-    } catch (e) { console.error("Debug Error: Franchise Load Failed", e); }
-};
+    } catch (err) {
+        fDropdown.innerHTML = '<option>Error loading schools</option>';
+    }
+});
 
-// 2. Load Students
-async function loadStudents(fId) {
-    console.log("Debug: Fetching Students for Franchise ID:", fId);
-    const sMenu = document.getElementById('student-dropdown');
-    if (!fId) { sMenu.disabled = true; return; }
-    sMenu.disabled = false;
-    sMenu.innerHTML = '<option>Loading...</option>';
+// Load Students
+async function fetchStudents(franchiseId) {
+    const sDropdown = document.getElementById('s-select');
+    if (!franchiseId) { sDropdown.disabled = true; return; }
+    sDropdown.disabled = false;
+    sDropdown.innerHTML = '<option>Loading...</option>';
     try {
-        const res = await fetch(`${API_ROUTES.student}?franchise_id=${fId}`);
+        const res = await fetch(`${API_ENDPOINTS.student}?franchise_id=${franchiseId}`);
         const data = await res.json();
-        sMenu.innerHTML = '<option value="">Select Student...</option>';
-        data.forEach(item => {
-            sMenu.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+        sDropdown.innerHTML = '<option value="">Select Student...</option>';
+        data.forEach(s => {
+            sDropdown.innerHTML += `<option value="${s.id}">${s.name}</option>`;
         });
-        console.log("Debug: Students loaded", data);
-    } catch (e) { console.error("Debug Error: Student Load Failed", e); }
+    } catch (err) {
+        sDropdown.innerHTML = '<option>Error</option>';
+    }
 }
 
-function handleCapture(input) {
+function handleFileSelect(input) {
     if (input.files && input.files[0]) {
-        activeImage = input.files[0];
-        console.log("Debug: Photo Captured", activeImage.name, activeImage.type);
-        document.getElementById('preview-img').src = URL.createObjectURL(activeImage);
-        document.getElementById('init-stage').style.display = 'none';
-        document.getElementById('preview-section').style.display = 'block';
+        vaultFile = input.files[0];
+        document.getElementById('preview-display').src = URL.createObjectURL(vaultFile);
+        document.getElementById('capture-stage').style.display = 'none';
+        document.getElementById('vault-preview-wrap').style.display = 'block';
     }
 }
 
-async function syncToVault() {
-    console.log("Debug: Starting Sync Process...");
-    const fBox = document.getElementById('franchise-dropdown');
-    const sId = document.getElementById('student-dropdown').value;
-    const fSlug = fBox.selectedOptions[0].dataset.slug;
-    
-    if (API_ROUTES.handshake === 'PASTE_YOUR_FULL_URL_HERE') {
-        alert("STOP: You must paste your Xano API URL into the script first.");
-        return;
-    }
+async function runS3Sync() {
+    const fSelect = document.getElementById('f-select');
+    const studentId = document.getElementById('s-select').value;
+    const franchiseSlug = fSelect.selectedOptions[0].dataset.slug;
 
-    const btn = document.getElementById('sync-btn');
-    const bar = document.getElementById('progress-fill');
-    const label = document.getElementById('status-label');
-    document.getElementById('progress-ui').style.display = 'block';
+    if (!fSelect.value || !studentId) return alert("Select School and Student.");
+
+    const btn = document.getElementById('sync-trigger');
+    const bar = document.getElementById('ui-bar');
+    const status = document.getElementById('ui-status');
+    const ui = document.getElementById('ui-progress');
+
     btn.disabled = true;
+    ui.style.display = 'block';
     
     try {
-        const filePath = `${fSlug}/student-${sId}/${Date.now()}-${activeImage.name}`;
-        console.log("Debug: Target S3 Path:", filePath);
-
-        // Handshake
-        label.innerText = "Step 1: Handshake with Xano...";
-        bar.style.width = "25%";
+        const timestamp = Date.now();
+        const fullS3Path = `${franchiseSlug}/student-${studentId}/${timestamp}-${vaultFile.name}`;
         
-        const authRequest = await fetch(API_ROUTES.handshake, {
+        status.innerText = "Authorizing with S3...";
+        bar.style.width = "25%";
+
+        const handshakeResponse = await fetch(API_ENDPOINTS.handshake, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file_path: filePath, content_type: activeImage.type })
+            body: JSON.stringify({ file_path: fullS3Path, content_type: vaultFile.type })
         });
 
-        console.log("Debug: Handshake Response Status:", authRequest.status);
-        if (!authRequest.ok) throw new Error(`Handshake Failed (${authRequest.status})`);
-        
-        const { upload_url } = await authRequest.json();
-        console.log("Debug: Received Signed URL:", upload_url);
+        if (!handshakeResponse.ok) throw new Error("Handshake Failed");
+        const { upload_url } = await handshakeResponse.json();
 
-        // Upload
-        label.innerText = "Step 2: Pushing to S3...";
+        status.innerText = "Streaming Photo to Vault...";
         bar.style.width = "65%";
         
-        const s3Push = await fetch(upload_url, {
+        const s3Response = await fetch(upload_url, {
             method: 'PUT',
-            headers: { 'Content-Type': activeImage.type },
-            body: activeImage
+            headers: { 'Content-Type': vaultFile.type },
+            body: vaultFile
         });
 
-        console.log("Debug: S3 Response Status:", s3Push.status);
-        if (s3Push.ok) {
+        if (s3Response.ok) {
             bar.style.width = "100%";
-            label.innerText = "Sync Successful!";
-            console.log("Debug: SUCCESS");
-        } else { throw new Error(`S3 Rejected Upload (${s3Push.status})`); }
-
+            status.innerText = "Sync Successful!";
+            setTimeout(resetVault, 2000);
+        } else {
+            throw new Error("S3 Rejected Upload");
+        }
     } catch (err) {
-        console.error("Debug: SYNC FAILED", err);
-        label.innerText = "FAILED: " + err.message;
+        status.innerText = "Sync Failed: " + err.message;
         btn.disabled = false;
     }
 }
 
-function resetApp() {
-    activeImage = null;
-    document.getElementById('init-stage').style.display = 'block';
-    document.getElementById('preview-section').style.display = 'none';
-    document.getElementById('progress-ui').style.display = 'none';
-    document.getElementById('sync-btn').disabled = false;
+function resetVault() {
+    vaultFile = null;
+    document.getElementById('input-cam').value = '';
+    document.getElementById('capture-stage').style.display = 'block';
+    document.getElementById('vault-preview-wrap').style.display = 'none';
+    document.getElementById('ui-progress').style.display = 'none';
+    document.getElementById('ui-bar').style.width = '0%';
+    document.getElementById('sync-trigger').disabled = false;
 }
 </script>
