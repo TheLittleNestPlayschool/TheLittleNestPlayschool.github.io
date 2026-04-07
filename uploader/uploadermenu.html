@@ -36,11 +36,6 @@
             letter-spacing: 2px;
             text-transform: uppercase;
         }
-        .vault-header p {
-            margin: 10px 0 0;
-            font-size: 14px;
-            opacity: 0.9;
-        }
 
         .vault-selectors {
             display: grid;
@@ -68,6 +63,7 @@
             font-size: 16px;
             outline: none;
             cursor: pointer;
+            background: white;
         }
 
         .capture-container {
@@ -80,10 +76,6 @@
             padding: 70px 30px;
             cursor: pointer;
             background: #ffffff;
-        }
-        .camera-trigger:hover {
-            border-color: var(--primary-blue);
-            background: #f0f7ff;
         }
 
         #vault-preview-wrap {
@@ -150,13 +142,13 @@
 
     <div class="vault-selectors">
         <div class="select-group">
-            <label>1. Select School</label>
+            <label>1. School</label>
             <select id="f-select" onchange="fetchStudents(this.value)">
                 <option value="">Loading Schools...</option>
             </select>
         </div>
         <div class="select-group">
-            <label>2. Select Student</label>
+            <label>2. Student</label>
             <select id="s-select" disabled>
                 <option value="">Select School First</option>
             </select>
@@ -189,15 +181,18 @@
 </div>
 
 <script>
+// BASED ON YOUR LATEST SCREENSHOTS
+const BASE_UPLOADER_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:uploader';
+
 const API_ENDPOINTS = {
-    franchise: 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise',
-    student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student',
-    // Corrected the group ID from "uploader" to "iEHfqd-N" based on your logs
-    handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/get_upload_url' 
+    franchise: `${BASE_UPLOADER_URL}/uploader_get_franchises`,
+    student: `${BASE_UPLOADER_URL}/uploader_get_students`,
+    handshake: `${BASE_UPLOADER_URL}/get_upload_url`
 };
 
 let vaultFile = null;
 
+// 1. Initial Load: Get Franchises from the 'uploader' group
 window.addEventListener('DOMContentLoaded', async () => {
     const fDropdown = document.getElementById('f-select');
     try {
@@ -216,6 +211,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+// 2. Filter Students by Franchise
 async function fetchStudents(franchiseId) {
     const sDropdown = document.getElementById('s-select');
     if (!franchiseId) { sDropdown.disabled = true; return; }
@@ -242,6 +238,7 @@ function handleFileSelect(input) {
     }
 }
 
+// 3. Handshake and S3 Upload
 async function runS3Sync() {
     const fSelect = document.getElementById('f-select');
     const sDropdown = document.getElementById('s-select');
@@ -261,7 +258,6 @@ async function runS3Sync() {
     
     try {
         const timestamp = new Date().getTime();
-        // Path: school/student-name/timestamp-filename.jpg
         const fullS3Path = `${franchiseSlug}/${studentName}/${timestamp}-${vaultFile.name}`;
         
         status.innerText = "Authorizing with S3 Vault...";
