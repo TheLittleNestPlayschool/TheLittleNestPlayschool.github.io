@@ -13,8 +13,9 @@
 
         .nestmind-vault-system {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            width: 100%;
             max-width: 650px;
-            margin: 40px auto;
+            margin: 20px auto;
             background: #ffffff;
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.12);
@@ -60,15 +61,30 @@
             font-weight: 700;
             text-transform: uppercase;
             color: var(--text-muted);
+            letter-spacing: 1px;
         }
         .vault-selectors select {
+            appearance: none;
+            background-color: #ffffff;
             border: 2px solid var(--border-color);
             border-radius: 12px;
             padding: 15px;
             font-size: 16px;
+            color: var(--text-main);
             outline: none;
             cursor: pointer;
-            background: white;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23718096%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 18px;
+        }
+        .vault-selectors select:focus {
+            border-color: var(--primary-blue);
+        }
+        .vault-selectors select:disabled {
+            background-color: #e2e8f0;
+            cursor: not-allowed;
+            opacity: 0.6;
         }
 
         .capture-container {
@@ -80,12 +96,22 @@
             border-radius: 25px;
             padding: 70px 30px;
             cursor: pointer;
+            transition: all 0.3s ease;
             background: #ffffff;
-            transition: 0.3s;
         }
         .camera-trigger:hover {
             border-color: var(--primary-blue);
             background: #f0f7ff;
+        }
+        .camera-trigger .icon {
+            font-size: 70px;
+            display: block;
+            margin-bottom: 20px;
+        }
+        .camera-trigger span {
+            display: block;
+            font-size: 20px;
+            font-weight: 700;
         }
 
         #vault-preview-wrap {
@@ -98,10 +124,12 @@
             border-radius: 15px;
             overflow: hidden;
             margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
         #preview-display {
             width: 100%;
             max-height: 500px;
+            display: block;
             object-fit: contain;
         }
 
@@ -118,9 +146,11 @@
             font-weight: 800;
             cursor: pointer;
             text-transform: uppercase;
+            transition: 0.2s;
         }
         .btn-sync { background: var(--primary-blue); color: white; }
         .btn-reset { background: #edf2f7; color: #4a5568; }
+        .vault-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .progress-box {
             margin-bottom: 25px;
@@ -142,6 +172,12 @@
             margin-top: 12px;
             font-size: 15px;
             font-weight: 700;
+            text-align: left;
+        }
+
+        @media (max-width: 550px) {
+            .vault-selectors { grid-template-columns: 1fr; }
+            .vault-actions { grid-template-columns: 1fr; }
         }
     </style>
 
@@ -167,7 +203,7 @@
 
     <div id="capture-stage" class="capture-container">
         <div class="camera-trigger" onclick="document.getElementById('input-cam').click()">
-            <div style="font-size: 60px; margin-bottom: 15px;">📸</div>
+            <span class="icon">📸</span>
             <span>Take Student Photo</span>
             <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="handleFileSelect(this)">
         </div>
@@ -175,7 +211,7 @@
 
     <div id="vault-preview-wrap">
         <div class="media-holder">
-            <img id="preview-display" src="">
+            <img id="preview-display" src="" alt="S3 Preview">
         </div>
 
         <div class="progress-box" id="ui-progress">
@@ -191,16 +227,14 @@
 </div>
 
 <script>
-// UPDATED WITH YOUR EXACT API GROUP IDS
 const API_ENDPOINTS = {
     franchise: 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise',
     student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student',
-    handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/get_upload_url' 
+    handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/get_upload_url'
 };
 
 let vaultFile = null;
 
-// Load Schools
 window.addEventListener('DOMContentLoaded', async () => {
     const fDropdown = document.getElementById('f-select');
     try {
@@ -219,21 +253,36 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Load Students
 async function fetchStudents(franchiseId) {
     const sDropdown = document.getElementById('s-select');
-    if (!franchiseId) { sDropdown.disabled = true; return; }
+    
+    if (!franchiseId || franchiseId === "") { 
+        sDropdown.disabled = true; 
+        sDropdown.innerHTML = '<option value="">Select School First</option>';
+        return; 
+    }
+
     sDropdown.disabled = false;
-    sDropdown.innerHTML = '<option>Loading...</option>';
+    sDropdown.innerHTML = '<option>Filtering Students...</option>';
+
     try {
         const res = await fetch(`${API_ENDPOINTS.student}?franchise_id=${franchiseId}`);
         const data = await res.json();
+        
         sDropdown.innerHTML = '<option value="">Select Student...</option>';
-        data.forEach(s => {
-            sDropdown.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-        });
+        
+        if (data.length === 0) {
+            sDropdown.innerHTML = '<option value="">No Students Found</option>';
+        } else {
+            data.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                sDropdown.appendChild(opt);
+            });
+        }
     } catch (err) {
-        sDropdown.innerHTML = '<option>Error</option>';
+        sDropdown.innerHTML = '<option>Error Loading Students</option>';
     }
 }
 
@@ -249,11 +298,15 @@ function handleFileSelect(input) {
 async function runS3Sync() {
     const fSelect = document.getElementById('f-select');
     const sDropdown = document.getElementById('s-select');
+    
     const studentId = sDropdown.value;
     const studentName = sDropdown.options[sDropdown.selectedIndex].text.replace(/\s+/g, '-').toLowerCase();
     const franchiseSlug = fSelect.selectedOptions[0].dataset.slug;
 
-    if (!fSelect.value || !studentId) return alert("Select School and Student.");
+    if (!fSelect.value || !studentId) {
+        alert("Please select a school and a student.");
+        return;
+    }
 
     const btn = document.getElementById('sync-trigger');
     const bar = document.getElementById('ui-bar');
@@ -273,13 +326,16 @@ async function runS3Sync() {
         const handshakeResponse = await fetch(API_ENDPOINTS.handshake, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file_path: fullS3Path, content_type: vaultFile.type })
+            body: JSON.stringify({
+                file_path: fullS3Path,
+                content_type: vaultFile.type
+            })
         });
 
         if (!handshakeResponse.ok) throw new Error(`Handshake Failed: ${handshakeResponse.status}`);
         const { upload_url } = await handshakeResponse.json();
 
-        status.innerText = "Streaming Photo to Vault...";
+        status.innerText = "Syncing Media to Vault...";
         bar.style.width = "65%";
         
         const s3Response = await fetch(upload_url, {
@@ -291,12 +347,15 @@ async function runS3Sync() {
         if (s3Response.ok) {
             bar.style.width = "100%";
             status.innerText = "Sync Successful!";
+            status.style.color = "var(--success-green)";
             setTimeout(resetVault, 2000);
         } else {
-            throw new Error("S3 Rejected Upload");
+            throw new Error(`S3 Rejected Upload: ${s3Response.status}`);
         }
+
     } catch (err) {
         status.innerText = "Sync Failed: " + err.message;
+        status.style.color = "var(--error-red)";
         btn.disabled = false;
     }
 }
@@ -308,6 +367,7 @@ function resetVault() {
     document.getElementById('vault-preview-wrap').style.display = 'none';
     document.getElementById('ui-progress').style.display = 'none';
     document.getElementById('ui-bar').style.width = '0%';
+    document.getElementById('ui-status').style.color = 'var(--text-main)';
     document.getElementById('sync-trigger').disabled = false;
 }
 </script>
