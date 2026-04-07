@@ -177,7 +177,6 @@
 </div>
 
 <script>
-// Updated API config with your new parent group
 const API_ENDPOINTS = {
     franchise: 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise',
     student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student',
@@ -187,6 +186,7 @@ const API_ENDPOINTS = {
 
 let vaultFile = null;
 let allStudentsRaw = [];
+let allParentsRaw = [];
 
 window.addEventListener('DOMContentLoaded', async () => {
     const fDropdown = document.getElementById('f-select');
@@ -202,10 +202,16 @@ window.addEventListener('DOMContentLoaded', async () => {
             fDropdown.appendChild(opt);
         });
 
-        // Fetch students and include the parent table data automatically
-        const sRes = await fetch(`${API_ENDPOINTS.student}?link_child[]=_parent`);
+        // Load Students and Parents separately to ensure we have all data
+        const [sRes, pRes] = await Promise.all([
+            fetch(API_ENDPOINTS.student),
+            fetch(API_ENDPOINTS.parent)
+        ]);
+        
         allStudentsRaw = await sRes.json();
-        console.log("Vault System Initialized.");
+        allParentsRaw = await pRes.json();
+        
+        console.log("System Ready: Students and Parents loaded.");
     } catch (err) {
         fDropdown.innerHTML = '<option>Error loading system</option>';
     }
@@ -246,12 +252,10 @@ function filterStudentsLocal(franchiseId) {
 function debugStudentSelection(studentId) {
     if (!studentId) return;
     const student = allStudentsRaw.find(s => String(s.id) === String(studentId));
+    const parent = allParentsRaw.find(p => String(p.id) === String(student.parent_id));
     
-    // Check if the _parent object exists from the link_child join
-    const pData = student._parent;
-    const pName = pData ? `${pData.first_name} ${pData.last_name}` : "NO PARENT DATA";
-    
-    alert(`DEBUG (Step 2 - Selection):\nStudent: ${student.name}\nParent: ${pName}`);
+    const pName = parent ? `${parent.first_name} ${parent.last_name}` : "MISSING PARENT";
+    alert(`DEBUG (Step 2 - Student Selection):\nStudent: ${student.name}\nParent Match: ${pName}`);
 }
 
 function handleFileSelect(input) {
@@ -273,14 +277,12 @@ async function runS3Sync() {
 
     const studentId = sDropdown.value;
     const studentData = allStudentsRaw.find(s => String(s.id) === String(studentId));
+    const parentData = allParentsRaw.find(p => String(p.id) === String(studentData.parent_id));
     const franchiseSlug = fSelect.selectedOptions[0].dataset.slug;
 
-    // Build Parent Name Path from the joined parent object
-    let pPath = "unassigned-parent";
-    if (studentData._parent) {
-        const f = (studentData._parent.first_name || "").trim();
-        const l = (studentData._parent.last_name || "").trim();
-        pPath = `${f}-${l}`.replace(/\s+/g, '-').toLowerCase();
+    let pFolderName = "unassigned-parent";
+    if (parentData) {
+        pFolderName = `${parentData.first_name}-${parentData.last_name}`.replace(/\s+/g, '-').toLowerCase();
     }
 
     btn.disabled = true;
@@ -288,8 +290,8 @@ async function runS3Sync() {
     
     try {
         const timestamp = new Date().getTime();
-        // Path: franchise/parent-name/timestamp-filename.ext
-        const fullS3Path = `${franchiseSlug}/${pPath}/${timestamp}-${vaultFile.name}`;
+        // Updated Path: franchise/parent-name/timestamp-filename.ext
+        const fullS3Path = `${franchiseSlug}/${pFolderName}/${timestamp}-${vaultFile.name}`;
         
         status.innerText = "Authorizing...";
         bar.style.width = "25%";
@@ -297,16 +299,11 @@ async function runS3Sync() {
         const handshakeResponse = await fetch(API_ENDPOINTS.handshake, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                file_path: fullS3Path,
-                content_type: vaultFile.type
-            })
+            body: JSON.stringify({ file_path: fullS3Path, content_type: vaultFile.type })
         });
 
         const { upload_url } = await handshakeResponse.json();
-
-        // Path Verification
-        alert(`DEBUG (Step 3 - Final Path Check):\n${fullS3Path}`);
+        alert(`DEBUG (Step 3 - Final Path):\n${fullS3Path}`);
 
         bar.style.width = "65%";
         status.innerText = "Syncing...";
@@ -320,14 +317,12 @@ async function runS3Sync() {
         if (s3Response.ok) {
             bar.style.width = "100%";
             status.innerText = "Sync Successful!";
-            status.style.color = "var(--success-green)";
             setTimeout(resetVault, 2000);
         } else {
             throw new Error(`S3 Error: ${s3Response.status}`);
         }
     } catch (err) {
         status.innerText = "Sync Failed: " + err.message;
-        status.style.color = "var(--error-red)";
         btn.disabled = false;
     }
 }
@@ -338,7 +333,6 @@ function resetVault() {
     document.getElementById('capture-stage').style.display = 'block';
     document.getElementById('vault-preview-wrap').style.display = 'none';
     document.getElementById('ui-progress').style.display = 'none';
-    document.getElementById('ui-status').style.color = 'var(--text-main)';
     document.getElementById('sync-trigger').disabled = false;
 }
 </script>
