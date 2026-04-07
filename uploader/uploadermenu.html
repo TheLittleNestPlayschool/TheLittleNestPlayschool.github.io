@@ -36,6 +36,11 @@
             letter-spacing: 2px;
             text-transform: uppercase;
         }
+        .vault-header p {
+            margin: 10px 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
 
         .vault-selectors {
             display: grid;
@@ -76,6 +81,11 @@
             padding: 70px 30px;
             cursor: pointer;
             background: #ffffff;
+            transition: 0.3s;
+        }
+        .camera-trigger:hover {
+            border-color: var(--primary-blue);
+            background: #f0f7ff;
         }
 
         #vault-preview-wrap {
@@ -181,11 +191,11 @@
 </div>
 
 <script>
-// Corrected to use specific Group IDs from your screenshots
+// UPDATED WITH YOUR EXACT API GROUP IDS
 const API_ENDPOINTS = {
     franchise: 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise',
     student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student',
-    handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/get_upload_url'
+    handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/get_upload_url' 
 };
 
 let vaultFile = null;
@@ -269,7 +279,7 @@ async function runS3Sync() {
         if (!handshakeResponse.ok) throw new Error(`Handshake Failed: ${handshakeResponse.status}`);
         const { upload_url } = await handshakeResponse.json();
 
-        status.innerText = "Syncing Media to Vault...";
+        status.innerText = "Streaming Photo to Vault...";
         bar.style.width = "65%";
         
         const s3Response = await fetch(upload_url, {
@@ -283,10 +293,10 @@ async function runS3Sync() {
             status.innerText = "Sync Successful!";
             setTimeout(resetVault, 2000);
         } else {
-            throw new Error("S3 Upload Rejected");
+            throw new Error("S3 Rejected Upload");
         }
     } catch (err) {
-        status.innerText = "Sync Error: " + err.message;
+        status.innerText = "Sync Failed: " + err.message;
         btn.disabled = false;
     }
 }
