@@ -227,17 +227,14 @@
 </div>
 
 <script>
-// --- CORE API CONFIGURATION ---
 const API_ENDPOINTS = {
     franchise: 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise',
-    // Using the base student API group for proper filtering
     student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student',
     handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/get_upload_url'
 };
 
 let vaultFile = null;
 
-// Initial Load: Populate Schools
 window.addEventListener('DOMContentLoaded', async () => {
     const fDropdown = document.getElementById('f-select');
     try {
@@ -256,8 +253,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Fetch Students: Filters by franchise_id AND is_active status
 async function fetchStudents(franchiseId) {
+    const fSelect = document.getElementById('f-select');
     const sDropdown = document.getElementById('s-select');
     
     if (!franchiseId || franchiseId === "") { 
@@ -266,20 +263,28 @@ async function fetchStudents(franchiseId) {
         return; 
     }
 
+    // --- DEBUG POPUP ---
+    const selectedText = fSelect.options[fSelect.selectedIndex].text;
+    const selectedSlug = fSelect.selectedOptions[0].dataset.slug;
+    alert(`DEBUG:\nSchool: ${selectedText}\nFranchise ID: ${franchiseId}\nS3 Slug: ${selectedSlug}`);
+
     sDropdown.disabled = false;
     sDropdown.innerHTML = '<option>Filtering Students...</option>';
 
     try {
-        // Constructing URL with active status and franchise ID filters
         const queryParams = new URLSearchParams({
             franchise_id: franchiseId,
             is_active: true
         });
 
-        const res = await fetch(`${API_ENDPOINTS.student}?${queryParams.toString()}`);
+        const fetchUrl = `${API_ENDPOINTS.student}?${queryParams.toString()}`;
+        console.log("DEBUG: Requesting URL:", fetchUrl);
+
+        const res = await fetch(fetchUrl);
         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         
         const data = await res.json();
+        console.log("DEBUG: Raw Student Data Received:", data);
         
         sDropdown.innerHTML = '<option value="">Select Student...</option>';
         
@@ -287,6 +292,8 @@ async function fetchStudents(franchiseId) {
             sDropdown.innerHTML = '<option value="">No Active Students Found</option>';
         } else {
             data.forEach(s => {
+                // Log each student's internal franchise_id to see if Xano is lying
+                console.log(`Student: ${s.name} | Table Franchise ID: ${s.franchise_id}`);
                 const opt = document.createElement('option');
                 opt.value = s.id;
                 opt.textContent = s.name;
