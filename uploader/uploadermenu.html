@@ -1,196 +1,250 @@
 <div class="nestmind-uploader">
     <style>
-        :root { --primary: #4a90e2; --success: #4caf50; --danger: #e74c3c; --text: #2d3748; }
-        .nestmind-uploader { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; color: var(--text); }
+        :root { 
+            --primary: #4a90e2; 
+            --success: #4caf50; 
+            --danger: #e74c3c; 
+            --text-dark: #2d3748; 
+            --text-light: #718096;
+            --border: #cbd5e0;
+            --bg-light: #f7fafc;
+        }
+
+        .nestmind-uploader { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            max-width: 600px; 
+            margin: 30px auto; 
+            background: white; 
+            border-radius: 16px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
+            overflow: hidden; 
+            color: var(--text-dark); 
+        }
         
-        .header { background: var(--primary); color: white; padding: 25px; text-align: center; }
-        .header h2 { margin: 0; font-size: 22px; letter-spacing: 1px; text-transform: uppercase; }
-        .header p { margin: 5px 0 0; font-size: 12px; opacity: 0.9; }
+        .uploader-header { 
+            background: var(--primary); 
+            color: white; 
+            padding: 30px 20px; 
+            text-align: center; 
+            border-bottom: 4px solid rgba(0,0,0,0.1);
+        }
+        .uploader-header h2 { margin: 0; font-size: 26px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 800; }
+        .uploader-header p { margin: 8px 0 0; font-size: 13px; opacity: 0.9; }
 
-        .setup-section { padding: 20px; border-bottom: 1px solid #eee; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #fafafa; }
-        .field-group { display: flex; flex-direction: column; gap: 5px; }
-        .field-group label { font-size: 10px; text-transform: uppercase; color: #718096; font-weight: bold; }
-        select { padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 14px; background: white; outline: none; }
+        .uploader-setup { 
+            padding: 25px; 
+            border-bottom: 1px solid #edf2f7; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px; 
+            background: #fafbfc; 
+        }
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        .input-group label { font-size: 11px; text-transform: uppercase; color: var(--text-light); font-weight: 700; }
+        .uploader-setup select { 
+            padding: 14px; 
+            border: 2px solid var(--border); 
+            border-radius: 10px; 
+            font-size: 15px; 
+            background: white; 
+            outline: none; 
+            cursor: pointer;
+        }
 
-        .upload-stage { padding: 40px 20px; text-align: center; }
-        .drop-zone { border: 3px dashed #cbd5e0; border-radius: 15px; padding: 50px 20px; transition: 0.3s; cursor: pointer; background: #fff; }
-        .drop-zone:hover { border-color: var(--primary); background: #f7fafc; }
+        .capture-area { padding: 50px 25px; text-align: center; }
+        .photo-trigger { 
+            border: 3px dashed var(--border); 
+            border-radius: 20px; 
+            padding: 60px 20px; 
+            transition: all 0.3s ease; 
+            cursor: pointer; 
+            background: white; 
+        }
+        .photo-trigger:hover { border-color: var(--primary); background: var(--bg-light); }
+        .photo-trigger i { font-size: 64px; display: block; margin-bottom: 15px; font-style: normal; }
         
-        #preview-box { display: none; padding: 20px; animation: slideUp 0.4s ease-out; }
-        #preview-img { width: 100%; max-height: 400px; object-fit: contain; border-radius: 10px; background: #1a202c; }
+        #preview-section { display: none; padding: 25px; animation: slideUp 0.5s ease; }
+        .img-container { width: 100%; background: #1a202c; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        #preview-img { width: 100%; max-height: 450px; object-fit: contain; }
         
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-        .btn { padding: 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; }
-        .btn-main { background: var(--primary); color: white; }
-        .btn-alt { background: #edf2f7; color: #4a5568; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .action-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        .btn-ui { padding: 18px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-confirm { background: var(--primary); color: white; }
+        .btn-cancel { background: #edf2f7; color: #4a5568; }
+        .btn-ui:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .progress-wrapper { margin-top: 20px; display: none; text-align: left; }
-        .progress-bar { height: 10px; background: #edf2f7; border-radius: 20px; overflow: hidden; }
-        .progress-fill { width: 0%; height: 100%; background: var(--success); transition: width 0.4s; }
-        .status-text { font-size: 13px; margin-top: 8px; font-weight: 500; color: #4a5568; }
+        .upload-progress { margin-top: 25px; display: none; text-align: left; }
+        .bar-outer { height: 12px; background: #edf2f7; border-radius: 50px; overflow: hidden; }
+        .bar-inner { width: 0%; height: 100%; background: var(--success); transition: width 0.4s ease; }
+        .status-msg { font-size: 14px; margin-top: 10px; font-weight: 600; color: var(--text-dark); }
 
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 500px) { .uploader-setup { grid-template-columns: 1fr; } }
     </style>
 
-    <div class="header">
-        <h2>NestMind Vault</h2>
-        <p>Official Uploader for The Little Nest</p>
+    <div class="uploader-header">
+        <h2>NESTMIND VAULT</h2>
+        <p>Official Media Management for The Little Nest</p>
     </div>
 
-    <div class="setup-section">
-        <div class="field-group">
-            <label>Location</label>
-            <select id="franchise-select" onchange="updateStudents(this.value)">
-                <option value="">Loading Schools...</option>
+    <div class="uploader-setup">
+        <div class="input-group">
+            <label>Franchise Location</label>
+            <select id="franchise-dropdown" onchange="loadStudents(this.value)">
+                <option value="">Fetching Locations...</option>
             </select>
         </div>
-        <div class="field-group">
-            <label>Student</label>
-            <select id="student-select" disabled>
-                <option value="">Select School First</option>
+        <div class="input-group">
+            <label>Target Student</label>
+            <select id="student-dropdown" disabled>
+                <option value="">Select Location First</option>
             </select>
         </div>
     </div>
 
-    <div id="capture-box" class="upload-stage">
-        <div class="drop-zone" onclick="document.getElementById('file-input').click()">
-            <span style="font-size: 50px;">📸</span>
-            <p><strong>Capture Student Work</strong><br><span style="color: #718096; font-size: 13px;">Tap to open camera</span></p>
-            <input type="file" id="file-input" hidden accept="image/*" capture="environment" onchange="processSelection(this)">
+    <div id="init-stage" class="capture-area">
+        <div class="photo-trigger" onclick="document.getElementById('camera-file').click()">
+            <i>📸</i>
+            <strong>Tap to Capture Work</strong>
+            <span style="color: var(--text-light); font-size: 14px;">Open camera or upload photo</span>
+            <input type="file" id="camera-file" hidden accept="image/*" capture="environment" onchange="handleCapture(this)">
         </div>
     </div>
 
-    <div id="preview-box">
-        <img id="preview-img" src="" alt="Vault Preview">
-        <div class="progress-wrapper" id="prog-ui">
-            <div class="progress-bar"><div class="progress-fill" id="prog-bar"></div></div>
-            <div class="status-text" id="prog-status">Ready to sync...</div>
+    <div id="preview-section">
+        <div class="img-container"><img id="preview-img" src=""></div>
+        
+        <div class="upload-progress" id="progress-ui">
+            <div class="bar-outer"><div class="bar-inner" id="progress-fill"></div></div>
+            <div class="status-msg" id="status-label">Ready to sync...</div>
         </div>
-        <div class="controls">
-            <button class="btn btn-alt" onclick="clearPreview()">Retake</button>
-            <button class="btn btn-main" id="upload-btn" onclick="startVaultSync()">Sync to Vault</button>
+
+        <div class="action-bar">
+            <button class="btn-ui btn-cancel" id="retake-btn" onclick="resetApp()">Retake</button>
+            <button class="btn-ui btn-confirm" id="sync-btn" onclick="syncToVault()">Sync to Vault</button>
         </div>
     </div>
 </div>
 
 <script>
-// --- ENDPOINTS ---
-const ENDPOINTS = {
+// --- CORE ENDPOINTS ---
+const API_ROUTES = {
     franchise: 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise',
     student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student',
     handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:uploader/get_upload_url'
 };
 
-let currentFile = null;
+let activeImage = null;
 
-// Load Franchises
-window.addEventListener('DOMContentLoaded', async () => {
-    const fSelect = document.getElementById('franchise-select');
+// Initial Load: Franchises
+window.onload = async () => {
+    const fMenu = document.getElementById('franchise-dropdown');
     try {
-        const response = await fetch(ENDPOINTS.franchise);
-        const franchises = await response.json();
-        fSelect.innerHTML = '<option value="">Select Location...</option>';
-        franchises.forEach(f => {
+        const res = await fetch(API_ROUTES.franchise);
+        const data = await res.json();
+        fMenu.innerHTML = '<option value="">Select Location...</option>';
+        data.forEach(item => {
             const opt = document.createElement('option');
-            opt.value = f.id;
-            opt.dataset.slug = f.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-            opt.textContent = f.name;
-            fSelect.appendChild(opt);
+            opt.value = item.id;
+            opt.dataset.slug = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            opt.textContent = item.name;
+            fMenu.appendChild(opt);
         });
-    } catch (err) { fSelect.innerHTML = '<option>Error loading locations</option>'; }
-});
+    } catch (e) { fMenu.innerHTML = '<option>Error Loading Schools</option>'; }
+};
 
-// Update Students based on Franchise ID
-async function updateStudents(fId) {
-    const sSelect = document.getElementById('student-select');
-    if (!fId) { sSelect.disabled = true; return; }
-    sSelect.disabled = false;
-    sSelect.innerHTML = '<option>Loading...</option>';
+// Load Students based on selection
+async function loadStudents(fId) {
+    const sMenu = document.getElementById('student-dropdown');
+    if (!fId) { sMenu.disabled = true; return; }
+    
+    sMenu.disabled = false;
+    sMenu.innerHTML = '<option>Loading Students...</option>';
+    
     try {
-        const response = await fetch(`${ENDPOINTS.student}?franchise_id=${fId}`);
-        const students = await response.json();
-        sSelect.innerHTML = '<option value="">Select Student...</option>';
-        students.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.id;
-            opt.textContent = s.name;
-            sSelect.appendChild(opt);
+        const res = await fetch(`${API_ROUTES.student}?franchise_id=${fId}`);
+        const data = await res.json();
+        sMenu.innerHTML = '<option value="">Select Student...</option>';
+        data.forEach(item => {
+            sMenu.innerHTML += `<option value="${item.id}">${item.name}</option>`;
         });
-    } catch (err) { sSelect.innerHTML = '<option>Error loading students</option>'; }
+    } catch (e) { sMenu.innerHTML = '<option>Error</option>'; }
 }
 
-function processSelection(input) {
+function handleCapture(input) {
     if (input.files && input.files[0]) {
-        currentFile = input.files[0];
-        document.getElementById('preview-img').src = URL.createObjectURL(currentFile);
-        document.getElementById('capture-box').style.display = 'none';
-        document.getElementById('preview-box').style.display = 'block';
+        activeImage = input.files[0];
+        document.getElementById('preview-img').src = URL.createObjectURL(activeImage);
+        document.getElementById('init-stage').style.display = 'none';
+        document.getElementById('preview-section').style.display = 'block';
     }
 }
 
-function clearPreview() {
-    currentFile = null;
-    document.getElementById('file-input').value = '';
-    document.getElementById('capture-box').style.display = 'block';
-    document.getElementById('preview-box').style.display = 'none';
-    document.getElementById('prog-ui').style.display = 'none';
-    document.getElementById('upload-btn').disabled = false;
+function resetApp() {
+    activeImage = null;
+    document.getElementById('camera-file').value = '';
+    document.getElementById('init-stage').style.display = 'block';
+    document.getElementById('preview-section').style.display = 'none';
+    document.getElementById('progress-ui').style.display = 'none';
+    document.getElementById('sync-btn').disabled = false;
 }
 
-async function startVaultSync() {
-    const fSelect = document.getElementById('franchise-select');
-    const sId = document.getElementById('student-select').value;
-    const fSlug = fSelect.selectedOptions[0].dataset.slug;
-    const btn = document.getElementById('upload-btn');
-    const bar = document.getElementById('prog-bar');
-    const status = document.getElementById('prog-status');
+async function syncToVault() {
+    const fBox = document.getElementById('franchise-dropdown');
+    const sId = document.getElementById('student-dropdown').value;
+    const fSlug = fBox.selectedOptions[0].dataset.slug;
+    
+    if (!fBox.value || !sId) return alert("Select location and student!");
 
-    if (!fSelect.value || !sId) return alert("Select franchise and student.");
+    const btn = document.getElementById('sync-btn');
+    const bar = document.getElementById('progress-fill');
+    const label = document.getElementById('status-label');
+    const ui = document.getElementById('progress-ui');
 
     btn.disabled = true;
-    document.getElementById('prog-ui').style.display = 'block';
+    ui.style.display = 'block';
     
     try {
-        status.innerText = "Securing Authorization...";
-        bar.style.width = "20%";
+        // 1. Handshake
+        label.innerText = "Requesting S3 Handshake...";
+        bar.style.width = "25%";
 
-        const path = `${fSlug}/student-${sId}/${Date.now()}-${currentFile.name}`;
-
-        // 1. Handshake with Lambda
-        const auth = await fetch(ENDPOINTS.handshake, {
+        const filePath = `${fSlug}/student-${sId}/${Date.now()}-${activeImage.name}`;
+        
+        const authRequest = await fetch(API_ROUTES.handshake, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file_path: path, content_type: currentFile.type })
+            body: JSON.stringify({
+                file_path: filePath,
+                content_type: activeImage.type
+            })
         });
 
-        if (!auth.ok) {
-            const errData = await auth.json();
-            throw new Error(errData.message || "Xano handshake failed");
-        }
-        
-        const data = await auth.json();
-        const upload_url = data.upload_url;
+        if (!authRequest.ok) throw new Error("Xano handshake failed");
+        const { upload_url } = await authRequest.json();
 
-        // 2. Direct S3 Upload
-        status.innerText = "Syncing to S3 Vault...";
-        bar.style.width = "60%";
-        const aws = await fetch(upload_url, {
+        // 2. AWS Upload
+        label.innerText = "Streaming to AWS S3 Vault...";
+        bar.style.width = "65%";
+
+        const s3Push = await fetch(upload_url, {
             method: 'PUT',
-            headers: { 'Content-Type': currentFile.type },
-            body: currentFile
+            headers: { 'Content-Type': activeImage.type },
+            body: activeImage
         });
 
-        if (aws.ok) {
+        if (s3Push.ok) {
             bar.style.width = "100%";
-            status.innerText = "Sync Complete!";
-            status.style.color = "var(--success)";
-            setTimeout(clearPreview, 2000);
-        } else { throw new Error("S3 Upload Rejected"); }
+            label.innerText = "Sync Successful!";
+            label.style.color = "var(--success)";
+            setTimeout(resetApp, 2000);
+        } else {
+            throw new Error("AWS S3 rejection");
+        }
 
     } catch (err) {
-        status.innerText = "Sync Failed: " + err.message;
-        status.style.color = "var(--danger)";
+        label.innerText = "Sync Failed: " + err.message;
+        label.style.color = "var(--danger)";
         btn.disabled = false;
     }
 }
