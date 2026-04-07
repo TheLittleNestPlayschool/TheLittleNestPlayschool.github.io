@@ -1,58 +1,58 @@
 <div class="nestmind-uploader">
     <style>
-        :root { --primary: #4a90e2; --success: #4caf50; --danger: #e74c3c; --bg: #f4f7f6; }
-        .nestmind-uploader { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
-        .header { background: var(--primary); color: white; padding: 25px; text-align: center; }
-        .header h2 { margin: 0; font-size: 24px; letter-spacing: 1px; }
+        :root { --primary: #4a90e2; --success: #4caf50; --danger: #e74c3c; --text: #2d3748; }
+        .nestmind-uploader { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; color: var(--text); }
         
+        .header { background: var(--primary); color: white; padding: 25px; text-align: center; }
+        .header h2 { margin: 0; font-size: 22px; letter-spacing: 1px; text-transform: uppercase; }
+        .header p { margin: 5px 0 0; font-size: 12px; opacity: 0.9; }
+
         .setup-section { padding: 20px; border-bottom: 1px solid #eee; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #fafafa; }
         .field-group { display: flex; flex-direction: column; gap: 5px; }
-        .field-group label { font-size: 11px; text-transform: uppercase; color: #888; font-weight: bold; }
-        select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: white; }
+        .field-group label { font-size: 10px; text-transform: uppercase; color: #718096; font-weight: bold; }
+        select { padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 14px; background: white; outline: none; }
+        select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1); }
 
         .upload-stage { padding: 40px 20px; text-align: center; }
-        .drop-zone { border: 3px dashed #cbd5e0; border-radius: 15px; padding: 40px 20px; transition: all 0.3s; cursor: pointer; position: relative; }
-        .drop-zone.active { border-color: var(--primary); background: #ebf4ff; }
-        .drop-zone i { font-size: 50px; color: #a0aec0; display: block; margin-bottom: 10px; }
+        .drop-zone { border: 3px dashed #cbd5e0; border-radius: 15px; padding: 50px 20px; transition: 0.3s; cursor: pointer; background: #fff; }
+        .drop-zone:hover { border-color: var(--primary); background: #f7fafc; }
+        .drop-zone i { font-size: 48px; display: block; margin-bottom: 10px; }
         
-        #preview-box { display: none; padding: 20px; animation: fadeIn 0.4s; }
-        #preview-img { width: 100%; max-height: 350px; object-fit: contain; border-radius: 8px; background: #000; }
+        #preview-box { display: none; padding: 20px; animation: slideUp 0.4s ease-out; }
+        #preview-img { width: 100%; max-height: 400px; object-fit: contain; border-radius: 10px; background: #1a202c; box-shadow: inset 0 2px 10px rgba(0,0,0,0.2); }
         
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .btn { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        .btn { padding: 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .btn-main { background: var(--primary); color: white; }
+        .btn-main:hover { background: #357abd; }
         .btn-alt { background: #edf2f7; color: #4a5568; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .progress-wrapper { margin-top: 20px; display: none; }
-        .progress-bar { height: 8px; background: #edf2f7; border-radius: 10px; overflow: hidden; }
-        .progress-fill { width: 0%; height: 100%; background: var(--success); transition: width 0.3s; }
-        .status-text { font-size: 13px; margin-top: 8px; color: #4a5568; font-style: italic; }
+        .progress-wrapper { margin-top: 20px; display: none; text-align: left; }
+        .progress-bar { height: 10px; background: #edf2f7; border-radius: 20px; overflow: hidden; }
+        .progress-fill { width: 0%; height: 100%; background: var(--success); transition: width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1); }
+        .status-text { font-size: 13px; margin-top: 8px; font-weight: 500; color: #4a5568; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 480px) { .setup-section { grid-template-columns: 1fr; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 500px) { .setup-section { grid-template-columns: 1fr; } }
     </style>
 
     <div class="header">
-        <h2>THE LITTLE NEST</h2>
-        <div style="font-size: 12px; opacity: 0.9;">Media Vault Assistant</div>
+        <h2>NestMind Vault</h2>
+        <p>Official Uploader for The Little Nest</p>
     </div>
 
     <div class="setup-section">
         <div class="field-group">
-            <label>Franchise Location</label>
-            <select id="franchise-select" onchange="loadStudents(this.value)">
-                <option value="">Select Location...</option>
-                <option value="tayabas">Tayabas</option>
-                <option value="sariaya">Sariaya</option>
-                <option value="lucena">Lucena</option>
-                <option value="candelaria">Candelaria</option>
+            <label>Location</label>
+            <select id="franchise-select" onchange="updateStudents(this.value)">
+                <option value="">Loading Schools...</option>
             </select>
         </div>
         <div class="field-group">
-            <label>Student Name</label>
+            <label>Student</label>
             <select id="student-select" disabled>
-                <option value="">Select Student...</option>
+                <option value="">Select School First</option>
             </select>
         </div>
     </div>
@@ -60,138 +60,160 @@
     <div id="capture-box" class="upload-stage">
         <div class="drop-zone" onclick="document.getElementById('file-input').click()">
             <i>📸</i>
-            <p><strong>Click to take photo</strong><br><span style="color: #718096; font-size: 13px;">or drag and drop images here</span></p>
-            <input type="file" id="file-input" hidden accept="image/*" capture="environment" onchange="handleFileSelect(this)">
+            <p><strong>Capture Student Work</strong><br><span style="color: #718096; font-size: 13px;">Tap to open camera</span></p>
+            <input type="file" id="file-input" hidden accept="image/*" capture="environment" onchange="processSelection(this)">
         </div>
     </div>
 
     <div id="preview-box">
-        <img id="preview-img" src="" alt="Capture Preview">
+        <img id="preview-img" src="" alt="Vault Preview">
         
-        <div class="progress-wrapper" id="prog-wrapper">
-            <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
-            <div class="status-text" id="status-label">Ready to sync with AWS...</div>
+        <div class="progress-wrapper" id="prog-ui">
+            <div class="progress-bar"><div class="progress-fill" id="prog-bar"></div></div>
+            <div class="status-text" id="prog-status">Ready to sync...</div>
         </div>
 
         <div class="controls">
-            <button class="btn btn-alt" onclick="cancelCapture()">Retake</button>
-            <button class="btn btn-main" id="upload-btn" onclick="executeVaultUpload()">Sync to Vault</button>
+            <button class="btn btn-alt" onclick="clearPreview()">Retake</button>
+            <button class="btn btn-main" id="upload-btn" onclick="startVaultSync()">Sync to Vault</button>
         </div>
     </div>
 </div>
 
 <script>
-// --- Configuration ---
-const API_CONFIG = {
-    xano_url: 'https://x8ki-letl-twmt.n7.xano.io/api:XXXX/get_upload_url', // Update this
-    current_user: 'Dave Stoyko'
+// --- ENDPOINTS ---
+const ENDPOINTS = {
+    franchise: 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise',
+    student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student',
+    handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:XXXX/get_upload_url' // UPDATE TO YOUR HANDSHAKE API
 };
 
-let activeFile = null;
+let currentFile = null;
 
-// Mock Student Data (Replace with your actual Xano Fetch logic)
-const studentRegistry = {
-    "tayabas": ["Juan Dela Cruz", "Maria Clara", "Pedro Penduko"],
-    "sariaya": ["Rizal Mercado", "Andres Bonifacio"],
-    "lucena": ["Dave Stoyko", "Angeline Zamilpa"]
-};
-
-function loadStudents(location) {
-    const studentSelect = document.getElementById('student-select');
-    studentSelect.innerHTML = '<option value="">Select Student...</option>';
-    
-    if (!location) {
-        studentSelect.disabled = true;
-        return;
+// Init: Load Franchises
+window.addEventListener('DOMContentLoaded', async () => {
+    const fSelect = document.getElementById('franchise-select');
+    try {
+        const response = await fetch(ENDPOINTS.franchise);
+        const franchises = await response.json();
+        fSelect.innerHTML = '<option value="">Select Location...</option>';
+        franchises.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f.id;
+            opt.dataset.slug = f.name.toLowerCase().replace(/\s+/g, '-');
+            opt.textContent = f.name;
+            fSelect.appendChild(opt);
+        });
+    } catch (err) {
+        fSelect.innerHTML = '<option>Error loading locations</option>';
     }
+});
 
-    studentRegistry[location].forEach(name => {
-        let opt = document.createElement('option');
-        opt.value = name.toLowerCase().replace(/\s+/g, '_');
-        opt.innerText = name;
-        studentSelect.appendChild(opt);
-    });
-    studentSelect.disabled = false;
+// Update Students based on Franchise ID
+async function updateStudents(fId) {
+    const sSelect = document.getElementById('student-select');
+    if (!fId) { sSelect.disabled = true; return; }
+
+    sSelect.disabled = false;
+    sSelect.innerHTML = '<option>Loading...</option>';
+
+    try {
+        // Querying student table filtered by franchise_id
+        const response = await fetch(`${ENDPOINTS.student}?franchise_id=${fId}`);
+        const students = await response.json();
+        sSelect.innerHTML = '<option value="">Select Student...</option>';
+        students.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            sSelect.appendChild(opt);
+        });
+    } catch (err) {
+        sSelect.innerHTML = '<option>Error loading students</option>';
+    }
 }
 
-function handleFileSelect(input) {
+function processSelection(input) {
     if (input.files && input.files[0]) {
-        activeFile = input.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            document.getElementById('preview-img').src = e.target.result;
-            document.getElementById('capture-box').style.display = 'none';
-            document.getElementById('preview-box').style.display = 'block';
-        };
-        reader.readAsDataURL(activeFile);
+        currentFile = input.files[0];
+        document.getElementById('preview-img').src = URL.createObjectURL(currentFile);
+        document.getElementById('capture-box').style.display = 'none';
+        document.getElementById('preview-box').style.display = 'block';
     }
 }
 
-function cancelCapture() {
-    activeFile = null;
+function clearPreview() {
+    currentFile = null;
     document.getElementById('file-input').value = '';
     document.getElementById('capture-box').style.display = 'block';
     document.getElementById('preview-box').style.display = 'none';
-    document.getElementById('prog-wrapper').style.display = 'none';
+    document.getElementById('prog-ui').style.display = 'none';
+    document.getElementById('upload-btn').disabled = false;
 }
 
-async function executeVaultUpload() {
-    const franchise = document.getElementById('franchise-select').value;
-    const student = document.getElementById('student-select').value;
-    const btn = document.getElementById('upload-btn');
-    const fill = document.getElementById('prog-fill');
-    const label = document.getElementById('status-label');
-
-    if (!franchise || !student) {
-        alert("Please select both Location and Student.");
+async function startVaultSync() {
+    const fSelect = document.getElementById('franchise-select');
+    const sId = document.getElementById('student-select').value;
+    const fSlug = fSelect.selectedOptions[0].dataset.slug;
+    
+    if (!fSelect.value || !sId) {
+        alert("Please select both Location and Student first.");
         return;
     }
 
+    const btn = document.getElementById('upload-btn');
+    const bar = document.getElementById('prog-bar');
+    const status = document.getElementById('prog-status');
+    const ui = document.getElementById('prog-ui');
+
     btn.disabled = true;
-    document.getElementById('prog-wrapper').style.display = 'block';
+    ui.style.display = 'block';
     
     try {
-        // 1. Handshake with Xano
-        label.innerText = "Generating secure S3 handshake...";
-        fill.style.width = "15%";
-        
-        const timestamp = Date.now();
-        const path = `${franchise}/${student}/${timestamp}-${activeFile.name}`;
+        // 1. Authorize with Xano Lambda
+        status.innerText = "Securing AWS Connection...";
+        bar.style.width = "25%";
 
-        const handshake = await fetch(API_CONFIG.xano_url, {
+        const timestamp = Date.now();
+        const s3Path = `${fSlug}/student-${sId}/${timestamp}-${currentFile.name}`;
+
+        const authResponse = await fetch(ENDPOINTS.handshake, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file_path: path, content_type: activeFile.type })
+            body: JSON.stringify({
+                file_path: s3Path,
+                content_type: currentFile.type
+            })
         });
 
-        if (!handshake.ok) throw new Error("Vault authorization failed.");
-        const { upload_url } = await handshake.json();
-        
-        // 2. Direct Binary Push to AWS
-        label.innerText = "Streaming encrypted data to AWS...";
-        fill.style.width = "45%";
+        if (!authResponse.ok) throw new Error("Vault Authorization Failed");
+        const { upload_url } = await authResponse.json();
+
+        // 2. Direct PUT to S3
+        status.innerText = "Streaming to Media Vault...";
+        bar.style.width = "65%";
 
         const awsTransfer = await fetch(upload_url, {
             method: 'PUT',
-            headers: { 'Content-Type': activeFile.type },
-            body: activeFile
+            headers: { 'Content-Type': currentFile.type },
+            body: currentFile
         });
 
         if (awsTransfer.ok) {
-            fill.style.width = "100%";
-            label.innerText = "Vault Synced Successfully!";
-            label.style.color = "var(--success)";
+            bar.style.width = "100%";
+            status.innerText = "Sync Complete!";
+            status.style.color = "var(--success)";
             setTimeout(() => {
-                alert("Image stored in: " + path);
-                cancelCapture();
+                alert("Successfully saved to NestMind Vault");
+                clearPreview();
             }, 1500);
         } else {
-            throw new Error("AWS Storage Error");
+            throw new Error("AWS Transfer Rejected");
         }
 
     } catch (err) {
-        label.innerText = "Critical Error: " + err.message;
-        label.style.color = "var(--danger)";
+        status.innerText = "Sync Failed: " + err.message;
+        status.style.color = "var(--danger)";
         btn.disabled = false;
     }
 }
