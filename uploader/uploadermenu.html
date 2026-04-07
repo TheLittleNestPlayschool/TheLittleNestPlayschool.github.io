@@ -73,7 +73,7 @@
             color: var(--text-main);
             outline: none;
             cursor: pointer;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23718096%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23718096%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat;
             background-position: right 15px center;
             background-size: 18px;
@@ -145,7 +145,7 @@
         </div>
         <div class="select-group">
             <label>2. Student</label>
-            <select id="s-select" disabled>
+            <select id="s-select" disabled onchange="debugStudentSelection(this.value)">
                 <option value="">Select School First</option>
             </select>
         </div>
@@ -186,11 +186,10 @@ const API_ENDPOINTS = {
 let vaultFile = null;
 let allStudentsRaw = [];
 
-// Step 1: Pre-load everything from the CRUD endpoints
+// Initial System Load
 window.addEventListener('DOMContentLoaded', async () => {
     const fDropdown = document.getElementById('f-select');
     try {
-        // Load Franchises
         const fRes = await fetch(API_ENDPOINTS.franchise);
         const fData = await fRes.json();
         fDropdown.innerHTML = '<option value="">Select Location...</option>';
@@ -202,7 +201,6 @@ window.addEventListener('DOMContentLoaded', async () => {
             fDropdown.appendChild(opt);
         });
 
-        // Load ALL Students into local memory
         const sRes = await fetch(API_ENDPOINTS.student);
         allStudentsRaw = await sRes.json();
     } catch (err) {
@@ -210,8 +208,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Step 2: Filter the data in the browser (No Xano inputs needed)
+// Local Filter + Debug 1
 function filterStudentsLocal(franchiseId) {
+    const fSelect = document.getElementById('f-select');
     const sDropdown = document.getElementById('s-select');
     
     if (!franchiseId || franchiseId === "") { 
@@ -220,10 +219,13 @@ function filterStudentsLocal(franchiseId) {
         return; 
     }
 
+    // DEBUG 1: Franchise Info
+    const fSlug = fSelect.selectedOptions[0].dataset.slug;
+    alert(`DEBUG (Step 1 - Franchise):\nSchool: ${fSelect.options[fSelect.selectedIndex].text}\nFranchise ID: ${franchiseId}\nS3 Slug: ${fSlug}`);
+
     sDropdown.disabled = false;
     sDropdown.innerHTML = '<option value="">Select Student...</option>';
 
-    // Filter by matching franchise_id and ensuring they are active
     const filtered = allStudentsRaw.filter(s => 
         String(s.franchise_id) === String(franchiseId) && s.is_active === true
     );
@@ -240,6 +242,20 @@ function filterStudentsLocal(franchiseId) {
     }
 }
 
+// Debug 2: Student Selection
+function debugStudentSelection(studentId) {
+    if (!studentId) return;
+    const fSelect = document.getElementById('f-select');
+    const sDropdown = document.getElementById('s-select');
+    
+    const franchiseId = fSelect.value;
+    const franchiseSlug = fSelect.selectedOptions[0].dataset.slug;
+    const studentName = sDropdown.options[sDropdown.selectedIndex].text;
+    const cleanName = studentName.replace(/\s+/g, '-').toLowerCase();
+    
+    alert(`DEBUG (Step 2 - Student Selection):\nFranchise ID: ${franchiseId}\nStudent: ${studentName}\nID: ${studentId}\nTarget Path: ${franchiseSlug}/${cleanName}/[timestamp]-photo.jpg`);
+}
+
 function handleFileSelect(input) {
     if (input.files && input.files[0]) {
         vaultFile = input.files[0];
@@ -252,45 +268,40 @@ function handleFileSelect(input) {
 async function runS3Sync() {
     const fSelect = document.getElementById('f-select');
     const sDropdown = document.getElementById('s-select');
-    
-    const studentId = sDropdown.value;
-    const studentName = sDropdown.options[sDropdown.selectedIndex].text.replace(/\s+/g, '-').toLowerCase();
-    const franchiseSlug = fSelect.selectedOptions[0].dataset.slug;
-
-    if (!fSelect.value || !studentId) {
-        alert("Select school and student.");
-        return;
-    }
-
     const btn = document.getElementById('sync-trigger');
     const bar = document.getElementById('ui-bar');
     const status = document.getElementById('ui-status');
     const ui = document.getElementById('ui-progress');
 
+    const studentName = sDropdown.options[sDropdown.selectedIndex].text.replace(/\s+/g, '-').toLowerCase();
+    const franchiseSlug = fSelect.selectedOptions[0].dataset.slug;
+
+    if (!vaultFile) return alert("No photo selected.");
+
     btn.disabled = true;
     ui.style.display = 'block';
     
     try {
-        const timestamp = new Date().getTime();
+        const timestamp = Date.now();
         const fullS3Path = `${franchiseSlug}/${studentName}/${timestamp}-${vaultFile.name}`;
         
-        status.innerText = "Authorizing with S3 Vault...";
+        status.innerText = "Authorizing...";
         bar.style.width = "25%";
 
         const handshakeResponse = await fetch(API_ENDPOINTS.handshake, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                file_path: fullS3Path,
-                content_type: vaultFile.type
-            })
+            body: JSON.stringify({ file_path: fullS3Path, content_type: vaultFile.type })
         });
 
-        if (!handshakeResponse.ok) throw new Error(`Handshake Failed: ${handshakeResponse.status}`);
+        if (!handshakeResponse.ok) throw new Error("Handshake Failed");
         const { upload_url } = await handshakeResponse.json();
 
-        status.innerText = "Syncing Media to Vault...";
+        // DEBUG 3: Final URL Verification
+        alert(`DEBUG (Step 3 - Handshake Result):\nS3 Key: ${fullS3Path}\n\nSigned Upload URL:\n${upload_url}`);
+
         bar.style.width = "65%";
+        status.innerText = "Syncing...";
         
         const s3Response = await fetch(upload_url, {
             method: 'PUT',
@@ -300,11 +311,11 @@ async function runS3Sync() {
 
         if (s3Response.ok) {
             bar.style.width = "100%";
-            status.innerText = "Sync Successful!";
+            status.innerText = "Success!";
             status.style.color = "var(--success-green)";
             setTimeout(resetVault, 2000);
         } else {
-            throw new Error(`S3 Rejected: ${s3Response.status}`);
+            throw new Error(`S3 Forbidden: ${s3Response.status}`);
         }
     } catch (err) {
         status.innerText = "Sync Failed: " + err.message;
@@ -319,7 +330,6 @@ function resetVault() {
     document.getElementById('capture-stage').style.display = 'block';
     document.getElementById('vault-preview-wrap').style.display = 'none';
     document.getElementById('ui-progress').style.display = 'none';
-    document.getElementById('ui-bar').style.width = '0%';
     document.getElementById('ui-status').style.color = 'var(--text-main)';
     document.getElementById('sync-trigger').disabled = false;
 }
