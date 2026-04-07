@@ -1,247 +1,198 @@
-<style>
-    /* Scoped Styles for Fragment Injection */
-    .uploader-card { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; overflow: hidden; }
-    .form-body { padding: 20px; }
-    .btn-action { background: #00d1b2; color: white; border: none; padding: 15px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; text-transform: uppercase; font-size: 0.75rem; width: 100%; transition: opacity 0.2s; }
-    .btn-action:disabled { background: #ccc; cursor: not-allowed; }
-    .uploader-label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.7rem; color: #666; text-transform: uppercase; }
-    .uploader-select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; }
-    .preview-area { background: #1a1a1a; min-height: 250px; display: flex; align-items: center; justify-content: center; position: relative; }
-    .counter-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,209,178,0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; }
-</style>
+<div class="nestmind-uploader">
+    <style>
+        :root { --primary: #4a90e2; --success: #4caf50; --danger: #e74c3c; --bg: #f4f7f6; }
+        .nestmind-uploader { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: var(--primary); color: white; padding: 25px; text-align: center; }
+        .header h2 { margin: 0; font-size: 24px; letter-spacing: 1px; }
+        
+        .setup-section { padding: 20px; border-bottom: 1px solid #eee; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #fafafa; }
+        .field-group { display: flex; flex-direction: column; gap: 5px; }
+        .field-group label { font-size: 11px; text-transform: uppercase; color: #888; font-weight: bold; }
+        select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: white; }
 
-<div class="uploader-card">
-    <div id="menuView" class="form-body">
-        <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px; margin-top:0; color:#1a1a1a; font-size: 0.9rem; text-transform: uppercase;">Select Activity</h4>
-        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-            <button onclick="showView('vaultView')" class="btn-action">Upload Photos</button>
-            <button onclick="showView('eodView')" class="btn-action">Upload EOD Reports</button>
-            <button onclick="showView('enrollmentView')" class="btn-action">New Enrollment</button>
+        .upload-stage { padding: 40px 20px; text-align: center; }
+        .drop-zone { border: 3px dashed #cbd5e0; border-radius: 15px; padding: 40px 20px; transition: all 0.3s; cursor: pointer; position: relative; }
+        .drop-zone.active { border-color: var(--primary); background: #ebf4ff; }
+        .drop-zone i { font-size: 50px; color: #a0aec0; display: block; margin-bottom: 10px; }
+        
+        #preview-box { display: none; padding: 20px; animation: fadeIn 0.4s; }
+        #preview-img { width: 100%; max-height: 350px; object-fit: contain; border-radius: 8px; background: #000; }
+        
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .btn { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-main { background: var(--primary); color: white; }
+        .btn-alt { background: #edf2f7; color: #4a5568; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .progress-wrapper { margin-top: 20px; display: none; }
+        .progress-bar { height: 8px; background: #edf2f7; border-radius: 10px; overflow: hidden; }
+        .progress-fill { width: 0%; height: 100%; background: var(--success); transition: width 0.3s; }
+        .status-text { font-size: 13px; margin-top: 8px; color: #4a5568; font-style: italic; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 480px) { .setup-section { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="header">
+        <h2>THE LITTLE NEST</h2>
+        <div style="font-size: 12px; opacity: 0.9;">Media Vault Assistant</div>
+    </div>
+
+    <div class="setup-section">
+        <div class="field-group">
+            <label>Franchise Location</label>
+            <select id="franchise-select" onchange="loadStudents(this.value)">
+                <option value="">Select Location...</option>
+                <option value="tayabas">Tayabas</option>
+                <option value="sariaya">Sariaya</option>
+                <option value="lucena">Lucena</option>
+                <option value="candelaria">Candelaria</option>
+            </select>
+        </div>
+        <div class="field-group">
+            <label>Student Name</label>
+            <select id="student-select" disabled>
+                <option value="">Select Student...</option>
+            </select>
         </div>
     </div>
 
-    <div id="vaultView" style="display:none;">
-        <div id="setupForm" class="form-body">
-            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px; margin-top:0; color:#1a1a1a; font-size: 0.9rem; text-transform: uppercase;">Vault Setup</h4>
-            <label class="uploader-label">Location</label>
-            <select id="franchiseSelect" class="uploader-select" onchange="syncFranchiseData('franchiseSelect', 'teacherSelect', 'studentSelect')"><option value="">-- Select --</option></select>
-            <label class="uploader-label">Teacher</label>
-            <select id="teacherSelect" class="uploader-select" disabled><option value="">-- Choose Teacher --</option></select>
-            <label class="uploader-label">Photos (Up to 10)</label>
-            <div style="padding: 30px; border: 2px dashed #00d1b2; border-radius: 4px; text-align: center; background: #f9f9f9; position: relative;">
-                <input type="file" id="fileInput" accept="image/*" multiple onchange="startBatch('fileInput', 'setupForm', 'taggingUI', loadPhoto)" style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
-                <span style="font-size:0.75rem; font-weight:bold;">Tap to select batch</span>
-            </div>
-            <button onclick="location.reload()" style="margin-top:20px; background:none; border:none; color:#666; font-size:0.7rem; width:100%; font-weight:bold;">← BACK</button>
-        </div>
-        <div id="taggingUI" style="display:none;">
-            <div class="preview-area" id="previewContainer"></div>
-            <div class="form-body">
-                <label class="uploader-label">Who is in this photo?</label>
-                <select id="studentSelect" class="uploader-select"><option value="">-- Identify Student --</option></select>
-                <button id="nextBtn" onclick="processVaultUpload()" class="btn-action">Secure & Next</button>
-                <div id="status-bar" style="margin-top:10px; text-align:center; font-size:0.7rem; font-weight:bold;">Ready.</div>
-            </div>
+    <div id="capture-box" class="upload-stage">
+        <div class="drop-zone" onclick="document.getElementById('file-input').click()">
+            <i>📸</i>
+            <p><strong>Click to take photo</strong><br><span style="color: #718096; font-size: 13px;">or drag and drop images here</span></p>
+            <input type="file" id="file-input" hidden accept="image/*" capture="environment" onchange="handleFileSelect(this)">
         </div>
     </div>
 
-    <div id="eodView" style="display:none;">
-        <div id="eodSetupForm" class="form-body">
-            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px; margin-top:0; color:#1a1a1a; font-size: 0.9rem; text-transform: uppercase;">EOD Report</h4>
-            <label class="uploader-label">Location</label>
-            <select id="eodFranchiseSelect" class="uploader-select" onchange="syncFranchiseData('eodFranchiseSelect', 'eodTeacherSelect')"><option value="">-- Select --</option></select>
-            <label class="uploader-label">Teacher</label>
-            <select id="eodTeacherSelect" class="uploader-select" disabled><option value="">-- Choose Teacher --</option></select>
-            <div style="padding: 30px; border: 2px dashed #00d1b2; border-radius: 4px; text-align: center; background: #f9f9f9; position: relative;">
-                <input type="file" id="eodFileInput" accept="image/*" multiple onchange="startBatch('eodFileInput', 'eodSetupForm', 'eodUploadUI', loadEodPhoto)" style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
-                <span style="font-size:0.75rem; font-weight:bold;">Tap to select report photos</span>
-            </div>
-            <button onclick="location.reload()" style="margin-top:20px; background:none; border:none; color:#666; font-size:0.7rem; width:100%; font-weight:bold;">← BACK</button>
+    <div id="preview-box">
+        <img id="preview-img" src="" alt="Capture Preview">
+        
+        <div class="progress-wrapper" id="prog-wrapper">
+            <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+            <div class="status-text" id="status-label">Ready to sync with AWS...</div>
         </div>
-        <div id="eodUploadUI" style="display:none;">
-            <div class="preview-area" id="eodPreviewContainer"></div>
-            <div class="form-body">
-                <button id="eodUploadBtn" onclick="processEodUpload()" class="btn-action">Upload Report</button>
-                <div id="eod-status-bar" style="margin-top:10px; text-align:center; font-size:0.7rem; font-weight:bold;">Ready.</div>
-            </div>
-        </div>
-    </div>
 
-    <div id="enrollmentView" style="display:none;">
-        <div id="enrSetupForm" class="form-body">
-            <h4 style="border-bottom:2px solid #00d1b2; padding-bottom:5px; margin-top:0; color:#1a1a1a; font-size: 0.9rem; text-transform: uppercase;">New Enrollment</h4>
-            <label class="uploader-label">Location</label>
-            <select id="enrFranchiseSelect" class="uploader-select" onchange="syncFranchiseData('enrFranchiseSelect', 'enrTeacherSelect')"><option value="">-- Select --</option></select>
-            <label class="uploader-label">Teacher</label>
-            <select id="enrTeacherSelect" class="uploader-select" disabled><option value="">-- Choose Teacher --</option></select>
-            <div style="padding: 30px; border: 2px dashed #00d1b2; border-radius: 4px; text-align: center; background: #f9f9f9; position: relative;">
-                <input type="file" id="enrFileInput" accept="image/*" onchange="startBatch('enrFileInput', 'enrSetupForm', 'enrUploadUI', loadEnrPhoto)" style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
-                <span style="font-size:0.75rem; font-weight:bold;">Capture or Select Form</span>
-            </div>
-            <button onclick="location.reload()" style="margin-top:20px; background:none; border:none; color:#666; font-size:0.7rem; width:100%; font-weight:bold;">← BACK</button>
-        </div>
-        <div id="enrUploadUI" style="display:none;">
-            <div class="preview-area" id="enrPreviewContainer"></div>
-            <div class="form-body">
-                <button id="enrUploadBtn" onclick="processEnrUpload()" class="btn-action">Process Enrollment</button>
-                <div id="enr-status-bar" style="margin-top:10px; text-align:center; font-size:0.7rem; font-weight:bold;">Ready.</div>
-            </div>
+        <div class="controls">
+            <button class="btn btn-alt" onclick="cancelCapture()">Retake</button>
+            <button class="btn btn-main" id="upload-btn" onclick="executeVaultUpload()">Sync to Vault</button>
         </div>
     </div>
 </div>
 
 <script>
-    // Configuration
-    const X_API = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL';
-    const PARENT_API = 'https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx';
-    const W_URL = 's3.ap-southeast-1.wasabisys.com';
-    const BKT = 'the-little-nest-media';
-    const AK = 'P7GI5LQMI4OX2SPAV1YA';
-    const SK = 'NVDSvPLB6HeLROD9piOwBjeUl45Reeb5zrhPKiLY';
+// --- Configuration ---
+const API_CONFIG = {
+    xano_url: 'https://x8ki-letl-twmt.n7.xano.io/api:XXXX/get_upload_url', // Update this
+    current_user: 'Dave Stoyko'
+};
 
-    let files = [];
-    let idx = 0;
-    const s3 = new AWS.S3({ endpoint: W_URL, accessKeyId: AK, secretAccessKey: SK, s3ForcePathStyle: true, signatureVersion: 'v4' });
+let activeFile = null;
 
-    function showView(viewId) {
-        document.getElementById('menuView').style.display = 'none';
-        document.getElementById('vaultView').style.display = 'none';
-        document.getElementById('eodView').style.display = 'none';
-        document.getElementById('enrollmentView').style.display = 'none';
-        document.getElementById(viewId).style.display = 'block';
+// Mock Student Data (Replace with your actual Xano Fetch logic)
+const studentRegistry = {
+    "tayabas": ["Juan Dela Cruz", "Maria Clara", "Pedro Penduko"],
+    "sariaya": ["Rizal Mercado", "Andres Bonifacio"],
+    "lucena": ["Dave Stoyko", "Angeline Zamilpa"]
+};
+
+function loadStudents(location) {
+    const studentSelect = document.getElementById('student-select');
+    studentSelect.innerHTML = '<option value="">Select Student...</option>';
+    
+    if (!location) {
+        studentSelect.disabled = true;
+        return;
     }
 
-    async function initUploader() {
-        try {
-            const r = await fetch(`${X_API}/uploader_get_franchises`);
-            const data = await r.json();
-            ['franchiseSelect', 'eodFranchiseSelect', 'enrFranchiseSelect'].forEach(id => {
-                const sel = document.getElementById(id);
-                if(sel) data.forEach(f => sel.innerHTML += `<option value="${f.id}">${f.name}</option>`);
-            });
-        } catch (e) { console.error("API Init failed", e); }
+    studentRegistry[location].forEach(name => {
+        let opt = document.createElement('option');
+        opt.value = name.toLowerCase().replace(/\s+/g, '_');
+        opt.innerText = name;
+        studentSelect.appendChild(opt);
+    });
+    studentSelect.disabled = false;
+}
+
+function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+        activeFile = input.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('preview-img').src = e.target.result;
+            document.getElementById('capture-box').style.display = 'none';
+            document.getElementById('preview-box').style.display = 'block';
+        };
+        reader.readAsDataURL(activeFile);
+    }
+}
+
+function cancelCapture() {
+    activeFile = null;
+    document.getElementById('file-input').value = '';
+    document.getElementById('capture-box').style.display = 'block';
+    document.getElementById('preview-box').style.display = 'none';
+    document.getElementById('prog-wrapper').style.display = 'none';
+}
+
+async function executeVaultUpload() {
+    const franchise = document.getElementById('franchise-select').value;
+    const student = document.getElementById('student-select').value;
+    const btn = document.getElementById('upload-btn');
+    const fill = document.getElementById('prog-fill');
+    const label = document.getElementById('status-label');
+
+    if (!franchise || !student) {
+        alert("Please select both Location and Student.");
+        return;
     }
 
-    async function syncFranchiseData(fId, tId, sId = null) {
-        const fid = document.getElementById(fId).value; if (!fid) return;
-        try {
-            const t = await fetch(`${X_API}/uploader_get_teachers?franchise_id=${fid}`).then(res => res.json());
-            const tSel = document.getElementById(tId);
-            tSel.innerHTML = '<option value="">-- Choose Teacher --</option>';
-            t.forEach(item => tSel.innerHTML += `<option value="${item.id}">${item.first_name}</option>`);
-            tSel.disabled = false;
+    btn.disabled = true;
+    document.getElementById('prog-wrapper').style.display = 'block';
+    
+    try {
+        // 1. Handshake with Xano
+        label.innerText = "Generating secure S3 handshake...";
+        fill.style.width = "15%";
+        
+        const timestamp = Date.now();
+        const path = `${franchise}/${student}/${timestamp}-${activeFile.name}`;
 
-            if (sId) {
-                const s = await fetch(`${X_API}/uploader_get_students?franchise_id=${fid}`).then(res => res.json());
-                const sSel = document.getElementById(sId);
-                sSel.innerHTML = '<option value="">-- Identify Student --</option>';
-                s.forEach(st => {
-                    const opt = document.createElement('option'); opt.value = st.id; opt.text = st.name; opt.dataset.pid = st.parent_id;
-                    sSel.appendChild(opt);
-                });
-            }
-        } catch (e) { console.error(e); }
+        const handshake = await fetch(API_CONFIG.xano_url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file_path: path, content_type: activeFile.type })
+        });
+
+        if (!handshake.ok) throw new Error("Vault authorization failed.");
+        const { upload_url } = await handshake.json();
+        
+        // 2. Direct Binary Push to AWS
+        label.innerText = "Streaming encrypted data to AWS...";
+        fill.style.width = "45%";
+
+        const awsTransfer = await fetch(upload_url, {
+            method: 'PUT',
+            headers: { 'Content-Type': activeFile.type },
+            body: activeFile
+        });
+
+        if (awsTransfer.ok) {
+            fill.style.width = "100%";
+            label.innerText = "Vault Synced Successfully!";
+            label.style.color = "var(--success)";
+            setTimeout(() => {
+                alert("Image stored in: " + path);
+                cancelCapture();
+            }, 1500);
+        } else {
+            throw new Error("AWS Storage Error");
+        }
+
+    } catch (err) {
+        label.innerText = "Critical Error: " + err.message;
+        label.style.color = "var(--danger)";
+        btn.disabled = false;
     }
-
-    function startBatch(inputId, hideId, showId, previewFn) {
-        const fInput = document.getElementById(inputId).files;
-        if (fInput.length === 0) return;
-        files = Array.from(fInput).slice(0, 10); idx = 0;
-        document.getElementById(hideId).style.display = 'none';
-        document.getElementById(showId).style.display = 'block';
-        previewFn();
-    }
-
-    function loadPhoto() { renderPreview('previewContainer', 'PHOTO'); }
-    function loadEodPhoto() { renderPreview('eodPreviewContainer', 'REPORT'); }
-    function loadEnrPhoto() { renderPreview('enrPreviewContainer', 'FORM'); }
-
-    function renderPreview(containerId, label) {
-        const file = files[idx]; const reader = new FileReader();
-        reader.onload = (e) => document.getElementById(containerId).innerHTML = `<div class="counter-badge">${label} ${idx + 1} OF ${files.length}</div><img src="${e.target.result}">`;
-        reader.readAsDataURL(file);
-    }
-
-    async function getParentName(pid) {
-        if (!pid) return "Unknown_Parent";
-        try {
-            const p = await fetch(`${PARENT_API}/parent/${pid}`).then(r => r.json());
-            return p.first_name ? `${p.first_name}_${p.last_name}`.replace(/\s+/g, '_') : "Unknown_Parent";
-        } catch (e) { return "Unknown_Parent"; }
-    }
-
-    async function processVaultUpload() {
-        const sSel = document.getElementById('studentSelect');
-        const tSel = document.getElementById('teacherSelect');
-        if (!sSel.value) return alert("Select student.");
-        document.getElementById('nextBtn').disabled = true;
-        document.getElementById('status-bar').innerText = "Securing to Wasabi...";
-
-        try {
-            const file = files[idx];
-            const pName = await getParentName(sSel.options[sSel.selectedIndex].dataset.pid);
-            const sName = sSel.options[sSel.selectedIndex].text.replace(/\s+/g, '_');
-            const tName = tSel.options[tSel.selectedIndex].text.replace(/\s+/g, '_');
-            const fileName = `${pName}_${sName}_${tName}_${Date.now()}_${file.name}`;
-            
-            const up = await s3.upload({ Bucket: BKT, Key: `vault/${pName}/${fileName}`, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
-            
-            await fetch(`${X_API}/uploader_register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ franchise_id: parseInt(document.getElementById('franchiseSelect').value), student_id: parseInt(sSel.value), teacher_id: parseInt(tSel.value), file_url: up.Location, file_type: 'image', file_name: fileName, file_size: file.size })
-            });
-
-            idx++; if (idx < files.length) { loadPhoto(); document.getElementById('nextBtn').disabled = false; } else { location.reload(); }
-        } catch (e) { alert(e.message); document.getElementById('nextBtn').disabled = false; }
-    }
-
-    async function processEodUpload() {
-        const fSel = document.getElementById('eodFranchiseSelect');
-        const tSel = document.getElementById('eodTeacherSelect');
-        document.getElementById('eodUploadBtn').disabled = true;
-        document.getElementById('eod-status-bar').innerText = "Uploading Report...";
-
-        try {
-            const file = files[idx];
-            const fName = fSel.options[fSel.selectedIndex].text.replace(/\s+/g, '_');
-            const fileName = `EOD_${fName}_${Date.now()}_${file.name}`;
-            const up = await s3.upload({ Bucket: BKT, Key: `reports/${fName}/${fileName}`, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
-            
-            await fetch(`${X_API}/uploader_register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ franchise_id: parseInt(fSel.value), teacher_id: parseInt(tSel.value), file_url: up.Location, file_type: 'eod', file_name: fileName, file_size: file.size })
-            });
-
-            idx++; if (idx < files.length) { loadEodPhoto(); document.getElementById('eodUploadBtn').disabled = false; } else { location.reload(); }
-        } catch (e) { alert(e.message); document.getElementById('eodUploadBtn').disabled = false; }
-    }
-
-    async function processEnrUpload() {
-        const fSel = document.getElementById('enrFranchiseSelect');
-        const tSel = document.getElementById('enrTeacherSelect');
-        document.getElementById('enrUploadBtn').disabled = true;
-        document.getElementById('enr-status-bar').innerText = "Processing Enrollment...";
-
-        try {
-            const file = files[idx];
-            const fName = fSel.options[fSel.selectedIndex].text.replace(/\s+/g, '_');
-            const tName = tSel.options[tSel.selectedIndex].text.replace(/\s+/g, '_');
-            const fileName = `ENR_${fName}_${tName}_${Date.now()}.jpg`;
-
-            const up = await s3.upload({ Bucket: BKT, Key: `enrollment/${fName}/${fileName}`, Body: file, ContentType: file.type, ACL: 'public-read' }).promise();
-            
-            await fetch(`${X_API}/uploader_register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ franchise_id: parseInt(fSel.value), teacher_id: parseInt(tSel.value), file_url: up.Location, file_type: 'enrollment', file_name: fileName, file_size: file.size })
-            });
-
-            document.getElementById('enrPreviewContainer').innerHTML = `<div style="padding:40px; text-align:center; color:white;"><h3>Form Securely Uploaded</h3></div>`;
-            const btn = document.getElementById('enrUploadBtn'); btn.innerText = "Finish"; btn.disabled = false; btn.onclick = () => location.reload();
-        } catch (e) { alert(e.message); document.getElementById('enrUploadBtn').disabled = false; }
-    }
-
-    initUploader();
+}
 </script>
