@@ -181,18 +181,16 @@
 </div>
 
 <script>
-// BASED ON YOUR LATEST SCREENSHOTS
-const BASE_UPLOADER_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:uploader';
-
+// Corrected to use specific Group IDs from your screenshots
 const API_ENDPOINTS = {
-    franchise: `${BASE_UPLOADER_URL}/uploader_get_franchises`,
-    student: `${BASE_UPLOADER_URL}/uploader_get_students`,
-    handshake: `${BASE_UPLOADER_URL}/get_upload_url`
+    franchise: 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise',
+    student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student',
+    handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/get_upload_url'
 };
 
 let vaultFile = null;
 
-// 1. Initial Load: Get Franchises from the 'uploader' group
+// Load Schools
 window.addEventListener('DOMContentLoaded', async () => {
     const fDropdown = document.getElementById('f-select');
     try {
@@ -211,7 +209,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// 2. Filter Students by Franchise
+// Load Students
 async function fetchStudents(franchiseId) {
     const sDropdown = document.getElementById('s-select');
     if (!franchiseId) { sDropdown.disabled = true; return; }
@@ -238,7 +236,6 @@ function handleFileSelect(input) {
     }
 }
 
-// 3. Handshake and S3 Upload
 async function runS3Sync() {
     const fSelect = document.getElementById('f-select');
     const sDropdown = document.getElementById('s-select');
