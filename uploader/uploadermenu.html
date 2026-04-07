@@ -229,7 +229,7 @@
 <script>
 const API_ENDPOINTS = {
     franchise: 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise',
-    student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student',
+    student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/uploader_get_students',
     handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/get_upload_url'
 };
 
@@ -266,12 +266,13 @@ async function fetchStudents(franchiseId) {
     sDropdown.innerHTML = '<option>Filtering Students...</option>';
 
     try {
+        // FORCE API CALL WITH QUERY PARAM
         const res = await fetch(`${API_ENDPOINTS.student}?franchise_id=${franchiseId}`);
         const data = await res.json();
         
         sDropdown.innerHTML = '<option value="">Select Student...</option>';
         
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
             sDropdown.innerHTML = '<option value="">No Students Found</option>';
         } else {
             data.forEach(s => {
