@@ -73,7 +73,7 @@
             color: var(--text-main);
             outline: none;
             cursor: pointer;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23718096%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23718096%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat;
             background-position: right 15px center;
             background-size: 18px;
@@ -139,13 +139,13 @@
     <div class="vault-selectors">
         <div class="select-group">
             <label>1. School</label>
-            <select id="f-select" onchange="fetchStudents(this.value)">
+            <select id="f-select" onchange="filterStudentsLocal(this.value)">
                 <option value="">Loading Schools...</option>
             </select>
         </div>
         <div class="select-group">
             <label>2. Student</label>
-            <select id="s-select" disabled onchange="debugStudentSelection(this.value)">
+            <select id="s-select" disabled>
                 <option value="">Select School First</option>
             </select>
         </div>
@@ -177,7 +177,6 @@
 </div>
 
 <script>
-// --- CORE API CONFIGURATION ---
 const API_ENDPOINTS = {
     franchise: 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise',
     student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student',
@@ -185,29 +184,34 @@ const API_ENDPOINTS = {
 };
 
 let vaultFile = null;
+let allStudentsRaw = [];
 
-// Phase 1: Load Franchises on Startup
+// Step 1: Pre-load everything from the CRUD endpoints
 window.addEventListener('DOMContentLoaded', async () => {
     const fDropdown = document.getElementById('f-select');
     try {
-        const res = await fetch(API_ENDPOINTS.franchise);
-        const data = await res.json();
+        // Load Franchises
+        const fRes = await fetch(API_ENDPOINTS.franchise);
+        const fData = await fRes.json();
         fDropdown.innerHTML = '<option value="">Select Location...</option>';
-        data.forEach(item => {
+        fData.forEach(item => {
             const opt = document.createElement('option');
             opt.value = item.id;
             opt.dataset.slug = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
             opt.textContent = item.name;
             fDropdown.appendChild(opt);
         });
+
+        // Load ALL Students into local memory
+        const sRes = await fetch(API_ENDPOINTS.student);
+        allStudentsRaw = await sRes.json();
     } catch (err) {
-        fDropdown.innerHTML = '<option>Error loading schools</option>';
+        fDropdown.innerHTML = '<option>Error loading system</option>';
     }
 });
 
-// Phase 2: Fetch Students Filtered by Franchise + Debug 1
-async function fetchStudents(franchiseId) {
-    const fSelect = document.getElementById('f-select');
+// Step 2: Filter the data in the browser (No Xano inputs needed)
+function filterStudentsLocal(franchiseId) {
     const sDropdown = document.getElementById('s-select');
     
     if (!franchiseId || franchiseId === "") { 
@@ -216,51 +220,26 @@ async function fetchStudents(franchiseId) {
         return; 
     }
 
-    // DEBUG 1: POPUP FRANCHISE INFO
-    const selectedSlug = fSelect.selectedOptions[0].dataset.slug;
-    const schoolName = fSelect.options[fSelect.selectedIndex].text;
-    alert(`DEBUG (Step 1 - Franchise):\nSchool: ${schoolName}\nFranchise ID: ${franchiseId}\nS3 Slug: ${selectedSlug}`);
-
     sDropdown.disabled = false;
-    sDropdown.innerHTML = '<option>Filtering Students...</option>';
+    sDropdown.innerHTML = '<option value="">Select Student...</option>';
 
-    try {
-        const res = await fetch(`${API_ENDPOINTS.student}?franchise_id=${franchiseId}&is_active=true`);
-        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-        
-        const data = await res.json();
-        sDropdown.innerHTML = '<option value="">Select Student...</option>';
-        
-        if (!data || data.length === 0) {
-            sDropdown.innerHTML = '<option value="">No Active Students Found</option>';
-        } else {
-            data.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.id;
-                opt.textContent = s.name;
-                sDropdown.appendChild(opt);
-            });
-        }
-    } catch (err) {
-        sDropdown.innerHTML = '<option>Error Loading Students</option>';
+    // Filter by matching franchise_id and ensuring they are active
+    const filtered = allStudentsRaw.filter(s => 
+        String(s.franchise_id) === String(franchiseId) && s.is_active === true
+    );
+
+    if (filtered.length === 0) {
+        sDropdown.innerHTML = '<option value="">No Active Students Found</option>';
+    } else {
+        filtered.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            sDropdown.appendChild(opt);
+        });
     }
 }
 
-// Phase 3: Debug Student Selection (Includes Franchise ID)
-function debugStudentSelection(studentId) {
-    if (!studentId) return;
-    const fSelect = document.getElementById('f-select');
-    const sDropdown = document.getElementById('s-select');
-    
-    const franchiseId = fSelect.value;
-    const franchiseSlug = fSelect.selectedOptions[0].dataset.slug;
-    const studentName = sDropdown.options[sDropdown.selectedIndex].text;
-    const cleanName = studentName.replace(/\s+/g, '-').toLowerCase();
-    
-    alert(`DEBUG (Step 2 - Student):\nFranchise ID: ${franchiseId}\nStudent Name: ${studentName}\nStudent ID: ${studentId}\nTarget S3 Path: ${franchiseSlug}/${cleanName}/[timestamp]-photo.jpg`);
-}
-
-// Media Handling
 function handleFileSelect(input) {
     if (input.files && input.files[0]) {
         vaultFile = input.files[0];
@@ -270,7 +249,6 @@ function handleFileSelect(input) {
     }
 }
 
-// Phase 4: S3 Synchronization Logic
 async function runS3Sync() {
     const fSelect = document.getElementById('f-select');
     const sDropdown = document.getElementById('s-select');
@@ -280,7 +258,7 @@ async function runS3Sync() {
     const franchiseSlug = fSelect.selectedOptions[0].dataset.slug;
 
     if (!fSelect.value || !studentId) {
-        alert("Please select a school and a student.");
+        alert("Select school and student.");
         return;
     }
 
@@ -326,9 +304,8 @@ async function runS3Sync() {
             status.style.color = "var(--success-green)";
             setTimeout(resetVault, 2000);
         } else {
-            throw new Error(`S3 Rejected Upload: ${s3Response.status}`);
+            throw new Error(`S3 Rejected: ${s3Response.status}`);
         }
-
     } catch (err) {
         status.innerText = "Sync Failed: " + err.message;
         status.style.color = "var(--error-red)";
