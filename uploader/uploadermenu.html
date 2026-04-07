@@ -11,30 +11,26 @@
         .field-group { display: flex; flex-direction: column; gap: 5px; }
         .field-group label { font-size: 10px; text-transform: uppercase; color: #718096; font-weight: bold; }
         select { padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 14px; background: white; outline: none; }
-        select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1); }
 
         .upload-stage { padding: 40px 20px; text-align: center; }
         .drop-zone { border: 3px dashed #cbd5e0; border-radius: 15px; padding: 50px 20px; transition: 0.3s; cursor: pointer; background: #fff; }
         .drop-zone:hover { border-color: var(--primary); background: #f7fafc; }
-        .drop-zone i { font-size: 48px; display: block; margin-bottom: 10px; }
         
         #preview-box { display: none; padding: 20px; animation: slideUp 0.4s ease-out; }
-        #preview-img { width: 100%; max-height: 400px; object-fit: contain; border-radius: 10px; background: #1a202c; box-shadow: inset 0 2px 10px rgba(0,0,0,0.2); }
+        #preview-img { width: 100%; max-height: 400px; object-fit: contain; border-radius: 10px; background: #1a202c; }
         
         .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-        .btn { padding: 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn { padding: 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; }
         .btn-main { background: var(--primary); color: white; }
-        .btn-main:hover { background: #357abd; }
         .btn-alt { background: #edf2f7; color: #4a5568; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .progress-wrapper { margin-top: 20px; display: none; text-align: left; }
         .progress-bar { height: 10px; background: #edf2f7; border-radius: 20px; overflow: hidden; }
-        .progress-fill { width: 0%; height: 100%; background: var(--success); transition: width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1); }
+        .progress-fill { width: 0%; height: 100%; background: var(--success); transition: width 0.4s; }
         .status-text { font-size: 13px; margin-top: 8px; font-weight: 500; color: #4a5568; }
 
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 500px) { .setup-section { grid-template-columns: 1fr; } }
     </style>
 
     <div class="header">
@@ -59,7 +55,7 @@
 
     <div id="capture-box" class="upload-stage">
         <div class="drop-zone" onclick="document.getElementById('file-input').click()">
-            <i>📸</i>
+            <span style="font-size: 50px;">📸</span>
             <p><strong>Capture Student Work</strong><br><span style="color: #718096; font-size: 13px;">Tap to open camera</span></p>
             <input type="file" id="file-input" hidden accept="image/*" capture="environment" onchange="processSelection(this)">
         </div>
@@ -67,12 +63,10 @@
 
     <div id="preview-box">
         <img id="preview-img" src="" alt="Vault Preview">
-        
         <div class="progress-wrapper" id="prog-ui">
             <div class="progress-bar"><div class="progress-fill" id="prog-bar"></div></div>
             <div class="status-text" id="prog-status">Ready to sync...</div>
         </div>
-
         <div class="controls">
             <button class="btn btn-alt" onclick="clearPreview()">Retake</button>
             <button class="btn btn-main" id="upload-btn" onclick="startVaultSync()">Sync to Vault</button>
@@ -85,12 +79,12 @@
 const ENDPOINTS = {
     franchise: 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise',
     student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student',
-    handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:XXXX/get_upload_url' // UPDATE TO YOUR HANDSHAKE API
+    handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:uploader/get_upload_url'
 };
 
 let currentFile = null;
 
-// Init: Load Franchises
+// Load Franchises
 window.addEventListener('DOMContentLoaded', async () => {
     const fSelect = document.getElementById('franchise-select');
     try {
@@ -100,25 +94,20 @@ window.addEventListener('DOMContentLoaded', async () => {
         franchises.forEach(f => {
             const opt = document.createElement('option');
             opt.value = f.id;
-            opt.dataset.slug = f.name.toLowerCase().replace(/\s+/g, '-');
+            opt.dataset.slug = f.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
             opt.textContent = f.name;
             fSelect.appendChild(opt);
         });
-    } catch (err) {
-        fSelect.innerHTML = '<option>Error loading locations</option>';
-    }
+    } catch (err) { fSelect.innerHTML = '<option>Error loading locations</option>'; }
 });
 
 // Update Students based on Franchise ID
 async function updateStudents(fId) {
     const sSelect = document.getElementById('student-select');
     if (!fId) { sSelect.disabled = true; return; }
-
     sSelect.disabled = false;
     sSelect.innerHTML = '<option>Loading...</option>';
-
     try {
-        // Querying student table filtered by franchise_id
         const response = await fetch(`${ENDPOINTS.student}?franchise_id=${fId}`);
         const students = await response.json();
         sSelect.innerHTML = '<option value="">Select Student...</option>';
@@ -128,9 +117,7 @@ async function updateStudents(fId) {
             opt.textContent = s.name;
             sSelect.appendChild(opt);
         });
-    } catch (err) {
-        sSelect.innerHTML = '<option>Error loading students</option>';
-    }
+    } catch (err) { sSelect.innerHTML = '<option>Error loading students</option>'; }
 }
 
 function processSelection(input) {
@@ -155,61 +142,51 @@ async function startVaultSync() {
     const fSelect = document.getElementById('franchise-select');
     const sId = document.getElementById('student-select').value;
     const fSlug = fSelect.selectedOptions[0].dataset.slug;
-    
-    if (!fSelect.value || !sId) {
-        alert("Please select both Location and Student first.");
-        return;
-    }
-
     const btn = document.getElementById('upload-btn');
     const bar = document.getElementById('prog-bar');
     const status = document.getElementById('prog-status');
-    const ui = document.getElementById('prog-ui');
+
+    if (!fSelect.value || !sId) return alert("Select franchise and student.");
 
     btn.disabled = true;
-    ui.style.display = 'block';
+    document.getElementById('prog-ui').style.display = 'block';
     
     try {
-        // 1. Authorize with Xano Lambda
-        status.innerText = "Securing AWS Connection...";
-        bar.style.width = "25%";
+        status.innerText = "Securing Authorization...";
+        bar.style.width = "20%";
 
-        const timestamp = Date.now();
-        const s3Path = `${fSlug}/student-${sId}/${timestamp}-${currentFile.name}`;
+        const path = `${fSlug}/student-${sId}/${Date.now()}-${currentFile.name}`;
 
-        const authResponse = await fetch(ENDPOINTS.handshake, {
+        // 1. Handshake with Lambda
+        const auth = await fetch(ENDPOINTS.handshake, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                file_path: s3Path,
-                content_type: currentFile.type
-            })
+            body: JSON.stringify({ file_path: path, content_type: currentFile.type })
         });
 
-        if (!authResponse.ok) throw new Error("Vault Authorization Failed");
-        const { upload_url } = await authResponse.json();
+        if (!auth.ok) {
+            const errData = await auth.json();
+            throw new Error(errData.message || "Xano handshake failed");
+        }
+        
+        const data = await auth.json();
+        const upload_url = data.upload_url;
 
-        // 2. Direct PUT to S3
-        status.innerText = "Streaming to Media Vault...";
-        bar.style.width = "65%";
-
-        const awsTransfer = await fetch(upload_url, {
+        // 2. Direct S3 Upload
+        status.innerText = "Syncing to S3 Vault...";
+        bar.style.width = "60%";
+        const aws = await fetch(upload_url, {
             method: 'PUT',
             headers: { 'Content-Type': currentFile.type },
             body: currentFile
         });
 
-        if (awsTransfer.ok) {
+        if (aws.ok) {
             bar.style.width = "100%";
             status.innerText = "Sync Complete!";
             status.style.color = "var(--success)";
-            setTimeout(() => {
-                alert("Successfully saved to NestMind Vault");
-                clearPreview();
-            }, 1500);
-        } else {
-            throw new Error("AWS Transfer Rejected");
-        }
+            setTimeout(clearPreview, 2000);
+        } else { throw new Error("S3 Upload Rejected"); }
 
     } catch (err) {
         status.innerText = "Sync Failed: " + err.message;
