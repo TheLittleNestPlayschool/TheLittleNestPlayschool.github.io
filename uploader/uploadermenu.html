@@ -145,7 +145,7 @@
         </div>
         <div class="select-group">
             <label>2. Student</label>
-            <select id="s-select" disabled onchange="debugStudentSelection(this.value)">
+            <select id="s-select" disabled>
                 <option value="">Select School First</option>
             </select>
         </div>
@@ -209,8 +209,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         
         allStudentsRaw = await sRes.json();
         allParentsRaw = await pRes.json();
-        
-        alert(`BOOT COMPLETE:\nSchools: ${fData.length}\nStudents: ${allStudentsRaw.length}\nParents: ${allParentsRaw.length}`);
     } catch (err) {
         fDropdown.innerHTML = '<option>Error loading system</option>';
     }
@@ -223,16 +221,10 @@ function filterStudentsLocal(franchiseId) {
         sDropdown.innerHTML = '<option value="">Select School First</option>';
         return; 
     }
-
     sDropdown.disabled = false;
-    sDropdown.innerHTML = '<option value="">Filtering...</option>';
-
     const filtered = allStudentsRaw.filter(s => 
         String(s.franchise_id) === String(franchiseId) && s.is_active === true
     );
-
-    alert(`FILTER:\nMatches Found: ${filtered.length}`);
-
     if (filtered.length === 0) {
         sDropdown.innerHTML = '<option value="">No Active Students Found</option>';
     } else {
@@ -244,14 +236,6 @@ function filterStudentsLocal(franchiseId) {
             sDropdown.appendChild(opt);
         });
     }
-}
-
-function debugStudentSelection(studentId) {
-    if (!studentId) return;
-    const student = allStudentsRaw.find(s => String(s.id) === String(studentId));
-    const parent = allParentsRaw.find(p => String(p.id) === String(student.parent_id));
-    const pName = parent ? `${parent.first_name} ${parent.last_name}` : "MISSING PARENT";
-    alert(`SELECTION:\nStudent: ${student.name}\nParent: ${pName}`);
 }
 
 function handleFileSelect(input) {
@@ -281,7 +265,6 @@ async function runS3Sync() {
         pFolderName = `${parentData.first_name}-${parentData.last_name}`.replace(/\s+/g, '-').toLowerCase();
     }
 
-    // Clean filename to prevent signature mismatch
     const safeName = vaultFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
 
     btn.disabled = true;
@@ -301,13 +284,12 @@ async function runS3Sync() {
         });
 
         const { upload_url } = await handshakeResponse.json();
-        
-        // SHOW SIGNED URL AND PATH
-        alert(`DEBUG - HANDSHAKE SUCCESS:\n\nS3 KEY:\n${fullS3Path}\n\nSIGNED URL:\n${upload_url}`);
+        alert(`Final Path Verification:\n${fullS3Path}`);
 
         bar.style.width = "65%";
         status.innerText = "Syncing Media...";
         
+        // EXPLICIT HEADER INCLUSION FOR PUT
         const s3Response = await fetch(upload_url, {
             method: 'PUT',
             headers: { 'Content-Type': vaultFile.type },
