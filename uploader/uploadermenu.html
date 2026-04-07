@@ -229,7 +229,7 @@
 <script>
 const API_ENDPOINTS = {
     franchise: 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise',
-    student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/uploader_get_students',
+    student: 'https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student',
     handshake: 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/get_upload_url'
 };
 
@@ -249,6 +249,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             fDropdown.appendChild(opt);
         });
     } catch (err) {
+        console.error("Franchise load failed", err);
         fDropdown.innerHTML = '<option>Error loading schools</option>';
     }
 });
@@ -266,9 +267,14 @@ async function fetchStudents(franchiseId) {
     sDropdown.innerHTML = '<option>Filtering Students...</option>';
 
     try {
-        // FORCE API CALL WITH QUERY PARAM
-        const res = await fetch(`${API_ENDPOINTS.student}?franchise_id=${franchiseId}`);
+        const url = `${API_ENDPOINTS.student}?franchise_id=${franchiseId}`;
+        console.log("Fetching students from:", url);
+        
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+        
         const data = await res.json();
+        console.log("Students received:", data);
         
         sDropdown.innerHTML = '<option value="">Select Student...</option>';
         
@@ -283,6 +289,7 @@ async function fetchStudents(franchiseId) {
             });
         }
     } catch (err) {
+        console.error("Student fetch error:", err);
         sDropdown.innerHTML = '<option>Error Loading Students</option>';
     }
 }
