@@ -188,6 +188,7 @@ let vaultFile = null;
 let allStudentsRaw = [];
 let allParentsRaw = [];
 
+// Step 1: Pre-load and Alert counts
 window.addEventListener('DOMContentLoaded', async () => {
     const fDropdown = document.getElementById('f-select');
     try {
@@ -202,17 +203,18 @@ window.addEventListener('DOMContentLoaded', async () => {
             fDropdown.appendChild(opt);
         });
 
-        // Load Students and Parents separately to ensure we have all data
-        const [sRes, pRes] = await Promise.all([
-            fetch(API_ENDPOINTS.student),
-            fetch(API_ENDPOINTS.parent)
-        ]);
-        
+        // Load data separately
+        const sRes = await fetch(API_ENDPOINTS.student);
         allStudentsRaw = await sRes.json();
+        
+        const pRes = await fetch(API_ENDPOINTS.parent);
         allParentsRaw = await pRes.json();
         
-        console.log("System Ready: Students and Parents loaded.");
+        // SYSTEM BOOT ALERT
+        alert(`SYSTEM LOADED:\nSchools Found: ${fData.length}\nStudents Total: ${allStudentsRaw.length}\nParents Total: ${allParentsRaw.length}`);
+
     } catch (err) {
+        alert("CRITICAL LOAD ERROR: " + err.message);
         fDropdown.innerHTML = '<option>Error loading system</option>';
     }
 });
@@ -228,18 +230,22 @@ function filterStudentsLocal(franchiseId) {
     }
 
     const fSlug = fSelect.selectedOptions[0].dataset.slug;
-    alert(`DEBUG (Step 1 - Franchise):\nSchool: ${fSelect.options[fSelect.selectedIndex].text}\nFranchise ID: ${franchiseId}\nS3 Slug: ${fSlug}`);
-
+    
     sDropdown.disabled = false;
-    sDropdown.innerHTML = '<option value="">Select Student...</option>';
+    sDropdown.innerHTML = '<option value="">Filtering...</option>';
 
+    // Perform Filter
     const filtered = allStudentsRaw.filter(s => 
         String(s.franchise_id) === String(franchiseId) && s.is_active === true
     );
 
+    // DEBUG ALERT ON FILTER
+    alert(`FILTER APPLIED:\nTarget Franchise ID: ${franchiseId}\nMatches Found: ${filtered.length}`);
+
     if (filtered.length === 0) {
         sDropdown.innerHTML = '<option value="">No Active Students Found</option>';
     } else {
+        sDropdown.innerHTML = '<option value="">Select Student...</option>';
         filtered.forEach(s => {
             const opt = document.createElement('option');
             opt.value = s.id;
@@ -255,7 +261,7 @@ function debugStudentSelection(studentId) {
     const parent = allParentsRaw.find(p => String(p.id) === String(student.parent_id));
     
     const pName = parent ? `${parent.first_name} ${parent.last_name}` : "MISSING PARENT";
-    alert(`DEBUG (Step 2 - Student Selection):\nStudent: ${student.name}\nParent Match: ${pName}`);
+    alert(`DEBUG (Step 2 - Selection):\nStudent: ${student.name}\nParent ID: ${student.parent_id}\nParent Match: ${pName}`);
 }
 
 function handleFileSelect(input) {
@@ -285,13 +291,15 @@ async function runS3Sync() {
         pFolderName = `${parentData.first_name}-${parentData.last_name}`.replace(/\s+/g, '-').toLowerCase();
     }
 
+    // CLEAN FILENAME: Strip spaces and special chars to prevent 403 Signature errors
+    const safeFileName = vaultFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+
     btn.disabled = true;
     ui.style.display = 'block';
     
     try {
         const timestamp = new Date().getTime();
-        // Updated Path: franchise/parent-name/timestamp-filename.ext
-        const fullS3Path = `${franchiseSlug}/${pFolderName}/${timestamp}-${vaultFile.name}`;
+        const fullS3Path = `${franchiseSlug}/${pFolderName}/${timestamp}-${safeFileName}`;
         
         status.innerText = "Authorizing...";
         bar.style.width = "25%";
@@ -303,7 +311,7 @@ async function runS3Sync() {
         });
 
         const { upload_url } = await handshakeResponse.json();
-        alert(`DEBUG (Step 3 - Final Path):\n${fullS3Path}`);
+        alert(`FINAL PATH CHECK:\n${fullS3Path}`);
 
         bar.style.width = "65%";
         status.innerText = "Syncing...";
