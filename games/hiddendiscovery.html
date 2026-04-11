@@ -1,0 +1,142 @@
+<style>
+    #hidden-wrapper {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Inter', sans-serif;
+        padding-top: 20px;
+    }
+
+    #game-container {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        height: 450px;
+        background: #C8E6C9; /* Placeholder for a grassy field */
+        border: 10px solid #5D4037;
+        border-radius: 25px;
+        overflow: hidden;
+        cursor: crosshair;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    /* Environmental decorative elements using CSS */
+    .tree { position: absolute; bottom: 20px; left: 50px; width: 80px; height: 120px; background: #388E3C; border-radius: 50% 50% 20% 20%; }
+    .tree::after { content: ''; position: absolute; bottom: -20px; left: 30px; width: 20px; height: 30px; background: #5D4037; }
+    
+    .bush { position: absolute; bottom: 30px; right: 80px; width: 100px; height: 60px; background: #4CAF50; border-radius: 30px; }
+
+    .hidden-target {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        font-weight: 900;
+        color: rgba(62, 39, 35, 0.4); /* Camouflaged color */
+        cursor: pointer;
+        transition: all 0.3s;
+        border-radius: 50%;
+        z-index: 5;
+    }
+
+    .found {
+        color: #FFD600 !important;
+        transform: scale(1.5) rotate(360deg);
+        background: white;
+        box-shadow: 0 0 20px #FFD600;
+        pointer-events: none;
+    }
+
+    #ui-layer {
+        position: absolute;
+        top: 20px;
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+        pointer-events: none;
+    }
+
+    .info-badge {
+        background: rgba(255,255,255,0.9);
+        padding: 10px 20px;
+        border-radius: 50px;
+        border: 3px solid #8D6E63;
+        font-weight: bold;
+        color: #5D4037;
+    }
+
+    #win-overlay {
+        display: none;
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(46, 125, 50, 0.8);
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        z-index: 20;
+    }
+</style>
+
+<div id="hidden-wrapper">
+    <div id="game-container">
+        <div id="ui-layer">
+            <div class="info-badge">Find the Hidden A's!</div>
+            <div class="info-badge" id="counter">Found: 0 / 3</div>
+        </div>
+
+        <div class="tree"></div>
+        <div class="bush"></div>
+        <div style="position:absolute; top:50px; left:100px; font-size:40px; opacity:0.2;">☁️</div>
+
+        <div class="hidden-target" style="top: 80px; left: 300px;" onclick="markFound(this)">A</div>
+        <div class="hidden-target" style="top: 310px; left: 70px;" onclick="markFound(this)">A</div>
+        <div class="hidden-target" style="top: 340px; right: 100px;" onclick="markFound(this)">A</div>
+
+        <div id="win-overlay">
+            <h1 style="font-size:60px; margin:0;">🔍🌟</h1>
+            <h2>Great Eyesight!</h2>
+            <button onclick="resetHidden()" style="padding:10px 25px; border-radius:10px; border:none; cursor:pointer; font-weight:bold;">Play Again</button>
+        </div>
+    </div>
+    
+    <button onclick="loadFrame('../games/gamesmenu.html', 'Game Center')" 
+            style="margin-top: 20px; padding: 10px 20px; border-radius: 10px; border: none; background: #C62828; color: white; cursor: pointer; font-weight: bold;">
+        Back to Menu
+    </button>
+</div>
+
+<script>
+(function() {
+    let foundCount = 0;
+    const totalToFind = 3;
+    const counterDisplay = document.getElementById('counter');
+    const winOverlay = document.getElementById('win-overlay');
+
+    window.markFound = function(el) {
+        if (el.classList.contains('found')) return;
+        
+        el.classList.add('found');
+        foundCount++;
+        counterDisplay.innerText = "Found: " + foundCount + " / " + totalToFind;
+
+        if (foundCount >= totalToFind) {
+            setTimeout(() => {
+                winOverlay.style.display = 'flex';
+            }, 600);
+        }
+    };
+
+    window.resetHidden = function() {
+        foundCount = 0;
+        counterDisplay.innerText = "Found: 0 / 3";
+        winOverlay.style.display = 'none';
+        document.querySelectorAll('.hidden-target').forEach(el => el.classList.remove('found'));
+    };
+})();
+</script>
