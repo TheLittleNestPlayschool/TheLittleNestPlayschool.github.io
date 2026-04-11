@@ -56,32 +56,76 @@
             box-sizing: border-box; 
         }
 
-        /* TOP COUNTERS */
+        /* --- UPDATED EXCITING COUNTERS --- */
         .counter-row {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            margin-bottom: 40px;
+            gap: 30px;
+            margin-bottom: 50px;
             flex-wrap: wrap;
         }
 
-        .counter-bubble {
-            width: 110px;
-            height: 110px;
+        .counter-card {
             background: white;
-            border: 4px solid #8D6E63;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border-radius: 20px;
+            padding: 15px;
+            width: 140px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border: 2px solid #F5F5F5;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: default;
         }
 
-        .counter-val { font-size: 26px; font-weight: 900; color: #5D4037; }
-        .counter-label { font-size: 10px; text-transform: uppercase; color: #8D6E63; font-weight: bold; }
+        .counter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(141, 110, 99, 0.2);
+        }
 
-        /* DATA BUBBLES GRID */
+        .egg-wrapper {
+            width: 70px;
+            height: 90px;
+            background: #FFF9C4;
+            margin: 0 auto 10px;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 3px solid #FBC02D;
+            overflow: hidden;
+            box-shadow: inset 0 -10px 10px rgba(0,0,0,0.05);
+        }
+
+        /* Dynamic Fill Effect */
+        .egg-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%; /* This will eventually be controlled by Xano data */
+            background: linear-gradient(to top, #FFD54F, #FFF176);
+            z-index: 1;
+        }
+
+        .counter-val { 
+            font-size: 28px; 
+            font-weight: 900; 
+            color: #5D4037; 
+            position: relative; 
+            z-index: 2; 
+            text-shadow: 1px 1px 0px white;
+        }
+
+        .counter-label { 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            color: #8D6E63; 
+            font-weight: 800; 
+            letter-spacing: 1px;
+        }
+
+        /* --- BUBBLE GRID --- */
         .bubble-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -96,8 +140,6 @@
             border-radius: 25px;
             padding: 25px;
             min-height: 160px;
-            display: flex;
-            flex-direction: column;
         }
 
         .bubble-title {
@@ -105,9 +147,6 @@
             color: #5D4037;
             margin-bottom: 15px;
             font-size: 18px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
         .broadcast-item {
@@ -118,33 +157,6 @@
             margin-bottom: 10px;
             font-size: 14px;
         }
-
-        .contact-method {
-            background: white;
-            padding: 10px 15px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            border: 1px solid #D7CCC8;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-        }
-
-        .award-badge {
-            width: 50px;
-            height: 50px;
-            background: #FFF9C4;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            border: 2px solid #FBC02D;
-            filter: grayscale(100%);
-            opacity: 0.5;
-            margin-right: 5px;
-        }
     </style>
 </head>
 <body>
@@ -152,7 +164,6 @@
     <div class="admin-sidebar">
         <div class="sidebar-header" style="color:#fff;">NEST<span style="color:#8D6E63;">CONNECT</span></div>
         <a class="menu-link" href="NestConnect.html">🏠 Home</a>
-        
         <a class="menu-link" onclick="loadFrame('../games/gamesmenu.html', 'Game Center')">🎮 Games</a>
         <a class="menu-link" onclick="loadFrame('my_pictures.html', 'My Pictures')">📸 My Pictures</a>
     </div>
@@ -161,14 +172,39 @@
         <div id="dashboard-content">
             
             <div class="counter-row">
-                <div class="counter-bubble"><span class="counter-val">-</span><span class="counter-label">Letters</span></div>
-                <div class="counter-bubble"><span class="counter-val">-</span><span class="counter-label">Numbers</span></div>
-                <div class="counter-bubble"><span class="counter-val">-</span><span class="counter-label">Manners</span></div>
-                <div class="counter-bubble"><span class="counter-val">-</span><span class="counter-label">Sessions</span></div>
+                <div class="counter-card">
+                    <div class="egg-wrapper">
+                        <div class="egg-fill" style="height: 40%;"></div> <span class="counter-val">A</span>
+                    </div>
+                    <span class="counter-label">Letters</span>
+                </div>
+
+                <div class="counter-card">
+                    <div class="egg-wrapper" style="background: #E1F5FE; border-color: #039BE5;">
+                        <div class="egg-fill" style="height: 70%; background: linear-gradient(to top, #03A9F4, #81D4FA);"></div>
+                        <span class="counter-val">5</span>
+                    </div>
+                    <span class="counter-label">Numbers</span>
+                </div>
+
+                <div class="counter-card">
+                    <div class="egg-wrapper" style="background: #F1F8E9; border-color: #7CB342;">
+                        <div class="egg-fill" style="height: 90%; background: linear-gradient(to top, #8BC34A, #AED581);"></div>
+                        <span class="counter-val">🌟</span>
+                    </div>
+                    <span class="counter-label">Manners</span>
+                </div>
+
+                <div class="counter-card">
+                    <div class="egg-wrapper" style="background: #F3E5F5; border-color: #8E24AA;">
+                        <div class="egg-fill" style="height: 25%; background: linear-gradient(to top, #9C27B0, #E1BEE7);"></div>
+                        <span class="counter-val">12</span>
+                    </div>
+                    <span class="counter-label">Sessions</span>
+                </div>
             </div>
 
             <div class="bubble-grid">
-                
                 <div class="data-bubble">
                     <div class="bubble-title">📢 Announcements</div>
                     <div class="broadcast-item"><strong>Upcoming:</strong> Ukrainian Christmas Supper - Jan 7th!</div>
@@ -177,25 +213,15 @@
 
                 <div class="data-bubble">
                     <div class="bubble-title">🏆 Student Awards</div>
-                    <div style="display:flex;">
-                        <div class="award-badge">🔤</div>
-                        <div class="award-badge">🤝</div>
-                        <div class="award-badge">🔢</div>
-                    </div>
+                    <p style="color:#8D6E63; font-size: 14px;">Keep playing to hatch more badges!</p>
                 </div>
-
+                
                 <div class="data-bubble">
                     <div class="bubble-title">💬 Message Us</div>
-                    <div class="contact-method"><span>Teacher Messenger</span><button style="border:none; background:#8D6E63; color:white; padding:5px 10px; border-radius:5px; cursor:pointer;">Chat</button></div>
-                    <div class="contact-method"><span>Email</span><span style="color:#8D6E63;">office@littlenest.com</span></div>
+                    <p style="font-size: 14px;">Teacher: office@littlenest.com</p>
                 </div>
-
-                <div class="data-bubble">
-                    <div class="bubble-title">📅 Daily Log</div>
-                    <p style="color:#999; font-style:italic; font-size: 14px;">Log will appear after session ends.</p>
-                </div>
-
             </div>
+
         </div>
     </main>
 
@@ -204,14 +230,10 @@
             const container = document.getElementById('dashboard-content');
             container.innerHTML = '<div style="padding:40px; font-style: italic;">Opening ' + name + '...</div>';
             try {
-                // Fetch using relative path
                 const response = await fetch(url + '?v=' + Date.now());
                 if (!response.ok) throw new Error('File not found');
-                
                 const html = await response.text();
                 container.innerHTML = html;
-
-                // Execute scripts within loaded HTML
                 const scripts = container.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
@@ -220,10 +242,7 @@
                     oldScript.parentNode.replaceChild(newScript, oldScript);
                 });
             } catch (e) {
-                console.error(e);
-                container.innerHTML = '<div style="padding:40px; text-align:center;">' +
-                    '<h2 style="color:#C62828;">Error Loading Module</h2>' +
-                    '<p>Could not find: <b>' + url + '</b></p></div>';
+                container.innerHTML = '<div style="padding:40px; text-align:center;"><h2>Module Not Ready</h2></div>';
             }
         }
     </script>
