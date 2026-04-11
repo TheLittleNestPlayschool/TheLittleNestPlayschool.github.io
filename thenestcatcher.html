@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Nest Catcher - Prototype</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 600px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 100%);
+            border: 8px solid #5D4037;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        #score-board {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #5D4037;
+            z-index: 10;
+            background: rgba(255,255,255,0.7);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        #nest {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            width: 100px;
+            height: 60px;
+            background: #8D6E63;
+            border-radius: 10px 10px 50px 50px;
+            border-bottom: 8px solid #5D4037;
+            transform: translateX(-50%);
+            cursor: pointer;
+            z-index: 5;
+            transition: transform 0.1s ease-out;
+        }
+
+        /* The straw texture for the nest */
+        #nest::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.1) 5px, rgba(0,0,0,0.1) 10px);
+            border-radius: inherit;
+        }
+
+        .falling-item {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: bold;
+            border-radius: 50%;
+            user-select: none;
+        }
+
+        .target {
+            background: white;
+            color: #2E7D32;
+            border: 3px solid #A5D6A7;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .distractor {
+            background: #FFEBEE;
+            color: #C62828;
+            border: 3px solid #EF9A9A;
+        }
+
+        #instructions {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            border: 4px solid #8D6E63;
+            z-index: 20;
+        }
+
+        button {
+            padding: 10px 25px;
+            font-size: 18px;
+            background: #8D6E63;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="score-board">Score: 0</div>
+    
+    <div id="instructions">
+        <h2>Catch the Letter A!</h2>
+        <p>Avoid the Letter B</p>
+        <button onclick="startGame()">Start Playing</button>
+    </div>
+
+    <div id="nest"></div>
+</div>
+
+<script>
+    const container = document.getElementById('game-container');
+    const nest = document.getElementById('nest');
+    const scoreBoard = document.getElementById('score-board');
+    const instructionScreen = document.getElementById('instructions');
+
+    let score = 0;
+    let gameActive = false;
+    let spawnInterval;
+    let targetChar = "A";
+    let distractorChar = "B";
+
+    // Handle Movement (Mouse & Touch)
+    function moveNest(e) {
+        if (!gameActive) return;
+        
+        let clientX;
+        if (e.type === 'touchmove') {
+            clientX = e.touches[0].clientX;
+        } else {
+            clientX = e.clientX;
+        }
+
+        const rect = container.getBoundingClientRect();
+        let x = clientX - rect.left;
+        
+        // Keep nest within container bounds
+        if (x < 50) x = 50;
+        if (x > rect.width - 50) x = rect.width - 50;
+        
+        nest.style.left = x + 'px';
+    }
+
+    container.addEventListener('mousemove', moveNest);
+    container.addEventListener('touchmove', moveNest);
+
+    function startGame() {
+        score = 0;
+        gameActive = true;
+        scoreBoard.innerText = "Score: 0";
+        instructionScreen.style.display = 'none';
+        
+        // Spawn an item every 1.2 seconds
+        spawnInterval = setInterval(createItem, 1200);
+    }
+
+    function createItem() {
+        if (!gameActive) return;
+
+        const item = document.createElement('div');
+        const isTarget = Math.random() > 0.4; // 60% chance for target
+        
+        item.classList.add('falling-item');
+        item.classList.add(isTarget ? 'target' : 'distractor');
+        item.innerText = isTarget ? targetChar : distractorChar;
+        
+        // Random horizontal position
+        const startX = Math.random() * (container.offsetWidth - 60) + 30;
+        item.style.left = startX + 'px';
+        item.style.top = '-60px';
+        
+        container.appendChild(item);
+
+        let posY = -60;
+        const speed = 2 + (score * 0.1); // Slowly gets faster
+
+        const fallTask = setInterval(() => {
+            if (!gameActive) {
+                clearInterval(fallTask);
+                item.remove();
+                return;
+            }
+
+            posY += speed;
+            item.style.top = posY + 'px';
+
+            // Check for collision with nest
+            const nestRect = nest.getBoundingClientRect();
+            const itemRect = item.getBoundingClientRect();
+
+            if (itemRect.bottom >= nestRect.top && 
+                itemRect.top <= nestRect.bottom &&
+                itemRect.left < nestRect.right && 
+                itemRect.right > nestRect.left) {
+                
+                if (isTarget) {
+                    score += 1;
+                    scoreBoard.innerText = "Score: " + score;
+                } else {
+                    score = Math.max(0, score - 1); // Lose a point for distractors
+                    scoreBoard.innerText = "Score: " + score;
+                    // Visual feedback for wrong item
+                    container.style.backgroundColor = '#FFCDD2';
+                    setTimeout(() => container.style.backgroundColor = '', 100);
+                }
+                
+                clearInterval(fallTask);
+                item.remove();
+            }
+
+            // Remove if it falls past the bottom
+            if (posY > container.offsetHeight) {
+                clearInterval(fallTask);
+                item.remove();
+            }
+        }, 20);
+    }
+
+    function gameOver() {
+        gameActive = false;
+        clearInterval(spawnInterval);
+        instructionScreen.style.display = 'block';
+        instructionScreen.innerHTML = `<h2>Well Done!</h2><p>You caught ${score} items.</p><button onclick="startGame()">Play Again</button>`;
+    }
+</script>
+
+</body>
+</html>
