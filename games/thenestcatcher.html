@@ -19,7 +19,7 @@
         border-radius: 25px;
         overflow: hidden;
         box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        touch-action: none; /* Prevents scrolling while playing on mobile */
+        touch-action: none;
     }
 
     #score-board {
@@ -36,6 +36,23 @@
         border: 2px solid #8D6E63;
     }
 
+    /* New Quit Button Style */
+    #quit-btn {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        font-size: 14px;
+        font-weight: bold;
+        color: white;
+        background: #C62828;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 50px;
+        cursor: pointer;
+        z-index: 10;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
     #nest {
         position: absolute;
         bottom: 25px;
@@ -47,16 +64,6 @@
         border-bottom: 10px solid #5D4037;
         transform: translateX(-50%);
         z-index: 5;
-        cursor: pointer;
-    }
-
-    /* Nest Texture */
-    #nest::before {
-        content: '';
-        position: absolute;
-        width: 100%; height: 100%;
-        background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.05) 4px, rgba(0,0,0,0.05) 8px);
-        border-radius: inherit;
     }
 
     .falling-item {
@@ -70,20 +77,10 @@
         font-weight: 900;
         border-radius: 50%;
         user-select: none;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
-    .target-egg {
-        background: #FFFFFF;
-        color: #2E7D32;
-        border: 4px solid #A5D6A7;
-    }
-
-    .bad-egg {
-        background: #FFEBEE;
-        color: #C62828;
-        border: 4px solid #EF9A9A;
-    }
+    .target-egg { background: #FFFFFF; color: #2E7D32; border: 4px solid #A5D6A7; }
+    .bad-egg { background: #FFEBEE; color: #C62828; border: 4px solid #EF9A9A; }
 
     #start-overlay {
         position: absolute;
@@ -113,15 +110,13 @@
         border-radius: 12px;
         cursor: pointer;
         font-weight: bold;
-        transition: transform 0.2s;
     }
-
-    .play-button:hover { transform: scale(1.05); }
 </style>
 
 <div id="nest-game-wrapper">
     <div id="game-container">
         <div id="score-board">Discovery: 0</div>
+        <button id="quit-btn" onclick="stopGame()" style="display:none;">Quit Game</button>
         
         <div id="start-overlay">
             <div class="menu-card">
@@ -142,6 +137,7 @@
     const scoreText = document.getElementById('score-board');
     const overlay = document.getElementById('start-overlay');
     const startBtn = document.getElementById('start-btn');
+    const quitBtn = document.getElementById('quit-btn');
 
     let score = 0;
     let isActive = false;
@@ -154,22 +150,38 @@
         const rect = container.getBoundingClientRect();
         let clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
         let x = clientX - rect.left;
-        
-        // Keep nest inside the box
         if (x < 55) x = 55;
         if (x > rect.width - 55) x = rect.width - 55;
-        
         nest.style.left = x + 'px';
     }
 
     container.addEventListener('mousemove', moveHandler);
     container.addEventListener('touchmove', moveHandler, { passive: false });
 
+    // The STOP Logic
+    window.stopGame = function() {
+        isActive = false;
+        clearInterval(spawnTimer);
+        
+        // Remove all falling items currently on screen
+        const items = document.querySelectorAll('.falling-item');
+        items.forEach(item => item.remove());
+        
+        // Show overlay and hide quit button
+        overlay.style.display = 'flex';
+        quitBtn.style.display = 'none';
+        
+        // Reset instructions to show final score
+        overlay.querySelector('h2').innerText = "Game Stopped";
+        overlay.querySelector('p').innerHTML = "Final Discovery Score: <strong>" + score + "</strong>";
+        overlay.querySelector('button').innerText = "Try Again";
+    };
+
     function spawn() {
         if (!isActive) return;
         
         const item = document.createElement('div');
-        const isCorrect = Math.random() > 0.4; // 60% are targets
+        const isCorrect = Math.random() > 0.4;
         
         item.className = isCorrect ? 'falling-item target-egg' : 'falling-item bad-egg';
         item.innerText = isCorrect ? target : distractor;
@@ -180,7 +192,7 @@
         container.appendChild(item);
 
         let y = -60;
-        let speed = 3 + (score * 0.15); // Faster as they learn
+        let speed = 3 + (score * 0.15);
 
         const loop = setInterval(() => {
             if (!isActive) { clearInterval(loop); item.remove(); return; }
@@ -191,13 +203,8 @@
             const n = nest.getBoundingClientRect();
             const i = item.getBoundingClientRect();
 
-            // Collision Detection
             if (i.bottom >= n.top && i.top <= n.bottom && i.left < n.right && i.right > n.left) {
-                if (isCorrect) {
-                    score++;
-                } else {
-                    score = Math.max(0, score - 1);
-                }
+                if (isCorrect) { score++; } else { score = Math.max(0, score - 1); }
                 scoreText.innerText = "Discovery: " + score;
                 clearInterval(loop);
                 item.remove();
@@ -212,14 +219,8 @@
         isActive = true;
         scoreText.innerText = "Discovery: 0";
         overlay.style.display = 'none';
+        quitBtn.style.display = 'block'; // Show quit button when playing
         spawnTimer = setInterval(spawn, 1100);
-    });
-
-    // Stop game if they navigate away
-    window.addEventListener('blur', () => {
-        isActive = false;
-        clearInterval(spawnTimer);
-        overlay.style.display = 'flex';
     });
 })();
 </script>
