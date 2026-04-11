@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <title>Parent Portal</title>
     <style>
-        /* These are the same styles from your Engine dashboard to keep it consistent */
         html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; }
         .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; color: #fff; position: fixed; left: 0; top: 0; z-index: 10000; overflow-y: auto; border-right: 1px solid #333; }
-        .main-content { margin-left: 250px; padding: 30px; width: calc(100% - 250px); min-height: 100vh; background: #fff; box-sizing: border-box; }
+        .main-content { margin-left: 250px; padding: 30px; width: calc(100% - 250px); min-height: 100vh; background: #fff; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
     </style>
 </head>
 <body>
@@ -22,7 +21,6 @@
     </main>
 
     <script>
-        // CRUCIAL CHANGE: This now fetches parentsmenu.html
         window.onload = function() {
             fetch('parentsmenu.html')
                 .then(response => response.text())
@@ -31,15 +29,28 @@
                 });
         };
 
-        // Standard loadFrame function
         async function loadFrame(url, name) {
             const container = document.getElementById('dashboard-content');
             container.innerHTML = '<div style="padding:40px;">Loading ' + name + '...</div>';
+            
             try {
                 const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999));
                 const html = await response.text();
+                
+                // Set the HTML content
                 container.innerHTML = html;
+
+                // IMPORTANT: Manually execute any script tags found in the loaded HTML
+                const scripts = container.querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+
             } catch (e) {
+                console.error(e);
                 container.innerHTML = '<h2>Error loading module</h2>';
             }
         }
