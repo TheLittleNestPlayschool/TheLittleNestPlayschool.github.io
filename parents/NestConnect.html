@@ -35,40 +35,18 @@
             font-size: 20px;
         }
 
-        .sidebar-section-label {
-            color: #666;
-            font-size: 11px;
-            text-transform: uppercase;
-            padding: 20px 20px 10px 20px;
-            letter-spacing: 1px;
-        }
-
-        .menu-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .menu-item {
-            padding: 5px 15px;
-        }
-
         .menu-link {
             color: #ccc;
             text-decoration: none;
             display: block;
-            padding: 12px 15px;
-            border-radius: 6px;
+            padding: 12px 25px;
             transition: all 0.2s;
             cursor: pointer;
         }
 
-        .menu-link:hover {
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-        }
+        .menu-link:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
-        /* Main Content Area */
+        /* Main Content */
         .main-content { 
             margin-left: 250px; 
             padding: 30px; 
@@ -76,60 +54,133 @@
             min-height: 100vh; 
             background: #fff; 
             box-sizing: border-box; 
+        }
+
+        /* Counters Section */
+        .counter-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .counter-bubble {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border: 4px solid #8D6E63;
+            border-radius: 50%;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
 
-        #dashboard-content {
-            width: 100%;
+        .counter-val { font-size: 28px; font-weight: 900; color: #5D4037; }
+        .counter-label { font-size: 11px; text-transform: uppercase; color: #8D6E63; font-weight: bold; }
+
+        /* Data Bubbles Grid */
+        .bubble-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .data-bubble {
+            background: #fdfbf7;
+            border: 2px solid #E0E0E0;
+            border-radius: 25px;
+            padding: 25px;
+            min-height: 150px;
+            position: relative;
+        }
+
+        .bubble-title {
+            font-weight: 800;
+            color: #5D4037;
+            margin-bottom: 15px;
             display: flex;
-            flex-direction: column;
             align-items: center;
+            gap: 10px;
         }
 
-        .welcome-screen {
-            margin-top: 15vh;
-            text-align: center;
+        .contact-method {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #D7CCC8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
 
     <div class="admin-sidebar">
-        <div class="sidebar-header">
-            <span style="color: #fff;">NEST</span><span style="color: #8D6E63;">CONNECT</span>
-        </div>
-        
-        <div class="sidebar-section-label">Parent Portal</div>
-        
-        <ul class="menu-list">
-            <li class="menu-item">
-                <a class="menu-link" onclick="loadFrame('../games/gamesmenu.html', 'Game Center')">🎮 Games</a>
-            </li>
-            <li class="menu-item">
-                <a class="menu-link" onclick="loadFrame('my_pictures.html', 'My Pictures')">📸 My Pictures</a>
-            </li>
-            <li class="menu-item">
-                <a class="menu-link" onclick="loadFrame('menu1.html', 'Menu 1')">📁 Menu 1</a>
-            </li>
-            <li class="menu-item">
-                <a class="menu-link" onclick="loadFrame('menu2.html', 'Menu 2')">📁 Menu 2</a>
-            </li>
-            <li class="menu-item">
-                <a class="menu-link" onclick="loadFrame('menu3.html', 'Menu 3')">📁 Menu 3</a>
-            </li>
-            <li class="menu-item">
-                <a class="menu-link" onclick="loadFrame('menu4.html', 'Menu 4')">📁 Menu 4</a>
-            </li>
-        </ul>
+        <div class="sidebar-header">NEST<span>CONNECT</span></div>
+        <a class="menu-link" onclick="location.reload()">🏠 Home</a>
+        <a class="menu-link" onclick="loadFrame('../games/gamesmenu.html', 'Game Center')">🎮 Games</a>
+        <a class="menu-link" onclick="loadFrame('my_pictures.html', 'My Pictures')">📸 My Pictures</a>
     </div>
 
     <main class="main-content">
         <div id="dashboard-content">
-            <div class="welcome-screen">
-                <h1 style="color: #5D4037; font-size: 32px;">Welcome to NestConnect</h1>
-                <p style="color: #8D6E63; font-size: 18px;">Your window into your child's day at The Little Nest.</p>
+            
+            <div class="counter-row">
+                <div class="counter-bubble">
+                    <span class="counter-val" id="count-letters">-</span>
+                    <span class="counter-label">Letters</span>
+                </div>
+                <div class="counter-bubble">
+                    <span class="counter-val" id="count-numbers">-</span>
+                    <span class="counter-label">Numbers</span>
+                </div>
+                <div class="counter-bubble">
+                    <span class="counter-val" id="count-manners">-</span>
+                    <span class="counter-label">Manners</span>
+                </div>
+                <div class="counter-bubble">
+                    <span class="counter-val" id="count-sessions">-</span>
+                    <span class="counter-label">Sessions</span>
+                </div>
+            </div>
+
+            <div class="bubble-grid">
+                
+                <div class="data-bubble">
+                    <div class="bubble-title">💬 Message Us</div>
+                    <div class="contact-method">
+                        <span>Teacher Messenger</span>
+                        <button style="border:none; background:#8D6E63; color:white; padding:5px 10px; border-radius:5px; cursor:pointer;">Chat</button>
+                    </div>
+                    <div class="contact-method">
+                        <span>School Email</span>
+                        <span style="color:#8D6E63; font-weight:600;">office@littlenest.com</span>
+                    </div>
+                </div>
+
+                <div class="data-bubble">
+                    <div class="bubble-title">📅 Today's Log</div>
+                    <p style="color:#999; font-style:italic;">Daily report data will appear here...</p>
+                </div>
+
+                <div class="data-bubble">
+                    <div class="bubble-title">📸 Recent Photos</div>
+                    <p style="color:#999; font-style:italic;">Latest snapshots from the vault...</p>
+                </div>
+
+                <div class="data-bubble">
+                    <div class="bubble-title">🏆 Achievement</div>
+                    <p style="color:#999; font-style:italic;">New skills learned today...</p>
+                </div>
+
             </div>
         </div>
     </main>
@@ -138,15 +189,10 @@
         async function loadFrame(url, name) {
             const container = document.getElementById('dashboard-content');
             container.innerHTML = '<div style="padding:40px; font-style: italic;">Opening ' + name + '...</div>';
-            
             try {
                 const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999));
-                if (!response.ok) throw new Error('File not found');
-                
                 const html = await response.text();
                 container.innerHTML = html;
-
-                // Execute scripts within loaded HTML
                 const scripts = container.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
@@ -154,12 +200,8 @@
                     newScript.appendChild(document.createTextNode(oldScript.innerHTML));
                     oldScript.parentNode.replaceChild(newScript, oldScript);
                 });
-
             } catch (e) {
-                console.error(e);
-                container.innerHTML = '<div style="padding:40px; text-align:center;">' +
-                    '<h2 style="color:#C62828;">Error Loading Module</h2>' +
-                    '<p>Check if <strong>' + url + '</strong> is in the correct folder.</p></div>';
+                container.innerHTML = '<h2>Error Loading Module</h2>';
             }
         }
     </script>
