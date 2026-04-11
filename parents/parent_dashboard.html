@@ -4,53 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Little Nest | Parent Hub</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        html, body { 
-            margin: 0; 
-            padding: 0; 
-            background: #fdfbf7; 
-            font-family: 'Inter', sans-serif; 
-            color: #5D4037;
-        }
-
-        /* Sidebar Styling */
-        .parent-sidebar { 
-            width: 260px; 
+        /* matching the clean, dark sidebar style you liked */
+        html, body { margin: 0; padding: 0; background: #fdfbf7; font-family: 'Inter', sans-serif; }
+        
+        .admin-sidebar { 
+            width: 250px; 
             height: 100vh; 
-            background: #5D4037; 
+            background: #1a1a1a; 
             color: #fff; 
             position: fixed; 
             left: 0; 
             top: 0; 
-            z-index: 1000; 
+            z-index: 10000; 
             overflow-y: auto; 
-            border-right: 1px solid rgba(255,255,255,0.1); 
+            border-right: 1px solid #333; 
         }
 
-        /* Main Viewport */
         .main-content { 
-            margin-left: 260px; 
-            padding: 40px; 
-            width: calc(100% - 260px); 
+            margin-left: 250px; 
+            padding: 30px; 
+            width: calc(100% - 250px); 
             min-height: 100vh; 
+            background: #fff; 
             box-sizing: border-box; 
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        #content-inner {
-            width: 100%;
-            max-width: 1000px;
-            text-align: center;
-        }
-
-        .loading-state {
-            font-style: italic;
-            color: #8D6E63;
-            margin-top: 50px;
-        }
+        #content-inner { width: 100%; text-align: center; }
     </style>
 </head>
 <body>
@@ -58,64 +41,43 @@
     <div id="nav-placeholder"></div>
 
     <main class="main-content" id="dashboard-content">
-        <div id="content-inner">
-            <h1 style="font-size: 2.5rem; margin-bottom: 10px;">The Little Nest Parent Hub</h1>
-            <p style="font-size: 1.1rem; color: #8D6E63;">Welcome to NestMind. Please select a game or lesson from the menu.</p>
-            <hr style="border: 0; border-top: 2px solid #E0E0E0; margin: 40px 0;">
+        <div id="content-inner" style="margin-top: 15vh;">
+            <h1 style="color: #5D4037;">The Little Nest Parent Hub</h1>
+            <p style="color: #8D6E63;">Please select a game or activity from the menu to begin.</p>
         </div>
     </main>
 
     <script>
-        // Load the Sidebar Menu automatically
+        // Load the sidebar menu
         window.onload = function() {
             fetch('parentsmenu.html')
-                .then(response => {
-                    if (!response.ok) throw new Error('Menu not found');
-                    return response.text();
-                })
+                .then(response => response.text())
                 .then(data => {
                     document.getElementById('nav-placeholder').innerHTML = data;
-                })
-                .catch(err => console.error('Error loading menu:', err));
+                });
         };
 
-        // Standard function to load games/modules into the main area
+        // Function to load the game into the dashboard
         async function loadFrame(url, name) {
             const container = document.getElementById('dashboard-content');
-            
-            // Show loading state
-            container.innerHTML = `<div class="loading-state">Opening ${name}...</div>`;
+            container.innerHTML = '<div style="padding:40px;">Opening ' + name + '...</div>';
             
             try {
-                // Fetch with a cache-buster to ensure fresh game code
-                const response = await fetch(url + '?v=' + Date.now());
+                const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999));
                 const html = await response.text();
-                
-                // Inject the HTML
                 container.innerHTML = html;
 
-                // CRITICAL: Manually find and re-run all scripts in the loaded HTML
-                // This is required because innerHTML doesn't execute <script> tags
+                // This part makes sure the game logic actually runs
                 const scripts = container.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
-                    // Copy attributes (src, type, etc)
-                    Array.from(oldScript.attributes).forEach(attr => {
-                        newScript.setAttribute(attr.name, attr.value);
-                    });
-                    // Copy the script content
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
                     newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                    // Replace the old non-working script with the new working one
                     oldScript.parentNode.replaceChild(newScript, oldScript);
                 });
 
             } catch (e) {
-                console.error('Module Load Error:', e);
-                container.innerHTML = `
-                    <div style="text-align:center; padding:50px;">
-                        <h2 style="color:#C62828;">Oops! Error loading ${name}</h2>
-                        <p>Please make sure ${url} exists in the /parents/ folder.</p>
-                    </div>`;
+                container.innerHTML = '<h2>Error loading ' + name + '</h2>';
             }
         }
     </script>
