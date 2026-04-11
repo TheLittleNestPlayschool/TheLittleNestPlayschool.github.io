@@ -1,0 +1,203 @@
+<style>
+    #sorter-wrapper {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Inter', sans-serif;
+        padding-top: 20px;
+    }
+
+    #game-container {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        height: 500px;
+        background: #e1f5fe;
+        border: 10px solid #5D4037;
+        border-radius: 25px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        touch-action: none;
+    }
+
+    #bin-container {
+        display: flex;
+        justify-content: space-around;
+        width: 100%;
+        margin-top: auto;
+        padding-bottom: 30px;
+    }
+
+    .nest-bin {
+        width: 160px;
+        height: 120px;
+        border-radius: 20px 20px 80px 80px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: white;
+        font-size: 18px;
+        border-bottom: 8px solid rgba(0,0,0,0.2);
+    }
+
+    #kind-nest { background: #4CAF50; }
+    #unkind-nest { background: #FF7043; }
+
+    #item-to-drag {
+        position: absolute;
+        top: 100px;
+        background: white;
+        padding: 20px;
+        border-radius: 20px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        cursor: grab;
+        font-size: 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: 4px solid #8D6E63;
+        z-index: 10;
+        user-select: none;
+    }
+
+    .item-label {
+        font-size: 16px;
+        font-weight: bold;
+        color: #5D4037;
+        margin-top: 10px;
+    }
+
+    #feedback {
+        position: absolute;
+        top: 20px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #2E7D32;
+        display: none;
+    }
+</style>
+
+<div id="sorter-wrapper">
+    <div id="game-container">
+        <div id="feedback">Great Job! 🌟</div>
+
+        <div id="item-to-drag">
+            <span id="item-emoji">🤝</span>
+            <div id="item-label" class="item-label">Sharing</div>
+        </div>
+
+        <div id="bin-container">
+            <div id="kind-nest" class="nest-bin">Kind Way</div>
+            <div id="unkind-nest" class="nest-bin">Need to Learn</div>
+        </div>
+    </div>
+    
+    <button onclick="loadFrame('../games/gamesmenu.html', 'Game Center')" 
+            style="margin-top: 20px; padding: 10px 20px; border-radius: 10px; border: none; background: #C62828; color: white; cursor: pointer; font-weight: bold;">
+        Back to Menu
+    </button>
+</div>
+
+<script>
+(function() {
+    const item = document.getElementById('item-to-drag');
+    const kindNest = document.getElementById('kind-nest');
+    const unkindNest = document.getElementById('unkind-nest');
+    const feedback = document.getElementById('feedback');
+    const emojiEl = document.getElementById('item-emoji');
+    const labelEl = document.getElementById('item-label');
+
+    const manners = [
+        { emoji: '🤝', text: 'Sharing', kind: true },
+        { emoji: '🤬', text: 'Shouting', kind: false },
+        { emoji: '🧸', text: 'Cleaning Up', kind: true },
+        { emoji: '🥊', text: 'Hitting', kind: false },
+        { emoji: '🙏', text: 'Saying Please', kind: true },
+        { emoji: '👅', text: 'Being Mean', kind: false }
+    ];
+
+    let currentIdx = 0;
+    let isDragging = false;
+    let startX, startY, initialX, initialY;
+
+    function setItem() {
+        const m = manners[currentIdx];
+        emojiEl.innerText = m.emoji;
+        labelEl.innerText = m.text;
+        item.style.left = "calc(50% - 60px)";
+        item.style.top = "100px";
+    }
+
+    setItem();
+
+    function onStart(e) {
+        isDragging = true;
+        const pos = e.touches ? e.touches[0] : e;
+        startX = pos.clientX;
+        startY = pos.clientY;
+        const rect = item.getBoundingClientRect();
+        const containerRect = document.getElementById('game-container').getBoundingClientRect();
+        initialX = rect.left - containerRect.left;
+        initialY = rect.top - containerRect.top;
+        item.style.cursor = "grabbing";
+    }
+
+    function onMove(e) {
+        if (!isDragging) return;
+        const pos = e.touches ? e.touches[0] : e;
+        const dx = pos.clientX - startX;
+        const dy = pos.clientY - startY;
+        item.style.left = (initialX + dx) + "px";
+        item.style.top = (initialY + dy) + "px";
+    }
+
+    function onEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        item.style.cursor = "grab";
+
+        const iRect = item.getBoundingClientRect();
+        const kRect = kindNest.getBoundingClientRect();
+        const uRect = unkindNest.getBoundingClientRect();
+
+        let isCorrect = false;
+        const isKind = manners[currentIdx].kind;
+
+        // Check if dropped in Kind Nest
+        if (iRect.left < kRect.right && iRect.right > kRect.left && iRect.top < kRect.bottom && iRect.bottom > kRect.top) {
+            if (isKind) isCorrect = true;
+        } 
+        // Check if dropped in Unkind Nest
+        else if (iRect.left < uRect.right && iRect.right > uRect.left && iRect.top < uRect.bottom && iRect.bottom > uRect.top) {
+            if (!isKind) isCorrect = true;
+        }
+
+        if (isCorrect) {
+            feedback.style.display = "block";
+            setTimeout(() => {
+                feedback.style.display = "none";
+                currentIdx = (currentIdx + 1) % manners.length;
+                setItem();
+            }, 1000);
+        } else {
+            // Snap back
+            item.style.left = "calc(50% - 60px)";
+            item.style.top = "100px";
+        }
+    }
+
+    item.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+
+    item.addEventListener('touchstart', onStart);
+    window.addEventListener('touchmove', onMove, {passive: false});
+    window.addEventListener('touchend', onEnd);
+})();
+</script>
