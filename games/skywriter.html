@@ -1,0 +1,185 @@
+<style>
+    #skywriter-wrapper {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Inter', sans-serif;
+        padding-top: 20px;
+    }
+
+    #game-container {
+        position: relative;
+        width: 100%;
+        max-width: 500px;
+        height: 600px;
+        background: #fdfbf7;
+        border: 10px solid #5D4037;
+        border-radius: 25px;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        touch-action: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    #canvas-stack {
+        position: relative;
+        width: 400px;
+        height: 400px;
+        margin-top: 40px;
+        background: white;
+        border: 2px dashed #D7CCC8;
+        border-radius: 15px;
+    }
+
+    /* The ghosted letter in the background */
+    #letter-hint {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 300px;
+        font-weight: 900;
+        color: #E0E0E0;
+        user-select: none;
+        z-index: 1;
+    }
+
+    /* The drawing layer */
+    #drawing-canvas {
+        position: absolute;
+        top: 0; left: 0;
+        z-index: 2;
+        cursor: crosshair;
+    }
+
+    #controls {
+        margin-top: 30px;
+        display: flex;
+        gap: 15px;
+    }
+
+    .btn {
+        padding: 12px 25px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .btn-clear { background: #8D6E63; color: white; }
+    .btn-done { background: #2E7D32; color: white; }
+    .btn-exit { background: #C62828; color: white; }
+    .btn:hover { transform: scale(1.05); }
+
+    #success-msg {
+        display: none;
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        border: 5px solid #2E7D32;
+        text-align: center;
+        z-index: 100;
+    }
+</style>
+
+<div id="skywriter-wrapper">
+    <div id="game-container">
+        <h2 style="color: #5D4037; margin-top: 20px;">Trace the Letter A</h2>
+        
+        <div id="canvas-stack">
+            <div id="letter-hint">A</div>
+            <canvas id="drawing-canvas" width="400" height="400"></canvas>
+        </div>
+
+        <div id="controls">
+            <button class="btn btn-clear" onclick="clearCanvas()">Start Over</button>
+            <button class="btn btn-done" onclick="finishTracing()">I'm Done!</button>
+            <button class="btn btn-exit" onclick="loadFrame('../games/gamesmenu.html', 'Game Center')">Back</button>
+        </div>
+
+        <div id="success-msg" id="success-box">
+            <h1 style="font-size: 50px; margin: 0;">🌟</h1>
+            <h2 style="color: #2E7D32;">Beautiful Writing!</h2>
+            <button class="btn btn-done" onclick="resetGame()">Write Again</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const canvas = document.getElementById('drawing-canvas');
+    const ctx = canvas.getContext('2d');
+    const successBox = document.getElementById('success-msg');
+    
+    let isDrawing = false;
+
+    // Set up line style
+    ctx.strokeStyle = '#5D4037';
+    ctx.lineWidth = 15;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    function start(e) {
+        isDrawing = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+    }
+
+    function stop() {
+        isDrawing = false;
+    }
+
+    // Mouse Events
+    canvas.addEventListener('mousedown', start);
+    window.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', stop);
+
+    // Touch Events
+    canvas.addEventListener('touchstart', start);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', stop);
+
+    window.clearCanvas = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
+
+    window.finishTracing = function() {
+        successBox.style.display = 'block';
+    };
+
+    window.resetGame = function() {
+        clearCanvas();
+        successBox.style.display = 'none';
+    };
+})();
+</script>
