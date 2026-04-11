@@ -56,7 +56,7 @@
             box-sizing: border-box; 
         }
 
-        /* --- UPDATED EXCITING COUNTERS --- */
+        /* --- EXCITING COUNTERS --- */
         .counter-row {
             display: flex;
             justify-content: center;
@@ -97,13 +97,12 @@
             box-shadow: inset 0 -10px 10px rgba(0,0,0,0.05);
         }
 
-        /* Dynamic Fill Effect */
         .egg-fill {
             position: absolute;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 60%; /* This will eventually be controlled by Xano data */
+            height: 60%;
             background: linear-gradient(to top, #FFD54F, #FFF176);
             z-index: 1;
         }
@@ -157,13 +156,42 @@
             margin-bottom: 10px;
             font-size: 14px;
         }
+
+        .contact-method {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #D7CCC8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .award-badge {
+            width: 50px;
+            height: 50px;
+            background: #FFF9C4;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: 2px solid #FBC02D;
+            filter: grayscale(100%);
+            opacity: 0.5;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
 
     <div class="admin-sidebar">
         <div class="sidebar-header" style="color:#fff;">NEST<span style="color:#8D6E63;">CONNECT</span></div>
-        <a class="menu-link" href="NestConnect.html">🏠 Home</a>
+        
+        <a class="menu-link" onclick="window.location.href='NestConnect.html'">🏠 Home</a>
+        
         <a class="menu-link" onclick="loadFrame('../games/gamesmenu.html', 'Game Center')">🎮 Games</a>
         <a class="menu-link" onclick="loadFrame('my_pictures.html', 'My Pictures')">📸 My Pictures</a>
     </div>
@@ -174,7 +202,8 @@
             <div class="counter-row">
                 <div class="counter-card">
                     <div class="egg-wrapper">
-                        <div class="egg-fill" style="height: 40%;"></div> <span class="counter-val">A</span>
+                        <div class="egg-fill" style="height: 40%;"></div>
+                        <span class="counter-val">A</span>
                     </div>
                     <span class="counter-label">Letters</span>
                 </div>
@@ -213,12 +242,29 @@
 
                 <div class="data-bubble">
                     <div class="bubble-title">🏆 Student Awards</div>
-                    <p style="color:#8D6E63; font-size: 14px;">Keep playing to hatch more badges!</p>
+                    <div style="display:flex;">
+                        <div class="award-badge">🔤</div>
+                        <div class="award-badge">🤝</div>
+                        <div class="award-badge">🔢</div>
+                    </div>
+                    <p style="color:#8D6E63; font-size: 14px; margin-top: 10px;">Keep playing to hatch more badges!</p>
                 </div>
-                
+
                 <div class="data-bubble">
                     <div class="bubble-title">💬 Message Us</div>
-                    <p style="font-size: 14px;">Teacher: office@littlenest.com</p>
+                    <div class="contact-method">
+                        <span>Teacher Messenger</span>
+                        <button style="border:none; background:#8D6E63; color:white; padding:5px 10px; border-radius:5px; cursor:pointer;">Chat</button>
+                    </div>
+                    <div class="contact-method">
+                        <span>Email</span>
+                        <span style="color:#8D6E63; font-weight:600;">office@littlenest.com</span>
+                    </div>
+                </div>
+
+                <div class="data-bubble">
+                    <div class="bubble-title">📅 Daily Log</div>
+                    <p style="color:#999; font-style:italic; font-size: 14px;">Today's lunch, nap, and activities will appear here once the session ends.</p>
                 </div>
             </div>
 
@@ -234,6 +280,7 @@
                 if (!response.ok) throw new Error('File not found');
                 const html = await response.text();
                 container.innerHTML = html;
+                
                 const scripts = container.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
@@ -242,7 +289,8 @@
                     oldScript.parentNode.replaceChild(newScript, oldScript);
                 });
             } catch (e) {
-                container.innerHTML = '<div style="padding:40px; text-align:center;"><h2>Module Not Ready</h2></div>';
+                console.error(e);
+                container.innerHTML = '<div style="padding:40px; text-align:center;"><h2>Module Not Ready</h2><p>Check if <b>' + url + '</b> is correct.</p></div>';
             }
         }
     </script>
