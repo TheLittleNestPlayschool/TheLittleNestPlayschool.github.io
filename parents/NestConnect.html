@@ -151,9 +151,10 @@
 
     <div class="admin-sidebar">
         <div class="sidebar-header" style="color:#fff;">NEST<span style="color:#8D6E63;">CONNECT</span></div>
-        <a class="menu-link" onclick="location.reload()">🏠 Home</a>
-        <a class="menu-link" onclick="loadFrame('/games/gamesmenu.html', 'Game Center')">🎮 Games</a>
-        <a class="menu-link" onclick="loadFrame('/parents/my_pictures.html', 'My Pictures')">📸 My Pictures</a>
+        <a class="menu-link" href="NestConnect.html">🏠 Home</a>
+        
+        <a class="menu-link" onclick="loadFrame('../games/gamesmenu.html', 'Game Center')">🎮 Games</a>
+        <a class="menu-link" onclick="loadFrame('my_pictures.html', 'My Pictures')">📸 My Pictures</a>
     </div>
 
     <main class="main-content">
@@ -203,11 +204,14 @@
             const container = document.getElementById('dashboard-content');
             container.innerHTML = '<div style="padding:40px; font-style: italic;">Opening ' + name + '...</div>';
             try {
-                // This will now fetch from root/games/filename
+                // Fetch using relative path from the current folder (parents/)
                 const response = await fetch(url + '?v=' + Date.now());
-                if (!response.ok) throw new Error('Not Found');
+                if (!response.ok) throw new Error('File not found at ' + url);
+                
                 const html = await response.text();
                 container.innerHTML = html;
+
+                // Re-inject scripts to make sure games work
                 const scripts = container.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
@@ -216,7 +220,11 @@
                     oldScript.parentNode.replaceChild(newScript, oldScript);
                 });
             } catch (e) {
-                container.innerHTML = '<div style="padding:40px; text-align:center;"><h2>404: Not Ready</h2><p>Check if <b>' + url + '</b> is uploaded correctly.</p></div>';
+                console.error(e);
+                container.innerHTML = '<div style="padding:40px; text-align:center;">' +
+                    '<h2 style="color:#C62828;">Error Loading Module</h2>' +
+                    '<p>Could not find: <b>' + url + '</b></p>' +
+                    '<p style="font-size:12px; color:#666;">Check folder name case sensitivity (games vs Games)</p></div>';
             }
         }
     </script>
