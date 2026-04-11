@@ -5,9 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Little Nest | Parent Hub</title>
     <style>
-        /* matching the clean, dark sidebar style you liked */
-        html, body { margin: 0; padding: 0; background: #fdfbf7; font-family: 'Inter', sans-serif; }
-        
+        html, body { 
+            margin: 0; 
+            padding: 0; 
+            background: #fdfbf7; 
+            font-family: 'Inter', sans-serif; 
+        }
+
+        /* Sidebar Menu */
         .admin-sidebar { 
             width: 250px; 
             height: 100vh; 
@@ -21,6 +26,49 @@
             border-right: 1px solid #333; 
         }
 
+        .sidebar-header {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+            font-weight: 800;
+            letter-spacing: 1px;
+            font-size: 20px;
+        }
+
+        .sidebar-section-label {
+            color: #666;
+            font-size: 11px;
+            text-transform: uppercase;
+            padding: 20px 20px 10px 20px;
+            letter-spacing: 1px;
+        }
+
+        .menu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu-item {
+            padding: 5px 15px;
+        }
+
+        .menu-link {
+            color: #ccc;
+            text-decoration: none;
+            display: block;
+            padding: 12px 15px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .menu-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        /* Main Content Area */
         .main-content { 
             margin-left: 250px; 
             padding: 30px; 
@@ -33,41 +81,73 @@
             align-items: center;
         }
 
-        #content-inner { width: 100%; text-align: center; }
+        #dashboard-content {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .welcome-screen {
+            margin-top: 15vh;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
-    <div id="nav-placeholder"></div>
+    <div class="admin-sidebar">
+        <div class="sidebar-header">
+            <span style="color: #fff;">NEST</span><span style="color: #8D6E63;">MIND</span>
+        </div>
+        
+        <div class="sidebar-section-label">Student Hub</div>
+        
+        <ul class="menu-list">
+            <li class="menu-item">
+                <a class="menu-link" onclick="loadFrame('thenestcatcher.html', 'Games')">🎮 Games</a>
+            </li>
+            <li class="menu-item">
+                <a class="menu-link" onclick="loadFrame('my_pictures.html', 'My Pictures')">📸 My Pictures</a>
+            </li>
+            <li class="menu-item">
+                <a class="menu-link" onclick="loadFrame('menu1.html', 'Menu 1')">📁 Menu 1</a>
+            </li>
+            <li class="menu-item">
+                <a class="menu-link" onclick="loadFrame('menu2.html', 'Menu 2')">📁 Menu 2</a>
+            </li>
+            <li class="menu-item">
+                <a class="menu-link" onclick="loadFrame('menu3.html', 'Menu 3')">📁 Menu 3</a>
+            </li>
+            <li class="menu-item">
+                <a class="menu-link" onclick="loadFrame('menu4.html', 'Menu 4')">📁 Menu 4</a>
+            </li>
+        </ul>
+    </div>
 
-    <main class="main-content" id="dashboard-content">
-        <div id="content-inner" style="margin-top: 15vh;">
-            <h1 style="color: #5D4037;">The Little Nest Parent Hub</h1>
-            <p style="color: #8D6E63;">Please select a game or activity from the menu to begin.</p>
+    <main class="main-content">
+        <div id="dashboard-content">
+            <div class="welcome-screen">
+                <h1 style="color: #5D4037; font-size: 32px;">The Little Nest Parent Hub</h1>
+                <p style="color: #8D6E63; font-size: 18px;">Select an activity from the menu to get started.</p>
+            </div>
         </div>
     </main>
 
     <script>
-        // Load the sidebar menu
-        window.onload = function() {
-            fetch('parentsmenu.html')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('nav-placeholder').innerHTML = data;
-                });
-        };
-
-        // Function to load the game into the dashboard
         async function loadFrame(url, name) {
             const container = document.getElementById('dashboard-content');
-            container.innerHTML = '<div style="padding:40px;">Opening ' + name + '...</div>';
+            container.innerHTML = '<div style="padding:40px; font-style: italic;">Opening ' + name + '...</div>';
             
             try {
+                // Fetch the game file
                 const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999));
+                if (!response.ok) throw new Error('File not found');
+                
                 const html = await response.text();
                 container.innerHTML = html;
 
-                // This part makes sure the game logic actually runs
+                // Re-inject scripts to ensure game logic runs
                 const scripts = container.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
@@ -77,7 +157,10 @@
                 });
 
             } catch (e) {
-                container.innerHTML = '<h2>Error loading ' + name + '</h2>';
+                console.error(e);
+                container.innerHTML = '<div style="padding:40px; text-align:center;">' +
+                    '<h2 style="color:#C62828;">Error Loading Module</h2>' +
+                    '<p>Make sure <strong>' + url + '</strong> is in the same folder.</p></div>';
             }
         }
     </script>
