@@ -1,0 +1,187 @@
+<style>
+    #quantity-wrapper {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Inter', sans-serif;
+        padding-top: 20px;
+    }
+
+    #game-container {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        height: 500px;
+        background: #FFF9C4;
+        border: 10px solid #5D4037;
+        border-radius: 25px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    #target-box {
+        background: white;
+        padding: 15px 30px;
+        border-radius: 20px;
+        border: 4px solid #8D6E63;
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    #target-number {
+        font-size: 48px;
+        font-weight: 900;
+        color: #2E7D32;
+        display: block;
+    }
+
+    #nest-area {
+        position: absolute;
+        bottom: 20px;
+        width: 250px;
+        height: 120px;
+        background: #8D6E63;
+        border-radius: 20px 20px 100px 100px;
+        border-bottom: 10px solid #5D4037;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-content: center;
+        padding: 10px;
+        gap: 5px;
+        transition: transform 0.3s;
+    }
+
+    .egg-supply {
+        position: absolute;
+        top: 150px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 0 40px;
+    }
+
+    .egg {
+        width: 45px;
+        height: 60px;
+        background: white;
+        border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+        border: 3px solid #D7CCC8;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        color: #8D6E63;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.2s;
+    }
+
+    .egg.in-nest {
+        width: 30px;
+        height: 40px;
+        border-width: 2px;
+    }
+
+    #win-celebration {
+        display: none;
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 50;
+    }
+</style>
+
+<div id="quantity-wrapper">
+    <div id="game-container">
+        <div id="target-box">
+            <span style="font-size: 14px; color: #8D6E63; font-weight: bold;">CAN YOU PUT</span>
+            <span id="target-number">3</span>
+            <span style="font-size: 14px; color: #8D6E63; font-weight: bold;">EGGS IN THE NEST?</span>
+        </div>
+
+        <div class="egg-supply" id="egg-supply">
+            <div class="egg" onclick="moveToNest(this)"></div>
+            <div class="egg" onclick="moveToNest(this)"></div>
+            <div class="egg" onclick="moveToNest(this)"></div>
+            <div class="egg" onclick="moveToNest(this)"></div>
+            <div class="egg" onclick="moveToNest(this)"></div>
+            <div class="egg" onclick="moveToNest(this)"></div>
+            <div class="egg" onclick="moveToNest(this)"></div>
+            <div class="egg" onclick="moveToNest(this)"></div>
+            <div class="egg" onclick="moveToNest(this)"></div>
+            <div class="egg" onclick="moveToNest(this)"></div>
+        </div>
+
+        <div id="nest-area"></div>
+
+        <div id="win-celebration">
+            <h1 style="font-size: 60px; margin: 0;">🥚✨</h1>
+            <h2 style="color: #5D4037;">Perfect Counting!</h2>
+            <button onclick="resetQuantityGame()" style="padding: 12px 30px; background: #2E7D32; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold;">Play Again</button>
+        </div>
+    </div>
+
+    <button onclick="loadFrame('../games/gamesmenu.html', 'Game Center')" 
+            style="margin-top: 20px; padding: 10px 20px; border-radius: 10px; border: none; background: #C62828; color: white; cursor: pointer; font-weight: bold;">
+        Back to Menu
+    </button>
+</div>
+
+<script>
+(function() {
+    let currentCount = 0;
+    let targetNum = Math.floor(Math.random() * 5) + 2; // Random target 2-6
+    
+    const targetDisplay = document.getElementById('target-number');
+    const nest = document.getElementById('nest-area');
+    const supply = document.getElementById('egg-supply');
+    const winBox = document.getElementById('win-celebration');
+
+    targetDisplay.innerText = targetNum;
+
+    window.moveToNest = function(egg) {
+        if (egg.parentElement.id === 'nest-area') return; // Already in nest
+        
+        currentCount++;
+        egg.classList.add('in-nest');
+        nest.appendChild(egg);
+
+        // Feedback shake for the nest
+        nest.style.transform = "scale(1.05)";
+        setTimeout(() => nest.style.transform = "scale(1)", 100);
+
+        if (currentCount === targetNum) {
+            setTimeout(() => {
+                winBox.style.display = 'flex';
+            }, 500);
+        } else if (currentCount > targetNum) {
+            // If they put too many, reset that round
+            alert("Oops! That's too many. Let's try counting to " + targetNum + " again!");
+            resetQuantityGame();
+        }
+    };
+
+    window.resetQuantityGame = function() {
+        currentCount = 0;
+        targetNum = Math.floor(Math.random() * 5) + 2;
+        targetDisplay.innerText = targetNum;
+        winBox.style.display = 'none';
+        
+        // Move all eggs back to supply
+        const allEggs = document.querySelectorAll('.egg');
+        allEggs.forEach(egg => {
+            egg.classList.remove('in-nest');
+            supply.appendChild(egg);
+        });
+    };
+})();
+</script>
