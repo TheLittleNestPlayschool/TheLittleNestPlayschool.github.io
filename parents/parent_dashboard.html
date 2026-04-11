@@ -105,7 +105,7 @@
         
         <ul class="menu-list">
             <li class="menu-item">
-                <a class="menu-link" onclick="loadFrame('../games/thenestcatcher.html', 'Games')">🎮 Games</a>
+                <a class="menu-link" onclick="loadFrame('../games/gamesmenu.html', 'Game Center')">🎮 Games</a>
             </li>
             <li class="menu-item">
                 <a class="menu-link" onclick="loadFrame('my_pictures.html', 'My Pictures')">📸 My Pictures</a>
@@ -140,14 +140,14 @@
             container.innerHTML = '<div style="padding:40px; font-style: italic;">Opening ' + name + '...</div>';
             
             try {
-                // Fetch the file with a cache-buster
+                // Fetch the file (game or menu) with a cache-buster
                 const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999));
-                if (!response.ok) throw new Error('File not found at: ' + url);
+                if (!response.ok) throw new Error('File not found');
                 
                 const html = await response.text();
                 container.innerHTML = html;
 
-                // Re-inject scripts to ensure game logic runs
+                // Execute scripts within loaded HTML (Crucial for game logic)
                 const scripts = container.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
@@ -160,7 +160,7 @@
                 console.error(e);
                 container.innerHTML = '<div style="padding:40px; text-align:center;">' +
                     '<h2 style="color:#C62828;">Error Loading Module</h2>' +
-                    '<p>Make sure the file exists in the correct folder.</p></div>';
+                    '<p>Check if <strong>' + url + '</strong> is in the correct folder.</p></div>';
             }
         }
     </script>
