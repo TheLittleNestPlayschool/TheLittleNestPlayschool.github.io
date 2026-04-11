@@ -2,11 +2,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Parent Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Little Nest | Parent Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: 'Inter', sans-serif; font-size: 15px; }
-        .admin-sidebar { width: 250px; height: 100vh; background: #1a1a1a; color: #fff; position: fixed; left: 0; top: 0; z-index: 10000; overflow-y: auto; border-right: 1px solid #333; }
-        .main-content { margin-left: 250px; padding: 30px; width: calc(100% - 250px); min-height: 100vh; background: #fff; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
+        html, body { 
+            margin: 0; 
+            padding: 0; 
+            background: #fdfbf7; 
+            font-family: 'Inter', sans-serif; 
+            color: #5D4037;
+        }
+
+        /* Sidebar Styling */
+        .parent-sidebar { 
+            width: 260px; 
+            height: 100vh; 
+            background: #5D4037; 
+            color: #fff; 
+            position: fixed; 
+            left: 0; 
+            top: 0; 
+            z-index: 1000; 
+            overflow-y: auto; 
+            border-right: 1px solid rgba(255,255,255,0.1); 
+        }
+
+        /* Main Viewport */
+        .main-content { 
+            margin-left: 260px; 
+            padding: 40px; 
+            width: calc(100% - 260px); 
+            min-height: 100vh; 
+            box-sizing: border-box; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #content-inner {
+            width: 100%;
+            max-width: 1000px;
+            text-align: center;
+        }
+
+        .loading-state {
+            font-style: italic;
+            color: #8D6E63;
+            margin-top: 50px;
+        }
     </style>
 </head>
 <body>
@@ -14,44 +58,64 @@
     <div id="nav-placeholder"></div>
 
     <main class="main-content" id="dashboard-content">
-        <div id="content-inner" style="text-align: center; margin-top: 20vh;">
-            <h1>The Little Nest Parent Hub</h1>
-            <p>Welcome to your portal. Please select an option from the menu.</p>
+        <div id="content-inner">
+            <h1 style="font-size: 2.5rem; margin-bottom: 10px;">The Little Nest Parent Hub</h1>
+            <p style="font-size: 1.1rem; color: #8D6E63;">Welcome to NestMind. Please select a game or lesson from the menu.</p>
+            <hr style="border: 0; border-top: 2px solid #E0E0E0; margin: 40px 0;">
         </div>
     </main>
 
     <script>
+        // Load the Sidebar Menu automatically
         window.onload = function() {
             fetch('parentsmenu.html')
-                .then(response => response.text())
+                .then(response => {
+                    if (!response.ok) throw new Error('Menu not found');
+                    return response.text();
+                })
                 .then(data => {
                     document.getElementById('nav-placeholder').innerHTML = data;
-                });
+                })
+                .catch(err => console.error('Error loading menu:', err));
         };
 
+        // Standard function to load games/modules into the main area
         async function loadFrame(url, name) {
             const container = document.getElementById('dashboard-content');
-            container.innerHTML = '<div style="padding:40px;">Loading ' + name + '...</div>';
+            
+            // Show loading state
+            container.innerHTML = `<div class="loading-state">Opening ${name}...</div>`;
             
             try {
-                const response = await fetch(url + '?v=' + Math.floor(Math.random() * 999999));
+                // Fetch with a cache-buster to ensure fresh game code
+                const response = await fetch(url + '?v=' + Date.now());
                 const html = await response.text();
                 
-                // Set the HTML content
+                // Inject the HTML
                 container.innerHTML = html;
 
-                // IMPORTANT: Manually execute any script tags found in the loaded HTML
+                // CRITICAL: Manually find and re-run all scripts in the loaded HTML
+                // This is required because innerHTML doesn't execute <script> tags
                 const scripts = container.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
-                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    // Copy attributes (src, type, etc)
+                    Array.from(oldScript.attributes).forEach(attr => {
+                        newScript.setAttribute(attr.name, attr.value);
+                    });
+                    // Copy the script content
                     newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    // Replace the old non-working script with the new working one
                     oldScript.parentNode.replaceChild(newScript, oldScript);
                 });
 
             } catch (e) {
-                console.error(e);
-                container.innerHTML = '<h2>Error loading module</h2>';
+                console.error('Module Load Error:', e);
+                container.innerHTML = `
+                    <div style="text-align:center; padding:50px;">
+                        <h2 style="color:#C62828;">Oops! Error loading ${name}</h2>
+                        <p>Please make sure ${url} exists in the /parents/ folder.</p>
+                    </div>`;
             }
         }
     </script>
