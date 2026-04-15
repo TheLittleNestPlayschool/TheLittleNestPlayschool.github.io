@@ -60,7 +60,6 @@
         .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; }
         .btn-sync { background: var(--primary-blue); color: white; margin-bottom: 10px; }
         .btn-back { background: #eee; color: #666; text-decoration: none; display: inline-block; text-align: center; margin-top: 10px; font-weight: 800; }
-        
         #status-msg { font-weight: 700; color: var(--primary-blue); margin-top: 15px; text-align: center; min-height: 24px; }
     </style>
 </head>
@@ -119,16 +118,13 @@
     async function runSync() {
         const status = document.getElementById('status-msg');
         const syncBtn = document.getElementById('sync-btn');
-        
         if (!selectedFile) return;
 
-        // 1. DYNAMIC EXTENSION: This stops the ".jpg" error in your console
-        const fileExtension = selectedFile.name.split('.').pop().toLowerCase();
+        // Correctly detect extension and build full file name before sending to Xano
+        const ext = selectedFile.name.split('.').pop().toLowerCase();
         const cleanSlug = (currentFSlug || 'unknown').trim().toLowerCase();
         const timestamp = new Date().getTime();
-        
-        // This is the EXACT name we register with AWS via Xano
-        const exactFilePath = `${cleanSlug}/${timestamp}-eod.${fileExtension}`;
+        const exactFilePath = `${cleanSlug}/${timestamp}-eod.${ext}`;
         
         try {
             syncBtn.disabled = true;
@@ -143,16 +139,16 @@
             if (!handshake.ok) throw new Error("Xano Handshake Failed");
             
             const responseData = await handshake.json();
-            const uploadUrl = responseData.form_name || responseData.url || responseData;
+            const uploadUrl = responseData.url || responseData.form_name || responseData;
 
             status.innerText = "Syncing to AWS...";
             
-            // 2. THE STRIPPED BLOB: This prevents hidden browser headers from breaking the signature
-            const blobData = new Blob([selectedFile], { type: '' });
+            // Send RAW data (ArrayBuffer) to match the "Host-only" signature from Xano
+            const arrayBuffer = await selectedFile.arrayBuffer();
 
             const s3Res = await fetch(uploadUrl, {
                 method: 'PUT',
-                body: blobData 
+                body: arrayBuffer 
             });
 
             if (s3Res.ok) {
@@ -160,8 +156,8 @@
                 setTimeout(() => { location.href = 'uploader_menu.html'; }, 2000);
             } else {
                 const s3Err = await s3Res.text();
-                console.error("AWS Error Response:", s3Err);
-                throw new Error("AWS Signature Error. Path: " + exactFilePath);
+                console.error("AWS Detail:", s3Err);
+                throw new Error("AWS Signature Error. Matches Host Only.");
             }
         } catch (err) {
             status.innerText = "Error: " + err.message;
@@ -174,6 +170,7 @@
         document.getElementById('capture-stage').style.display = 'block';
         document.getElementById('preview-wrap').style.display = 'none';
         document.getElementById('status-msg').innerText = "";
+        document.getElementById('input-cam').value = "";
     }
 </script>
 
