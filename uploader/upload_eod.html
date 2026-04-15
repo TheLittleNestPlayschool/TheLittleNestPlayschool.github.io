@@ -120,12 +120,14 @@
         const status = document.getElementById('status-msg');
         const syncBtn = document.getElementById('sync-btn');
         
-        // 1. GET THE ACTUAL EXTENSION (Fixes the SignatureDoesNotMatch)
-        const fileExtension = selectedFile.name.split('.').pop().toLowerCase() || 'jpg';
+        if (!selectedFile) return;
+
+        // 1. DYNAMIC EXTENSION: This stops the ".jpg" error in your console
+        const fileExtension = selectedFile.name.split('.').pop().toLowerCase();
         const cleanSlug = (currentFSlug || 'unknown').trim().toLowerCase();
         const timestamp = new Date().getTime();
         
-        // This MUST match what we send to Xano
+        // This is the EXACT name we register with AWS via Xano
         const exactFilePath = `${cleanSlug}/${timestamp}-eod.${fileExtension}`;
         
         try {
@@ -143,14 +145,9 @@
             const responseData = await handshake.json();
             const uploadUrl = responseData.form_name || responseData.url || responseData;
 
-            if (!uploadUrl || typeof uploadUrl !== 'string') {
-                throw new Error("Invalid URL from Xano");
-            }
-
             status.innerText = "Syncing to AWS...";
             
-            // 2. THE BLOB WRAPPER
-            // We strip the type here to match Xano's simple signature
+            // 2. THE STRIPPED BLOB: This prevents hidden browser headers from breaking the signature
             const blobData = new Blob([selectedFile], { type: '' });
 
             const s3Res = await fetch(uploadUrl, {
@@ -163,8 +160,8 @@
                 setTimeout(() => { location.href = 'uploader_menu.html'; }, 2000);
             } else {
                 const s3Err = await s3Res.text();
-                console.error("AWS Error details:", s3Err);
-                throw new Error("AWS Sync Failed (403). Check console for Signature mismatch.");
+                console.error("AWS Error Response:", s3Err);
+                throw new Error("AWS Signature Error. Path: " + exactFilePath);
             }
         } catch (err) {
             status.innerText = "Error: " + err.message;
@@ -177,7 +174,6 @@
         document.getElementById('capture-stage').style.display = 'block';
         document.getElementById('preview-wrap').style.display = 'none';
         document.getElementById('status-msg').innerText = "";
-        document.getElementById('input-cam').value = "";
     }
 </script>
 
