@@ -119,7 +119,7 @@
         const syncBtn = document.getElementById('sync-btn');
         
         const timestamp = new Date().getTime();
-        const fileNameWithFolder = `${currentFSlug}/${timestamp}-eod.jpg`;
+        const fileKey = `${currentFSlug}/${timestamp}-eod.jpg`;
         
         try {
             syncBtn.disabled = true;
@@ -128,27 +128,24 @@
             const handshake = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_signer_eod", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ file_name: fileNameWithFolder })
+                body: JSON.stringify({ file_name: fileKey })
             });
 
-            if (!handshake.ok) throw new Error("Xano Handshake Failed: " + handshake.status);
+            if (!handshake.ok) throw new Error("Xano Handshake Failed");
             
             const responseData = await handshake.json();
             
-            // DEBUG: This will show in your F12 console exactly what Xano sent back
-            console.log("Xano Response:", responseData);
+            // Fixed: Check both 'url' and 'form_name' depending on Xano return
+            const uploadUrl = responseData.url || responseData.form_name || responseData;
 
-            // Logic to handle if Xano sends an object OR a raw string
-            let uploadUrl = responseData.url || responseData;
-
-            if (!uploadUrl || typeof uploadUrl !== 'string' || !uploadUrl.startsWith('http')) {
-                console.error("Invalid URL received:", uploadUrl);
-                throw new Error("Xano did not return a valid S3 URL.");
+            if (!uploadUrl || typeof uploadUrl !== 'string') {
+                console.error("Xano Response Error:", responseData);
+                throw new Error("Invalid URL from Xano");
             }
 
             status.innerText = "Syncing to AWS...";
             
-            // Perform the PUT to the actual URL
+            // The actual upload to S3
             const s3Res = await fetch(uploadUrl, {
                 method: 'PUT',
                 body: selectedFile
@@ -159,12 +156,11 @@
                 setTimeout(() => { location.href = 'uploader_menu.html'; }, 2000);
             } else {
                 const s3Err = await s3Res.text();
-                console.error("S3 Error Response:", s3Err);
-                throw new Error("AWS Sync Failed. Check Bucket CORS.");
+                console.log("AWS Detail:", s3Err);
+                throw new Error("AWS 403 Forbidden. Check IAM Policy.");
             }
         } catch (err) {
             status.innerText = "Error: " + err.message;
-            console.error("Catch block error:", err);
             syncBtn.disabled = false;
         }
     }
