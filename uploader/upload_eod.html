@@ -118,7 +118,6 @@
         const status = document.getElementById('status-msg');
         const syncBtn = document.getElementById('sync-btn');
         
-        // This builds the virtual folder in S3
         const timestamp = new Date().getTime();
         const fileNameWithFolder = `${currentFSlug}/${timestamp}-eod.jpg`;
         
@@ -126,14 +125,13 @@
             syncBtn.disabled = true;
             status.innerText = "Authorizing...";
 
-            // Check your Xano API Group for the exact endpoint name
             const handshake = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_signer_eod", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ file_name: fileNameWithFolder })
             });
 
-            if (!handshake.ok) throw new Error("Check Xano Endpoint Name");
+            if (!handshake.ok) throw new Error("Endpoint Not Found. Check Xano API group.");
             
             const responseData = await handshake.json();
             const uploadUrl = responseData.form_name;
