@@ -29,9 +29,12 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.1); 
         }
 
-        /* Header is hidden by default, shown only on success */
+        /* All UI elements hidden by default */
+        .header, .menu-nav, #module-frame, #lock-screen { 
+            display: none; 
+        }
+
         .header { 
-            display: none;
             background: var(--nest-blue); 
             color: white; 
             padding: 15px; 
@@ -39,9 +42,7 @@
         }
         .header h2 { margin: 0; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; font-weight: 800; }
 
-        /* Navigation hidden until key is verified */
         .menu-nav { 
-            display: none; 
             padding: 10px; 
             gap: 8px; 
             background: #f8fafc; 
@@ -61,12 +62,11 @@
         .nav-item span { display: block; font-size: 24px; margin-bottom: 4px; }
         .nav-item label { font-size: 10px; font-weight: 800; text-transform: uppercase; display: block; color: var(--nest-dark); }
 
-        #module-frame { flex-grow: 1; border: none; width: 100%; background: var(--nest-bg); display: none; }
+        #module-frame { flex-grow: 1; border: none; width: 100%; background: var(--nest-bg); }
 
-        /* Blank Access Denied State */
         #lock-screen { 
             flex-grow: 1; 
-            display: flex; 
+            display: none; /* Hidden by default */
             align-items: center; 
             justify-content: center; 
             background: #fff;
@@ -111,12 +111,15 @@
         const urlParams = new URLSearchParams(window.location.search);
         const tlnpKey = urlParams.get('tlnp');
 
-        if (!tlnpKey) return; 
+        // If no key at all, show "Access Denied" immediately
+        if (!tlnpKey) {
+            lockScreen.style.display = 'flex';
+            return;
+        }
 
         try {
             const response = await fetch(NEST_ENDPOINTS.franchise.list);
             const data = await response.json();
-            
             const matched = data.find(f => f.access_key === tlnpKey);
 
             if (matched) {
@@ -126,17 +129,20 @@
                 localStorage.setItem('nestmind_f_slug', slug);
                 localStorage.setItem('nestmind_f_name', matched.name);
                 
-                // Show the "App" UI
-                lockScreen.style.display = 'none';
+                // Success: Show the UI
                 mainHeader.style.display = 'block';
                 mainNav.style.display = 'flex';
                 frame.style.display = 'block';
                 title.innerText = matched.name.toUpperCase() + " VAULT";
                 
                 window.history.replaceState({}, document.title, window.location.pathname);
+            } else {
+                // Key was wrong: show Access Denied
+                lockScreen.style.display = 'flex';
             }
         } catch (err) {
             console.error("Auth System Error:", err);
+            lockScreen.style.display = 'flex';
         }
     }
 
