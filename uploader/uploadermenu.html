@@ -6,54 +6,56 @@
     <link rel="stylesheet" href="../nest_style.css">
     <script src="../api_config.js"></script>
     <style>
-        :root { --nest-blue: #4a90e2; --nest-dark: #2d3748; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        :root { --nest-blue: #009dff; --nest-dark: #2d3748; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Compact Header */
-        .header { background: linear-gradient(135deg, var(--nest-blue), #357abd); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .header h2 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-        .school-info { font-size: 11px; font-weight: 700; background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 15px; }
+        /* Compact Blue Header */
+        .header { background: var(--nest-blue); color: white; padding: 12px; text-align: center; }
+        .header h2 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; font-weight: 800; }
+        .header p { margin: 2px 0 0; font-size: 10px; opacity: 0.9; }
 
-        /* The 3 Choices (Compact Horizontal Row) */
-        .menu-nav { background: white; display: flex; padding: 8px; gap: 8px; border-bottom: 1px solid #e2e8f0; }
+        /* The Selection Bar (Branch Dropdown) */
+        .branch-bar { background: #fff; padding: 10px 15px; border-bottom: 1px solid #e2e8f0; }
+        .branch-bar label { display: block; font-size: 9px; font-weight: 800; color: #a0aec0; text-transform: uppercase; margin-bottom: 4px; }
+        .branch-bar select { width: 100%; border: 1px solid #cbd5e0; border-radius: 6px; padding: 8px; font-weight: 700; font-size: 14px; color: var(--nest-dark); outline: none; }
+
+        /* Permanent Navigation (The 3 choices) */
+        .menu-nav { background: white; display: flex; padding: 10px; gap: 10px; border-bottom: 1px solid #e2e8f0; }
         .nav-item { 
-            flex: 1; text-align: center; padding: 8px 4px; border: 1px solid #edf2f7; 
-            border-radius: 8px; cursor: pointer; transition: 0.2s; background: #f8fafc;
-            text-decoration: none; color: var(--nest-dark);
+            flex: 1; text-align: center; padding: 10px 5px; border: 1px solid #edf2f7; 
+            border-radius: 10px; cursor: pointer; transition: 0.2s; background: #f8fafc;
+            color: var(--nest-dark); font-weight: 700;
         }
-        .nav-item.active { background: var(--nest-blue); color: white; border-color: var(--nest-blue); }
-        .nav-item span { display: block; font-size: 18px; margin-bottom: 2px; }
-        .nav-item label { font-size: 10px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+        .nav-item.active { background: #ebf8ff; border-color: var(--nest-blue); color: var(--nest-blue); }
+        .nav-item span { display: block; font-size: 20px; margin-bottom: 4px; }
+        .nav-item label { font-size: 10px; text-transform: uppercase; display: block; cursor: pointer; }
 
-        /* Branch Selector (Thin Strip) */
-        .branch-bar { background: #e2e8f0; padding: 5px 15px; display: flex; align-items: center; justify-content: space-between; }
-        .branch-bar select { background: transparent; border: none; font-size: 12px; font-weight: 700; color: #4a5568; outline: none; width: 100%; }
-
-        /* The Content Area (Where EOD loads) */
+        /* The Content Area */
         #module-frame { flex-grow: 1; border: none; width: 100%; background: #f0f4f8; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h2>NestMind Vault</h2>
-    <div class="school-info" id="school-display">Select Branch</div>
+    <h2>NESTMIND VAULT</h2>
+    <p>Select Location & Category</p>
 </div>
 
 <div class="branch-bar">
+    <label>Current School Location</label>
     <select id="f-select" onchange="saveSelection(this)">
         <option value="">Loading Schools...</option>
     </select>
 </div>
 
 <div class="menu-nav">
-    <div class="nav-item" id="btn-student" onclick="loadModule('upload_student_pictures.html', this)">
+    <div class="nav-item" onclick="loadModule('upload_student_pictures.html', this)">
         <span>👦</span><label>Students</label>
     </div>
-    <div class="nav-item" id="btn-eod" onclick="loadModule('upload_eod.html', this)">
-        <span>📝</span><label>EOD</label>
+    <div class="nav-item" onclick="loadModule('upload_eod.html', this)">
+        <span>📝</span><label>End of Day</label>
     </div>
-    <div class="nav-item" id="btn-receipt" onclick="loadModule('upload_receipt.html', this)">
+    <div class="nav-item" onclick="loadModule('upload_receipt.html', this)">
         <span>🧾</span><label>Receipts</label>
     </div>
 </div>
@@ -66,7 +68,7 @@
         try {
             const response = await fetch(NEST_ENDPOINTS.franchise.list);
             const data = await response.json();
-            drop.innerHTML = '<option value="">Select School Location...</option>';
+            drop.innerHTML = '<option value="">Select Location...</option>';
             data.forEach(f => {
                 const opt = document.createElement('option');
                 opt.value = f.id;
@@ -75,13 +77,8 @@
                 drop.appendChild(opt);
             });
             const savedId = localStorage.getItem('nestmind_f_id');
-            if (savedId) {
-                drop.value = savedId;
-                document.getElementById('school-display').innerText = localStorage.getItem('nestmind_f_name');
-            }
-        } catch (err) {
-            console.error(err);
-        }
+            if (savedId) drop.value = savedId;
+        } catch (err) { console.error(err); }
     }
 
     function saveSelection(select) {
@@ -90,25 +87,18 @@
             localStorage.setItem('nestmind_f_id', select.value);
             localStorage.setItem('nestmind_f_slug', selected.dataset.slug);
             localStorage.setItem('nestmind_f_name', selected.textContent);
-            document.getElementById('school-display').innerText = selected.textContent;
-            
-            // Reload the iframe if a module is already open so it gets the new slug
             const frame = document.getElementById('module-frame');
             if(frame.src !== "about:blank") frame.contentWindow.location.reload();
         }
     }
 
     function loadModule(url, el) {
-        // Update UI
         document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
         el.classList.add('active');
-        
-        // Load page into iframe
         document.getElementById('module-frame').src = url;
     }
 
     window.onload = loadFranchises;
 </script>
-
 </body>
 </html>
