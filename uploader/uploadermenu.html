@@ -19,7 +19,6 @@
             align-items: center; 
         }
         
-        /* Dashboard Container: Locks width for mobile feel */
         .dashboard { 
             width: 100%; 
             max-width: 450px; 
@@ -30,7 +29,6 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.1); 
         }
 
-        /* Compact Blue Header */
         .header { 
             background: var(--nest-blue); 
             color: white; 
@@ -51,7 +49,6 @@
             font-weight: 600;
         }
 
-        /* School Selection Strip */
         .branch-bar { 
             padding: 8px 15px; 
             border-bottom: 1px solid #eee; 
@@ -77,7 +74,6 @@
             background-color: white;
         }
 
-        /* Horizontal Navigation Row */
         .menu-nav { 
             display: flex; 
             padding: 10px; 
@@ -98,7 +94,6 @@
         .nav-item.active { 
             border-color: var(--nest-blue); 
             background: #ebf8ff; 
-            box-shadow: inset 0 0 0 1px var(--nest-blue);
         }
         .nav-item span { 
             display: block; 
@@ -114,7 +109,6 @@
             cursor: pointer;
         }
 
-        /* Iframe Content Window */
         #module-frame { 
             flex-grow: 1; 
             border: none; 
@@ -128,10 +122,10 @@
 <div class="dashboard">
     <div class="header">
         <h2>NESTMIND VAULT</h2>
-        <p>Select Location & Category</p>
+        <p id="sub-header">Select Location & Category</p>
     </div>
 
-    <div class="branch-bar">
+    <div class="branch-bar" id="branch-container">
         <label>Current School Location</label>
         <select id="f-select" onchange="saveSelection(this)">
             <option value="">Loading Schools...</option>
@@ -154,34 +148,60 @@
 </div>
 
 <script>
-    // 1. Load Locations from Xano
     async function loadFranchises() {
         const drop = document.getElementById('f-select');
+        const branchBar = document.getElementById('branch-container');
+        const subHeader = document.getElementById('sub-header');
+        
+        // 1. Extract the 'tlnp' key from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const tlnpKey = urlParams.get('tlnp');
+
         try {
             const response = await fetch(NEST_ENDPOINTS.franchise.list);
             const data = await response.json();
             
             drop.innerHTML = '<option value="">Select Location...</option>';
+            let matchedFranchise = null;
+
             data.forEach(f => {
                 const opt = document.createElement('option');
                 opt.value = f.id;
-                // Generate slug for folder naming (e.g., "Sariaya Branch" -> "sariaya")
-                opt.dataset.slug = f.name ? f.name.toLowerCase().split(' ')[0].replace(/[^a-z0-9]/g, '') : 'unknown';
-                opt.textContent = f.name || 'Unnamed Branch';
+                const slug = f.name ? f.name.toLowerCase().split(' ')[0].replace(/[^a-z0-9]/g, '') : 'unknown';
+                opt.dataset.slug = slug;
+                opt.textContent = f.name;
+                
+                // 2. Check if this branch key matches the URL key
+                if (tlnpKey && f.access_key === tlnpKey) {
+                    matchedFranchise = opt;
+                }
+                
                 drop.appendChild(opt);
             });
 
-            // Restore last used branch
-            const savedId = localStorage.getItem('nestmind_f_id');
-            if (savedId) drop.value = savedId;
+            // 3. Stealth Lock Logic
+            if (matchedFranchise) {
+                drop.value = matchedFranchise.value;
+                saveSelection(drop);
+                
+                // Hide the dropdown bar
+                branchBar.style.display = 'none';
+                subHeader.innerText = matchedFranchise.textContent + " Vault";
+                
+                // Wipe key from URL for security
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else {
+                // Normal mode: check local storage
+                const savedId = localStorage.getItem('nestmind_f_id');
+                if (savedId) drop.value = savedId;
+            }
             
         } catch (err) {
-            console.error("Failed to load branches:", err);
-            drop.innerHTML = '<option>Error loading list</option>';
+            console.error("Dashboard Load Error:", err);
+            drop.innerHTML = '<option>Error Connection</option>';
         }
     }
 
-    // 2. Save Branch Info for the Modules to use
     function saveSelection(select) {
         const selected = select.selectedOptions[0];
         if (select.value && selected) {
@@ -189,21 +209,14 @@
             localStorage.setItem('nestmind_f_slug', selected.dataset.slug);
             localStorage.setItem('nestmind_f_name', selected.textContent);
             
-            // If a module is already open, refresh it so it gets the new location info
             const frame = document.getElementById('module-frame');
-            if(frame.src !== "about:blank") {
-                frame.contentWindow.location.reload();
-            }
+            if(frame.src !== "about:blank") frame.contentWindow.location.reload();
         }
     }
 
-    // 3. Swap Modules without leaving the page
     function loadModule(url, el) {
-        // Highlight active button
         document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
         el.classList.add('active');
-        
-        // Push the target URL into the frame
         document.getElementById('module-frame').src = url;
     }
 
