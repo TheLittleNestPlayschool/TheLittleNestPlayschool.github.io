@@ -3,19 +3,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NestMind Vault Menu</title>
+    <link rel="stylesheet" href="nest_style.css">
+    <script src="api_config.js"></script>
+    
     <style>
-        :root {
-            --primary-blue: #4a90e2;
-            --deep-blue: #357abd;
-            --text-main: #2d3748;
-            --text-muted: #718096;
-            --bg-light: #f8fafc;
-            --border-color: #cbd5e0;
-        }
+        /* Keeping layout-specific spacing, but using Nest Variables */
         body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: #edf2f7; 
-            margin: 0; 
             padding: 20px 10px; 
             display: flex;
             justify-content: center;
@@ -24,39 +17,14 @@
         .menu-container {
             width: 100%;
             max-width: 500px;
-            background: #fff;
-            border-radius: 25px;
-            overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
         }
 
         .header {
-            background: linear-gradient(135deg, var(--primary-blue), var(--deep-blue));
-            color: white;
+            background: linear-gradient(135deg, var(--nest-teal), var(--nest-teal-dark));
+            color: var(--nest-dark);
             padding: 40px 20px;
             text-align: center;
-        }
-
-        .school-selection {
-            padding: 20px 25px 0 25px;
-        }
-
-        .school-selection label {
-            display: block;
-            font-size: 11px;
-            font-weight: 800;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        #f-select {
-            width: 100%;
-            padding: 12px;
-            border-radius: 12px;
-            border: 2px solid var(--border-color);
-            font-size: 16px;
-            background-color: white;
+            border-radius: var(--nest-radius-lg) var(--nest-radius-lg) 0 0;
         }
 
         .menu-list {
@@ -66,97 +34,80 @@
             gap: 15px;
         }
 
+        /* Swapping to Nest card and interactive styles */
         .menu-item {
             display: flex;
             align-items: center;
             padding: 20px;
-            background: var(--bg-light);
-            border: 2px solid var(--border-color);
-            border-radius: 18px;
             text-decoration: none;
-            color: var(--text-main);
             transition: all 0.2s ease;
         }
 
         .menu-item:active {
             transform: scale(0.98);
-            background: #eef6ff;
-            border-color: var(--primary-blue);
+            border-color: var(--nest-teal);
         }
 
         .icon-box {
             font-size: 32px;
             margin-right: 20px;
-            background: white;
+            background: var(--nest-bg);
             width: 60px;
             height: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
-
-        .text-box strong {
-            display: block;
-            font-size: 18px;
-            margin-bottom: 2px;
-        }
-
-        .text-box span {
-            font-size: 13px;
-            color: var(--text-muted);
+            border-radius: var(--nest-radius-sm);
         }
     </style>
 </head>
 <body>
 
-<div class="menu-container">
+<div class="menu-container nest-card" style="padding:0;">
     <div class="header">
-        <h2 style="margin:0; letter-spacing: 1px; text-transform: uppercase;">NestMind Vault</h2>
+        <h2 class="nest-header" style="margin:0; text-transform: uppercase;">NestMind Vault</h2>
         <p style="margin:8px 0 0; font-size: 14px; opacity: 0.9;">Select Location & Category</p>
     </div>
 
-    <div class="school-selection">
-        <label>Current School Location</label>
-        <select id="f-select" onchange="saveSelection(this)">
+    <div style="padding: 20px 25px 0 25px;">
+        <label class="nest-label">Current School Location</label>
+        <select id="f-select" class="nest-select" onchange="saveSelection(this)">
             <option value="">Loading Schools...</option>
         </select>
     </div>
 
     <div class="menu-list">
-        <a href="upload_student_pictures.html" class="menu-item">
+        <a href="upload_student_pictures.html" class="menu-item nest-card" style="padding:20px;">
             <div class="icon-box">👦</div>
             <div class="text-box">
-                <strong>Student Pictures</strong>
-                <span>Photos & Progress Sheets</span>
+                <strong class="nest-text-main" style="display:block; font-size:18px;">Student Pictures</strong>
+                <span class="nest-text-muted" style="font-size:13px;">Photos & Progress Sheets</span>
             </div>
         </a>
 
-        <a href="upload_eod.html" class="menu-item">
+        <a href="upload_eod.html" class="menu-item nest-card" style="padding:20px;">
             <div class="icon-box">📝</div>
             <div class="text-box">
-                <strong>End of Day</strong>
-                <span>Daily Branch Reports</span>
+                <strong class="nest-text-main" style="display:block; font-size:18px;">End of Day</strong>
+                <span class="nest-text-muted" style="font-size:13px;">Daily Branch Reports</span>
             </div>
         </a>
 
-        <a href="upload_receipt.html" class="menu-item">
+        <a href="upload_receipt.html" class="menu-item nest-card" style="padding:20px;">
             <div class="icon-box">🧾</div>
             <div class="text-box">
-                <strong>Receipts</strong>
-                <span>Expenses & Purchases</span>
+                <strong class="nest-text-main" style="display:block; font-size:18px;">Receipts</strong>
+                <span class="nest-text-muted" style="font-size:13px;">Expenses & Purchases</span>
             </div>
         </a>
     </div>
 </div>
 
 <script>
-    const API_F = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
-
+    // Now using NEST_ENDPOINTS from api_config.js
     window.onload = async () => {
         try {
-            const res = await fetch(API_F);
+            const res = await fetch(NEST_ENDPOINTS.franchise.list);
             const data = await res.json();
             const drop = document.getElementById('f-select');
             drop.innerHTML = '<option value="">Select Location...</option>';
@@ -169,7 +120,6 @@
                 drop.appendChild(opt);
             });
 
-            // Restore previous selection if it exists
             const savedId = localStorage.getItem('nestmind_f_id');
             if (savedId) drop.value = savedId;
         } catch (e) { console.error("Load error", e); }
