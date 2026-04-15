@@ -7,16 +7,17 @@
     <script src="api_config.js"></script>
     
     <style>
-        /* Keeping layout-specific spacing, but using Nest Variables */
         body { 
             padding: 20px 10px; 
             display: flex;
             justify-content: center;
+            min-height: 100vh;
         }
         
         .menu-container {
             width: 100%;
             max-width: 500px;
+            align-self: flex-start;
         }
 
         .header {
@@ -34,7 +35,6 @@
             gap: 15px;
         }
 
-        /* Swapping to Nest card and interactive styles */
         .menu-item {
             display: flex;
             align-items: center;
@@ -45,7 +45,6 @@
 
         .menu-item:active {
             transform: scale(0.98);
-            border-color: var(--nest-teal);
         }
 
         .icon-box {
@@ -104,30 +103,41 @@
 </div>
 
 <script>
-    // Now using NEST_ENDPOINTS from api_config.js
     window.onload = async () => {
+        const drop = document.getElementById('f-select');
+        
         try {
+            // Using the specific path from your api_config.js
             const res = await fetch(NEST_ENDPOINTS.franchise.list);
+            
+            if (!res.ok) throw new Error("Could not fetch franchises");
+            
             const data = await res.json();
-            const drop = document.getElementById('f-select');
+            
             drop.innerHTML = '<option value="">Select Location...</option>';
             
             data.forEach(f => {
                 const opt = document.createElement('option');
                 opt.value = f.id;
-                opt.dataset.slug = f.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                opt.textContent = f.name;
+                // Generate slug from branch name
+                opt.dataset.slug = f.name ? f.name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'unknown';
+                opt.textContent = f.name || 'Unnamed Branch';
                 drop.appendChild(opt);
             });
 
+            // Restore previous selection from localStorage
             const savedId = localStorage.getItem('nestmind_f_id');
             if (savedId) drop.value = savedId;
-        } catch (e) { console.error("Load error", e); }
+
+        } catch (e) { 
+            console.error("Load error:", e); 
+            drop.innerHTML = '<option>Error loading franchises</option>';
+        }
     };
 
     function saveSelection(select) {
         const selected = select.selectedOptions[0];
-        if (select.value) {
+        if (select.value && selected) {
             localStorage.setItem('nestmind_f_id', select.value);
             localStorage.setItem('nestmind_f_slug', selected.dataset.slug);
             localStorage.setItem('nestmind_f_name', selected.textContent);
