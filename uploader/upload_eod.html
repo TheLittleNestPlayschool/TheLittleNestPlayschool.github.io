@@ -60,6 +60,8 @@
         .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; }
         .btn-sync { background: var(--primary-blue); color: white; margin-bottom: 10px; }
         .btn-back { background: #eee; color: #666; text-decoration: none; display: inline-block; text-align: center; margin-top: 10px; font-weight: 800; }
+        
+        #status-msg { font-weight: 700; color: var(--primary-blue); margin-top: 15px; text-align: center; min-height: 24px; }
     </style>
 </head>
 <body>
@@ -85,7 +87,7 @@
         <img id="preview-img" src="">
         <button class="btn btn-sync" id="sync-btn" onclick="runSync()">Sync EOD to Vault</button>
         <button class="btn btn-back" onclick="resetPage()">Retake Photo</button>
-        <p id="status-msg" style="font-weight: 700; color: var(--primary-blue); margin-top: 15px; text-align: center;"></p>
+        <p id="status-msg"></p>
     </div>
 </div>
 
@@ -118,13 +120,14 @@
         const status = document.getElementById('status-msg');
         const syncBtn = document.getElementById('sync-btn');
         
-        // Use exact slug from localStorage
-        const slug = (currentFSlug || 'unknown').trim();
+        // 1. GET THE ACTUAL EXTENSION (Fixes the SignatureDoesNotMatch)
+        const fileExtension = selectedFile.name.split('.').pop().toLowerCase() || 'jpg';
+        const cleanSlug = (currentFSlug || 'unknown').trim().toLowerCase();
         const timestamp = new Date().getTime();
-        const exactFilePath = `${slug}/${timestamp}-eod.jpg`;
         
-        console.log("DEBUG: Target File Path is:", exactFilePath);
-
+        // This MUST match what we send to Xano
+        const exactFilePath = `${cleanSlug}/${timestamp}-eod.${fileExtension}`;
+        
         try {
             syncBtn.disabled = true;
             status.innerText = "Authorizing...";
@@ -140,9 +143,14 @@
             const responseData = await handshake.json();
             const uploadUrl = responseData.form_name || responseData.url || responseData;
 
+            if (!uploadUrl || typeof uploadUrl !== 'string') {
+                throw new Error("Invalid URL from Xano");
+            }
+
             status.innerText = "Syncing to AWS...";
             
-            // Convert to Blob with empty type to prevent browser from adding Content-Type headers
+            // 2. THE BLOB WRAPPER
+            // We strip the type here to match Xano's simple signature
             const blobData = new Blob([selectedFile], { type: '' });
 
             const s3Res = await fetch(uploadUrl, {
@@ -155,8 +163,8 @@
                 setTimeout(() => { location.href = 'uploader_menu.html'; }, 2000);
             } else {
                 const s3Err = await s3Res.text();
-                console.error("AWS Error Response:", s3Err);
-                throw new Error("AWS Sync Failed (403). check console for details.");
+                console.error("AWS Error details:", s3Err);
+                throw new Error("AWS Sync Failed (403). Check console for Signature mismatch.");
             }
         } catch (err) {
             status.innerText = "Error: " + err.message;
@@ -169,6 +177,7 @@
         document.getElementById('capture-stage').style.display = 'block';
         document.getElementById('preview-wrap').style.display = 'none';
         document.getElementById('status-msg').innerText = "";
+        document.getElementById('input-cam').value = "";
     }
 </script>
 
