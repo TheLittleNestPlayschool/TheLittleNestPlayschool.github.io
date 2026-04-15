@@ -66,9 +66,16 @@
         document.getElementById('school-display').innerText = currentFName || "Uploader";
     };
 
+    // The most aggressive navigation fix possible
     function goBack() {
-        // Clean navigation without spaces or complex pathing
-        window.location.replace('uploader_menu.html');
+        const target = 'uploader_menu.html';
+        // Try local folder first, then try root
+        window.location.href = target;
+        
+        // If it doesn't leave the page in 500ms, try going up one level
+        setTimeout(() => {
+            window.location.href = '../' + target;
+        }, 500);
     }
 
     function showPreview(input) {
