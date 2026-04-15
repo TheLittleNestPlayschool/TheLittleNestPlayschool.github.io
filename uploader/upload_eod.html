@@ -30,20 +30,19 @@
             text-align: center;
         }
 
-        /* New Badge for School Name */
+        /* The element that displays your local variable */
         .school-badge {
             background: rgba(255, 255, 255, 0.2);
-            padding: 5px 15px;
+            padding: 6px 18px;
             border-radius: 50px;
             font-size: 14px;
             font-weight: 700;
             display: inline-block;
             margin-top: 10px;
             border: 1px solid rgba(255, 255, 255, 0.3);
+            letter-spacing: 0.5px;
         }
 
-        .section { padding: 20px; border-bottom: 1px solid #eee; text-align: center; }
-        
         .camera-box {
             padding: 40px 20px;
             text-align: center;
@@ -89,7 +88,7 @@
 </div>
 
 <script>
-    // Retrieve variables from Menu selection
+    // Pull the data from the Menu's local storage
     const currentFId = localStorage.getItem('nestmind_f_id');
     const currentFSlug = localStorage.getItem('nestmind_f_slug');
     const currentFName = localStorage.getItem('nestmind_f_name');
@@ -98,11 +97,13 @@
     let selectedFile = null;
 
     window.onload = () => {
+        // Kick them back to menu if they haven't picked a school yet
         if (!currentFId) {
-            alert("No school selected. Returning to menu.");
+            alert("Please select a school location on the main menu first.");
             location.href = 'uploader_menu.html';
             return;
         }
+        // Just display the name, no dropdown needed
         document.getElementById('school-display').innerText = currentFName;
     };
 
@@ -119,6 +120,7 @@
         const status = document.getElementById('status-msg');
         const syncBtn = document.getElementById('sync-btn');
         
+        // Use the Slug from the local variable for the S3 path
         const path = `${currentFSlug}/eod-reports/${Date.now()}-${selectedFile.name.toLowerCase()}`;
         
         try {
