@@ -134,11 +134,18 @@
             if (!handshake.ok) throw new Error("Check Xano Endpoint Name");
             
             const responseData = await handshake.json();
-            const uploadUrl = responseData.form_name;
+            
+            // Fixed: Corrected to use 'url' as returned by your Xano function
+            const uploadUrl = responseData.url;
+
+            if (!uploadUrl) {
+                console.error("Xano Response Data:", responseData);
+                throw new Error("Xano returned an empty URL");
+            }
 
             status.innerText = "Syncing to AWS...";
             
-            // PUT request without Content-Type header to match Xano signature
+            // PUT request without headers to match Xano's host-only signature
             const s3Res = await fetch(uploadUrl, {
                 method: 'PUT',
                 body: selectedFile
