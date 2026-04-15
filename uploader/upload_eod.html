@@ -10,11 +10,13 @@
         body { font-family: 'Segoe UI', sans-serif; background: #edf2f7; margin: 0; padding: 10px; }
         .vault-container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         .header { background: linear-gradient(135deg, var(--primary-blue), var(--deep-blue)); color: white; padding: 25px; text-align: center; }
+        .school-badge { background: rgba(255, 255, 255, 0.2); padding: 6px 18px; border-radius: 50px; font-size: 14px; font-weight: 700; display: inline-block; margin-top: 10px; border: 1px solid rgba(255, 255, 255, 0.3); }
         .camera-box { padding: 40px 20px; text-align: center; border: 3px dashed #cbd5e0; margin: 20px; border-radius: 15px; cursor: pointer; }
         #preview-wrap { display: none; padding: 20px; text-align: center; }
         #preview-img { width: 100%; border-radius: 10px; margin-bottom: 15px; }
         .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; }
         .btn-sync { background: var(--primary-blue); color: white; margin-bottom: 10px; }
+        .btn-back { background: #eee; color: #666; text-decoration: none; display: inline-block; text-align: center; margin-top: 10px; font-weight: 800; width: 100%; }
         #status-msg { font-weight: 700; color: var(--primary-blue); margin-top: 15px; text-align: center; min-height: 24px; }
     </style>
 </head>
@@ -23,19 +25,24 @@
 <div class="vault-container">
     <div class="header">
         <h2 style="margin:0">EOD Report Vault</h2>
-        <div class="school-badge" id="school-display" style="background:rgba(255,255,255,0.2); padding:5px 15px; border-radius:20px; display:inline-block; margin-top:10px;">Loading Branch...</div>
+        <div class="school-badge" id="school-display">Loading Branch...</div>
     </div>
+
     <div id="capture-stage">
         <div class="camera-box" onclick="document.getElementById('input-cam').click()">
             <span style="font-size: 40px">📝</span>
             <p style="font-weight: 700; margin: 10px 0 0">Capture EOD Report</p>
             <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="showPreview(this)">
         </div>
+        <div style="text-align: center; padding-bottom: 20px;">
+            <a href="uploader_menu.html" class="btn-back" style="width: auto; padding: 10px 20px;">← Back to Menu</a>
+        </div>
     </div>
+
     <div id="preview-wrap">
         <img id="preview-img" src="">
         <button class="btn btn-sync" id="sync-btn" onclick="runSync()">Sync EOD to Vault</button>
-        <button class="btn" style="background:#eee; width:100%; margin-top:10px; border-radius:10px; padding:15px; font-weight:800;" onclick="location.reload()">Retake</button>
+        <button class="btn-back" onclick="location.reload()">Retake Photo</button>
         <p id="status-msg"></p>
     </div>
 </div>
@@ -45,7 +52,9 @@
     const currentFName = localStorage.getItem('nestmind_f_name');
     let selectedFile = null;
 
-    window.onload = () => { document.getElementById('school-display').innerText = currentFName || "Uploader"; };
+    window.onload = () => {
+        document.getElementById('school-display').innerText = currentFName || "Uploader";
+    };
 
     function showPreview(input) {
         if (input.files && input.files[0]) {
@@ -66,35 +75,24 @@
         
         try {
             syncBtn.disabled = true;
-            status.innerText = "Authorizing...";
+            status.innerText = "Uploading to Vault...";
 
-            const handshake = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_signer_eod", {
+            const formData = new FormData();
+            formData.append('file_resource', selectedFile);
+            formData.append('file_name', fileKey);
+
+            const response = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_proxy_upload", {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ file_name: fileKey })
+                body: formData
             });
 
-            const responseData = await handshake.json();
-            const uploadUrl = responseData.url || responseData.form_name || responseData;
-
-            status.innerText = "Syncing to AWS...";
-
-            // Use the most basic fetch possible.
-            // Explicitly NO headers are defined to match the Host-only signature.
-            const s3Res = await fetch(uploadUrl, {
-                method: 'PUT',
-                body: selectedFile,
-                headers: {} 
-            });
-
-            if (s3Res.ok) {
+            if (response.ok) {
                 status.innerText = "Success! EOD Synced.";
                 setTimeout(() => { location.href = 'uploader_menu.html'; }, 2000);
             } else {
-                const s3Err = await s3Res.text();
-                console.error("AWS Detail:", s3Err);
-                status.innerText = "Auth Error. Checking Bucket Policy...";
-                syncBtn.disabled = false;
+                const errData = await response.json();
+                console.error("Xano Error:", errData);
+                throw new Error(errData.message || "Upload Failed");
             }
         } catch (err) {
             status.innerText = "Error: " + err.message;
@@ -102,5 +100,6 @@
         }
     }
 </script>
+
 </body>
 </html>
