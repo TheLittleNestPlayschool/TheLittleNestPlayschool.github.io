@@ -75,9 +75,10 @@
         
         try {
             syncBtn.disabled = true;
-            status.innerText = "Uploading to Vault...";
+            status.innerText = "Syncing with Vault...";
 
             const formData = new FormData();
+            // These keys must match your Xano POST inputs exactly
             formData.append('file_resource', selectedFile);
             formData.append('file_name', fileKey);
 
@@ -87,11 +88,11 @@
             });
 
             if (response.ok) {
-                status.innerText = "Success! EOD Synced.";
-                setTimeout(() => { location.href = 'uploader_menu.html'; }, 2000);
+                status.innerText = "Success! EOD Synced to AWS.";
+                syncBtn.style.display = 'none'; // Hide button after success
             } else {
                 const errData = await response.json();
-                console.error("Xano Error:", errData);
+                console.error("Xano Error Detail:", errData);
                 throw new Error(errData.message || "Upload Failed");
             }
         } catch (err) {
