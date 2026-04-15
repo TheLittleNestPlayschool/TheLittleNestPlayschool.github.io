@@ -118,11 +118,13 @@
         const status = document.getElementById('status-msg');
         const syncBtn = document.getElementById('sync-btn');
         
-        // Trim and clean the slug to prevent path mismatches
-        const cleanSlug = (currentFSlug || 'unknown').trim().toLowerCase();
+        // Use exact slug from localStorage
+        const slug = (currentFSlug || 'unknown').trim();
         const timestamp = new Date().getTime();
-        const exactFilePath = `${cleanSlug}/${timestamp}-eod.jpg`;
+        const exactFilePath = `${slug}/${timestamp}-eod.jpg`;
         
+        console.log("DEBUG: Target File Path is:", exactFilePath);
+
         try {
             syncBtn.disabled = true;
             status.innerText = "Authorizing...";
@@ -138,14 +140,9 @@
             const responseData = await handshake.json();
             const uploadUrl = responseData.form_name || responseData.url || responseData;
 
-            if (!uploadUrl || typeof uploadUrl !== 'string') {
-                throw new Error("Invalid URL from Xano");
-            }
-
             status.innerText = "Syncing to AWS...";
             
-            // THE FIX: Wrap the file in a Blob with an empty type.
-            // This prevents the browser from adding a Content-Type header that Xano didn't sign.
+            // Convert to Blob with empty type to prevent browser from adding Content-Type headers
             const blobData = new Blob([selectedFile], { type: '' });
 
             const s3Res = await fetch(uploadUrl, {
@@ -158,8 +155,8 @@
                 setTimeout(() => { location.href = 'uploader_menu.html'; }, 2000);
             } else {
                 const s3Err = await s3Res.text();
-                console.error("Signature Details:", s3Err);
-                throw new Error("AWS Sync Failed (403). Possible Signature Mismatch.");
+                console.error("AWS Error Response:", s3Err);
+                throw new Error("AWS Sync Failed (403). check console for details.");
             }
         } catch (err) {
             status.innerText = "Error: " + err.message;
