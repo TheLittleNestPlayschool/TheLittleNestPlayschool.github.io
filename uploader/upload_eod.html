@@ -3,64 +3,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>End of Day Vault</title>
-    
     <link rel="stylesheet" href="../nest_style.css">
     <script src="../api_config.js"></script>
-    
     <style>
-        :root {
-            --primary-blue: #4a90e2;
-            --deep-blue: #357abd;
-            --text-main: #2d3748;
-            --text-muted: #718096;
-            --bg-light: #f8fafc;
-            --border-color: #cbd5e0;
-        }
+        :root { --primary-blue: #4a90e2; --deep-blue: #357abd; }
         body { font-family: 'Segoe UI', sans-serif; background: #edf2f7; margin: 0; padding: 10px; }
-        
-        .vault-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: #fff;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-
-        .header {
-            background: linear-gradient(135deg, var(--primary-blue), var(--deep-blue));
-            color: white;
-            padding: 25px;
-            text-align: center;
-        }
-
-        .school-badge {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 6px 18px;
-            border-radius: 50px;
-            font-size: 14px;
-            font-weight: 700;
-            display: inline-block;
-            margin-top: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .camera-box {
-            padding: 40px 20px;
-            text-align: center;
-            border: 3px dashed var(--border-color);
-            margin: 20px;
-            border-radius: 15px;
-            cursor: pointer;
-        }
-
+        .vault-container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, var(--primary-blue), var(--deep-blue)); color: white; padding: 25px; text-align: center; }
+        .camera-box { padding: 40px 20px; text-align: center; border: 3px dashed #cbd5e0; margin: 20px; border-radius: 15px; cursor: pointer; }
         #preview-wrap { display: none; padding: 20px; text-align: center; }
         #preview-img { width: 100%; border-radius: 10px; margin-bottom: 15px; }
-
         .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; }
         .btn-sync { background: var(--primary-blue); color: white; margin-bottom: 10px; }
-        .btn-back { background: #eee; color: #666; text-decoration: none; display: inline-block; text-align: center; margin-top: 10px; font-weight: 800; }
-        #status-msg { font-weight: 700; color: var(--primary-blue); margin-top: 15px; text-align: center; min-height: 24px; }
+        #status-msg { font-weight: 700; color: var(--primary-blue); margin-top: 15px; text-align: center; }
     </style>
 </head>
 <body>
@@ -68,43 +23,29 @@
 <div class="vault-container">
     <div class="header">
         <h2 style="margin:0">EOD Report Vault</h2>
-        <div class="school-badge" id="school-display">Loading Branch...</div>
+        <div class="school-badge" id="school-display" style="background:rgba(255,255,255,0.2); padding:5px 15px; border-radius:20px; display:inline-block; margin-top:10px;">Loading Branch...</div>
     </div>
-
     <div id="capture-stage">
         <div class="camera-box" onclick="document.getElementById('input-cam').click()">
             <span style="font-size: 40px">📝</span>
             <p style="font-weight: 700; margin: 10px 0 0">Capture EOD Report</p>
             <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="showPreview(this)">
         </div>
-        <div style="text-align: center; padding-bottom: 20px;">
-            <a href="uploader_menu.html" class="btn-back" style="width: auto; padding: 10px 20px;">← Back to Menu</a>
-        </div>
     </div>
-
     <div id="preview-wrap">
         <img id="preview-img" src="">
         <button class="btn btn-sync" id="sync-btn" onclick="runSync()">Sync EOD to Vault</button>
-        <button class="btn btn-back" onclick="resetPage()">Retake Photo</button>
+        <button class="btn" style="background:#eee; width:100%; margin-top:10px; border-radius:10px; padding:15px; font-weight:800;" onclick="location.reload()">Retake</button>
         <p id="status-msg"></p>
     </div>
 </div>
 
 <script>
-    const currentFId = localStorage.getItem('nestmind_f_id');
     const currentFSlug = localStorage.getItem('nestmind_f_slug');
     const currentFName = localStorage.getItem('nestmind_f_name');
-
     let selectedFile = null;
 
-    window.onload = () => {
-        if (!currentFId) {
-            alert("No school selected. Returning to menu.");
-            location.href = 'uploader_menu.html';
-            return;
-        }
-        document.getElementById('school-display').innerText = currentFName;
-    };
+    window.onload = () => { document.getElementById('school-display').innerText = currentFName || "Uploader"; };
 
     function showPreview(input) {
         if (input.files && input.files[0]) {
@@ -120,11 +61,8 @@
         const syncBtn = document.getElementById('sync-btn');
         if (!selectedFile) return;
 
-        // Correctly detect extension and build full file name before sending to Xano
         const ext = selectedFile.name.split('.').pop().toLowerCase();
-        const cleanSlug = (currentFSlug || 'unknown').trim().toLowerCase();
-        const timestamp = new Date().getTime();
-        const exactFilePath = `${cleanSlug}/${timestamp}-eod.${ext}`;
+        const fileKey = `${currentFSlug}/${Date.now()}-eod.${ext}`;
         
         try {
             syncBtn.disabled = true;
@@ -133,46 +71,44 @@
             const handshake = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_signer_eod", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ file_name: exactFilePath })
+                body: JSON.stringify({ file_name: fileKey })
             });
 
-            if (!handshake.ok) throw new Error("Xano Handshake Failed");
-            
             const responseData = await handshake.json();
             const uploadUrl = responseData.url || responseData.form_name || responseData;
 
             status.innerText = "Syncing to AWS...";
+
+            // USING XHR INSTEAD OF FETCH: This is much stricter with headers
+            const xhr = new XMLHttpRequest();
+            xhr.open("PUT", uploadUrl);
             
-            // Send RAW data (ArrayBuffer) to match the "Host-only" signature from Xano
-            const arrayBuffer = await selectedFile.arrayBuffer();
+            // This ensures NO extra headers are sent that could break the signature
+            xhr.setRequestHeader("Content-Type", ""); 
 
-            const s3Res = await fetch(uploadUrl, {
-                method: 'PUT',
-                body: arrayBuffer 
-            });
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    status.innerText = "Success! EOD Synced.";
+                    setTimeout(() => { location.href = 'uploader_menu.html'; }, 2000);
+                } else {
+                    console.error("AWS Error:", xhr.responseText);
+                    status.innerText = "Sync Error: " + xhr.status;
+                    syncBtn.disabled = false;
+                }
+            };
 
-            if (s3Res.ok) {
-                status.innerText = "EOD Successfully Synced!";
-                setTimeout(() => { location.href = 'uploader_menu.html'; }, 2000);
-            } else {
-                const s3Err = await s3Res.text();
-                console.error("AWS Detail:", s3Err);
-                throw new Error("AWS Signature Error. Matches Host Only.");
-            }
+            xhr.onerror = () => {
+                status.innerText = "Network Error.";
+                syncBtn.disabled = false;
+            };
+
+            xhr.send(selectedFile);
+
         } catch (err) {
             status.innerText = "Error: " + err.message;
             syncBtn.disabled = false;
         }
     }
-
-    function resetPage() {
-        selectedFile = null;
-        document.getElementById('capture-stage').style.display = 'block';
-        document.getElementById('preview-wrap').style.display = 'none';
-        document.getElementById('status-msg').innerText = "";
-        document.getElementById('input-cam').value = "";
-    }
 </script>
-
 </body>
 </html>
