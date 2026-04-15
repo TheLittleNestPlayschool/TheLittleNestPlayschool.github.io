@@ -131,21 +131,24 @@
                 body: JSON.stringify({ file_name: fileNameWithFolder })
             });
 
-            if (!handshake.ok) throw new Error("Check Xano Endpoint Name");
+            if (!handshake.ok) throw new Error("Xano Handshake Failed: " + handshake.status);
             
             const responseData = await handshake.json();
             
-            // Fixed: Corrected to use 'url' as returned by your Xano function
-            const uploadUrl = responseData.url;
+            // DEBUG: This will show in your F12 console exactly what Xano sent back
+            console.log("Xano Response:", responseData);
 
-            if (!uploadUrl) {
-                console.error("Xano Response Data:", responseData);
-                throw new Error("Xano returned an empty URL");
+            // Logic to handle if Xano sends an object OR a raw string
+            let uploadUrl = responseData.url || responseData;
+
+            if (!uploadUrl || typeof uploadUrl !== 'string' || !uploadUrl.startsWith('http')) {
+                console.error("Invalid URL received:", uploadUrl);
+                throw new Error("Xano did not return a valid S3 URL.");
             }
 
             status.innerText = "Syncing to AWS...";
             
-            // PUT request without headers to match Xano's host-only signature
+            // Perform the PUT to the actual URL
             const s3Res = await fetch(uploadUrl, {
                 method: 'PUT',
                 body: selectedFile
@@ -155,10 +158,13 @@
                 status.innerText = "EOD Successfully Synced!";
                 setTimeout(() => { location.href = 'uploader_menu.html'; }, 2000);
             } else {
-                throw new Error("AWS Sync Failed");
+                const s3Err = await s3Res.text();
+                console.error("S3 Error Response:", s3Err);
+                throw new Error("AWS Sync Failed. Check Bucket CORS.");
             }
         } catch (err) {
             status.innerText = "Error: " + err.message;
+            console.error("Catch block error:", err);
             syncBtn.disabled = false;
         }
     }
