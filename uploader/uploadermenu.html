@@ -7,60 +7,60 @@
     <script src="../api_config.js"></script>
     <style>
         :root { --nest-blue: #009dff; --nest-dark: #2d3748; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; align-items: center; }
         
-        /* Compact Blue Header */
-        .header { background: var(--nest-blue); color: white; padding: 12px; text-align: center; }
-        .header h2 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; font-weight: 800; }
-        .header p { margin: 2px 0 0; font-size: 10px; opacity: 0.9; }
+        /* Dashboard Container - Locks the width */
+        .dashboard { width: 100%; max-width: 450px; display: flex; flex-direction: column; height: 100vh; background: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
 
-        /* The Selection Bar (Branch Dropdown) */
-        .branch-bar { background: #fff; padding: 10px 15px; border-bottom: 1px solid #e2e8f0; }
-        .branch-bar label { display: block; font-size: 9px; font-weight: 800; color: #a0aec0; text-transform: uppercase; margin-bottom: 4px; }
-        .branch-bar select { width: 100%; border: 1px solid #cbd5e0; border-radius: 6px; padding: 8px; font-weight: 700; font-size: 14px; color: var(--nest-dark); outline: none; }
+        .header { background: var(--nest-blue); color: white; padding: 10px; text-align: center; }
+        .header h2 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; }
 
-        /* Permanent Navigation (The 3 choices) */
-        .menu-nav { background: white; display: flex; padding: 10px; gap: 10px; border-bottom: 1px solid #e2e8f0; }
+        .branch-bar { padding: 8px 15px; border-bottom: 1px solid #eee; background: #fff; }
+        .branch-bar label { font-size: 9px; font-weight: 800; color: #a0aec0; text-transform: uppercase; }
+        .branch-bar select { width: 100%; border: 1px solid #cbd5e0; border-radius: 5px; padding: 6px; font-weight: 700; font-size: 13px; outline: none; }
+
+        /* The 3 Choices - Tight Row */
+        .menu-nav { display: flex; padding: 10px; gap: 8px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
         .nav-item { 
-            flex: 1; text-align: center; padding: 10px 5px; border: 1px solid #edf2f7; 
-            border-radius: 10px; cursor: pointer; transition: 0.2s; background: #f8fafc;
-            color: var(--nest-dark); font-weight: 700;
+            flex: 1; text-align: center; padding: 8px 0; border: 2px solid #edf2f7; 
+            border-radius: 10px; cursor: pointer; background: #fff; transition: 0.2s;
         }
-        .nav-item.active { background: #ebf8ff; border-color: var(--nest-blue); color: var(--nest-blue); }
-        .nav-item span { display: block; font-size: 20px; margin-bottom: 4px; }
-        .nav-item label { font-size: 10px; text-transform: uppercase; display: block; cursor: pointer; }
+        .nav-item.active { border-color: var(--nest-blue); background: #f0f9ff; }
+        .nav-item span { display: block; font-size: 18px; margin-bottom: 2px; }
+        .nav-item label { font-size: 9px; font-weight: 800; text-transform: uppercase; display: block; color: var(--nest-dark); }
 
-        /* The Content Area */
+        /* Content window where the EOD page loads */
         #module-frame { flex-grow: 1; border: none; width: 100%; background: #f0f4f8; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h2>NESTMIND VAULT</h2>
-    <p>Select Location & Category</p>
-</div>
-
-<div class="branch-bar">
-    <label>Current School Location</label>
-    <select id="f-select" onchange="saveSelection(this)">
-        <option value="">Loading Schools...</option>
-    </select>
-</div>
-
-<div class="menu-nav">
-    <div class="nav-item" onclick="loadModule('upload_student_pictures.html', this)">
-        <span>👦</span><label>Students</label>
+<div class="dashboard">
+    <div class="header">
+        <h2>NESTMIND VAULT</h2>
     </div>
-    <div class="nav-item" onclick="loadModule('upload_eod.html', this)">
-        <span>📝</span><label>End of Day</label>
-    </div>
-    <div class="nav-item" onclick="loadModule('upload_receipt.html', this)">
-        <span>🧾</span><label>Receipts</label>
-    </div>
-</div>
 
-<iframe id="module-frame" src="about:blank"></iframe>
+    <div class="branch-bar">
+        <label>School Location</label>
+        <select id="f-select" onchange="saveSelection(this)">
+            <option value="">Loading...</option>
+        </select>
+    </div>
+
+    <div class="menu-nav">
+        <div class="nav-item" onclick="loadModule('upload_student_pictures.html', this)">
+            <span>👦</span><label>Students</label>
+        </div>
+        <div class="nav-item" onclick="loadModule('upload_eod.html', this)">
+            <span>📝</span><label>End of Day</label>
+        </div>
+        <div class="nav-item" onclick="loadModule('upload_receipt.html', this)">
+            <span>🧾</span><label>Receipts</label>
+        </div>
+    </div>
+
+    <iframe id="module-frame" src="about:blank"></iframe>
+</div>
 
 <script>
     async function loadFranchises() {
