@@ -10,7 +10,7 @@
         
         body { 
             font-family: 'Segoe UI', sans-serif; 
-            background: var(--nest-bg); 
+            background: #fff; /* Start with pure white */
             margin: 0; 
             display: flex; 
             flex-direction: column; 
@@ -26,11 +26,10 @@
             flex-direction: column; 
             height: 100vh; 
             background: #fff; 
-            box-shadow: 0 0 20px rgba(0,0,0,0.1); 
         }
 
-        /* All UI elements hidden by default */
-        .header, .menu-nav, #module-frame, #lock-screen { 
+        /* ALL UI HIDDEN BY DEFAULT - NO EXCEPTIONS */
+        #main-header, #main-nav, #module-frame, #lock-screen { 
             display: none; 
         }
 
@@ -64,12 +63,12 @@
 
         #module-frame { flex-grow: 1; border: none; width: 100%; background: var(--nest-bg); }
 
+        /* Minimalist Denied State */
         #lock-screen { 
             flex-grow: 1; 
-            display: none; /* Hidden by default */
+            display: none; 
             align-items: center; 
             justify-content: center; 
-            background: #fff;
         }
         #lock-screen h1 { color: #cbd5e0; font-weight: 400; font-size: 24px; }
     </style>
@@ -111,7 +110,6 @@
         const urlParams = new URLSearchParams(window.location.search);
         const tlnpKey = urlParams.get('tlnp');
 
-        // If no key at all, show "Access Denied" immediately
         if (!tlnpKey) {
             lockScreen.style.display = 'flex';
             return;
@@ -129,19 +127,19 @@
                 localStorage.setItem('nestmind_f_slug', slug);
                 localStorage.setItem('nestmind_f_name', matched.name);
                 
-                // Success: Show the UI
+                // Show only on success
                 mainHeader.style.display = 'block';
                 mainNav.style.display = 'flex';
                 frame.style.display = 'block';
                 title.innerText = matched.name.toUpperCase() + " VAULT";
                 
+                // Hide key from URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             } else {
-                // Key was wrong: show Access Denied
                 lockScreen.style.display = 'flex';
             }
         } catch (err) {
-            console.error("Auth System Error:", err);
+            console.error(err);
             lockScreen.style.display = 'flex';
         }
     }
