@@ -8,20 +8,20 @@
     <style>
         :root { --primary-blue: #4a90e2; --deep-blue: #357abd; --success-green: #2ecc71; }
         body { font-family: 'Segoe UI', sans-serif; background: #edf2f7; margin: 0; padding: 10px; }
-        .vault-container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; min-height: 400px; }
+        .vault-container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; min-height: 450px; }
         .header { background: linear-gradient(135deg, var(--primary-blue), var(--deep-blue)); color: white; padding: 25px; text-align: center; }
         .school-badge { background: rgba(255, 255, 255, 0.2); padding: 6px 18px; border-radius: 50px; font-size: 14px; font-weight: 700; display: inline-block; margin-top: 10px; border: 1px solid rgba(255, 255, 255, 0.3); }
         .camera-box { padding: 40px 20px; text-align: center; border: 3px dashed #cbd5e0; margin: 20px; border-radius: 15px; cursor: pointer; }
         #preview-wrap { display: none; padding: 20px; text-align: center; }
         #preview-img { width: 100%; border-radius: 10px; margin-bottom: 15px; }
-        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; text-decoration: none; display: block; box-sizing: border-box; }
         .btn-sync { background: var(--primary-blue); color: white; margin-bottom: 10px; }
-        .btn-menu { background: var(--success-green); color: white; margin-top: 20px; text-decoration: none; display: block; }
-        .btn-back { background: #eee; color: #666; text-decoration: none; display: inline-block; text-align: center; margin-top: 10px; font-weight: 800; width: 100%; }
+        .btn-menu { background: var(--success-green); color: white; margin-top: 20px; }
+        .btn-back { background: #eee; color: #666; margin-top: 10px; font-weight: 800; text-align: center; }
         #status-msg { font-weight: 700; color: var(--primary-blue); margin-top: 15px; text-align: center; }
         
-        /* Success Overlay */
-        #success-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 99; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; }
+        /* Success Screen Overlay */
+        #success-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -30,13 +30,13 @@
     <div id="success-screen">
         <span style="font-size: 60px;">✅</span>
         <h2 style="color: var(--success-green); margin: 20px 0 10px;">File Successfully Uploaded</h2>
-        <p style="color: #666; margin-bottom: 30px;">The EOD report is now in the cloud.</p>
-        <a href="uploader_menu.html" class="btn btn-menu">Back to Menu</a>
+        <p style="color: #666; margin-bottom: 30px;">Your EOD report has been safely synced to the vault.</p>
+        <a href="javascript:void(0)" onclick="goToMenu()" class="btn btn-menu">Back to Menu</a>
     </div>
 
     <div class="header">
         <h2 style="margin:0">EOD Report Vault</h2>
-        <div class="school-badge" id="school-display">Loading...</div>
+        <div class="school-badge" id="school-display">Loading Branch...</div>
     </div>
 
     <div id="capture-stage">
@@ -45,15 +45,15 @@
             <p style="font-weight: 700; margin: 10px 0 0">Capture EOD Report</p>
             <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="showPreview(this)">
         </div>
-        <div style="text-align: center; padding-bottom: 20px;">
-            <a href="uploader_menu.html" class="btn-back" style="width: auto; padding: 10px 20px;">← Back to Menu</a>
+        <div style="text-align: center; padding: 0 20px 20px;">
+            <a href="javascript:void(0)" onclick="goToMenu()" class="btn btn-back">← Back to Menu</a>
         </div>
     </div>
 
     <div id="preview-wrap">
         <img id="preview-img" src="">
         <button class="btn btn-sync" id="sync-btn" onclick="runSync()">Sync EOD to Vault</button>
-        <button class="btn-back" onclick="location.reload()">Retake Photo</button>
+        <button class="btn btn-back" style="width:100%" onclick="location.reload()">Retake Photo</button>
         <p id="status-msg"></p>
     </div>
 </div>
@@ -76,6 +76,12 @@
         }
     }
 
+    // Force Absolute Navigation to prevent protocol dropping (HTTPS fix)
+    function goToMenu() {
+        const root = window.location.origin;
+        window.location.href = root + '/uploader/uploader_menu.html';
+    }
+
     async function runSync() {
         const status = document.getElementById('status-msg');
         const syncBtn = document.getElementById('sync-btn');
@@ -86,7 +92,7 @@
         
         try {
             syncBtn.disabled = true;
-            status.innerText = "Processing...";
+            status.innerText = "Uploading to Vault...";
 
             const formData = new FormData();
             formData.append('file_resource', selectedFile);
@@ -98,12 +104,11 @@
             });
 
             if (response.ok) {
-                // FORCE THE SCREEN CHANGE
+                // Show success screen and block any further auto-navigation
                 document.getElementById('success-screen').style.display = 'flex';
-                // Stop everything else
-                return false;
             } else {
                 const errData = await response.json();
+                console.error("Xano Error:", errData);
                 throw new Error(errData.message || "Upload Failed");
             }
         } catch (err) {
