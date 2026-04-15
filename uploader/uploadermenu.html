@@ -4,12 +4,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NestMind Vault Menu</title>
     
-    <link rel="stylesheet" href="./nest_style.css">
-    <script src="./api_config.js"></script>
+    <link rel="stylesheet" href="../nest_style.css">
+    <script src="../api_config.js"></script>
     
     <style>
-        body { padding: 20px 10px; display: flex; justify-content: center; min-height: 100vh; }
-        .menu-container { width: 100%; max-width: 500px; align-self: flex-start; }
+        body { 
+            padding: 20px 10px; 
+            display: flex; 
+            justify-content: center; 
+            min-height: 100vh; 
+        }
+        
+        .menu-container {
+            width: 100%;
+            max-width: 500px;
+            align-self: flex-start;
+        }
+
         .header {
             background: linear-gradient(135deg, var(--nest-teal), var(--nest-teal-dark));
             color: var(--nest-dark);
@@ -17,12 +28,36 @@
             text-align: center;
             border-radius: var(--nest-radius-lg) var(--nest-radius-lg) 0 0;
         }
-        .menu-list { padding: 25px; display: flex; flex-direction: column; gap: 15px; }
-        .menu-item { display: flex; align-items: center; padding: 20px; text-decoration: none; transition: all 0.2s ease; }
+
+        .menu-list {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .menu-item:active {
+            transform: scale(0.98);
+        }
+
         .icon-box {
-            font-size: 32px; margin-right: 20px; background: var(--nest-bg);
-            width: 60px; height: 60px; display: flex; align-items: center;
-            justify-content: center; border-radius: var(--nest-radius-sm);
+            font-size: 32px;
+            margin-right: 20px;
+            background: var(--nest-bg);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--nest-radius-sm);
         }
     </style>
 </head>
@@ -69,12 +104,11 @@
 </div>
 
 <script>
-    // 2. Use the endpoints globally
     async function loadFranchises() {
         const drop = document.getElementById('f-select');
         
         try {
-            // We call NEST_ENDPOINTS directly because it was loaded in the <head>
+            // Fetch using the global object loaded from ../api_config.js
             const response = await fetch(NEST_ENDPOINTS.franchise.list);
             const data = await response.json();
             
@@ -87,15 +121,16 @@
                 drop.appendChild(opt);
             });
 
+            // Restore selection if it exists
             const savedId = localStorage.getItem('nestmind_f_id');
             if (savedId) drop.value = savedId;
         } catch (err) {
             drop.innerHTML = '<option>Error loading franchises</option>';
-            console.error(err);
+            console.error("API Fetch Error:", err);
         }
     }
 
-    // Initialize
+    // Initialize when page is ready
     window.onload = loadFranchises;
 
     function saveSelection(select) {
