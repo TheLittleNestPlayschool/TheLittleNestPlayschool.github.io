@@ -15,7 +15,6 @@
         #preview-img { width: 100%; border-radius: 10px; margin-bottom: 15px; }
         .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; }
         .btn-sync { background: var(--primary-blue); color: white; margin-bottom: 10px; }
-        .btn-back { background: #eee; color: #666; text-decoration: none; display: inline-block; text-align: center; margin-top: 10px; font-weight: 800; width: 100%; }
         #status-msg { font-weight: 700; color: var(--primary-blue); margin-top: 15px; text-align: center; min-height: 24px; }
     </style>
 </head>
@@ -24,7 +23,7 @@
 <div class="vault-container">
     <div class="header">
         <h2 style="margin:0">EOD Report Vault</h2>
-        <div class="school-badge" id="school-display" style="background:rgba(255,255,255,0.2); padding:5px 15px; border-radius:20px; display:inline-block; margin-top:10px;">Loading...</div>
+        <div class="school-badge" id="school-display" style="background:rgba(255,255,255,0.2); padding:5px 15px; border-radius:20px; display:inline-block; margin-top:10px;">Loading Branch...</div>
     </div>
     <div id="capture-stage">
         <div class="camera-box" onclick="document.getElementById('input-cam').click()">
@@ -36,7 +35,7 @@
     <div id="preview-wrap">
         <img id="preview-img" src="">
         <button class="btn btn-sync" id="sync-btn" onclick="runSync()">Sync EOD to Vault</button>
-        <button class="btn-back" onclick="location.reload()">Retake Photo</button>
+        <button class="btn" style="background:#eee; width:100%; margin-top:10px; border-radius:10px; padding:15px; font-weight:800;" onclick="location.reload()">Retake</button>
         <p id="status-msg"></p>
     </div>
 </div>
@@ -76,41 +75,27 @@
             });
 
             const responseData = await handshake.json();
-            let uploadUrl = responseData.url || responseData.form_name || responseData;
+            const uploadUrl = responseData.url || responseData.form_name || responseData;
 
             status.innerText = "Syncing to AWS...";
 
-            // PATH-STYLE CONVERSION
-            if (uploadUrl.includes('tlnp-eod.s3.ap-southeast-2.amazonaws.com/')) {
-                uploadUrl = uploadUrl.replace('tlnp-eod.s3.ap-southeast-2.amazonaws.com/', 's3.ap-southeast-2.amazonaws.com/tlnp-eod/');
-            }
+            // Use the most basic fetch possible.
+            // Explicitly NO headers are defined to match the Host-only signature.
+            const s3Res = await fetch(uploadUrl, {
+                method: 'PUT',
+                body: selectedFile,
+                headers: {} 
+            });
 
-            // USE XHR FOR MAXIMUM HEADER CONTROL
-            const xhr = new XMLHttpRequest();
-            xhr.open("PUT", uploadUrl, true);
-            
-            // This prevents XHR from adding any default Content-Type
-            xhr.setRequestHeader("Content-Type", "");
-
-            xhr.onload = function() {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    status.innerText = "Success! EOD Synced.";
-                    setTimeout(() => { location.href = 'uploader_menu.html'; }, 2000);
-                } else {
-                    console.error("AWS Detail:", xhr.responseText);
-                    status.innerText = "Auth Error. Check Xano Key/Secret.";
-                    syncBtn.disabled = false;
-                }
-            };
-
-            xhr.onerror = function() {
-                status.innerText = "Network Error.";
+            if (s3Res.ok) {
+                status.innerText = "Success! EOD Synced.";
+                setTimeout(() => { location.href = 'uploader_menu.html'; }, 2000);
+            } else {
+                const s3Err = await s3Res.text();
+                console.error("AWS Detail:", s3Err);
+                status.innerText = "Auth Error. Checking Bucket Policy...";
                 syncBtn.disabled = false;
-            };
-
-            // Send raw file
-            xhr.send(selectedFile);
-
+            }
         } catch (err) {
             status.innerText = "Error: " + err.message;
             syncBtn.disabled = false;
