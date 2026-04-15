@@ -3,107 +3,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>End of Day Vault</title>
+    
+    <link rel="stylesheet" href="../nest_style.css">
+    <script src="../api_config.js"></script>
+    
     <style>
-        :root {
-            --primary-blue: #4a90e2;
-            --deep-blue: #357abd;
-            --text-main: #2d3748;
-            --text-muted: #718096;
-            --bg-light: #f8fafc;
-            --border-color: #cbd5e0;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background: #edf2f7; margin: 0; padding: 10px; }
+        body { font-family: 'Inter', sans-serif; background: var(--nest-bg); margin: 0; padding: 10px; }
+        .vault-container { max-width: 600px; margin: 0 auto; }
         
-        .vault-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: #fff;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-
         .header {
-            background: linear-gradient(135deg, var(--primary-blue), var(--deep-blue));
-            color: white;
-            padding: 25px;
+            background: linear-gradient(135deg, var(--nest-teal), var(--nest-teal-dark));
+            color: var(--nest-dark);
+            padding: 30px 20px;
             text-align: center;
+            border-radius: var(--nest-radius-lg) var(--nest-radius-lg) 0 0;
         }
 
-        /* The element that displays your local variable */
         .school-badge {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.1);
             padding: 6px 18px;
             border-radius: 50px;
             font-size: 14px;
-            font-weight: 700;
+            font-weight: 800;
             display: inline-block;
             margin-top: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
 
         .camera-box {
-            padding: 40px 20px;
+            padding: 60px 20px;
             text-align: center;
-            border: 3px dashed var(--border-color);
+            border: 3px dashed var(--nest-border);
             margin: 20px;
-            border-radius: 15px;
+            border-radius: var(--nest-radius-lg);
             cursor: pointer;
+            background: white;
         }
 
         #preview-wrap { display: none; padding: 20px; text-align: center; }
-        #preview-img { width: 100%; border-radius: 10px; margin-bottom: 15px; }
-
-        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; }
-        .btn-sync { background: var(--primary-blue); color: white; margin-bottom: 10px; }
-        .btn-back { background: #eee; color: #666; text-decoration: none; display: inline-block; text-align: center; margin-top: 10px; }
+        #preview-img { width: 100%; border-radius: var(--nest-radius-lg); margin-bottom: 20px; box-shadow: var(--nest-shadow); }
+        
+        .status-area { font-weight: 700; padding: 15px; text-align: center; min-height: 50px; }
     </style>
 </head>
 <body>
 
-<div class="vault-container">
+<div class="vault-container nest-card" style="padding:0;">
     <div class="header">
-        <h2 style="margin:0">EOD Report Vault</h2>
-        <div class="school-badge" id="school-display">Loading Branch...</div>
+        <h2 class="nest-header" style="margin:0">EOD Report Vault</h2>
+        <div class="school-badge" id="school-display">Loading...</div>
     </div>
 
     <div id="capture-stage">
         <div class="camera-box" onclick="document.getElementById('input-cam').click()">
-            <span style="font-size: 40px">📝</span>
-            <p style="font-weight: 700; margin: 10px 0 0">Capture EOD Report</p>
+            <span style="font-size: 50px">📝</span>
+            <p class="nest-text-main" style="font-weight: 800; margin: 15px 0 0">CAPTURE DAILY REPORT</p>
             <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="showPreview(this)">
         </div>
-        <div style="text-align: center; padding-bottom: 20px;">
-            <a href="uploader_menu.html" class="btn-back" style="width: auto; padding: 10px 20px;">← Back to Menu</a>
+        <div style="text-align: center; padding-bottom: 30px;">
+            <a href="uploader_menu.html" class="nest-btn nest-btn-outline">← Back to Menu</a>
         </div>
     </div>
 
     <div id="preview-wrap">
         <img id="preview-img" src="">
-        <button class="btn btn-sync" id="sync-btn" onclick="runUpload()">Sync EOD to Vault</button>
-        <button class="btn btn-back" onclick="resetPage()">Retake Photo</button>
-        <p id="status-msg" style="font-weight: 700; color: var(--primary-blue); margin-top: 15px;"></p>
+        <button class="nest-btn nest-btn-teal" id="sync-btn" style="width:100%" onclick="runSync()">Sync EOD to Vault</button>
+        <button class="nest-btn nest-btn-outline" style="width:100%; margin-top:10px;" onclick="resetPage()">Retake Photo</button>
+        <div id="status-msg" class="status-area nest-text-muted"></div>
     </div>
 </div>
 
 <script>
-    // Pull the data from the Menu's local storage
+    // Pull local vars from Menu selection
     const currentFId = localStorage.getItem('nestmind_f_id');
     const currentFSlug = localStorage.getItem('nestmind_f_slug');
     const currentFName = localStorage.getItem('nestmind_f_name');
 
-    const API_H = 'https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/get_upload_url';
     let selectedFile = null;
 
     window.onload = () => {
-        // Kick them back to menu if they haven't picked a school yet
         if (!currentFId) {
-            alert("Please select a school location on the main menu first.");
+            alert("Please select a school on the menu first.");
             location.href = 'uploader_menu.html';
             return;
         }
-        // Just display the name, no dropdown needed
         document.getElementById('school-display').innerText = currentFName;
     };
 
@@ -116,37 +99,48 @@
         }
     }
 
-    async function runUpload() {
+    async function runSync() {
         const status = document.getElementById('status-msg');
         const syncBtn = document.getElementById('sync-btn');
         
-        // Use the Slug from the local variable for the S3 path
-        const path = `${currentFSlug}/eod-reports/${Date.now()}-${selectedFile.name.toLowerCase()}`;
+        // FOLDER LOGIC: We put the slug in the file_name to create the virtual folder
+        const timestamp = new Date().getTime();
+        const fileNameWithFolder = `${currentFSlug}/${timestamp}-eod.jpg`;
         
         try {
             syncBtn.disabled = true;
-            status.innerText = "Authorizing...";
-            
-            const res = await fetch(API_H, {
+            status.innerText = "Requesting Signed URL...";
+
+            // 1. Get Signed URL from your specific Xano function
+            // Note: Update this endpoint if it's different in your api_config.js
+            const handshake = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_signer_eod", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ file_path: path, content_type: selectedFile.type })
+                body: JSON.stringify({ file_name: fileNameWithFolder })
             });
-            const { upload_url } = await res.json();
+            
+            const responseData = await handshake.json();
+            const uploadUrl = responseData.form_name; // Based on your Xano 'Return As' variable
 
-            status.innerText = "Syncing to AWS...";
-            const s3Res = await fetch(upload_url, {
+            status.innerText = "Uploading to S3 Bucket...";
+
+            // 2. Perform the PUT request directly to S3
+            const s3Res = await fetch(uploadUrl, {
                 method: 'PUT',
                 headers: { 'Content-Type': selectedFile.type },
                 body: selectedFile
             });
 
             if (s3Res.ok) {
-                status.innerText = "EOD Successfully Synced!";
+                status.style.color = "var(--nest-success)";
+                status.innerText = "SUCCESS: Vault Updated!";
                 setTimeout(() => { location.href = 'uploader_menu.html'; }, 2000);
+            } else {
+                throw new Error("S3 Upload Failed");
             }
-        } catch (err) { 
-            status.innerText = "Sync Failed."; 
+        } catch (err) {
+            status.style.color = "var(--nest-danger)";
+            status.innerText = "SYNC ERROR: " + err.message;
             syncBtn.disabled = false;
         }
     }
