@@ -30,7 +30,7 @@
         <span style="font-size: 60px;">✅</span>
         <h2 style="color: var(--success-green); margin: 20px 0 10px;">File Successfully Uploaded</h2>
         <p style="color: #666; margin-bottom: 30px;">Your EOD report has been safely synced to the vault.</p>
-        <button class="btn btn-menu" onclick="handleNavigation()">Back to Menu</button>
+        <button class="btn btn-menu" onclick="goBack()">Back to Menu</button>
     </div>
 
     <div class="header">
@@ -45,7 +45,7 @@
             <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="showPreview(this)">
         </div>
         <div style="text-align: center; padding: 0 20px 20px;">
-            <button onclick="handleNavigation()" class="btn btn-back">← Back to Menu</button>
+            <button onclick="goBack()" class="btn btn-back">← Back to Menu</button>
         </div>
     </div>
 
@@ -60,16 +60,15 @@
 <script>
     const currentFSlug = localStorage.getItem('nestmind_f_slug');
     const currentFName = localStorage.getItem('nestmind_f_name');
-    const menuTarget = 'uploader_menu.html';
     let selectedFile = null;
 
     window.onload = () => {
         document.getElementById('school-display').innerText = currentFName || "Uploader";
     };
 
-    function handleNavigation() {
-        // Forces the browser to stay in the current directory and use the protocol it's already using
-        window.location.href = menuTarget;
+    function goBack() {
+        // Clean navigation without spaces or complex pathing
+        window.location.replace('uploader_menu.html');
     }
 
     function showPreview(input) {
