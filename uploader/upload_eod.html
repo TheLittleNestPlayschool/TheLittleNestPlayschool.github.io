@@ -119,6 +119,7 @@
         const syncBtn = document.getElementById('sync-btn');
         
         const timestamp = new Date().getTime();
+        // Force the key to be clean
         const fileKey = `${currentFSlug}/${timestamp}-eod.jpg`;
         
         try {
@@ -131,9 +132,11 @@
                 body: JSON.stringify({ file_name: fileKey })
             });
 
-            if (!handshake.ok) throw new Error("Xano Connection Failed");
+            if (!handshake.ok) throw new Error("Xano Handshake Failed");
             
             const responseData = await handshake.json();
+            
+            // Matches Xano returning form_name, url, or raw string
             const uploadUrl = responseData.form_name || responseData.url || responseData;
 
             if (!uploadUrl || typeof uploadUrl !== 'string') {
@@ -142,10 +145,10 @@
 
             status.innerText = "Syncing to AWS...";
             
-            // CLEAN PUT: No headers at all. This matches the simple Xano signature.
+            // CRITICAL: No headers here. Sending Content-Type 403s if not signed.
             const s3Res = await fetch(uploadUrl, {
                 method: 'PUT',
-                body: selectedFile 
+                body: selectedFile
             });
 
             if (s3Res.ok) {
@@ -154,7 +157,7 @@
             } else {
                 const s3Err = await s3Res.text();
                 console.log("AWS Detail:", s3Err);
-                throw new Error("AWS 403 Forbidden. Check S3 Bucket Ownership settings.");
+                throw new Error("AWS Sync Failed (403). Check signature mismatch.");
             }
         } catch (err) {
             status.innerText = "Error: " + err.message;
