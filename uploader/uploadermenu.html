@@ -3,23 +3,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NestMind Vault Menu</title>
+    
     <link rel="stylesheet" href="nest_style.css">
     <script src="api_config.js"></script>
     
     <style>
-        body { 
-            padding: 20px 10px; 
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-        }
-        
-        .menu-container {
-            width: 100%;
-            max-width: 500px;
-            align-self: flex-start;
-        }
-
+        body { padding: 20px 10px; display: flex; justify-content: center; min-height: 100vh; }
+        .menu-container { width: 100%; max-width: 500px; align-self: flex-start; }
         .header {
             background: linear-gradient(135deg, var(--nest-teal), var(--nest-teal-dark));
             color: var(--nest-dark);
@@ -27,36 +17,12 @@
             text-align: center;
             border-radius: var(--nest-radius-lg) var(--nest-radius-lg) 0 0;
         }
-
-        .menu-list {
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .menu-item {
-            display: flex;
-            align-items: center;
-            padding: 20px;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-
-        .menu-item:active {
-            transform: scale(0.98);
-        }
-
+        .menu-list { padding: 25px; display: flex; flex-direction: column; gap: 15px; }
+        .menu-item { display: flex; align-items: center; padding: 20px; text-decoration: none; transition: all 0.2s ease; }
         .icon-box {
-            font-size: 32px;
-            margin-right: 20px;
-            background: var(--nest-bg);
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--nest-radius-sm);
+            font-size: 32px; margin-right: 20px; background: var(--nest-bg);
+            width: 60px; height: 60px; display: flex; align-items: center;
+            justify-content: center; border-radius: var(--nest-radius-sm);
         }
     </style>
 </head>
@@ -103,37 +69,34 @@
 </div>
 
 <script>
-    window.onload = async () => {
+    // 2. Use the endpoints globally
+    async function loadFranchises() {
         const drop = document.getElementById('f-select');
         
         try {
-            // Using the specific path from your api_config.js
-            const res = await fetch(NEST_ENDPOINTS.franchise.list);
-            
-            if (!res.ok) throw new Error("Could not fetch franchises");
-            
-            const data = await res.json();
+            // We call NEST_ENDPOINTS directly because it was loaded in the <head>
+            const response = await fetch(NEST_ENDPOINTS.franchise.list);
+            const data = await response.json();
             
             drop.innerHTML = '<option value="">Select Location...</option>';
-            
             data.forEach(f => {
                 const opt = document.createElement('option');
                 opt.value = f.id;
-                // Generate slug from branch name
                 opt.dataset.slug = f.name ? f.name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'unknown';
                 opt.textContent = f.name || 'Unnamed Branch';
                 drop.appendChild(opt);
             });
 
-            // Restore previous selection from localStorage
             const savedId = localStorage.getItem('nestmind_f_id');
             if (savedId) drop.value = savedId;
-
-        } catch (e) { 
-            console.error("Load error:", e); 
+        } catch (err) {
             drop.innerHTML = '<option>Error loading franchises</option>';
+            console.error(err);
         }
-    };
+    }
+
+    // Initialize
+    window.onload = loadFranchises;
 
     function saveSelection(select) {
         const selected = select.selectedOptions[0];
@@ -141,10 +104,6 @@
             localStorage.setItem('nestmind_f_id', select.value);
             localStorage.setItem('nestmind_f_slug', selected.dataset.slug);
             localStorage.setItem('nestmind_f_name', selected.textContent);
-        } else {
-            localStorage.removeItem('nestmind_f_id');
-            localStorage.removeItem('nestmind_f_slug');
-            localStorage.removeItem('nestmind_f_name');
         }
     }
 </script>
