@@ -37,6 +37,28 @@
             text-align: center;
         }
 
+        .school-selection {
+            padding: 20px 25px 0 25px;
+        }
+
+        .school-selection label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        #f-select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            font-size: 16px;
+            background-color: white;
+        }
+
         .menu-list {
             padding: 25px;
             display: flex;
@@ -92,7 +114,14 @@
 <div class="menu-container">
     <div class="header">
         <h2 style="margin:0; letter-spacing: 1px; text-transform: uppercase;">NestMind Vault</h2>
-        <p style="margin:8px 0 0; font-size: 14px; opacity: 0.9;">Select Upload Category</p>
+        <p style="margin:8px 0 0; font-size: 14px; opacity: 0.9;">Select Location & Category</p>
+    </div>
+
+    <div class="school-selection">
+        <label>Current School Location</label>
+        <select id="f-select" onchange="saveSelection(this)">
+            <option value="">Loading Schools...</option>
+        </select>
     </div>
 
     <div class="menu-list">
@@ -120,11 +149,45 @@
             </div>
         </a>
     </div>
-    
-    <div style="text-align: center; padding-bottom: 20px; font-size: 11px; color: #cbd5e0;">
-        NestMind Central Intelligence v1.0
-    </div>
 </div>
+
+<script>
+    const API_F = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
+
+    window.onload = async () => {
+        try {
+            const res = await fetch(API_F);
+            const data = await res.json();
+            const drop = document.getElementById('f-select');
+            drop.innerHTML = '<option value="">Select Location...</option>';
+            
+            data.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.dataset.slug = f.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                opt.textContent = f.name;
+                drop.appendChild(opt);
+            });
+
+            // Restore previous selection if it exists
+            const savedId = localStorage.getItem('nestmind_f_id');
+            if (savedId) drop.value = savedId;
+        } catch (e) { console.error("Load error", e); }
+    };
+
+    function saveSelection(select) {
+        const selected = select.selectedOptions[0];
+        if (select.value) {
+            localStorage.setItem('nestmind_f_id', select.value);
+            localStorage.setItem('nestmind_f_slug', selected.dataset.slug);
+            localStorage.setItem('nestmind_f_name', selected.textContent);
+        } else {
+            localStorage.removeItem('nestmind_f_id');
+            localStorage.removeItem('nestmind_f_slug');
+            localStorage.removeItem('nestmind_f_name');
+        }
+    }
+</script>
 
 </body>
 </html>
