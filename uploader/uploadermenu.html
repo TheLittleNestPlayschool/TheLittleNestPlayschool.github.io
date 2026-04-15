@@ -29,18 +29,19 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.1); 
         }
 
+        /* Header is hidden by default, shown only on success */
         .header { 
+            display: none;
             background: var(--nest-blue); 
             color: white; 
             padding: 15px; 
             text-align: center; 
         }
         .header h2 { margin: 0; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; font-weight: 800; }
-        .header p { margin: 4px 0 0; font-size: 11px; opacity: 0.9; font-weight: 600; }
 
-        /* Permanent Navigation Row */
+        /* Navigation hidden until key is verified */
         .menu-nav { 
-            display: none; /* Hidden until key is verified */
+            display: none; 
             padding: 10px; 
             gap: 8px; 
             background: #f8fafc; 
@@ -62,30 +63,26 @@
 
         #module-frame { flex-grow: 1; border: none; width: 100%; background: var(--nest-bg); display: none; }
 
-        /* Lock Screen for unauthorized users */
+        /* Blank Access Denied State */
         #lock-screen { 
             flex-grow: 1; 
             display: flex; 
-            flex-direction: column; 
             align-items: center; 
             justify-content: center; 
-            padding: 40px; 
-            text-align: center; 
+            background: #fff;
         }
+        #lock-screen h1 { color: #cbd5e0; font-weight: 400; font-size: 24px; }
     </style>
 </head>
 <body>
 
 <div class="dashboard">
-    <div class="header">
+    <div class="header" id="main-header">
         <h2 id="main-title">NESTMIND VAULT</h2>
-        <p id="sub-header">Secure Internal Uploader</p>
     </div>
 
     <div id="lock-screen">
-        <span style="font-size: 50px;">🔒</span>
-        <h3 style="color: #cbd5e0;">Access Denied</h3>
-        <p style="color: #a0aec0; font-size: 13px;">A valid branch key is required to access the vault.</p>
+        <h1>Access Denied</h1>
     </div>
 
     <div class="menu-nav" id="main-nav">
@@ -107,38 +104,35 @@
     async function authenticateAndLoad() {
         const lockScreen = document.getElementById('lock-screen');
         const mainNav = document.getElementById('main-nav');
+        const mainHeader = document.getElementById('main-header');
         const frame = document.getElementById('module-frame');
         const title = document.getElementById('main-title');
         
-        // 1. Get key from URL
         const urlParams = new URLSearchParams(window.location.search);
         const tlnpKey = urlParams.get('tlnp');
 
-        if (!tlnpKey) return; // Stay locked if no key
+        if (!tlnpKey) return; 
 
         try {
-            // 2. Fetch branches from Xano
             const response = await fetch(NEST_ENDPOINTS.franchise.list);
             const data = await response.json();
             
-            // 3. Find the one matching your access_key
             const matched = data.find(f => f.access_key === tlnpKey);
 
             if (matched) {
                 const slug = matched.name.toLowerCase().split(' ')[0].replace(/[^a-z0-9]/g, '');
                 
-                // 4. Save credentials silently
                 localStorage.setItem('nestmind_f_id', matched.id);
                 localStorage.setItem('nestmind_f_slug', slug);
                 localStorage.setItem('nestmind_f_name', matched.name);
                 
-                // 5. Unlock UI
+                // Show the "App" UI
                 lockScreen.style.display = 'none';
+                mainHeader.style.display = 'block';
                 mainNav.style.display = 'flex';
                 frame.style.display = 'block';
                 title.innerText = matched.name.toUpperCase() + " VAULT";
                 
-                // 6. Clean URL so they don't see the key anymore
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         } catch (err) {
