@@ -6,23 +6,34 @@
     <link rel="stylesheet" href="../nest_style.css">
     <script src="../api_config.js"></script>
     <style>
-        :root { --primary-blue: #4a90e2; --deep-blue: #357abd; }
+        :root { --primary-blue: #4a90e2; --deep-blue: #357abd; --success-green: #2ecc71; }
         body { font-family: 'Segoe UI', sans-serif; background: #edf2f7; margin: 0; padding: 10px; }
-        .vault-container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .vault-container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; }
         .header { background: linear-gradient(135deg, var(--primary-blue), var(--deep-blue)); color: white; padding: 25px; text-align: center; }
         .school-badge { background: rgba(255, 255, 255, 0.2); padding: 6px 18px; border-radius: 50px; font-size: 14px; font-weight: 700; display: inline-block; margin-top: 10px; border: 1px solid rgba(255, 255, 255, 0.3); }
         .camera-box { padding: 40px 20px; text-align: center; border: 3px dashed #cbd5e0; margin: 20px; border-radius: 15px; cursor: pointer; }
         #preview-wrap { display: none; padding: 20px; text-align: center; }
         #preview-img { width: 100%; border-radius: 10px; margin-bottom: 15px; }
-        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
         .btn-sync { background: var(--primary-blue); color: white; margin-bottom: 10px; }
+        .btn-success { background: var(--success-green); color: white; margin-top: 20px; }
         .btn-back { background: #eee; color: #666; text-decoration: none; display: inline-block; text-align: center; margin-top: 10px; font-weight: 800; width: 100%; }
         #status-msg { font-weight: 700; color: var(--primary-blue); margin-top: 15px; text-align: center; min-height: 24px; }
+        
+        /* Success Overlay */
+        #success-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 10; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
 <div class="vault-container">
+    <div id="success-overlay">
+        <span style="font-size: 60px;">✅</span>
+        <h2 style="color: var(--success-green); margin: 20px 0 10px;">File Successfully Uploaded</h2>
+        <p style="color: #666; margin-bottom: 30px;">Your EOD report has been safely synced to the vault.</p>
+        <button class="btn btn-success" onclick="goToMenu()">Back to Menu</button>
+    </div>
+
     <div class="header">
         <h2 style="margin:0">EOD Report Vault</h2>
         <div class="school-badge" id="school-display">Loading Branch...</div>
@@ -65,6 +76,11 @@
         }
     }
 
+    function goToMenu() {
+        // This takes the user back to the 3-choice menu
+        window.location.href = 'uploader_menu.html';
+    }
+
     async function runSync() {
         const status = document.getElementById('status-msg');
         const syncBtn = document.getElementById('sync-btn');
@@ -75,10 +91,9 @@
         
         try {
             syncBtn.disabled = true;
-            status.innerText = "Syncing with Vault...";
+            status.innerText = "Uploading to Vault...";
 
             const formData = new FormData();
-            // These keys must match your Xano POST inputs exactly
             formData.append('file_resource', selectedFile);
             formData.append('file_name', fileKey);
 
@@ -88,11 +103,11 @@
             });
 
             if (response.ok) {
-                status.innerText = "Success! EOD Synced to AWS.";
-                syncBtn.style.display = 'none'; // Hide button after success
+                // Show the success overlay instead of redirecting automatically
+                document.getElementById('success-overlay').style.display = 'flex';
             } else {
                 const errData = await response.json();
-                console.error("Xano Error Detail:", errData);
+                console.error("Xano Error:", errData);
                 throw new Error(errData.message || "Upload Failed");
             }
         } catch (err) {
