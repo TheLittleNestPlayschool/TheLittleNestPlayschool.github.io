@@ -131,24 +131,21 @@
                 body: JSON.stringify({ file_name: fileKey })
             });
 
-            if (!handshake.ok) throw new Error("Xano Handshake Failed");
+            if (!handshake.ok) throw new Error("Xano Connection Failed");
             
             const responseData = await handshake.json();
-            
-            // Fixed: Check both 'url' and 'form_name' depending on Xano return
-            const uploadUrl = responseData.url || responseData.form_name || responseData;
+            const uploadUrl = responseData.form_name || responseData.url || responseData;
 
             if (!uploadUrl || typeof uploadUrl !== 'string') {
-                console.error("Xano Response Error:", responseData);
                 throw new Error("Invalid URL from Xano");
             }
 
             status.innerText = "Syncing to AWS...";
             
-            // The actual upload to S3
+            // CLEAN PUT: No headers at all. This matches the simple Xano signature.
             const s3Res = await fetch(uploadUrl, {
                 method: 'PUT',
-                body: selectedFile
+                body: selectedFile 
             });
 
             if (s3Res.ok) {
@@ -157,7 +154,7 @@
             } else {
                 const s3Err = await s3Res.text();
                 console.log("AWS Detail:", s3Err);
-                throw new Error("AWS 403 Forbidden. Check IAM Policy.");
+                throw new Error("AWS 403 Forbidden. Check S3 Bucket Ownership settings.");
             }
         } catch (err) {
             status.innerText = "Error: " + err.message;
