@@ -14,13 +14,12 @@
         .camera-box { padding: 40px 20px; text-align: center; border: 3px dashed #cbd5e0; margin: 20px; border-radius: 15px; cursor: pointer; }
         #preview-wrap { display: none; padding: 20px; text-align: center; }
         #preview-img { width: 100%; border-radius: 10px; margin-bottom: 15px; }
-        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; text-decoration: none; display: block; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; text-decoration: none; display: block; box-sizing: border-box; text-align: center; }
         .btn-sync { background: var(--primary-blue); color: white; margin-bottom: 10px; }
         .btn-menu { background: var(--success-green); color: white; margin-top: 20px; }
-        .btn-back { background: #eee; color: #666; margin-top: 10px; font-weight: 800; text-align: center; }
+        .btn-back { background: #eee; color: #666; margin-top: 10px; font-weight: 800; }
         #status-msg { font-weight: 700; color: var(--primary-blue); margin-top: 15px; text-align: center; }
         
-        /* Success Screen Overlay */
         #success-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; }
     </style>
 </head>
@@ -30,8 +29,8 @@
     <div id="success-screen">
         <span style="font-size: 60px;">✅</span>
         <h2 style="color: var(--success-green); margin: 20px 0 10px;">File Successfully Uploaded</h2>
-        <p style="color: #666; margin-bottom: 30px;">Your EOD report has been safely synced to the vault.</p>
-        <a href="javascript:void(0)" onclick="goToMenu()" class="btn btn-menu">Back to Menu</a>
+        <p style="color: #666; margin-bottom: 30px;">Your EOD report has been safely synced.</p>
+        <a href="./uploader_menu.html" class="btn btn-menu">Back to Menu</a>
     </div>
 
     <div class="header">
@@ -46,14 +45,14 @@
             <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="showPreview(this)">
         </div>
         <div style="text-align: center; padding: 0 20px 20px;">
-            <a href="javascript:void(0)" onclick="goToMenu()" class="btn btn-back">← Back to Menu</a>
+            <a href="./uploader_menu.html" class="btn btn-back">← Back to Menu</a>
         </div>
     </div>
 
     <div id="preview-wrap">
         <img id="preview-img" src="">
         <button class="btn btn-sync" id="sync-btn" onclick="runSync()">Sync EOD to Vault</button>
-        <button class="btn btn-back" style="width:100%" onclick="location.reload()">Retake Photo</button>
+        <button class="btn btn-back" onclick="location.reload()">Retake Photo</button>
         <p id="status-msg"></p>
     </div>
 </div>
@@ -74,12 +73,6 @@
             document.getElementById('capture-stage').style.display = 'none';
             document.getElementById('preview-wrap').style.display = 'block';
         }
-    }
-
-    // Force Absolute Navigation to prevent protocol dropping (HTTPS fix)
-    function goToMenu() {
-        const root = window.location.origin;
-        window.location.href = root + '/uploader/uploader_menu.html';
     }
 
     async function runSync() {
@@ -104,11 +97,9 @@
             });
 
             if (response.ok) {
-                // Show success screen and block any further auto-navigation
                 document.getElementById('success-screen').style.display = 'flex';
             } else {
                 const errData = await response.json();
-                console.error("Xano Error:", errData);
                 throw new Error(errData.message || "Upload Failed");
             }
         } catch (err) {
