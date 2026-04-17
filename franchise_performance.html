@@ -1,7 +1,32 @@
 <link rel="stylesheet" href="/nest_style.css">
 <script src="/api_config.js"></script>
 
-<div class="flex flex-col items-center justify-start w-full max-w-[98%] mx-auto space-y-4 animate-in fade-in duration-500 pb-20">
+<style>
+    /* Hide everything by default for security */
+    #perf-content, #lock-screen { display: none; }
+    
+    #lock-screen { 
+        min-height: 400px;
+        display: none; 
+        align-items: center; 
+        justify-content: center; 
+        flex-direction: column;
+        gap: 10px;
+    }
+    #lock-screen h1 { color: #cbd5e0; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+
+    /* Custom scrollbar for the session grid */
+    .compact-scroll::-webkit-scrollbar { width: 3px; }
+    .compact-scroll::-webkit-scrollbar-track { background: transparent; }
+    .compact-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+</style>
+
+<div id="lock-screen">
+    <h1>Access Denied</h1>
+    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Invalid or Missing Access Key</p>
+</div>
+
+<div id="perf-content" class="flex flex-col items-center justify-start w-full max-w-[98%] mx-auto space-y-3 animate-in fade-in duration-500 pb-20">
     
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
         
@@ -136,25 +161,23 @@
                     <option value="7">7 Days</option>
                 </select>
             </div>
-            <div id="billing-list" class="space-y-1.5 max-h-[120px] overflow-y-auto pr-1 text-left">
+            <div id="billing-list" class="space-y-1.5 max-h-[120px] overflow-y-auto pr-1 text-left custom-scrollbar">
                 <p class="text-[8px] text-slate-300 italic text-center py-4 uppercase">Synchronizing...</p>
             </div>
         </div>
     </div>
 
     <div class="bg-white w-full rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="px-6 py-3 border-b border-slate-50 bg-slate-50/30 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex flex-col text-left w-full">
-                <h2 class="text-[10px] font-black text-slate-800 uppercase tracking-tight leading-none">Session Capacity Monitor</h2>
-                <span class="text-[7px] font-bold text-slate-400 uppercase tracking-widest italic leading-none mt-1">Live Distribution</span>
+        <div class="px-5 py-2.5 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
+            <div class="flex flex-col text-left">
+                <h2 class="text-[9px] font-black text-slate-700 uppercase tracking-widest leading-none">Session Capacity Monitor</h2>
+                <span class="text-[7px] font-bold text-slate-400 uppercase tracking-tighter italic leading-none mt-1">Real-time occupancy</span>
             </div>
-            <div class="flex gap-2 w-full md:w-auto justify-end">
-                <button class="whitespace-nowrap text-[8px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all">Create Session Listing</button>
-            </div>
+            <button class="text-[7px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all">Create Session</button>
         </div>
         
-        <div id="perf-sessions-body" class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-h-[400px] overflow-y-auto bg-slate-50/10">
-        </div>
+        <div id="perf-sessions-body" class="p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 max-h-[220px] overflow-y-auto bg-slate-50/10 compact-scroll">
+            </div>
     </div>
 
     <div class="w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -236,27 +259,38 @@
 
 <script>
     async function initPerformance() {
-        const getIdentity = () => {
-            return new Promise((resolve) => {
-                let attempts = 0;
-                const interval = setInterval(() => {
-                    const fid = localStorage.getItem('locked_franchise_id');
-                    const endpoints = window.NEST_ENDPOINTS;
-                    if (fid && endpoints) {
-                        clearInterval(interval);
-                        resolve({ fid, endpoints });
-                    }
-                    if (attempts > 50) { clearInterval(interval); resolve(null); }
-                    attempts++;
-                }, 100);
-            });
-        };
+        const lockScreen = document.getElementById('lock-screen');
+        const content = document.getElementById('perf-content');
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const tlnpKey = urlParams.get('tlnp');
 
-        const identity = await getIdentity();
-        if (!identity) return;
-        const { fid, endpoints } = identity;
+        if (!tlnpKey) {
+            lockScreen.style.display = 'flex';
+            content.style.display = 'none';
+            return;
+        }
 
         try {
+            const response = await fetch(NEST_ENDPOINTS.franchise.list);
+            const data = await response.json();
+            const franchises = Array.isArray(data) ? data : (data.items || []);
+            const matched = franchises.find(f => f.access_key === tlnpKey);
+
+            if (!matched) {
+                lockScreen.style.display = 'flex';
+                content.style.display = 'none';
+                return;
+            }
+
+            const fid = matched.id;
+            localStorage.setItem('locked_franchise_id', fid);
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            lockScreen.style.display = 'none';
+            content.style.display = 'flex';
+
+            const endpoints = window.NEST_ENDPOINTS;
             const [sessionRes, studentRes, profileRes, parentRes] = await Promise.all([
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`),
@@ -269,7 +303,6 @@
             const profilesRaw = await profileRes.json();
             const parentsRaw = await parentRes.json();
             
-            // SECURITY FILTER: Ensure items belong to the current franchise
             const sessions = (Array.isArray(sessionsRaw) ? sessionsRaw : (sessionsRaw.items || [])).filter(i => i.franchise_id == fid);
             const students = (Array.isArray(studentsRaw) ? studentsRaw : (studentsRaw.items || [])).filter(i => i.franchise_id == fid);
             const profiles = (Array.isArray(profilesRaw) ? profilesRaw : (profilesRaw.items || [])).filter(i => i.franchise_id == fid);
@@ -345,26 +378,30 @@
                 const max = session.max_students || 15;
                 const percent = Math.min((count / max) * 100, 100);
                 
+                // Condensed Tile Layout
                 grid.insertAdjacentHTML('beforeend', `
-                    <div class="bg-white border border-slate-100 p-3 rounded-xl shadow-sm hover:shadow-md transition-all">
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="flex flex-col">
-                                <span class="text-[9px] font-black text-slate-700 uppercase leading-tight truncate w-32">${session.name}</span>
-                                <span class="text-[7px] font-bold text-slate-400 italic">${session.start_time_text || '--'}</span>
+                    <div class="bg-white border border-slate-100 p-2 rounded-lg shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <div class="flex flex-col overflow-hidden">
+                                <span class="text-[8px] font-black text-slate-700 uppercase leading-none truncate w-full">${session.name}</span>
+                                <span class="text-[7px] font-bold text-slate-300 italic leading-none mt-1">${session.start_time_text || '--'}</span>
                             </div>
-                            <span class="text-[9px] font-black text-slate-800">${count}/${max}</span>
+                            <span class="text-[8px] font-black text-slate-800 ml-1">${count}/${max}</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <div class="flex-grow h-1.5 bg-slate-50 rounded-full overflow-hidden">
+                        <div class="mt-2 flex items-center gap-1.5">
+                            <div class="flex-grow h-1 bg-slate-50 rounded-full overflow-hidden">
                                 <div class="h-full bg-[#00d1b2] transition-all duration-700" style="width: ${percent}%"></div>
                             </div>
-                            <span class="text-[8px] font-black text-slate-400 w-6 text-right">${Math.round(percent)}%</span>
+                            <span class="text-[6px] font-black text-slate-400 w-4 text-right">${Math.round(percent)}%</span>
                         </div>
                     </div>`);
             });
 
             if (window.calculateROI) window.calculateROI();
-        } catch (e) { console.error("Performance Load Fail:", e); }
+        } catch (e) { 
+            console.error("Performance Auth/Load Fail:", e); 
+            lockScreen.style.display = 'flex';
+        }
     }
 
     window.calculateROI = () => {
@@ -384,8 +421,9 @@
         document.getElementById('recovery-bar').style.width = Math.max(recoveryPercent * 10, 0.5) + "%";
     };
 
-    initPerformance();
+    window.onload = initPerformance;
 </script>
+
 <style>
     .custom-scrollbar::-webkit-scrollbar { width: 3px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; }
