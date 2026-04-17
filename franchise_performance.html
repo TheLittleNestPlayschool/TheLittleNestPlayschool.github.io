@@ -143,15 +143,15 @@
     </div>
 
     <div class="bg-white w-full rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="px-5 py-2 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
+        <div class="px-5 py-2.5 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
             <div class="flex flex-col text-left">
-                <h2 class="text-[9px] font-black text-slate-800 uppercase tracking-widest leading-none">Session Capacity Monitor</h2>
-                <span class="text-[7px] font-bold text-slate-400 uppercase tracking-widest italic leading-none mt-1">Live Occupancy</span>
+                <h2 class="text-[9px] font-black text-slate-700 uppercase tracking-widest leading-none">Session Capacity Monitor</h2>
+                <span class="text-[7px] font-bold text-slate-400 uppercase tracking-tighter italic leading-none mt-1">Live Distribution</span>
             </div>
-            <button class="text-[8px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all">Create Session</button>
+            <button class="text-[7px] font-black uppercase tracking-widest bg-[#00d1b2] text-white px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all">New Session</button>
         </div>
         
-        <div id="perf-sessions-body" class="p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 max-h-[250px] overflow-y-auto bg-slate-50/10 custom-scrollbar">
+        <div id="perf-sessions-body" class="p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 max-h-[220px] overflow-y-auto bg-slate-50/10 custom-scrollbar">
         </div>
     </div>
 
@@ -209,22 +209,25 @@
         const { fid, endpoints } = identity;
 
         try {
-            const [sessionRes, studentRes, profileRes, parentRes] = await Promise.all([
+            const [sessionRes, studentRes, profileRes, parentRes, enrollmentRes] = await Promise.all([
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.lead_profile.list}?franchise_id=${fid}`),
-                fetch(`${endpoints.parent.list}?franchise_id=${fid}`)
+                fetch(`${endpoints.parent.list}?franchise_id=${fid}`),
+                fetch(`${endpoints.session_enrollment.list}?franchise_id=${fid}`)
             ]);
 
             const sessionsRaw = await sessionRes.json();
             const studentsRaw = await studentRes.json();
             const profilesRaw = await profileRes.json();
             const parentsRaw = await parentRes.json();
+            const enrollmentsRaw = await enrollmentRes.json();
             
             const sessions = (Array.isArray(sessionsRaw) ? sessionsRaw : (sessionsRaw.items || [])).filter(i => i.franchise_id == fid);
             const students = (Array.isArray(studentsRaw) ? studentsRaw : (studentsRaw.items || [])).filter(i => i.franchise_id == fid);
             const profiles = (Array.isArray(profilesRaw) ? profilesRaw : (profilesRaw.items || [])).filter(i => i.franchise_id == fid);
             const parents = (Array.isArray(parentsRaw) ? parentsRaw : (parentsRaw.items || [])).filter(i => i.franchise_id == fid);
+            const enrollments = (Array.isArray(enrollmentsRaw) ? enrollmentsRaw : (enrollmentsRaw.items || [])).filter(i => i.franchise_id == fid);
 
             const now = new Date();
             const oneDay = 24 * 60 * 60 * 1000;
@@ -287,8 +290,14 @@
 
             const grid = document.getElementById('perf-sessions-body');
             grid.innerHTML = ''; 
+            
             const sessionCounts = {};
-            activeStudents.forEach(s => { if (s.session_id) sessionCounts[s.session_id] = (sessionCounts[s.session_id] || 0) + 1; });
+            enrollments.forEach(enr => { 
+                // Now checking boolean status
+                if (enr.status === true && enr.session_id) {
+                    sessionCounts[enr.session_id] = (sessionCounts[enr.session_id] || 0) + 1; 
+                }
+            });
 
             const displaySessions = sessions.filter(s => s.display === true);
             displaySessions.forEach(session => {
@@ -301,7 +310,7 @@
                         <div class="flex justify-between items-start">
                             <div class="flex flex-col overflow-hidden">
                                 <span class="text-[8px] font-black text-slate-700 uppercase leading-none truncate w-full">${session.name}</span>
-                                <span class="text-[7px] font-bold text-slate-300 italic leading-none mt-0.5">${session.start_time_text || '--'}</span>
+                                <span class="text-[7px] font-bold text-slate-300 italic leading-none mt-1">${session.start_time_text || '--'}</span>
                             </div>
                             <span class="text-[8px] font-black text-slate-800 ml-1">${count}/${max}</span>
                         </div>
@@ -309,7 +318,7 @@
                             <div class="flex-grow h-1 bg-slate-50 rounded-full overflow-hidden">
                                 <div class="h-full bg-[#00d1b2] transition-all duration-700" style="width: ${percent}%"></div>
                             </div>
-                            <span class="text-[7px] font-black text-slate-400 w-4 text-right">${Math.round(percent)}%</span>
+                            <span class="text-[6px] font-black text-slate-400 w-4 text-right">${Math.round(percent)}%</span>
                         </div>
                     </div>`);
             });
