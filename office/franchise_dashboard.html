@@ -11,7 +11,7 @@
             <div class="bg-[#1e293b] p-3 rounded-xl border border-slate-700/50 text-center shadow-lg">
                 <p class="text-[9px] font-black text-[#2dd4bf] uppercase mb-2 tracking-widest opacity-80">Identity Lock</p>
                 
-                <select id="branch-select" onchange="unlockDashboard()" class="w-full bg-[#0f172a] text-white py-1.5 px-2 rounded-md border border-slate-600 text-[11px] focus:ring-1 focus:ring-[#00d1b2] outline-none cursor-pointer">
+                <select id="branch-select" onchange="unlockDashboard()" class="hidden w-full bg-[#0f172a] text-white py-1.5 px-2 rounded-md border border-slate-600 text-[11px] focus:ring-1 focus:ring-[#00d1b2] outline-none cursor-pointer">
                     <option value="">-- Select Branch --</option>
                 </select>
 
@@ -76,13 +76,12 @@
     <main id="main-workspace" class="flex-grow overflow-y-auto relative bg-[#f8fafc]">
         <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full">
             <h1 class="text-7xl font-black text-slate-800 tracking-tighter mb-2">NestMind</h1>
-            <p id="status-text" class="text-slate-400 font-medium text-sm italic">Please select a branch to initialize portal.</p>
+            <p id="status-text" class="text-slate-400 font-medium text-sm italic">Authenticating security key...</p>
         </div>
     </main>
 </div>
 
 <style>
-    /* Thin scrollbar for the tightened menu */
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
@@ -93,41 +92,59 @@
     const XANO_FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
 
     async function init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tlnpKey = urlParams.get('tlnp');
+        const select = document.getElementById('branch-select');
+        const statusText = document.getElementById('status-text');
+
         try {
             const res = await fetch(XANO_FRANCHISE_API);
             const data = await res.json();
-            const select = document.getElementById('branch-select');
-            
-            select.innerHTML = '<option value="">-- Select Branch --</option>';
-            data.forEach(f => {
-                let opt = document.createElement('option');
-                opt.value = f.id; 
-                opt.innerText = f.name;
-                select.appendChild(opt);
-            });
+            const franchises = Array.isArray(data) ? data : (data.items || []);
 
-            localStorage.removeItem('locked_franchise_id');
-            localStorage.removeItem('locked_franchise_name');
-            
-            select.value = "";
-            document.getElementById('status-text').innerText = "Please select a branch to initialize portal.";
+            // Check if we are using an Access Key (URL Pattern)
+            if (tlnpKey) {
+                const matched = franchises.find(f => f.access_key === tlnpKey);
+                
+                if (matched) {
+                    // Lock identity
+                    localStorage.setItem('locked_franchise_id', matched.id);
+                    localStorage.setItem('locked_franchise_name', matched.name);
+                    
+                    // Finalize UI appearance
+                    finalizeUnlock(matched.name);
+                    
+                    // Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } else {
+                    statusText.innerText = "Access Denied: Invalid Security Key.";
+                    statusText.classList.add('text-red-500');
+                }
+            } else {
+                // No Key found: Fallback to manual selection mode (Admin behavior)
+                select.classList.remove('hidden');
+                select.innerHTML = '<option value="">-- Select Branch --</option>';
+                franchises.forEach(f => {
+                    let opt = document.createElement('option');
+                    opt.value = f.id; 
+                    opt.innerText = f.name;
+                    select.appendChild(opt);
+                });
+                statusText.innerText = "Please select a branch to initialize portal.";
+            }
 
-        } catch (e) { console.error("Identity initialization failed", e); }
+        } catch (e) { 
+            console.error("Identity initialization failed", e);
+            statusText.innerText = "Connection Error. Please refresh.";
+        }
     }
 
-    function unlockDashboard() {
+    // This handles the transition from locked/select state to authenticated state
+    function finalizeUnlock(fname) {
         const select = document.getElementById('branch-select');
         const branchDisplay = document.getElementById('active-branch-name');
         const breadcrumbBox = document.getElementById('breadcrumb-container');
         const statusText = document.getElementById('status-text');
-        
-        const fid = select.value;
-        if(!fid) return;
-
-        const fname = select.options[select.selectedIndex].text;
-        
-        localStorage.setItem('locked_franchise_id', fid);
-        localStorage.setItem('locked_franchise_name', fname);
         
         select.classList.add('hidden');
         branchDisplay.innerText = fname;
@@ -136,6 +153,19 @@
         document.getElementById('nav-menu').classList.remove('hidden');
         
         if(statusText) statusText.innerText = "Identity Verified: " + fname;
+    }
+
+    // Function for manual dropdown selection (if no key is used)
+    function unlockDashboard() {
+        const select = document.getElementById('branch-select');
+        const fid = select.value;
+        if(!fid) return;
+
+        const fname = select.options[select.selectedIndex].text;
+        localStorage.setItem('locked_franchise_id', fid);
+        localStorage.setItem('locked_franchise_name', fname);
+        
+        finalizeUnlock(fname);
     }
 
     async function loadModule(file, title) {
@@ -161,5 +191,5 @@
         } catch (e) { workspace.innerHTML = `<div class="p-10 text-red-500 font-bold">${e.message}</div>`; }
     }
 
-    init();
+    window.onload = init;
 </script>
