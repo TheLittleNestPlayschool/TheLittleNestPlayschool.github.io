@@ -257,7 +257,6 @@
         const { fid, endpoints } = identity;
 
         try {
-            // Updated Fetch to include parent list for Billing Due box
             const [sessionRes, studentRes, profileRes, parentRes] = await Promise.all([
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`),
@@ -270,10 +269,11 @@
             const profilesRaw = await profileRes.json();
             const parentsRaw = await parentRes.json();
             
-            const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : (sessionsRaw.items || []);
-            const students = Array.isArray(studentsRaw) ? studentsRaw : (studentsRaw.items || []);
-            const profiles = Array.isArray(profilesRaw) ? profilesRaw : (profilesRaw.items || []);
-            const parents = Array.isArray(parentsRaw) ? parentsRaw : (parentsRaw.items || []);
+            // SECURITY FILTER: Ensure items belong to the current franchise
+            const sessions = (Array.isArray(sessionsRaw) ? sessionsRaw : (sessionsRaw.items || [])).filter(i => i.franchise_id == fid);
+            const students = (Array.isArray(studentsRaw) ? studentsRaw : (studentsRaw.items || [])).filter(i => i.franchise_id == fid);
+            const profiles = (Array.isArray(profilesRaw) ? profilesRaw : (profilesRaw.items || [])).filter(i => i.franchise_id == fid);
+            const parents = (Array.isArray(parentsRaw) ? parentsRaw : (parentsRaw.items || [])).filter(i => i.franchise_id == fid);
 
             const now = new Date();
             const oneDay = 24 * 60 * 60 * 1000;
@@ -323,7 +323,6 @@
             document.getElementById('rev-monthly').innerText = (getCount(activeStudents, 0, oneMonth) * TUITION).toLocaleString();
             document.getElementById('rev-prev-monthly').innerText = (getCount(activeStudents, oneMonth, oneMonth * 2) * TUITION).toLocaleString();
 
-            // Populate Billing Due Box
             const billingContainer = document.getElementById('billing-list');
             billingContainer.innerHTML = '';
             parents.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || '')).forEach(p => {
