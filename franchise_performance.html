@@ -1,27 +1,7 @@
 <link rel="stylesheet" href="/nest_style.css">
 <script src="/api_config.js"></script>
 
-<style>
-    /* Hide everything by default for security */
-    #perf-content, #lock-screen { display: none; }
-    
-    #lock-screen { 
-        min-height: 400px;
-        display: none; 
-        align-items: center; 
-        justify-content: center; 
-        flex-direction: column;
-        gap: 10px;
-    }
-    #lock-screen h1 { color: #cbd5e0; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
-</style>
-
-<div id="lock-screen">
-    <h1>Access Denied</h1>
-    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Invalid or Missing Access Key</p>
-</div>
-
-<div id="perf-content" class="flex flex-col items-center justify-start w-full max-w-[98%] mx-auto space-y-4 animate-in fade-in duration-500 pb-20">
+<div class="flex flex-col items-center justify-start w-full max-w-[98%] mx-auto space-y-4 animate-in fade-in duration-500 pb-20">
     
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
         
@@ -256,43 +236,27 @@
 
 <script>
     async function initPerformance() {
-        const lockScreen = document.getElementById('lock-screen');
-        const content = document.getElementById('perf-content');
-        
-        // 1. GET KEY FROM URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const tlnpKey = urlParams.get('tlnp');
+        const getIdentity = () => {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const interval = setInterval(() => {
+                    const fid = localStorage.getItem('locked_franchise_id');
+                    const endpoints = window.NEST_ENDPOINTS;
+                    if (fid && endpoints) {
+                        clearInterval(interval);
+                        resolve({ fid, endpoints });
+                    }
+                    if (attempts > 50) { clearInterval(interval); resolve(null); }
+                    attempts++;
+                }, 100);
+            });
+        };
 
-        if (!tlnpKey) {
-            lockScreen.style.display = 'flex';
-            content.style.display = 'none';
-            return;
-        }
+        const identity = await getIdentity();
+        if (!identity) return;
+        const { fid, endpoints } = identity;
 
         try {
-            // 2. VALIDATE KEY AGAINST FRANCHISE LIST
-            const response = await fetch(NEST_ENDPOINTS.franchise.list);
-            const data = await response.json();
-            const franchises = Array.isArray(data) ? data : (data.items || []);
-            const matched = franchises.find(f => f.access_key === tlnpKey);
-
-            if (!matched) {
-                lockScreen.style.display = 'flex';
-                content.style.display = 'none';
-                return;
-            }
-
-            // 3. SET IDENTITY AND CLEAN URL
-            const fid = matched.id;
-            localStorage.setItem('locked_franchise_id', fid);
-            window.history.replaceState({}, document.title, window.location.pathname);
-            
-            // Show UI
-            lockScreen.style.display = 'none';
-            content.style.display = 'flex';
-
-            // 4. LOAD PERFORMANCE DATA
-            const endpoints = window.NEST_ENDPOINTS;
             const [sessionRes, studentRes, profileRes, parentRes] = await Promise.all([
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`),
@@ -305,7 +269,7 @@
             const profilesRaw = await profileRes.json();
             const parentsRaw = await parentRes.json();
             
-            // DOUBLE-CHECK FILTER (Ensures safety even if API has leak)
+            // SECURITY FILTER: Ensure items belong to the current franchise
             const sessions = (Array.isArray(sessionsRaw) ? sessionsRaw : (sessionsRaw.items || [])).filter(i => i.franchise_id == fid);
             const students = (Array.isArray(studentsRaw) ? studentsRaw : (studentsRaw.items || [])).filter(i => i.franchise_id == fid);
             const profiles = (Array.isArray(profilesRaw) ? profilesRaw : (profilesRaw.items || [])).filter(i => i.franchise_id == fid);
@@ -400,10 +364,7 @@
             });
 
             if (window.calculateROI) window.calculateROI();
-        } catch (e) { 
-            console.error("Performance Auth/Load Fail:", e); 
-            lockScreen.style.display = 'flex';
-        }
+        } catch (e) { console.error("Performance Load Fail:", e); }
     }
 
     window.calculateROI = () => {
@@ -423,10 +384,8 @@
         document.getElementById('recovery-bar').style.width = Math.max(recoveryPercent * 10, 0.5) + "%";
     };
 
-    // Run on load
-    window.onload = initPerformance;
+    initPerformance();
 </script>
-
 <style>
     .custom-scrollbar::-webkit-scrollbar { width: 3px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; }
