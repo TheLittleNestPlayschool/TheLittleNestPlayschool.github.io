@@ -139,7 +139,9 @@
         const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${franchiseId}`);
         const parents = await resp.json();
         pSel.innerHTML = '<option value="">-- Select Parent --</option>';
-        parents.forEach(p => pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
+        parents.forEach(p => {
+            pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
+        });
     }
 
     async function loadStudents(pId) {
@@ -152,23 +154,19 @@
         sSel.innerHTML = '<option>Loading...</option>';
         
         try {
-            // WE SEND THE PARENT_ID HERE. 
-            // IF XANO RETURNS EVERYONE, THE XANO FILTER IS NOT MAPPED TO THIS INPUT.
+            // CRITICAL: We pass ?parent_id= to the student endpoint
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}`);
             const data = await resp.json();
             
-            console.log("Students loaded for parent " + pId, data);
-            
             sSel.innerHTML = '';
             if (data.length === 0) {
-                sSel.innerHTML = '<option value="">No students found</option>';
+                sSel.innerHTML = '<option value="">No students linked to this parent</option>';
             } else {
                 data.forEach(s => {
                     sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
                 });
             }
         } catch (e) {
-            console.error("Student load fail", e);
             sSel.innerHTML = '<option value="">Error loading</option>';
         }
     }
