@@ -71,16 +71,14 @@
     let mediaUrl = "";
     let basket = [];
     
-    // STRICT ID RETRIEVAL
-    function getBranchId() {
-        return localStorage.getItem('locked_franchise_id') || 
-               localStorage.getItem('nestmind_f_id') || 
-               window.parent.localStorage.getItem('locked_franchise_id') || 
-               window.parent.localStorage.getItem('nestmind_f_id');
+    // ARCHITECT: Cleaning local storage on start to prevent the 500 JSON error
+    const lockedId = localStorage.getItem('locked_franchise_id') || window.parent.localStorage.getItem('locked_franchise_id');
+    if (lockedId) {
+        localStorage.setItem('nestmind_f_id', lockedId); // Force sync
     }
 
-    const fId = getBranchId();
-    const slug = localStorage.getItem('nestmind_f_slug') || 'unknown';
+    const fId = localStorage.getItem('nestmind_f_id');
+    const slug = localStorage.getItem('nestmind_f_slug') || 'vault_upload';
 
     async function loadTeachers() {
         if(!fId) return;
@@ -89,7 +87,7 @@
             const data = await resp.json();
             const sel = document.getElementById('teacher-select');
             data.forEach(t => sel.innerHTML += `<option value="${t.name}">${t.name}</option>`);
-        } catch (e) { console.error("Teacher fetch issue"); }
+        } catch (e) { console.error("Resource fetch issue"); }
     }
     loadTeachers();
 
@@ -105,10 +103,9 @@
     async function uploadAndInitialize() {
         const status = document.getElementById('status-msg');
         const file = document.getElementById('input-cam').files[0];
-        const currentId = getBranchId(); // Re-verify ID at click
         
-        if (!currentId) {
-            status.innerText = "ERROR: NO FRANCHISE ID FOUND";
+        if (!fId) {
+            status.innerText = "ERROR: NO ACTIVE FRANCHISE ID";
             return;
         }
 
@@ -116,20 +113,17 @@
         const formData = new FormData();
         formData.append('file_resource', file);
         formData.append('file_name', `${slug}/eod_${Date.now()}.jpg`);
-        formData.append('franchise_id', parseInt(currentId));
+        formData.append('franchise_id', parseInt(fId)); // Send as integer to avoid JSON error
 
         try {
             const upResp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_proxy_upload", { method: 'POST', body: formData });
             
-            if (!upResp.ok) {
-                const err = await upResp.json();
-                throw new Error(err.message || "Xano Server Error");
-            }
+            if (!upResp.ok) throw new Error("AWS Upload Failed");
 
             const result = await upResp.json();
             mediaUrl = result.access_url || result.url || result.x1?.access_url;
 
-            await fetchParents(currentId);
+            await fetchParents();
 
             document.getElementById('upload-btn').style.display = 'none';
             document.getElementById('entry-section').style.display = 'block';
@@ -139,9 +133,9 @@
         }
     }
 
-    async function fetchParents(branchId) {
+    async function fetchParents() {
         const pSel = document.getElementById('parent-select');
-        const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${branchId}`);
+        const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${fId}`);
         const parents = await resp.json();
         pSel.innerHTML = '<option value="">-- Select Parent --</option>';
         parents.forEach(p => pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
@@ -149,10 +143,9 @@
 
     async function fetchStudentsForParent(pId) {
         const sSel = document.getElementById('student-select');
-        const branchId = getBranchId();
         if (!pId) return;
         sSel.innerHTML = '<option>Loading...</option>';
-        const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}&franchise_id=${branchId}`);
+        const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}&franchise_id=${fId}`);
         const data = await resp.json();
         sSel.innerHTML = '';
         data.forEach(s => sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
@@ -189,7 +182,6 @@
 
     async function syncBatch() {
         const status = document.getElementById('status-msg');
-        const branchId = getBranchId();
         status.innerText = "🚀 SYNCING...";
         try {
             await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/process_eod", {
@@ -198,7 +190,7 @@
                 body: JSON.stringify({
                     media_url: mediaUrl,
                     eod_date: new Date().toISOString().split('T')[0],
-                    franchise_id: parseInt(branchId),
+                    franchise_id: parseInt(fId),
                     record_list: basket
                 })
             });
