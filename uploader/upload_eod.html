@@ -9,31 +9,22 @@
         :root { --nest-blue: #4a90e2; --success: #2ecc71; --danger: #e74c3c; --bg-soft: #f8fafc; }
         body { font-family: 'Segoe UI', sans-serif; background: transparent; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         .module-card { width: 100%; max-width: 450px; background: #fff; border-radius: 12px; padding: 20px; box-sizing: border-box; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
-        
-        /* Camera Section */
         .camera-box { padding: 40px 20px; text-align: center; border: 2px dashed #cbd5e0; border-radius: 10px; cursor: pointer; background: var(--bg-soft); }
         #preview-img { width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-bottom: 15px; background: #000; display: none; }
-        
-        /* Form Section */
         .entry-form { display: none; border-top: 2px solid #edf2f7; padding-top: 20px; margin-top: 15px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; font-size: 11px; font-weight: 800; color: #4a5568; text-transform: uppercase; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none; background: white; -webkit-appearance: none; }
-
-        /* Table Section */
+        input, select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none; background: white; }
         .basket-wrap { margin-top: 20px; background: var(--bg-soft); border-radius: 8px; padding: 10px; border: 1px solid #e2e8f0; }
         .basket-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .basket-table th { text-align: left; color: #718096; padding: 8px; border-bottom: 2px solid #e2e8f0; }
         .basket-table td { padding: 10px 8px; border-bottom: 1px solid #edf2f7; }
-
-        /* Button Styling */
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; }
         .btn-upload { background: var(--nest-blue); color: white; margin-bottom: 10px; }
         .btn-add { background: white; color: var(--nest-blue); border: 2px solid var(--nest-blue); margin-top: 10px; }
-        .btn-sync { background: var(--success); color: white; display: none; margin-top: 25px; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3); }
+        .btn-sync { background: var(--success); color: white; display: none; margin-top: 25px; }
         .btn-del { color: var(--danger); font-size: 18px; cursor: pointer; text-align: center; width: 30px; }
-
-        #status-msg { font-size: 12px; font-weight: 800; color: var(--nest-blue); text-align: center; margin-top: 15px; }
+        #status-msg { font-size: 11px; font-weight: 800; color: var(--nest-blue); text-align: center; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -46,87 +37,69 @@
             <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="handleImageSelect(this)">
         </div>
         <img id="preview-img" src="">
-        <button class="btn btn-upload" id="upload-btn" style="display:none;" onclick="uploadPhotoToProxy()">Upload & Load Branch List</button>
+        <button class="btn btn-upload" id="upload-btn" style="display:none;" onclick="uploadAndInitialize()">Upload & Load Franchise Data</button>
     </div>
 
     <div id="entry-section" class="entry-form">
         <div class="form-group">
             <label>1. Select Parent</label>
-            <select id="parent-select" onchange="loadStudentsForParent(this.value)">
-                <option value="">-- Loading Branch Parents... --</option>
+            <select id="parent-select" onchange="loadStudents(this.value)">
+                <option value="">-- Select Parent --</option>
             </select>
         </div>
-        
         <div class="form-group">
             <label>2. Select Student</label>
-            <select id="student-select">
-                <option value="">-- Select Parent First --</option>
-            </select>
+            <select id="student-select"><option value="">-- Select Parent First --</option></select>
         </div>
-
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div class="form-group">
-                <label>Amount (PHP)</label>
-                <input type="number" id="amount-input" placeholder="0">
-            </div>
-            <div class="form-group">
-                <label>Received By</label>
-                <select id="teacher-select">
-                    <option value="">-- Select Teacher --</option>
-                </select>
-            </div>
+            <div class="form-group"><label>Amount (PHP)</label><input type="number" id="amount-input" placeholder="0"></div>
+            <div class="form-group"><label>Received By</label><select id="teacher-select"></select></div>
         </div>
-
-        <button class="btn btn-add" onclick="addRowToBasket()">+ Add to List</button>
-
+        <button class="btn btn-add" onclick="addToBasket()">+ Add to List</button>
         <div class="basket-wrap" id="basket-wrap" style="display:none;">
             <table class="basket-table">
                 <thead><tr><th>Student</th><th>Amount</th><th></th></tr></thead>
                 <tbody id="basket-body"></tbody>
             </table>
         </div>
-
-        <button class="btn btn-sync" id="sync-btn" onclick="syncBatch()">Final Sync: All Records</button>
+        <button class="btn btn-sync" id="sync-btn" onclick="syncBatch()">Final Sync</button>
     </div>
-    
     <p id="status-msg"></p>
 </div>
 
 <script>
     let mediaUrl = "";
     let basket = [];
+    
+    // Architect: Getting the ID directly from your local variable
     const franchiseId = localStorage.getItem('nestmind_f_id') || window.parent.localStorage.getItem('nestmind_f_id');
     const slug = localStorage.getItem('nestmind_f_slug') || 'unknown';
 
-    // 1. Initial Load: Get Teachers for this specific branch
+    // Load branch teachers immediately
     async function loadTeachers() {
+        if(!franchiseId) return console.error("No Franchise ID found in local storage");
         try {
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?franchise_id=${franchiseId}`);
-            const teachers = await resp.json();
+            const data = await resp.json();
             const sel = document.getElementById('teacher-select');
-            teachers.forEach(t => {
-                sel.innerHTML += `<option value="${t.name}">${t.name}</option>`;
-            });
-        } catch (e) { console.error("Teacher fetch failed", e); }
+            data.forEach(t => sel.innerHTML += `<option value="${t.name}">${t.name}</option>`);
+        } catch (e) { console.error("Teacher API call failed"); }
     }
     loadTeachers();
 
     function handleImageSelect(input) {
         if (input.files && input.files[0]) {
-            const preview = document.getElementById('preview-img');
-            preview.src = URL.createObjectURL(input.files[0]);
-            preview.style.display = 'block';
+            document.getElementById('preview-img').src = URL.createObjectURL(input.files[0]);
+            document.getElementById('preview-img').style.display = 'block';
             document.getElementById('cam-box').style.display = 'none';
             document.getElementById('upload-btn').style.display = 'block';
         }
     }
 
-    // 2. Upload Photo & Fetch All Parents for this franchise
-    async function uploadPhotoToProxy() {
+    async function uploadAndInitialize() {
         const status = document.getElementById('status-msg');
         const file = document.getElementById('input-cam').files[0];
-        status.innerText = "☁️ UPLOADING TO AWS...";
-        document.getElementById('upload-btn').disabled = true;
+        status.innerText = "☁️ SAVING PHOTO...";
         
         const formData = new FormData();
         formData.append('file_resource', file);
@@ -134,62 +107,53 @@
         formData.append('franchise_id', franchiseId);
 
         try {
-            const uploadResp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_proxy_upload", {
-                method: 'POST', body: formData
-            });
-            const result = await uploadResp.json();
-            mediaUrl = result.access_url || result.url || result.x1.access_url;
+            // 1. Photo Upload
+            const uploadResp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_proxy_upload", { method: 'POST', body: formData });
+            const uploadResult = await uploadResp.json();
+            mediaUrl = uploadResult.access_url || uploadResult.url || uploadResult.x1?.access_url;
 
-            // Success: Now pull the full parent list
-            status.innerText = "📁 LOADING PARENTS...";
+            // 2. Query Parent table specifically for THIS franchise_id
+            status.innerText = "📁 QUERYING BRANCH PARENTS...";
             await fetchFranchiseParents();
 
-            status.innerText = "✅ PHOTO SAVED. ADD RECORDS.";
+            status.innerText = "PHOTO SAVED. ADD RECORDS.";
             document.getElementById('upload-btn').style.display = 'none';
             document.getElementById('entry-section').style.display = 'block';
         } catch (e) { 
-            status.innerText = "❌ ERROR: Check Internet";
-            document.getElementById('upload-btn').disabled = false;
+            status.innerText = "ERROR: Could not query data. Check Xano Input."; 
         }
     }
 
     async function fetchFranchiseParents() {
         const pSel = document.getElementById('parent-select');
-        try {
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${franchiseId}`);
-            const parents = await resp.json();
-            
-            pSel.innerHTML = '<option value="">-- Select a Parent --</option>';
-            parents.forEach(p => {
-                pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
-            });
-        } catch (e) { pSel.innerHTML = '<option value="">Error loading</option>'; }
+        // This query uses your local variable franchiseId to filter the table
+        const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${franchiseId}`);
+        
+        if (!resp.ok) throw new Error("API Filter Error");
+        
+        const parents = await resp.json();
+        pSel.innerHTML = '<option value="">-- Select Parent --</option>';
+        parents.forEach(p => {
+            pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
+        });
     }
 
-    async function loadStudentsForParent(pId) {
-        if (!pId) return;
+    async function loadStudents(pId) {
         const sSel = document.getElementById('student-select');
-        sSel.innerHTML = '<option value="">-- Loading Students --</option>';
-        try {
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}`);
-            const students = await resp.json();
-            sSel.innerHTML = '';
-            students.forEach(s => {
-                sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-            });
-        } catch (e) { sSel.innerHTML = '<option value="">Error</option>'; }
+        if (!pId) return;
+        sSel.innerHTML = '<option>Loading...</option>';
+        // Using existing student API
+        const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}`);
+        const data = await resp.json();
+        sSel.innerHTML = '';
+        data.forEach(s => sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
     }
 
-    // 3. Basket Logic
-    function addRowToBasket() {
+    function addToBasket() {
         const pSel = document.getElementById('parent-select');
         const sSel = document.getElementById('student-select');
         const amt = document.getElementById('amount-input').value;
-
-        if (!sSel.value || !amt || amt <= 0) {
-            alert("Select student and enter amount");
-            return;
-        }
+        if (!sSel.value || !amt) return alert("Select student and amount");
 
         basket.push({
             parent_id: parseInt(pSel.value),
@@ -201,50 +165,36 @@
             processed: false
         });
 
-        renderBasketUI();
-        // Clear student and amount, keep parent for sibling entries
+        renderBasket();
         document.getElementById('amount-input').value = '';
     }
 
-    function renderBasketUI() {
+    function renderBasket() {
         const body = document.getElementById('basket-body');
         body.innerHTML = '';
         basket.forEach((item, i) => {
-            body.innerHTML += `<tr>
-                <td>${item.student_name}</td>
-                <td>₱${item.amount.toLocaleString()}</td>
-                <td class="btn-del" onclick="basket.splice(${i},1);renderBasketUI()">✕</td>
-            </tr>`;
+            body.innerHTML += `<tr><td>${item.student_name}</td><td>₱${item.amount}</td><td class="btn-del" onclick="basket.splice(${i},1);renderBasket()">✕</td></tr>`;
         });
         document.getElementById('basket-wrap').style.display = basket.length ? 'block' : 'none';
         document.getElementById('sync-btn').style.display = basket.length ? 'block' : 'none';
     }
 
-    // 4. Batch Sync to process_eod
     async function syncBatch() {
         const status = document.getElementById('status-msg');
-        status.innerText = "🚀 SYNCING ALL RECORDS...";
-        document.getElementById('sync-btn').disabled = true;
-
-        try {
-            const resp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/process_eod", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    media_url: mediaUrl,
-                    eod_date: new Date().toISOString().split('T')[0],
-                    franchise_id: parseInt(franchiseId),
-                    record_list: basket
-                })
-            });
-
-            if (resp.ok) {
-                status.innerText = "✅ BATCH SYNCED SUCCESSFULLY!";
-                setTimeout(() => location.reload(), 2000);
-            } else { throw new Error(); }
-        } catch (e) {
-            status.innerText = "❌ SYNC FAILED. TRY AGAIN.";
-            document.getElementById('sync-btn').disabled = false;
+        status.innerText = "🚀 SYNCING...";
+        const resp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/process_eod", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                media_url: mediaUrl,
+                eod_date: new Date().toISOString().split('T')[0],
+                franchise_id: parseInt(franchiseId),
+                record_list: basket
+            })
+        });
+        if (resp.ok) {
+            status.innerText = "✅ DONE!";
+            setTimeout(() => location.reload(), 2000);
         }
     }
 </script>
