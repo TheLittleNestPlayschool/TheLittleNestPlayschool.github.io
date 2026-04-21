@@ -43,18 +43,16 @@
     <div id="entry-section" class="entry-form">
         <div class="form-group">
             <label>1. Select Parent</label>
-            <select id="parent-select" onchange="fetchFilteredStudents(this.value)">
+            <select id="parent-select" onchange="fetchStudentsForParent(this.value)">
                 <option value="">-- Select Parent --</option>
             </select>
         </div>
-        
         <div class="form-group">
             <label>2. Select Student</label>
             <select id="student-select">
                 <option value="">-- Select Parent First --</option>
             </select>
         </div>
-
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div class="form-group">
                 <label>Amount (PHP)</label>
@@ -65,19 +63,15 @@
                 <select id="teacher-select"></select>
             </div>
         </div>
-
-        <button class="btn btn-add" onclick="addRecordToBasket()">+ Add to List</button>
-
+        <button class="btn btn-add" onclick="addEntry()">+ Add to List</button>
         <div class="basket-wrap" id="basket-wrap" style="display:none;">
             <table class="basket-table">
                 <thead><tr><th>Student</th><th>Amount</th><th></th></tr></thead>
                 <tbody id="basket-body"></tbody>
             </table>
         </div>
-
-        <button class="btn btn-sync" id="sync-btn" onclick="syncBatchToXano()">Final Sync: All Records</button>
+        <button class="btn btn-sync" id="sync-btn" onclick="syncBatch()">Final Sync</button>
     </div>
-    
     <p id="status-msg"></p>
 </div>
 
@@ -85,7 +79,8 @@
     let mediaUrl = "";
     let basket = [];
     
-    const fId = localStorage.getItem('nestmind_f_id') || window.parent.localStorage.getItem('nestmind_f_id');
+    // ARCHITECT: Force standard retrieval for the correct franchise lock
+    const fId = localStorage.getItem('locked_franchise_id') || localStorage.getItem('nestmind_f_id');
     const slug = localStorage.getItem('nestmind_f_slug') || 'unknown';
 
     async function loadTeachers() {
@@ -95,7 +90,7 @@
             const data = await resp.json();
             const sel = document.getElementById('teacher-select');
             data.forEach(t => sel.innerHTML += `<option value="${t.name}">${t.name}</option>`);
-        } catch (e) { console.error("Teacher fetch error"); }
+        } catch (e) { console.error("Teacher fetch issue"); }
     }
     loadTeachers();
 
@@ -111,58 +106,61 @@
     async function uploadAndInitialize() {
         const status = document.getElementById('status-msg');
         const file = document.getElementById('input-cam').files[0];
-        status.innerText = "☁️ UPLOADING...";
+        status.innerText = "☁️ SAVING PHOTO...";
         
         const formData = new FormData();
         formData.append('file_resource', file);
+        // Ensure franchise_id is passed as a string for the folder path
         formData.append('file_name', `${slug}/eod_${Date.now()}.jpg`);
-        formData.append('franchise_id', fId);
+        // Ensure this matches the EXACT input name in your aws_proxy_upload function
+        formData.append('franchise_id', parseInt(fId)); 
 
         try {
-            const upResp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_proxy_upload", { method: 'POST', body: formData });
-            const upRes = await upResp.json();
-            mediaUrl = upRes.access_url || upRes.url || upRes.x1?.access_url;
+            const upResp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_proxy_upload", { 
+                method: 'POST', 
+                body: formData 
+            });
+            
+            if (!upResp.ok) {
+                const errorData = await upResp.json();
+                throw new Error(errorData.message || "Xano 500 Error");
+            }
 
-            await fetchBranchParents();
+            const result = await upResp.json();
+            mediaUrl = result.access_url || result.url || result.x1?.access_url;
+
+            await fetchParents();
 
             document.getElementById('upload-btn').style.display = 'none';
             document.getElementById('entry-section').style.display = 'block';
             status.innerText = "PHOTO SAVED. ADD RECORDS.";
-        } catch (e) { status.innerText = "ERROR DURING UPLOAD"; }
+        } catch (e) { 
+            status.innerText = "UPLOAD ERROR: " + e.message; 
+            console.error(e);
+        }
     }
 
-    async function fetchBranchParents() {
+    async function fetchParents() {
         const pSel = document.getElementById('parent-select');
-        const url = `https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${fId}`;
-        console.log("Fetching Parents with URL:", url);
-        
-        const resp = await fetch(url);
+        const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${fId}`);
         const parents = await resp.json();
         pSel.innerHTML = '<option value="">-- Select Parent --</option>';
-        parents.forEach(p => {
-            pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
-        });
+        parents.forEach(p => pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
     }
 
-    async function fetchFilteredStudents(pId) {
+    async function fetchStudentsForParent(pId) {
         const sSel = document.getElementById('student-select');
         if (!pId) return;
         sSel.innerHTML = '<option>Loading...</option>';
-        
-        const url = `https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}&franchise_id=${fId}`;
-        console.log("Fetching Students with URL:", url);
-
         try {
-            const resp = await fetch(url);
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}&franchise_id=${fId}`);
             const data = await resp.json();
             sSel.innerHTML = '';
-            data.forEach(s => {
-                sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-            });
-        } catch (e) { sSel.innerHTML = '<option value="">Error fetching students</option>'; }
+            data.forEach(s => sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
+        } catch (e) { sSel.innerHTML = '<option value="">Error</option>'; }
     }
 
-    function addRecordToBasket() {
+    function addEntry() {
         const pSel = document.getElementById('parent-select');
         const sSel = document.getElementById('student-select');
         const amt = document.getElementById('amount-input').value;
@@ -178,21 +176,21 @@
             processed: false
         });
 
-        updateTable();
+        renderBasket();
         document.getElementById('amount-input').value = '';
     }
 
-    function updateTable() {
+    function renderBasket() {
         const body = document.getElementById('basket-body');
         body.innerHTML = '';
         basket.forEach((item, i) => {
-            body.innerHTML += `<tr><td>${item.student_name}</td><td>₱${item.amount.toLocaleString()}</td><td class="btn-del" onclick="basket.splice(${i},1);updateTable()">✕</td></tr>`;
+            body.innerHTML += `<tr><td>${item.student_name}</td><td>₱${item.amount.toLocaleString()}</td><td class="btn-del" onclick="basket.splice(${i},1);renderBasket()">✕</td></tr>`;
         });
         document.getElementById('basket-wrap').style.display = basket.length ? 'block' : 'none';
         document.getElementById('sync-btn').style.display = basket.length ? 'block' : 'none';
     }
 
-    async function syncBatchToXano() {
+    async function syncBatch() {
         const status = document.getElementById('status-msg');
         status.innerText = "🚀 SYNCING...";
         try {
