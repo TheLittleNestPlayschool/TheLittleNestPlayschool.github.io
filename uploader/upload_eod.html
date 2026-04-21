@@ -85,6 +85,7 @@
     let mediaUrl = "";
     let basket = [];
     
+    // Retrieve variables from the dashboard environment
     const franchiseId = localStorage.getItem('nestmind_f_id') || window.parent.localStorage.getItem('nestmind_f_id');
     const slug = localStorage.getItem('nestmind_f_slug') || 'unknown';
 
@@ -136,6 +137,7 @@
 
     async function fetchFranchiseParents() {
         const pSel = document.getElementById('parent-select');
+        // This MUST filter by franchiseId to remove Sariaya parents
         const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${franchiseId}`);
         const parents = await resp.json();
         pSel.innerHTML = '<option value="">-- Select Parent --</option>';
@@ -154,13 +156,13 @@
         sSel.innerHTML = '<option>Loading...</option>';
         
         try {
-            // CRITICAL: We pass ?parent_id= to the student endpoint
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}`);
+            // Passing both parent_id AND franchise_id for strict filtering
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}&franchise_id=${franchiseId}`);
             const data = await resp.json();
             
             sSel.innerHTML = '';
             if (data.length === 0) {
-                sSel.innerHTML = '<option value="">No students linked to this parent</option>';
+                sSel.innerHTML = '<option value="">No students found</option>';
             } else {
                 data.forEach(s => {
                     sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
