@@ -33,11 +33,11 @@
     <div id="upload-section">
         <div class="camera-box" id="cam-box" onclick="document.getElementById('input-cam').click()">
             <span style="font-size: 40px">📸</span>
-            <p style="font-weight: 800; margin: 10px 0 0; font-size: 14px; color: #2d3748;">SNAP EOD REPORT</p>
+            <p style="font-weight: 800; margin: 10px 0 0; font-size: 14px;">SNAP EOD REPORT</p>
             <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="handleImageSelect(this)">
         </div>
         <img id="preview-img" src="">
-        <button class="btn btn-upload" id="upload-btn" style="display:none;" onclick="uploadAndInitialize()">Upload & Load Franchise Data</button>
+        <button class="btn btn-upload" id="upload-btn" style="display:none;" onclick="uploadAndInitialize()">Upload & Continue</button>
     </div>
 
     <div id="entry-section" class="entry-form">
@@ -71,19 +71,19 @@
     let mediaUrl = "";
     let basket = [];
     
-    // Architect: Getting the ID directly from your local variable
+    // Architect: Using your existing local variable set by the access_key resolution
     const franchiseId = localStorage.getItem('nestmind_f_id') || window.parent.localStorage.getItem('nestmind_f_id');
     const slug = localStorage.getItem('nestmind_f_slug') || 'unknown';
 
-    // Load branch teachers immediately
+    // 1. Initial Load: Use existing variable to load branch teachers
     async function loadTeachers() {
-        if(!franchiseId) return console.error("No Franchise ID found in local storage");
+        if(!franchiseId) return;
         try {
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?franchise_id=${franchiseId}`);
             const data = await resp.json();
             const sel = document.getElementById('teacher-select');
             data.forEach(t => sel.innerHTML += `<option value="${t.name}">${t.name}</option>`);
-        } catch (e) { console.error("Teacher API call failed"); }
+        } catch (e) { console.error("Teacher fetch issue"); }
     }
     loadTeachers();
 
@@ -107,42 +107,33 @@
         formData.append('franchise_id', franchiseId);
 
         try {
-            // 1. Photo Upload
             const uploadResp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_proxy_upload", { method: 'POST', body: formData });
             const uploadResult = await uploadResp.json();
             mediaUrl = uploadResult.access_url || uploadResult.url || uploadResult.x1?.access_url;
 
-            // 2. Query Parent table specifically for THIS franchise_id
-            status.innerText = "📁 QUERYING BRANCH PARENTS...";
+            status.innerText = "📁 LOADING BRANCH PARENTS...";
             await fetchFranchiseParents();
 
             status.innerText = "PHOTO SAVED. ADD RECORDS.";
             document.getElementById('upload-btn').style.display = 'none';
             document.getElementById('entry-section').style.display = 'block';
         } catch (e) { 
-            status.innerText = "ERROR: Could not query data. Check Xano Input."; 
+            status.innerText = "ERROR: " + e.message; 
         }
     }
 
     async function fetchFranchiseParents() {
         const pSel = document.getElementById('parent-select');
-        // This query uses your local variable franchiseId to filter the table
         const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${franchiseId}`);
-        
-        if (!resp.ok) throw new Error("API Filter Error");
-        
         const parents = await resp.json();
         pSel.innerHTML = '<option value="">-- Select Parent --</option>';
-        parents.forEach(p => {
-            pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
-        });
+        parents.forEach(p => pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
     }
 
     async function loadStudents(pId) {
         const sSel = document.getElementById('student-select');
         if (!pId) return;
         sSel.innerHTML = '<option>Loading...</option>';
-        // Using existing student API
         const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}`);
         const data = await resp.json();
         sSel.innerHTML = '';
