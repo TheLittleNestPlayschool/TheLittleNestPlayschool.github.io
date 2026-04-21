@@ -85,11 +85,9 @@
     let mediaUrl = "";
     let basket = [];
     
-    // Architect: Standard variables from your dashboard setup
     const fId = localStorage.getItem('nestmind_f_id') || window.parent.localStorage.getItem('nestmind_f_id');
     const slug = localStorage.getItem('nestmind_f_slug') || 'unknown';
 
-    // Immediate: Load branch-specific teachers
     async function loadTeachers() {
         if(!fId) return;
         try {
@@ -113,7 +111,7 @@
     async function uploadAndInitialize() {
         const status = document.getElementById('status-msg');
         const file = document.getElementById('input-cam').files[0];
-        status.innerText = "☁️ UPLOADING SHEET...";
+        status.innerText = "☁️ UPLOADING...";
         
         const formData = new FormData();
         formData.append('file_resource', file);
@@ -125,22 +123,20 @@
             const upRes = await upResp.json();
             mediaUrl = upRes.access_url || upRes.url || upRes.x1?.access_url;
 
-            // Load branch-specific parents only
-            status.innerText = "📁 FETCHING BRANCH PARENTS...";
             await fetchBranchParents();
 
-            status.innerText = "PHOTO SAVED. ADD RECORDS.";
             document.getElementById('upload-btn').style.display = 'none';
             document.getElementById('entry-section').style.display = 'block';
-        } catch (e) { 
-            status.innerText = "ERROR DURING UPLOAD/INIT"; 
-        }
+            status.innerText = "PHOTO SAVED. ADD RECORDS.";
+        } catch (e) { status.innerText = "ERROR DURING UPLOAD"; }
     }
 
     async function fetchBranchParents() {
         const pSel = document.getElementById('parent-select');
-        // RELEVANT: Pass franchise_id to filter the list
-        const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${fId}`);
+        const url = `https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${fId}`;
+        console.log("Fetching Parents with URL:", url);
+        
+        const resp = await fetch(url);
         const parents = await resp.json();
         pSel.innerHTML = '<option value="">-- Select Parent --</option>';
         parents.forEach(p => {
@@ -150,14 +146,14 @@
 
     async function fetchFilteredStudents(pId) {
         const sSel = document.getElementById('student-select');
-        if (!pId) {
-            sSel.innerHTML = '<option value="">-- Select Parent First --</option>';
-            return;
-        }
+        if (!pId) return;
         sSel.innerHTML = '<option>Loading...</option>';
+        
+        const url = `https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}&franchise_id=${fId}`;
+        console.log("Fetching Students with URL:", url);
+
         try {
-            // RELEVANT: Pass parent_id AND franchise_id to strictly filter students
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}&franchise_id=${fId}`);
+            const resp = await fetch(url);
             const data = await resp.json();
             sSel.innerHTML = '';
             data.forEach(s => {
@@ -182,15 +178,15 @@
             processed: false
         });
 
-        updateBasketTable();
+        updateTable();
         document.getElementById('amount-input').value = '';
     }
 
-    function updateBasketTable() {
+    function updateTable() {
         const body = document.getElementById('basket-body');
         body.innerHTML = '';
         basket.forEach((item, i) => {
-            body.innerHTML += `<tr><td>${item.student_name}</td><td>₱${item.amount.toLocaleString()}</td><td class="btn-del" onclick="basket.splice(${i},1);updateBasketTable()">✕</td></tr>`;
+            body.innerHTML += `<tr><td>${item.student_name}</td><td>₱${item.amount.toLocaleString()}</td><td class="btn-del" onclick="basket.splice(${i},1);updateTable()">✕</td></tr>`;
         });
         document.getElementById('basket-wrap').style.display = basket.length ? 'block' : 'none';
         document.getElementById('sync-btn').style.display = basket.length ? 'block' : 'none';
@@ -198,9 +194,9 @@
 
     async function syncBatchToXano() {
         const status = document.getElementById('status-msg');
-        status.innerText = "🚀 SYNCING ALL RECORDS...";
+        status.innerText = "🚀 SYNCING...";
         try {
-            const resp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/process_eod", {
+            await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/process_eod", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -210,11 +206,9 @@
                     record_list: basket
                 })
             });
-            if (resp.ok) {
-                status.innerText = "✅ BATCH SYNCED SUCCESSFULLY!";
-                setTimeout(() => location.reload(), 2000);
-            }
-        } catch (e) { status.innerText = "❌ SYNC FAILED"; }
+            status.innerText = "✅ DONE!";
+            setTimeout(() => location.reload(), 2000);
+        } catch (e) { status.innerText = "❌ FAILED"; }
     }
 </script>
 </body>
