@@ -2,119 +2,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EOD Module</title>
+    <title>EOD Batch Uploader</title>
     <link rel="stylesheet" href="../nest_style.css">
     <script src="../api_config.js"></script>
     <style>
-        :root { --nest-blue: #4a90e2; --success: #2ecc71; }
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: transparent; 
-            margin: 0; padding: 5px; 
-            display: flex; flex-direction: column; align-items: center; 
-        }
-        .module-card { 
-            width: 100%; max-width: 400px; background: #fff; 
-            border-radius: 12px; padding: 10px; box-sizing: border-box;
-        }
-        .camera-box { 
-            padding: 20px 10px; text-align: center; border: 2px dashed #cbd5e0; 
-            border-radius: 10px; cursor: pointer; background: #f8fafc;
-        }
-        #preview-wrap { display: none; text-align: center; }
-        #preview-img { 
-            width: 100%; max-height: 300px; object-fit: contain; 
-            border-radius: 8px; margin-bottom: 10px; background: #000; 
-        }
-        .btn { 
-            width: 100%; padding: 14px; border-radius: 8px; border: none; 
-            font-weight: 800; font-size: 14px; cursor: pointer; text-transform: uppercase; 
-        }
-        .btn-sync { background: var(--nest-blue); color: white; }
-        .btn-reselect { background: #edf2f7; color: #718096; margin-top: 8px; }
-        #status-msg { font-size: 13px; font-weight: 800; color: var(--nest-blue); margin: 10px 0; text-align: center; }
-        #success-section { display: none; border-top: 2px solid #f0f4f8; padding-top: 15px; margin-top: 10px; }
+        :root { --nest-blue: #4a90e2; --success: #2ecc71; --danger: #e74c3c; }
+        body { font-family: 'Segoe UI', sans-serif; background: transparent; margin: 0; padding: 5px; display: flex; flex-direction: column; align-items: center; }
+        .module-card { width: 100%; max-width: 450px; background: #fff; border-radius: 12px; padding: 15px; box-sizing: border-box; }
+        .camera-box { padding: 25px; text-align: center; border: 2px dashed #cbd5e0; border-radius: 10px; cursor: pointer; background: #f8fafc; }
+        #preview-img { width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; margin-bottom: 10px; background: #000; display: none; }
+        
+        /* Form & Basket Styling */
+        .entry-form { display: none; border-top: 2px solid #f0f4f8; padding-top: 15px; margin-top: 10px; }
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 11px; font-weight: 800; color: #718096; text-transform: uppercase; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; }
+        
+        .basket-table { width: 100%; margin-top: 15px; border-collapse: collapse; font-size: 12px; }
+        .basket-table th { text-align: left; color: #718096; border-bottom: 2px solid #f0f4f8; padding: 5px; }
+        .basket-table td { padding: 8px 5px; border-bottom: 1px solid #f0f4f8; }
+        
+        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-top: 5px; }
+        .btn-upload { background: var(--nest-blue); color: white; }
+        .btn-add { background: #edf2f7; color: var(--nest-blue); border: 1px solid var(--nest-blue); }
+        .btn-sync { background: var(--success); color: white; display: none; margin-top: 20px; }
+        .btn-del { color: var(--danger); font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="module-card">
-    <div id="capture-stage">
-        <div class="camera-box" onclick="document.getElementById('input-cam').click()">
-            <span style="font-size: 35px">📸</span>
-            <p style="font-weight: 700; margin: 5px 0 0; color: #2d3748; font-size: 14px;">Select EOD report to upload</p>
-            <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="showPreview(this)">
+    <div id="upload-section">
+        <div class="camera-box" id="cam-box" onclick="document.getElementById('input-cam').click()">
+            <span style="font-size: 30px">📸</span>
+            <p style="font-weight: 700; margin: 5px 0 0; font-size: 13px;">Step 1: Snap EOD Sheet</p>
+            <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="handleImageSelect(this)">
         </div>
-    </div>
-
-    <div id="preview-wrap">
         <img id="preview-img" src="">
-        <button type="button" class="btn btn-sync" id="sync-btn" onclick="runSync()">Upload EOD report</button>
-        <button type="button" id="reselect-btn" class="btn btn-reselect" onclick="location.reload()">Reselect Picture</button>
-        <p id="status-msg"></p>
-
-        <div id="success-section">
-            <h3 style="color: var(--success); margin: 0; font-size: 16px;">✅ EOD Synced</h3>
-            <p style="font-size: 12px; color: #718096; margin-top: 5px;">Report Saved</p>
-        </div>
+        <button class="btn btn-upload" id="upload-btn" style="display:none;" onclick="uploadPhoto()">Upload Photo</button>
     </div>
+
+    <div id="entry-section" class="entry-form">
+        <div class="form-group">
+            <label>Parent Search</label>
+            <input type="text" id="parent-search" placeholder="Type name..." oninput="searchParents(this.value)">
+            <select id="parent-results" size="3" style="display:none; margin-top:5px;" onchange="selectParent(this)"></select>
+        </div>
+        
+        <div class="form-group">
+            <label>Student</label>
+            <select id="student-select"><option value="">Select Parent First</option></select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+                <label>Amount (PHP)</label>
+                <input type="number" id="amount-input" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Received By</label>
+                <select id="teacher-select"></select>
+            </div>
+        </div>
+
+        <button class="btn btn-add" onclick="addToBasket()">+ Add To List</button>
+
+        <table class="basket-table" id="basket-table">
+            <thead><tr><th>Student</th><th>Amount</th><th></th></tr></thead>
+            <tbody id="basket-body"></tbody>
+        </table>
+
+        <button class="btn btn-sync" id="sync-btn" onclick="syncAll()">Sync All Records</button>
+    </div>
+    
+    <p id="status-msg" style="text-align:center; font-size:12px; font-weight:700; margin-top:10px;"></p>
 </div>
 
 <script>
-    function getSlug() { return localStorage.getItem('nestmind_f_slug') || 'unknown'; }
+    let mediaUrl = "";
+    let basket = [];
+    let teachers = [];
 
-    function showPreview(input) {
+    const getFranchiseId = () => localStorage.getItem('nestmind_f_id') || window.parent.localStorage.getItem('nestmind_f_id');
+    const getSlug = () => localStorage.getItem('nestmind_f_slug') || 'unknown';
+
+    // 1. Initial Load: Get Teachers
+    async function loadTeachers() {
+        const resp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher");
+        teachers = await resp.json();
+        const sel = document.getElementById('teacher-select');
+        teachers.forEach(t => sel.innerHTML += `<option value="${t.name}">${t.name}</option>`);
+    }
+    loadTeachers();
+
+    // 2. Image Handling
+    function handleImageSelect(input) {
         if (input.files && input.files[0]) {
-            document.getElementById('preview-img').src = URL.createObjectURL(input.files[0]);
-            document.getElementById('capture-stage').style.display = 'none';
-            document.getElementById('preview-wrap').style.display = 'block';
+            const preview = document.getElementById('preview-img');
+            preview.src = URL.createObjectURL(input.files[0]);
+            preview.style.display = 'block';
+            document.getElementById('cam-box').style.display = 'none';
+            document.getElementById('upload-btn').style.display = 'block';
         }
     }
 
-    async function runSync() {
+    async function uploadPhoto() {
         const status = document.getElementById('status-msg');
-        const syncBtn = document.getElementById('sync-btn');
-        const reselectBtn = document.getElementById('reselect-btn');
-        const successSec = document.getElementById('success-section');
         const file = document.getElementById('input-cam').files[0];
-
-        // CHECK BOTH LOCAL STORAGE AND PARENT STORAGE FOR IFRAME COMPATIBILITY
-        const franchiseId = localStorage.getItem('nestmind_f_id') || window.parent.localStorage.getItem('nestmind_f_id');
-
-        if (!file) return;
+        status.innerText = "UPLOADING...";
+        
+        const formData = new FormData();
+        formData.append('file_resource', file);
+        formData.append('file_name', `${getSlug()}/${Date.now()}.jpg`);
+        formData.append('franchise_id', getFranchiseId());
 
         try {
-            syncBtn.style.display = 'none';
-            reselectBtn.style.display = 'none';
-            status.innerText = "SYNCING WITH CLOUD...";
-
-            const ext = file.name.split('.').pop().toLowerCase();
-            const fileName = `${getSlug()}/${Date.now()}-eod.${ext}`;
-
-            const formData = new FormData();
-            formData.append('file_resource', file);
-            formData.append('file_name', fileName);
-            
-            // PASS THE FRANCHISE ID TO XANO
-            formData.append('franchise_id', franchiseId);
-
-            const response = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_proxy_upload", {
-                method: 'POST',
-                body: formData
+            const resp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_proxy_upload", {
+                method: 'POST', body: formData
             });
+            const result = await resp.json();
+            mediaUrl = result.access_url || result.url; // Adjust based on your AWS proxy output
+            status.innerText = "PHOTO SAVED. ADD RECORDS.";
+            document.getElementById('upload-btn').style.display = 'none';
+            document.getElementById('entry-section').style.display = 'block';
+        } catch (e) { status.innerText = "UPLOAD FAILED"; }
+    }
 
-            if (response.ok) {
-                status.style.display = 'none';
-                successSec.style.display = 'block';
-            } else {
-                throw new Error("SYNC FAILED");
+    // 3. Search Logic
+    async function searchParents(val) {
+        if (val.length < 3) return;
+        const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?first_name=${val}`);
+        const data = await resp.json();
+        const resBox = document.getElementById('parent-results');
+        resBox.innerHTML = '';
+        data.forEach(p => resBox.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
+        resBox.style.display = 'block';
+    }
+
+    async function selectParent(el) {
+        const parentId = el.value;
+        const parentName = el.options[el.selectedIndex].text;
+        document.getElementById('parent-search').value = parentName;
+        document.getElementById('parent-results').style.display = 'none';
+        
+        // Fetch Students for this Parent
+        const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${parentId}`);
+        const students = await resp.json();
+        const sSel = document.getElementById('student-select');
+        sSel.innerHTML = '';
+        students.forEach(s => sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
+    }
+
+    // 4. Basket Logic
+    function addToBasket() {
+        const record = {
+            parent_id: parseInt(document.getElementById('parent-results').value),
+            student_id: parseInt(document.getElementById('student-select').value),
+            student_name: document.getElementById('student-select').options[document.getElementById('student-select').selectedIndex].text,
+            amount: parseInt(document.getElementById('amount-input').value),
+            received_by: document.getElementById('teacher-select').value,
+            paid_by: document.getElementById('parent-search').value // Using parent name as default payer
+        };
+
+        if (!record.student_id || !record.amount) return alert("Fill in Student and Amount");
+
+        basket.push(record);
+        renderBasket();
+        // Clear fields for next entry
+        document.getElementById('parent-search').value = '';
+        document.getElementById('student-select').innerHTML = '<option value="">Select Parent First</option>';
+        document.getElementById('amount-input').value = '';
+    }
+
+    function renderBasket() {
+        const body = document.getElementById('basket-body');
+        body.innerHTML = '';
+        basket.forEach((item, index) => {
+            body.innerHTML += `<tr><td>${item.student_name}</td><td>₱${item.amount}</td><td class="btn-del" onclick="basket.splice(${index},1);renderBasket()">✕</td></tr>`;
+        });
+        document.getElementById('sync-btn').style.display = basket.length > 0 ? 'block' : 'none';
+    }
+
+    // 5. Final Batch Sync
+    async function syncAll() {
+        const status = document.getElementById('status-msg');
+        status.innerText = "SYNCING BATCH...";
+        
+        const payload = {
+            media_url: mediaUrl,
+            eod_date: new Date().toISOString().split('T')[0],
+            franchise_id: getFranchiseId(),
+            record_list: basket
+        };
+
+        try {
+            const resp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/process_eod", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (resp.ok) {
+                status.innerText = "✅ ALL RECORDS SYNCED";
+                setTimeout(() => location.reload(), 2000);
             }
-        } catch (err) {
-            status.style.color = "red";
-            status.innerText = "ERROR: " + err.message;
-            syncBtn.style.display = 'block';
-            reselectBtn.style.display = 'block';
-        }
+        } catch (e) { status.innerText = "SYNC ERROR"; }
     }
 </script>
 </body>
