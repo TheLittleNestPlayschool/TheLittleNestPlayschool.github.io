@@ -9,26 +9,21 @@
         :root { --nest-blue: #4a90e2; --success: #2ecc71; --danger: #e74c3c; --bg-soft: #f8fafc; }
         body { font-family: 'Segoe UI', sans-serif; background: transparent; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         .module-card { width: 100%; max-width: 450px; background: #fff; border-radius: 12px; padding: 20px; box-sizing: border-box; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
-        
         .camera-box { padding: 40px 20px; text-align: center; border: 2px dashed #cbd5e0; border-radius: 10px; cursor: pointer; background: var(--bg-soft); }
         #preview-img { width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-bottom: 15px; background: #000; display: none; }
-        
         .entry-form { display: none; border-top: 2px solid #edf2f7; padding-top: 20px; margin-top: 15px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; font-size: 11px; font-weight: 800; color: #4a5568; text-transform: uppercase; margin-bottom: 5px; }
         input, select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none; background: white; }
-
         .basket-wrap { margin-top: 20px; background: var(--bg-soft); border-radius: 8px; padding: 10px; border: 1px solid #e2e8f0; }
         .basket-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .basket-table th { text-align: left; color: #718096; padding: 8px; border-bottom: 2px solid #e2e8f0; }
         .basket-table td { padding: 10px 8px; border-bottom: 1px solid #edf2f7; }
-
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; }
         .btn-upload { background: var(--nest-blue); color: white; margin-bottom: 10px; }
         .btn-add { background: white; color: var(--nest-blue); border: 2px solid var(--nest-blue); margin-top: 10px; }
         .btn-sync { background: var(--success); color: white; display: none; margin-top: 25px; }
         .btn-del { color: var(--danger); font-size: 18px; cursor: pointer; text-align: center; width: 30px; }
-
         #status-msg { font-size: 11px; font-weight: 800; color: var(--nest-blue); text-align: center; margin-top: 15px; }
     </style>
 </head>
@@ -90,7 +85,6 @@
     let mediaUrl = "";
     let basket = [];
     
-    // Architect: Standard variable retrieval from dashboard environment
     const franchiseId = localStorage.getItem('nestmind_f_id') || window.parent.localStorage.getItem('nestmind_f_id');
     const slug = localStorage.getItem('nestmind_f_slug') || 'unknown';
 
@@ -145,24 +139,38 @@
         const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${franchiseId}`);
         const parents = await resp.json();
         pSel.innerHTML = '<option value="">-- Select Parent --</option>';
-        parents.forEach(p => {
-            pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
-        });
+        parents.forEach(p => pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
     }
 
     async function loadStudents(pId) {
         const sSel = document.getElementById('student-select');
-        if (!pId) return;
+        if (!pId) {
+            sSel.innerHTML = '<option value="">-- Select Parent First --</option>';
+            return;
+        }
+        
         sSel.innerHTML = '<option>Loading...</option>';
         
-        // This call sends the parent_id to the filtered student API
-        const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}`);
-        const data = await resp.json();
-        
-        sSel.innerHTML = '';
-        data.forEach(s => {
-            sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-        });
+        try {
+            // WE SEND THE PARENT_ID HERE. 
+            // IF XANO RETURNS EVERYONE, THE XANO FILTER IS NOT MAPPED TO THIS INPUT.
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}`);
+            const data = await resp.json();
+            
+            console.log("Students loaded for parent " + pId, data);
+            
+            sSel.innerHTML = '';
+            if (data.length === 0) {
+                sSel.innerHTML = '<option value="">No students found</option>';
+            } else {
+                data.forEach(s => {
+                    sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+                });
+            }
+        } catch (e) {
+            console.error("Student load fail", e);
+            sSel.innerHTML = '<option value="">Error loading</option>';
+        }
     }
 
     function addToBasket() {
