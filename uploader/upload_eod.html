@@ -45,7 +45,7 @@
     <div id="entry-section" class="entry-form">
         <div class="form-group">
             <label>1. Select Parent</label>
-            <select id="parent-select" onchange="fetchStudentsForParent(this.value)">
+            <select id="parent-select" onchange="fetchFilteredStudents(this.value)">
                 <option value="">-- Select Parent --</option>
             </select>
         </div>
@@ -54,8 +54,16 @@
             <select id="student-select"><option value="">-- Select Parent First --</option></select>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div class="form-group"><label>Amount (PHP)</label><input type="number" id="amount-input" placeholder="0"></div>
-            <div class="form-group"><label>Received By</label><select id="teacher-select"></select></div>
+            <div class="form-group">
+                <label>Amount (PHP)</label>
+                <input type="number" id="amount-input" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Received By (Teacher)</label>
+                <select id="teacher-select">
+                    <option value="">-- Select Teacher --</option>
+                </select>
+            </div>
         </div>
         <button class="btn btn-add" onclick="addEntryToBasket()">+ Add to List</button>
         <div class="basket-wrap" id="basket-wrap" style="display:none;">
@@ -76,12 +84,14 @@
     const fId = Number(localStorage.getItem('nestmind_f_id'));
     const slug = localStorage.getItem('nestmind_f_slug') || 'vault';
 
+    // UPDATED: Now sends franchise_id to filter the teacher list
     async function loadTeachers() {
         if(!fId) return;
+        const sel = document.getElementById('teacher-select');
         try {
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?franchise_id=${fId}`);
             const data = await resp.json();
-            const sel = document.getElementById('teacher-select');
+            sel.innerHTML = '<option value="">-- Select Teacher --</option>';
             data.forEach(t => sel.innerHTML += `<option value="${t.name}">${t.name}</option>`);
         } catch (e) { console.error("Teacher fetch issue"); }
     }
@@ -119,44 +129,39 @@
 
     async function fetchParents() {
         const pSel = document.getElementById('parent-select');
-        // Standardizing the query parameter name
-        const url = `https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${fId}`;
-        console.log("Parent Query URL:", url);
-
         try {
-            const resp = await fetch(url);
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${fId}`);
             const parents = await resp.json();
             pSel.innerHTML = '<option value="">-- Select Parent --</option>';
-            parents.forEach(p => {
-                pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
-            });
-        } catch (e) { console.error("Parent lookup failed"); }
+            parents.forEach(p => pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`);
+        } catch (e) { console.error("Parent fetch error"); }
     }
 
-    async function fetchStudentsForParent(pId) {
+    async function fetchFilteredStudents(pId) {
         const sSel = document.getElementById('student-select');
         if (!pId) return;
-        sSel.innerHTML = '<option>Loading...</option>';
+        sSel.innerHTML = '<option>Filtering...</option>';
         try {
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}&franchise_id=${fId}`);
             const data = await resp.json();
             sSel.innerHTML = '';
             data.forEach(s => sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
-        } catch (e) { console.error("Student lookup failed"); }
+        } catch (e) { console.error("Student fetch error"); }
     }
 
     function addEntryToBasket() {
         const pSel = document.getElementById('parent-select');
         const sSel = document.getElementById('student-select');
+        const tSel = document.getElementById('teacher-select');
         const amtInput = document.getElementById('amount-input');
-        if (!sSel.value || !amtInput.value) return alert("Select student and amount");
+        if (!sSel.value || !amtInput.value || !tSel.value) return alert("Select student, teacher, and amount");
 
         basket.push({
             parent_id: parseInt(pSel.value),
             student_id: parseInt(sSel.value),
             student_name: sSel.options[sSel.selectedIndex].text,
             amount: parseInt(amtInput.value),
-            received_by: document.getElementById('teacher-select').value,
+            received_by: tSel.value,
             paid_by: pSel.options[pSel.selectedIndex].text,
             processed: false
         });
