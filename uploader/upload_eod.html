@@ -7,138 +7,26 @@
     <script src="../api_config.js"></script>
     <style>
         :root { 
-            --nest-blue: #4a90e2; 
-            --success: #2ecc71; 
-            --danger: #e74c3c; 
-            --bg-soft: #f8fafc; 
-            --border: #e2e8f0;
+            --nest-blue: #4a90e2; --success: #2ecc71; --danger: #e74c3c; --bg-soft: #f8fafc; --border: #e2e8f0;
         }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: transparent; 
-            margin: 0; 
-            padding: 10px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-        }
-        .module-card { 
-            width: 100%; 
-            max-width: 450px; 
-            background: #fff; 
-            border-radius: 12px; 
-            padding: 20px; 
-            box-sizing: border-box; 
-            box-shadow: 0 10px 15px rgba(0,0,0,0.1); 
-        }
-        
-        .camera-box { 
-            padding: 40px 20px; 
-            text-align: center; 
-            border: 2px dashed #cbd5e0; 
-            border-radius: 10px; 
-            cursor: pointer; 
-            background: var(--bg-soft); 
-            transition: all 0.2s ease;
-        }
-        .camera-box:hover { border-color: var(--nest-blue); background: #f1f5f9; }
-        #preview-img { 
-            width: 100%; 
-            max-height: 250px; 
-            object-fit: contain; 
-            border-radius: 8px; 
-            margin-bottom: 15px; 
-            background: #000; 
-            display: none; 
-        }
-        
-        .entry-form { 
-            display: none; 
-            border-top: 2px solid #edf2f7; 
-            padding-top: 20px; 
-            margin-top: 15px; 
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: transparent; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .module-card { width: 100%; max-width: 450px; background: #fff; border-radius: 12px; padding: 20px; box-sizing: border-box; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+        .camera-box { padding: 40px 20px; text-align: center; border: 2px dashed #cbd5e0; border-radius: 10px; cursor: pointer; background: var(--bg-soft); }
+        #preview-img { width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-bottom: 15px; background: #000; display: none; }
+        .entry-form { display: none; border-top: 2px solid #edf2f7; padding-top: 20px; margin-top: 15px; }
         .form-group { margin-bottom: 15px; }
-        label { 
-            display: block; 
-            font-size: 11px; 
-            font-weight: 800; 
-            color: #4a5568; 
-            text-transform: uppercase; 
-            margin-bottom: 5px; 
-            letter-spacing: 0.5px;
-        }
-        input, select { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1px solid var(--border); 
-            border-radius: 8px; 
-            font-size: 14px; 
-            outline: none; 
-            background: white;
-            transition: border 0.2s;
-        }
-        input:focus, select:focus { border-color: var(--nest-blue); }
-
-        .basket-wrap { 
-            margin-top: 20px; 
-            background: var(--bg-soft); 
-            border-radius: 8px; 
-            padding: 10px; 
-            border: 1px solid var(--border); 
-        }
+        label { display: block; font-size: 11px; font-weight: 800; color: #4a5568; text-transform: uppercase; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; background: white; }
+        .basket-wrap { margin-top: 20px; background: var(--bg-soft); border-radius: 8px; padding: 10px; border: 1px solid var(--border); }
         .basket-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .basket-table th { 
-            text-align: left; 
-            color: #718096; 
-            padding: 8px; 
-            border-bottom: 2px solid var(--border); 
-            text-transform: uppercase;
-            font-size: 10px;
-        }
-        .basket-table td { padding: 10px 8px; border-bottom: 1px solid #edf2f7; color: #2d3748; }
-
-        .btn { 
-            width: 100%; 
-            padding: 14px; 
-            border-radius: 8px; 
-            border: none; 
-            font-weight: 800; 
-            cursor: pointer; 
-            text-transform: uppercase; 
-            transition: transform 0.1s, opacity 0.2s;
-        }
-        .btn:active { transform: scale(0.98); }
+        .basket-table th { text-align: left; color: #718096; padding: 8px; border-bottom: 2px solid var(--border); font-size: 10px; }
+        .basket-table td { padding: 10px 8px; border-bottom: 1px solid #edf2f7; }
+        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; }
         .btn-upload { background: var(--nest-blue); color: white; margin-bottom: 10px; }
-        .btn-add { 
-            background: white; 
-            color: var(--nest-blue); 
-            border: 2px solid var(--nest-blue); 
-            margin-top: 10px; 
-        }
-        .btn-sync { 
-            background: var(--success); 
-            color: white; 
-            display: none; 
-            margin-top: 25px; 
-            box-shadow: 0 4px 6px rgba(46, 204, 113, 0.2);
-        }
-        .btn-del { 
-            color: var(--danger); 
-            font-size: 18px; 
-            cursor: pointer; 
-            text-align: center; 
-            width: 30px; 
-            font-weight: bold;
-        }
-
-        #status-msg { 
-            font-size: 11px; 
-            font-weight: 800; 
-            color: var(--nest-blue); 
-            text-align: center; 
-            margin-top: 15px; 
-        }
+        .btn-add { background: white; color: var(--nest-blue); border: 2px solid var(--nest-blue); margin-top: 10px; }
+        .btn-sync { background: var(--success); color: white; display: none; margin-top: 25px; }
+        .btn-del { color: var(--danger); font-size: 18px; cursor: pointer; text-align: center; width: 30px; font-weight: bold; }
+        #status-msg { font-size: 11px; font-weight: 800; color: var(--nest-blue); text-align: center; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -147,7 +35,7 @@
     <div id="upload-section">
         <div class="camera-box" id="cam-box" onclick="document.getElementById('input-cam').click()">
             <span style="font-size: 40px">📸</span>
-            <p style="font-weight: 800; margin: 10px 0 0; font-size: 14px; color: #2d3748;">SNAP EOD REPORT</p>
+            <p style="font-weight: 800; margin: 10px 0 0; font-size: 14px;">SNAP EOD REPORT</p>
             <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="handleImageSelect(this)">
         </div>
         <img id="preview-img" src="">
@@ -161,37 +49,23 @@
                 <option value="">-- Select Parent --</option>
             </select>
         </div>
-        
         <div class="form-group">
             <label>2. Select Student</label>
-            <select id="student-select">
-                <option value="">-- Select Parent First --</option>
-            </select>
+            <select id="student-select"><option value="">-- Select Parent First --</option></select>
         </div>
-
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div class="form-group">
-                <label>Amount (PHP)</label>
-                <input type="number" id="amount-input" placeholder="0">
-            </div>
-            <div class="form-group">
-                <label>Received By</label>
-                <select id="teacher-select"></select>
-            </div>
+            <div class="form-group"><label>Amount (PHP)</label><input type="number" id="amount-input" placeholder="0"></div>
+            <div class="form-group"><label>Received By</label><select id="teacher-select"></select></div>
         </div>
-
         <button class="btn btn-add" onclick="addEntryToBasket()">+ Add to List</button>
-
         <div class="basket-wrap" id="basket-wrap" style="display:none;">
             <table class="basket-table">
                 <thead><tr><th>Student</th><th>Amount</th><th></th></tr></thead>
                 <tbody id="basket-body"></tbody>
             </table>
         </div>
-
-        <button class="btn btn-sync" id="sync-btn" onclick="syncBatchToXano()">Final Sync: All Records</button>
+        <button class="btn btn-sync" id="sync-btn" onclick="syncBatchToXano()">Final Sync</button>
     </div>
-    
     <p id="status-msg"></p>
 </div>
 
@@ -200,7 +74,7 @@
     let basket = [];
     
     const fId = Number(localStorage.getItem('nestmind_f_id'));
-    const slug = localStorage.getItem('nestmind_f_slug') || 'vault_upload';
+    const slug = localStorage.getItem('nestmind_f_slug') || 'vault';
 
     async function loadTeachers() {
         if(!fId) return;
@@ -234,59 +108,60 @@
         try {
             const upResp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_proxy_upload", { method: 'POST', body: formData });
             const result = await upResp.json();
-            mediaUrl = result.access_url || result.url;
+            mediaUrl = result.access_url || result.url || result.x1?.access_url;
 
             await fetchParents();
-
             document.getElementById('upload-btn').style.display = 'none';
             document.getElementById('entry-section').style.display = 'block';
             status.innerText = "PHOTO SAVED. ADD RECORDS.";
-        } catch (e) { 
-            status.innerText = "UPLOAD FAILED. Check console."; 
-        }
+        } catch (e) { status.innerText = "UPLOAD FAILED."; }
     }
 
     async function fetchParents() {
         const pSel = document.getElementById('parent-select');
+        // Standardizing the query parameter name
+        const url = `https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${fId}`;
+        console.log("Parent Query URL:", url);
+
         try {
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${fId}`);
+            const resp = await fetch(url);
             const parents = await resp.json();
             pSel.innerHTML = '<option value="">-- Select Parent --</option>';
             parents.forEach(p => {
                 pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
             });
-        } catch (e) {
-            document.getElementById('status-msg').innerText = "PARENT LOOKUP FAILED.";
-        }
+        } catch (e) { console.error("Parent lookup failed"); }
     }
 
     async function fetchStudentsForParent(pId) {
         const sSel = document.getElementById('student-select');
         if (!pId) return;
         sSel.innerHTML = '<option>Loading...</option>';
-        const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}&franchise_id=${fId}`);
-        const data = await resp.json();
-        sSel.innerHTML = '';
-        data.forEach(s => sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
+        try {
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}&franchise_id=${fId}`);
+            const data = await resp.json();
+            sSel.innerHTML = '';
+            data.forEach(s => sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
+        } catch (e) { console.error("Student lookup failed"); }
     }
 
     function addEntryToBasket() {
         const pSel = document.getElementById('parent-select');
         const sSel = document.getElementById('student-select');
-        const amt = document.getElementById('amount-input').value;
-        if (!sSel.value || !amt) return alert("Missing info");
+        const amtInput = document.getElementById('amount-input');
+        if (!sSel.value || !amtInput.value) return alert("Select student and amount");
 
         basket.push({
             parent_id: parseInt(pSel.value),
             student_id: parseInt(sSel.value),
             student_name: sSel.options[sSel.selectedIndex].text,
-            amount: parseInt(amt),
+            amount: parseInt(amtInput.value),
             received_by: document.getElementById('teacher-select').value,
             paid_by: pSel.options[pSel.selectedIndex].text,
             processed: false
         });
         renderBasket();
-        document.getElementById('amount-input').value = '';
+        amtInput.value = '';
     }
 
     function renderBasket() {
