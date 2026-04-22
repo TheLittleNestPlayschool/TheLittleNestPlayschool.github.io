@@ -32,7 +32,6 @@
             box-shadow: 0 10px 15px rgba(0,0,0,0.1); 
         }
         
-        /* Camera & Preview */
         .camera-box { 
             padding: 40px 20px; 
             text-align: center; 
@@ -53,7 +52,6 @@
             display: none; 
         }
         
-        /* Form Styling */
         .entry-form { 
             display: none; 
             border-top: 2px solid #edf2f7; 
@@ -82,7 +80,6 @@
         }
         input:focus, select:focus { border-color: var(--nest-blue); }
 
-        /* Basket Table */
         .basket-wrap { 
             margin-top: 20px; 
             background: var(--bg-soft); 
@@ -101,7 +98,6 @@
         }
         .basket-table td { padding: 10px 8px; border-bottom: 1px solid #edf2f7; color: #2d3748; }
 
-        /* Buttons */
         .btn { 
             width: 100%; 
             padding: 14px; 
@@ -188,13 +184,7 @@
 
         <div class="basket-wrap" id="basket-wrap" style="display:none;">
             <table class="basket-table">
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Amount</th>
-                        <th></th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Student</th><th>Amount</th><th></th></tr></thead>
                 <tbody id="basket-body"></tbody>
             </table>
         </div>
@@ -209,30 +199,17 @@
     let mediaUrl = "";
     let basket = [];
     
-    // ARCHITECT: Storage Cleaning & Variable Resolution
-    const currentVaultId = localStorage.getItem('nestmind_f_id') || window.parent.localStorage.getItem('nestmind_f_id');
-    const staleLockedId = localStorage.getItem('locked_franchise_id');
-
-    if (currentVaultId && staleLockedId !== currentVaultId) {
-        console.log("Cleaning stale franchise lock...");
-        localStorage.removeItem('locked_franchise_id');
-        localStorage.setItem('locked_franchise_id', currentVaultId);
-    }
-
-    const fId = Number(localStorage.getItem('locked_franchise_id') || currentVaultId);
+    const fId = Number(localStorage.getItem('nestmind_f_id'));
     const slug = localStorage.getItem('nestmind_f_slug') || 'vault_upload';
 
-    // 1. Initial Load: Teachers
     async function loadTeachers() {
         if(!fId) return;
         try {
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?franchise_id=${fId}`);
             const data = await resp.json();
             const sel = document.getElementById('teacher-select');
-            data.forEach(t => {
-                sel.innerHTML += `<option value="${t.name}">${t.name}</option>`;
-            });
-        } catch (e) { console.error("Teacher fetch failed"); }
+            data.forEach(t => sel.innerHTML += `<option value="${t.name}">${t.name}</option>`);
+        } catch (e) { console.error("Teacher fetch issue"); }
     }
     loadTeachers();
 
@@ -246,32 +223,18 @@
         }
     }
 
-    // 2. Upload Process
     async function uploadAndInitialize() {
         const status = document.getElementById('status-msg');
-        const file = document.getElementById('input-cam').files[0];
-        
-        if (!fId) {
-            status.innerText = "ERROR: NO ACTIVE FRANCHISE ID";
-            return;
-        }
-
-        status.innerText = "☁️ SAVING PHOTO TO AWS...";
+        status.innerText = "☁️ SAVING PHOTO...";
         const formData = new FormData();
-        formData.append('file_resource', file);
+        formData.append('file_resource', document.getElementById('input-cam').files[0]);
         formData.append('file_name', `${slug}/eod_${Date.now()}.jpg`);
         formData.append('franchise_id', fId);
 
         try {
-            const upResp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_proxy_upload", { 
-                method: 'POST', 
-                body: formData 
-            });
-            
-            if (!upResp.ok) throw new Error("AWS Upload 500");
-
+            const upResp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_proxy_upload", { method: 'POST', body: formData });
             const result = await upResp.json();
-            mediaUrl = result.access_url || result.url || result.x1?.access_url;
+            mediaUrl = result.access_url || result.url;
 
             await fetchParents();
 
@@ -279,19 +242,22 @@
             document.getElementById('entry-section').style.display = 'block';
             status.innerText = "PHOTO SAVED. ADD RECORDS.";
         } catch (e) { 
-            status.innerText = "UPLOAD FAILED: Check Xano logs"; 
+            status.innerText = "UPLOAD FAILED. Check console."; 
         }
     }
 
-    // 3. Data Fetching (Parents/Students)
     async function fetchParents() {
         const pSel = document.getElementById('parent-select');
-        const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${fId}`);
-        const parents = await resp.json();
-        pSel.innerHTML = '<option value="">-- Select Parent --</option>';
-        parents.forEach(p => {
-            pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
-        });
+        try {
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${fId}`);
+            const parents = await resp.json();
+            pSel.innerHTML = '<option value="">-- Select Parent --</option>';
+            parents.forEach(p => {
+                pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
+            });
+        } catch (e) {
+            document.getElementById('status-msg').innerText = "PARENT LOOKUP FAILED.";
+        }
     }
 
     async function fetchStudentsForParent(pId) {
@@ -301,21 +267,14 @@
         const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}&franchise_id=${fId}`);
         const data = await resp.json();
         sSel.innerHTML = '';
-        data.forEach(s => {
-            sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-        });
+        data.forEach(s => sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
     }
 
-    // 4. Basket Management
     function addEntryToBasket() {
         const pSel = document.getElementById('parent-select');
         const sSel = document.getElementById('student-select');
         const amt = document.getElementById('amount-input').value;
-        
-        if (!sSel.value || !amt || amt <= 0) {
-            alert("Select student and enter valid amount");
-            return;
-        }
+        if (!sSel.value || !amt) return alert("Missing info");
 
         basket.push({
             parent_id: parseInt(pSel.value),
@@ -326,55 +285,36 @@
             paid_by: pSel.options[pSel.selectedIndex].text,
             processed: false
         });
-
-        renderBasketUI();
+        renderBasket();
         document.getElementById('amount-input').value = '';
     }
 
-    function renderBasketUI() {
+    function renderBasket() {
         const body = document.getElementById('basket-body');
         body.innerHTML = '';
         basket.forEach((item, i) => {
-            body.innerHTML += `<tr>
-                <td>${item.student_name}</td>
-                <td>₱${item.amount.toLocaleString()}</td>
-                <td class="btn-del" onclick="removeEntry(${i})">✕</td>
-            </tr>`;
+            body.innerHTML += `<tr><td>${item.student_name}</td><td>₱${item.amount.toLocaleString()}</td><td class="btn-del" onclick="basket.splice(${i},1);renderBasket()">✕</td></tr>`;
         });
         document.getElementById('basket-wrap').style.display = basket.length ? 'block' : 'none';
         document.getElementById('sync-btn').style.display = basket.length ? 'block' : 'none';
     }
 
-    function removeEntry(index) {
-        basket.splice(index, 1);
-        renderBasketUI();
-    }
-
-    // 5. Final Sync
     async function syncBatchToXano() {
         const status = document.getElementById('status-msg');
-        status.innerText = "🚀 SYNCING BATCH TO XANO...";
-        document.getElementById('sync-btn').disabled = true;
-
-        try {
-            const resp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/process_eod", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    media_url: mediaUrl,
-                    eod_date: new Date().toISOString().split('T')[0],
-                    franchise_id: fId,
-                    record_list: basket
-                })
-            });
-            
-            if (resp.ok) {
-                status.innerText = "✅ BATCH SYNCED SUCCESSFULLY!";
-                setTimeout(() => location.reload(), 2000);
-            } else { throw new Error(); }
-        } catch (e) {
-            status.innerText = "❌ SYNC FAILED. Try again.";
-            document.getElementById('sync-btn').disabled = false;
+        status.innerText = "🚀 SYNCING...";
+        const resp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/process_eod", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                media_url: mediaUrl,
+                eod_date: new Date().toISOString().split('T')[0],
+                franchise_id: fId,
+                record_list: basket
+            })
+        });
+        if (resp.ok) {
+            status.innerText = "✅ DONE!";
+            setTimeout(() => location.reload(), 2000);
         }
     }
 </script>
