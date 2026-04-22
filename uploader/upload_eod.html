@@ -71,13 +71,19 @@
     let mediaUrl = "";
     let basket = [];
     
-    // ARCHITECT: Cleaning local storage on start to prevent the 500 JSON error
-    const lockedId = localStorage.getItem('locked_franchise_id') || window.parent.localStorage.getItem('locked_franchise_id');
-    if (lockedId) {
-        localStorage.setItem('nestmind_f_id', lockedId); // Force sync
+    // ARCHITECT: Force cleanup of stale data from previous weeks
+    const currentVaultId = localStorage.getItem('nestmind_f_id') || window.parent.localStorage.getItem('nestmind_f_id');
+    const staleLockedId = localStorage.getItem('locked_franchise_id');
+
+    // If the 'locked' ID from a week ago doesn't match the current dashboard, kill it.
+    if (currentVaultId && staleLockedId !== currentVaultId) {
+        console.log("Cleaning stale franchise lock...");
+        localStorage.removeItem('locked_franchise_id');
+        localStorage.removeItem('locked_franchise_name');
+        localStorage.setItem('locked_franchise_id', currentVaultId);
     }
 
-    const fId = localStorage.getItem('nestmind_f_id');
+    const fId = localStorage.getItem('locked_franchise_id') || currentVaultId;
     const slug = localStorage.getItem('nestmind_f_slug') || 'vault_upload';
 
     async function loadTeachers() {
@@ -113,7 +119,7 @@
         const formData = new FormData();
         formData.append('file_resource', file);
         formData.append('file_name', `${slug}/eod_${Date.now()}.jpg`);
-        formData.append('franchise_id', parseInt(fId)); // Send as integer to avoid JSON error
+        formData.append('franchise_id', parseInt(fId));
 
         try {
             const upResp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/aws_proxy_upload", { method: 'POST', body: formData });
