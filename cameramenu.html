@@ -1,127 +1,144 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NestMind | Enterprise Video Management</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>NestMind | Video Intelligence</title>
+    
+    <link rel="stylesheet" href="../nest_style.css">
+    <script src="../api_config.js"></script>
+
     <style>
-        .video-container { aspect-ratio: 16 / 9; background-color: #0a0a0a; position: relative; border-radius: 4px; overflow: hidden; border: 1px solid #262626; }
-        .cam-label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.6); padding: 2px 8px; border-radius: 2px; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
-        .status-dot { height: 8px; width: 8px; background-color: #22c55e; border-radius: 50%; display: inline-block; margin-right: 4px; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+        body { background: var(--bg-soft); margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        
+        /* Sidebar Architecture */
+        .sidebar { width: 280px; background: #fff; border-right: 1px solid var(--border); display: flex; flex-direction: column; shrink-0; }
+        .main-content { flex-grow: 1; padding: 20px; overflow-y: auto; }
+        
+        /* Video Grid Architecture */
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+        .camera-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .video-wrapper { aspect-ratio: 16 / 9; background: #000; position: relative; display: flex; align-items: center; justify-content: center; }
+        
+        .cam-header { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .cam-name { font-weight: 600; color: #1e293b; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        /* Navigation & History */
+        .nav-section { padding: 15px; border-bottom: 1px solid var(--border); }
+        .nav-title { font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        
+        .segment-item { 
+            padding: 10px; border-radius: 8px; margin-bottom: 5px; cursor: pointer; 
+            border: 1px solid transparent; transition: all 0.2s; font-size: 0.85rem;
+        }
+        .segment-item:hover { background: var(--bg-soft); border-color: var(--nest-blue); }
+        .segment-item.active { background: #eef6ff; border-color: var(--nest-blue); color: var(--nest-blue); }
+
+        /* Configuration Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+        .modal-content { background: #fff; padding: 25px; border-radius: 15px; width: 100%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
     </style>
 </head>
-<body class="bg-[#0f0f0f] text-gray-200 font-sans overflow-hidden">
+<body>
 
-    <nav class="h-14 bg-[#1a1a1a] border-b border-[#262626] flex items-center justify-between px-6">
-        <div class="flex items-center space-x-4">
-            <span class="text-blue-500 font-black text-xl tracking-tighter">NestMind</span>
-            <div class="h-6 w-px bg-gray-700"></div>
-            <h2 id="location-name" class="text-sm font-semibold tracking-wide text-gray-400 uppercase">
-                Loading Location...
-            </h2>
+    <aside class="sidebar">
+        <div class="p-6 border-b border-slate-50">
+            <h1 style="color: var(--nest-blue); margin: 0; font-size: 1.2rem;">NestMind <span style="font-weight: 300; color: #64748b;">Video</span></h1>
         </div>
-        
-        <div class="flex items-center space-x-6">
-            <div class="text-[10px] text-right">
-                <p class="text-gray-500 leading-none">SECURITY ACCESS KEY</p>
-                <p id="key-display" class="font-mono text-blue-400">********</p>
+
+        <div class="nav-section">
+            <div class="nav-title">Franchise Context</div>
+            <div id="franchise-display" class="font-bold text-slate-700">District: Sariaya</div>
+            <div id="key-display" class="text-xs text-slate-400 mt-1 uppercase font-mono">Key: TLNP****</div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-title">Playback History</div>
+            <input type="date" id="history-date" class="nest-input" style="width: 100%; margin-bottom: 10px;">
+            <div id="segment-list" style="max-height: 300px; overflow-y: auto;">
+                <div class="segment-item">
+                    <div style="font-weight: 600;">14:00 - 14:15</div>
+                    <div style="font-size: 0.7rem; color: #94a3b8;">STORED ARCHIVE</div>
+                </div>
             </div>
-            <button class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-4 rounded transition">
-                ADMIN CONSOLE
+        </div>
+
+        <div class="mt-auto p-4 border-t border-slate-100">
+            <button onclick="openSetup()" class="nest-btn-secondary" style="width: 100%; font-size: 0.75rem; padding: 10px;">
+                ⚙️ SYSTEM SETUP
             </button>
         </div>
-    </nav>
+    </aside>
 
-    <div class="flex h-[calc(100vh-56px)]">
-        
-        <main class="flex-grow p-4 overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <div class="flex space-x-2">
-                    <button class="bg-[#262626] p-2 rounded border border-gray-700 hover:bg-gray-700" title="Grid View">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 5V9H9V5H5M5 11V15H9V11H5M11 5V9H15V5H11M11 11V15H15V11H11Z"></path></svg>
-                    </button>
-                    <button class="bg-[#262626] p-2 rounded border border-gray-700 hover:bg-gray-700" title="Single View">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3 3H17V17H3V3Z"></path></svg>
-                    </button>
+    <main class="main-content">
+        <div class="video-grid">
+            <div class="camera-card">
+                <div class="cam-header">
+                    <span id="label-cam1" class="cam-name">Entrance</span>
+                    <span class="text-xs text-green-500 font-bold">● LIVE</span>
                 </div>
-                <div class="flex items-center space-x-4 text-xs">
-                    <span class="flex items-center"><span class="status-dot"></span> System Online</span>
-                    <span id="current-time" class="text-gray-500 font-mono">2026-04-23 14:00:00</span>
+                <div class="video-wrapper">
+                    <span class="text-slate-500 text-sm italic">Encrypted Stream...</span>
                 </div>
             </div>
 
-            <div id="camera-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                
-                <div class="video-container group">
-                    <div class="cam-label text-blue-400">Cam 01 // Primary Entrance</div>
-                    <div class="w-full h-full flex items-center justify-center text-gray-700 italic text-sm">
-                        Establishing encrypted link...
-                    </div>
-                    <div class="absolute bottom-3 left-3 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button class="bg-black/70 px-3 py-1 rounded text-[10px] border border-white/20">LIVE</button>
-                        <button class="bg-black/70 px-3 py-1 rounded text-[10px] border border-white/20">HISTORY</button>
-                    </div>
+            <div class="camera-card">
+                <div class="cam-header">
+                    <span id="label-cam2" class="cam-name">Classroom</span>
+                    <span class="text-xs text-green-500 font-bold">● LIVE</span>
                 </div>
-
-                <div class="video-container group">
-                    <div class="cam-label text-blue-400">Cam 02 // Learning Area</div>
-                    <div class="w-full h-full flex items-center justify-center text-gray-700 italic text-sm">
-                        Establishing encrypted link...
-                    </div>
+                <div class="video-wrapper">
+                    <span class="text-slate-500 text-sm italic">Encrypted Stream...</span>
                 </div>
-
-                <div class="video-container group">
-                    <div class="cam-label text-blue-400">Cam 03 // Office Interior</div>
-                    <div class="w-full h-full flex items-center justify-center text-gray-700 italic text-sm">
-                        Establishing encrypted link...
-                    </div>
-                </div>
-
-                <div class="video-container border-dashed border-gray-800 flex items-center justify-center">
-                    <button class="text-gray-600 hover:text-blue-500 flex flex-col items-center">
-                        <span class="text-2xl mb-1">+</span>
-                        <span class="text-[10px] uppercase tracking-widest font-bold">Add Stream</span>
-                    </button>
-                </div>
-
-            </div>
-        </main>
-
-        <aside class="w-72 bg-[#141414] border-l border-[#262626] flex flex-col">
-            <div class="p-4 border-b border-[#262626]">
-                <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Playback Archive</h3>
-                <input type="date" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2 text-xs text-white outline-none focus:border-blue-600">
             </div>
 
-            <div id="segment-list" class="flex-grow overflow-y-auto p-4 space-y-2">
-                <div class="p-3 bg-[#1a1a1a] border border-transparent hover:border-blue-600/50 rounded cursor-pointer transition">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs font-bold">14:00 - 14:15</span>
-                        <span class="text-[9px] bg-blue-600/20 text-blue-400 px-1 rounded">S3</span>
-                    </div>
-                    <div class="text-[9px] text-gray-500 uppercase tracking-tighter">Entrance_CAM01.mp4</div>
+            <div class="camera-card">
+                <div class="cam-header">
+                    <span id="label-cam3" class="cam-name">Office Side</span>
+                    <span class="text-xs text-green-500 font-bold">● LIVE</span>
                 </div>
-                
+                <div class="video-wrapper">
+                    <span class="text-slate-500 text-sm italic">Encrypted Stream...</span>
                 </div>
-
-            <div class="p-4 bg-[#1a1a1a] border-t border-[#262626]">
-                <button class="w-full text-center text-xs font-bold text-gray-400 hover:text-white transition">
-                    VIEW SYSTEM LOGS
-                </button>
             </div>
-        </aside>
+        </div>
+    </main>
+
+    <div id="setup-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color: #1e293b;">Camera Labels</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <label class="nav-title">Cam 01</label>
+                <input type="text" id="input-cam1" class="nest-input" style="width: 100%;" value="Entrance">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label class="nav-title">Cam 02</label>
+                <input type="text" id="input-cam2" class="nest-input" style="width: 100%;" value="Classroom">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label class="nav-title">Cam 03</label>
+                <input type="text" id="input-cam3" class="nest-input" style="width: 100%;" value="Office Side">
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="saveSetup()" class="nest-btn-primary" style="flex: 1;">Save</button>
+                <button onclick="closeSetup()" class="nest-btn-secondary">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Simple logic to mask the access key on load
-        const rawKey = "TLNP624163"; // This will come from the URL later
-        document.getElementById('key-display').innerText = rawKey.substring(0,4) + "****";
-        
-        // This will be replaced with Xano data later
-        document.getElementById('location-name').innerText = "District: Sariaya";
+        function openSetup() { document.getElementById('setup-modal').style.display = 'flex'; }
+        function closeSetup() { document.getElementById('setup-modal').style.display = 'none'; }
+
+        function saveSetup() {
+            document.getElementById('label-cam1').innerText = document.getElementById('input-cam1').value;
+            document.getElementById('label-cam2').innerText = document.getElementById('input-cam2').value;
+            document.getElementById('label-cam3').innerText = document.getElementById('input-cam3').value;
+            closeSetup();
+        }
     </script>
 </body>
 </html>
