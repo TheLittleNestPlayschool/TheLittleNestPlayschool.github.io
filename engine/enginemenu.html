@@ -1,111 +1,90 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-        body { background-color: #0f172a; margin: 0; padding: 0; }
-    </style>
-</head>
-<body class="font-['Inter',_sans-serif]">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
-    <aside class="w-[240px] h-screen bg-[#0f172a] flex flex-col border-r border-[#1e293b]">
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+    body { background-color: #0f172a; margin: 0; padding: 0; overflow-x: hidden; }
+</style>
+
+<div class="flex h-screen font-['Inter',_sans-serif]">
+    <aside class="w-[240px] bg-[#0f172a] flex-shrink-0 flex flex-col border-r border-[#1e293b]">
         <div class="p-5">
-            <h1 class="text-[#00d1b2] text-xl font-black tracking-tighter cursor-pointer" onclick="loadFrame('../corporate_dashboard.html', 'Home')">NestMind</h1>
+            <h1 class="text-[#00d1b2] text-xl font-black tracking-tighter">NestMind</h1>
         </div>
         
         <div class="px-3 mb-4">
             <div class="bg-[#1e293b] p-3 rounded-xl border border-slate-700/50 text-center shadow-lg">
-                <p class="text-[9px] font-black text-[#2dd4bf] uppercase mb-2 tracking-widest opacity-80">System Admin</p>
+                <p class="text-[9px] font-black text-[#2dd4bf] uppercase mb-2 tracking-widest opacity-80">Identity Lock</p>
                 
                 <button onclick="window.parent.resetDashboard()" class="w-full bg-[#00d1b2] text-[#0f172a] py-1.5 px-2 rounded-md font-bold text-[10px] uppercase tracking-tighter hover:bg-[#2dd4bf] transition-colors">
                     🏠 Dashboard Home
                 </button>
 
-                <div id="active-screen-container" class="mt-2 pt-2 border-t border-slate-700/30">
+                <div id="breadcrumb-container" class="mt-2 pt-2 border-t border-slate-700/30">
                     <div class="flex items-center justify-center gap-1.5">
                         <div class="w-1.5 h-1.5 rounded-full bg-[#00d1b2] animate-pulse"></div>
-                        <span id="screen-name" class="text-[9px] font-bold text-slate-300 uppercase tracking-widest leading-none">Home</span>
+                        <span id="screen-name" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Home</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <nav class="flex-grow px-2 overflow-y-auto space-y-0.5 custom-scrollbar pb-10">
-            
+        <nav id="nav-menu" class="px-2 overflow-y-auto space-y-0.5 custom-scrollbar pb-10">
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Executive View</div>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="loadFrame('../corporate_dashboard.html', 'Corporate Dashboard')">
-                <span class="text-sm">📊</span> Corporate Dashboard
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadFrame('../corporate_dashboard.html', 'Corporate')">
+                <span class="text-sm">📈</span> Performance
             </button>
 
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Site & Identity</div>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="loadFrame('../franchise.html', 'Franchise Manager')">
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadFrame('../franchise.html', 'Franchises')">
                 <span class="text-sm">🏢</span> Franchises
             </button>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="loadFrame('../parents.html', 'Parents')">
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadFrame('../parents.html', 'Parents')">
                 <span class="text-sm">👨‍👩‍👧</span> Parents
             </button>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="loadFrame('../teacher_v2.html', 'Teachers')">
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadFrame('../teacher_v2.html', 'Teachers')">
                 <span class="text-sm">🧑‍🏫</span> Teachers
             </button>
-
+            
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">CRM & Leads</div>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="loadFrame('../lead_profile.html', 'Lead Profiles')">
-                <span class="text-sm">📱</span> Lead Profiles
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadFrame('../lead_profile.html', 'Leads')">
+                <span class="text-sm">🪄</span> Lead Profiles
             </button>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="loadFrame('../winning_patterns.html', 'Winning Patterns')">
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadFrame('../winning_patterns.html', 'Patterns')">
                 <span class="text-sm">✨</span> Winning Patterns
             </button>
 
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Academic DNA</div>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="loadFrame('../students.html', 'Students')">
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadFrame('../new_enrollment.html', 'Enrollment')">
+                <span class="text-sm">✨</span> Enrollment
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadFrame('../students.html', 'Students')">
                 <span class="text-sm">🏫</span> Students
             </button>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="loadFrame('../student_assessment.html', 'Assessments')">
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadFrame('../student_assessment.html', 'Assessments')">
                 <span class="text-sm">📝</span> Assessments
             </button>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="loadFrame('../student_progress.html', 'Progress Tracking')">
-                <span class="text-sm">📈</span> Student Progress
-            </button>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="loadFrame('../session_details.html', 'Session Master')">
-                <span class="text-sm">🗓️</span> Session Master
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadFrame('../session_details.html', 'Sessions')">
+                <span class="text-sm">🗓️</span> Sessions
             </button>
 
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Operations</div>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="loadFrame('../digital_file.html', 'Vault')">
-                <span class="text-sm">🔐</span> Digital Vault
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadFrame('../digital_file.html', 'Vault')">
+                <span class="text-sm">📁</span> Digital Vault
             </button>
         </nav>
     </aside>
+</div>
 
-    <script>
-        function loadFrame(file, title) {
-            // Logic to update local UI indicator
-            const nameEl = document.getElementById('screen-name');
-            if(nameEl) nameEl.innerText = title;
-            
-            // Execute the parent page's loadFrame function
-            if (typeof window.parent.loadFrame === 'function') {
-                window.parent.loadFrame(file, title);
-            } else {
-                console.warn("Parent loadFrame function not found.");
-            }
-        }
-    </script>
-</body>
-</html>
+<script>
+    function loadFrame(file, title) {
+        // Update the internal UI indicator
+        const screenEl = document.getElementById('screen-name');
+        if(screenEl) screenEl.innerText = title;
+        
+        // Use the native loadFrame from your dashboard environment
+        loadFrame(file, title);
+    }
+</script>
