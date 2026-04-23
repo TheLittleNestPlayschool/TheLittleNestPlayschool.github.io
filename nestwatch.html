@@ -28,24 +28,20 @@
         .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .view-header { padding: 15px 25px; background: #fff; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 5; }
         
-        /* 4-Camera Grid */
-        .video-grid { display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 15px; padding: 20px; height: 100%; box-sizing: border-box; }
+        .video-grid { display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 10px; padding: 15px; height: 100%; box-sizing: border-box; }
         .camera-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .video-wrapper { flex-grow: 1; background: #000; position: relative; display: flex; align-items: center; justify-content: center; }
         
-        .cam-header { padding: 10px 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fff; }
-        .cam-name { font-weight: 700; color: #1e293b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .cam-header { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fff; }
+        .cam-name { font-weight: 700; color: #1e293b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        /* Archive Layout */
+        /* Archive Specialized Layout */
         .archive-container { display: flex; height: 100%; overflow: hidden; }
-        .archive-controls { width: 400px; padding: 20px; border-right: 1px solid var(--border); overflow-y: auto; background: #fff; shrink-0; }
-        .archive-player { flex-grow: 1; padding: 25px; background: var(--bg-soft); display: flex; flex-direction: column; align-items: center; }
+        .archive-controls { width: 350px; padding: 20px; border-right: 1px solid var(--border); overflow-y: auto; background: #fff; shrink-0; }
+        .archive-player-grid { flex-grow: 1; background: var(--bg-soft); display: flex; flex-direction: column; }
         
-        /* Smaller Player Window */
-        .player-window { width: 100%; max-width: 800px; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-
-        .timeline-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 5px; }
-        .time-block { padding: 6px 2px; border-radius: 4px; border: 1px solid var(--border); text-align: center; font-size: 0.65rem; font-weight: 600; cursor: pointer; transition: 0.2s; background: #fff; }
+        .timeline-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 5px; }
+        .time-block { padding: 6px 2px; border-radius: 4px; border: 1px solid var(--border); text-align: center; font-size: 0.6rem; font-weight: 600; cursor: pointer; transition: 0.2s; background: #fff; }
         .time-block:hover { border-color: var(--nest-blue); color: var(--nest-blue); background: #f0f7ff; }
         .time-block.active { background: var(--nest-blue); color: #fff; border-color: var(--nest-blue); }
 
@@ -84,51 +80,42 @@
         </header>
 
         <div id="live-view" class="video-grid hidden">
-            <div class="camera-card"><div class="cam-header"><span id="label-cam1" class="cam-name">Entrance</span><span style="color: var(--success); font-size: 0.6rem; font-weight: 900;">● LIVE</span></div><div class="video-wrapper"></div></div>
-            <div class="camera-card"><div class="cam-header"><span id="label-cam2" class="cam-name">Classroom</span><span style="color: var(--success); font-size: 0.6rem; font-weight: 900;">● LIVE</span></div><div class="video-wrapper"></div></div>
-            <div class="camera-card"><div class="cam-header"><span id="label-cam3" class="cam-name">Office Side</span><span style="color: var(--success); font-size: 0.6rem; font-weight: 900;">● LIVE</span></div><div class="video-wrapper"></div></div>
-            <div class="camera-card"><div class="cam-header"><span id="label-cam4" class="cam-name">Auxiliary</span><span style="color: var(--success); font-size: 0.6rem; font-weight: 900;">● LIVE</span></div><div class="video-wrapper"></div></div>
+            <div class="camera-card"><div class="cam-header"><span class="cam-name label-cam1">Entrance</span><span style="color: var(--success); font-size: 0.6rem; font-weight: 900;">● LIVE</span></div><div class="video-wrapper"></div></div>
+            <div class="camera-card"><div class="cam-header"><span class="cam-name label-cam2">Classroom</span><span style="color: var(--success); font-size: 0.6rem; font-weight: 900;">● LIVE</span></div><div class="video-wrapper"></div></div>
+            <div class="camera-card"><div class="cam-header"><span class="cam-name label-cam3">Office Side</span><span style="color: var(--success); font-size: 0.6rem; font-weight: 900;">● LIVE</span></div><div class="video-wrapper"></div></div>
+            <div class="camera-card"><div class="cam-header"><span class="cam-name label-cam4">Auxiliary</span><span style="color: var(--success); font-size: 0.6rem; font-weight: 900;">● LIVE</span></div><div class="video-wrapper"></div></div>
         </div>
 
         <div id="archives-view" class="archive-container hidden">
             <div class="archive-controls">
                 <label class="section-title" style="margin-top:0">Date</label>
-                <input type="date" id="archive-date-input" class="nest-input" style="width: 100%; margin-bottom: 10px;">
-                <label class="section-title">Node</label>
-                <select class="nest-input" style="width: 100%; margin-bottom: 20px;">
-                    <option>Cam 1</option><option>Cam 2</option><option>Cam 3</option><option>Cam 4</option>
-                </select>
-                <label class="section-title">Timeline (24h)</label>
+                <input type="date" id="archive-date-input" class="nest-input" style="width: 100%; margin-bottom: 20px;">
+                <label class="section-title">Timeline Sync (48 Blocks)</label>
                 <div id="full-timeline" class="timeline-grid"></div>
             </div>
-            
-            <div class="archive-player">
-                <div class="player-window">
-                    <span id="player-status" style="color: #475569; font-size: 0.8rem; font-style: italic;">Select time block...</span>
-                </div>
-                <div style="width: 100%; max-width: 800px; margin-top: 15px; padding: 15px; background: #fff; border: 1px solid var(--border); border-radius: 8px;">
-                    <h3 id="playing-info" style="margin: 0; color: #1e293b; font-size: 0.9rem;">Ready</h3>
-                    <p id="playing-details" style="color: #64748b; font-size: 0.75rem; margin-top: 5px;">AWS S3 Glacier IR Stream Link</p>
+            <div class="archive-player-grid">
+                <div class="video-grid">
+                    <div class="camera-card"><div class="cam-header"><span class="cam-name label-cam1">Entrance</span><span style="font-size: 0.5rem; color: #94a3b8;">S3_SYNC</span></div><div class="video-wrapper"></div></div>
+                    <div class="camera-card"><div class="cam-header"><span class="cam-name label-cam2">Classroom</span><span style="font-size: 0.5rem; color: #94a3b8;">S3_SYNC</span></div><div class="video-wrapper"></div></div>
+                    <div class="camera-card"><div class="cam-header"><span class="cam-name label-cam3">Office Side</span><span style="font-size: 0.5rem; color: #94a3b8;">S3_SYNC</span></div><div class="video-wrapper"></div></div>
+                    <div class="camera-card"><div class="cam-header"><span class="cam-name label-cam4">Auxiliary</span><span style="font-size: 0.5rem; color: #94a3b8;">S3_SYNC</span></div><div class="video-wrapper"></div></div>
                 </div>
             </div>
         </div>
 
         <div id="settings-view" class="hidden" style="padding: 30px; max-width: 650px; overflow-y: auto;">
             <div style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 25px;">
-                <div class="section-title" style="margin-top:0">Node Configuration & Pricing</div>
-                
+                <div class="section-title" style="margin-top:0">Node Configuration & Retention</div>
                 <div id="config-container" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px;">
                     <div class="cam-config-row" style="padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
                         <input type="text" id="set-cam1" class="nest-input" style="width: 100%; margin-bottom: 8px;" placeholder="CAM 1 LABEL">
                         <div style="display: flex; gap: 10px;">
                             <div style="flex: 1;"><label class="section-title" style="margin-top:0">RETENTION</label>
                                 <select class="nest-input cost-selector" id="ret-cam1" onchange="calculateCosts()" style="width: 100%;">
-                                    <option value="14">14 Days</option><option value="30">30 Days</option><option value="40">40 Days</option><option value="50">50 Days</option><option value="60">60 Days</option>
+                                    <option value="14">14 Days (Included)</option><option value="30">30 Days (+₱100)</option><option value="40">40 Days (+₱125)</option><option value="50">50 Days (+₱150)</option><option value="60">60 Days (+₱174)</option>
                                 </select>
                             </div>
-                            <div style="flex: 1;"><label class="section-title" style="margin-top:0">WINDOW</label>
-                                <div style="display: flex; gap: 4px;"><input type="time" class="nest-input" value="07:00"><input type="time" class="nest-input" value="19:00"></div>
-                            </div>
+                            <div style="flex: 1;"><label class="section-title" style="margin-top:0">WINDOW</label><div style="display: flex; gap: 4px;"><input type="time" class="nest-input" value="07:00"><input type="time" class="nest-input" value="19:00"></div></div>
                         </div>
                     </div>
                     <div class="cam-config-row" style="padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
@@ -139,9 +126,7 @@
                                     <option value="14">14 Days</option><option value="30">30 Days</option><option value="40">40 Days</option><option value="50">50 Days</option><option value="60">60 Days</option>
                                 </select>
                             </div>
-                            <div style="flex: 1;"><label class="section-title" style="margin-top:0">WINDOW</label>
-                                <div style="display: flex; gap: 4px;"><input type="time" class="nest-input" value="07:00"><input type="time" class="nest-input" value="19:00"></div>
-                            </div>
+                            <div style="flex: 1;"><label class="section-title" style="margin-top:0">WINDOW</label><div style="display: flex; gap: 4px;"><input type="time" class="nest-input" value="07:00"><input type="time" class="nest-input" value="19:00"></div></div>
                         </div>
                     </div>
                     <div class="cam-config-row" style="padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
@@ -152,9 +137,7 @@
                                     <option value="14">14 Days</option><option value="30">30 Days</option><option value="40">40 Days</option><option value="50">50 Days</option><option value="60">60 Days</option>
                                 </select>
                             </div>
-                            <div style="flex: 1;"><label class="section-title" style="margin-top:0">WINDOW</label>
-                                <div style="display: flex; gap: 4px;"><input type="time" class="nest-input" value="07:00"><input type="time" class="nest-input" value="19:00"></div>
-                            </div>
+                            <div style="flex: 1;"><label class="section-title" style="margin-top:0">WINDOW</label><div style="display: flex; gap: 4px;"><input type="time" class="nest-input" value="07:00"><input type="time" class="nest-input" value="19:00"></div></div>
                         </div>
                     </div>
                     <div class="cam-config-row" style="padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
@@ -165,9 +148,7 @@
                                     <option value="14">14 Days</option><option value="30">30 Days</option><option value="40">40 Days</option><option value="50">50 Days</option><option value="60">60 Days</option>
                                 </select>
                             </div>
-                            <div style="flex: 1;"><label class="section-title" style="margin-top:0">WINDOW</label>
-                                <div style="display: flex; gap: 4px;"><input type="time" class="nest-input" value="07:00"><input type="time" class="nest-input" value="19:00"></div>
-                            </div>
+                            <div style="flex: 1;"><label class="section-title" style="margin-top:0">WINDOW</label><div style="display: flex; gap: 4px;"><input type="time" class="nest-input" value="07:00"><input type="time" class="nest-input" value="19:00"></div></div>
                         </div>
                     </div>
                 </div>
@@ -185,19 +166,14 @@
                 const hour = h.toString().padStart(2, '0');
                 ['00', '30'].forEach(min => {
                     const block = document.createElement('div');
-                    block.className = 'time-block'; const tStr = `${hour}:${min}`;
-                    block.innerText = tStr;
+                    block.className = 'time-block'; block.innerText = `${hour}:${min}`;
                     block.onclick = function() {
                         document.querySelectorAll('.time-block').forEach(b => b.classList.remove('active'));
-                        block.classList.add('active'); loadArchiveSegment(tStr);
+                        block.classList.add('active');
                     };
                     grid.appendChild(block);
                 });
             }
-        }
-        function loadArchiveSegment(time) {
-            document.getElementById('player-status').innerText = "Loading " + time + "...";
-            document.getElementById('playing-info').innerText = "Segment: " + time;
         }
         function calculateCosts() {
             let total = 0; document.querySelectorAll('.cost-selector').forEach(s => {
@@ -219,7 +195,7 @@
         function applySettings() {
             for (let i = 1; i <= 4; i++) {
                 const label = document.getElementById('set-cam' + i).value;
-                if(label) document.getElementById('label-cam' + i).innerText = label.toUpperCase();
+                if(label) { document.querySelectorAll('.label-cam' + i).forEach(el => el.innerText = label.toUpperCase()); }
             }
             showView('live');
         }
