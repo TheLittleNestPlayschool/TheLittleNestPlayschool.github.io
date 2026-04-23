@@ -36,55 +36,55 @@
             
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Executive View</div>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="triggerMenuLink('../corporate_dashboard.html', 'Performance')">
+                onclick="navTo('../corporate_dashboard.html', 'Performance')">
                 <span class="text-sm">📈</span> Performance
             </button>
 
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Site & Identity</div>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="triggerMenuLink('../franchise.html', 'Franchises')">
+                onclick="navTo('../franchise.html', 'Franchises')">
                 <span class="text-sm">🏢</span> Franchises
             </button>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="triggerMenuLink('../parents.html', 'Parents')">
+                onclick="navTo('../parents.html', 'Parents')">
                 <span class="text-sm">👨‍👩‍👧</span> Parents
             </button>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="triggerMenuLink('../students.html', 'Students')">
+                onclick="navTo('../students.html', 'Students')">
                 <span class="text-sm">🏫</span> Students
             </button>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="triggerMenuLink('../teacher_v2.html', 'Teachers')">
+                onclick="navTo('../teacher_v2.html', 'Teachers')">
                 <span class="text-sm">🧑‍🏫</span> Teachers
             </button>
 
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">CRM & Leads</div>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="triggerMenuLink('../winning_patterns.html', 'Patterns')">
+                onclick="navTo('../winning_patterns.html', 'Patterns')">
                 <span class="text-sm">✨</span> Winning Patterns
             </button>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="triggerMenuLink('../lead_profile.html', 'Leads')">
+                onclick="navTo('../lead_profile.html', 'Leads')">
                 <span class="text-sm">🪄</span> Lead Profiles
             </button>
 
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Academic DNA</div>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="triggerMenuLink('../new_enrollment.html', 'Enrollment')">
+                onclick="navTo('../new_enrollment.html', 'Enrollment')">
                 <span class="text-sm">📝</span> New Enrollment
             </button>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="triggerMenuLink('../student_assessment.html', 'Assessments')">
+                onclick="navTo('../student_assessment.html', 'Assessments')">
                 <span class="text-sm">📊</span> Assessments
             </button>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="triggerMenuLink('../session_details.html', 'Sessions')">
+                onclick="navTo('../session_details.html', 'Sessions')">
                 <span class="text-sm">🗓️</span> Session Master
             </button>
 
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Operations</div>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
-                onclick="triggerMenuLink('../digital_file.html', 'Vault')">
+                onclick="navTo('../digital_file.html', 'Vault')">
                 <span class="text-sm">📁</span> Digital Vault
             </button>
         </nav>
@@ -92,11 +92,7 @@
 </div>
 
 <script>
-    /**
-     * triggerMenuLink
-     * Renamed to avoid recursion error.
-     */
-    function triggerMenuLink(file, title) {
+    function navTo(file, title) {
         // Update local label
         const screenNameEl = document.getElementById('screen-name');
         if (screenNameEl) screenNameEl.innerText = title;
@@ -104,11 +100,8 @@
         // Call the parent dashboard's loadFrame
         if (window.parent && typeof window.parent.loadFrame === 'function') {
             window.parent.loadFrame(file, title);
-        } else if (typeof loadFrame === 'function') {
-            // Fallback if not in iframe
-            loadFrame(file, title);
         } else {
-            console.error("Dashboard core (loadFrame) not detected.");
+            console.error("Dashboard core (parent.loadFrame) not detected.");
         }
     }
 </script>
