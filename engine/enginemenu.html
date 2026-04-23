@@ -1,59 +1,111 @@
-<div style="padding: 10px 0; background: #000; min-height: 100vh; font-family: sans-serif; box-sizing: border-box;">
-    
-    <div style="margin: 0 20px 15px 20px; border-bottom: 1px solid #333; padding-bottom: 15px;">
-        <div onclick="loadFrame('../corporate_dashboard.html', 'Corporate Dashboard')" style="background: #00d1b2; color: #1a1a1a; padding: 10px; border-radius: 4px; text-align: center; cursor: pointer; font-weight: 900; font-size: 0.75rem; margin-bottom: 8px; text-transform: uppercase;">
-            🏠 DASHBOARD HOME
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        body { background-color: #0f172a; margin: 0; padding: 0; }
+    </style>
+</head>
+<body class="font-['Inter',_sans-serif]">
+
+    <aside class="w-[240px] h-screen bg-[#0f172a] flex flex-col border-r border-[#1e293b]">
+        <div class="p-5">
+            <h1 class="text-[#00d1b2] text-xl font-black tracking-tighter cursor-pointer" onclick="loadFrame('../corporate_dashboard.html', 'Home')">NestMind</h1>
         </div>
         
-        <div style="padding: 8px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; text-align: center; margin-bottom: 8px;">
-            <span style="color: #555; font-size: 0.55rem; font-weight: 800; display: block; margin-bottom: 2px; text-transform: uppercase;">SESSION PROFILE</span>
-            <span style="color: #fff; font-size: 0.75rem; font-weight: 700;">Active User</span>
+        <div class="px-3 mb-4">
+            <div class="bg-[#1e293b] p-3 rounded-xl border border-slate-700/50 text-center shadow-lg">
+                <p class="text-[9px] font-black text-[#2dd4bf] uppercase mb-2 tracking-widest opacity-80">System Admin</p>
+                
+                <button onclick="window.parent.resetDashboard()" class="w-full bg-[#00d1b2] text-[#0f172a] py-1.5 px-2 rounded-md font-bold text-[10px] uppercase tracking-tighter hover:bg-[#2dd4bf] transition-colors">
+                    🏠 Dashboard Home
+                </button>
+
+                <div id="active-screen-container" class="mt-2 pt-2 border-t border-slate-700/30">
+                    <div class="flex items-center justify-center gap-1.5">
+                        <div class="w-1.5 h-1.5 rounded-full bg-[#00d1b2] animate-pulse"></div>
+                        <span id="screen-name" class="text-[9px] font-bold text-slate-300 uppercase tracking-widest leading-none">Home</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div id="active-screen-indicator" style="padding: 8px; background: #1a365d; border: 1px solid #2a4a7d; border-radius: 4px; text-align: center;">
-            <span style="color: #555; font-size: 0.55rem; font-weight: 800; display: block; margin-bottom: 2px; text-transform: uppercase;">VIEWING SCREEN</span>
-            <span id="screen-name" style="color: #00d1b2; font-size: 0.75rem; font-weight: 900; text-transform: uppercase;">Home</span>
-        </div>
-    </div>
+        <nav class="flex-grow px-2 overflow-y-auto space-y-0.5 custom-scrollbar pb-10">
+            
+            <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Executive View</div>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
+                onclick="loadFrame('../corporate_dashboard.html', 'Corporate Dashboard')">
+                <span class="text-sm">📊</span> Corporate Dashboard
+            </button>
 
-    <div style="padding: 0 20px;">
-        <span style="color: #555; font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">EXECUTIVE VIEW</span>
-        <div style="margin: 4px 0 12px 0;">
-            <div onclick="loadFrame('../corporate_dashboard.html', 'Corporate Dashboard')" style="color: #00d1b2; font-weight:bold; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Corporate Dashboard</div>
-        </div>
+            <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Site & Identity</div>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
+                onclick="loadFrame('../franchise.html', 'Franchise Manager')">
+                <span class="text-sm">🏢</span> Franchises
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
+                onclick="loadFrame('../parents.html', 'Parents')">
+                <span class="text-sm">👨‍👩‍👧</span> Parents
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
+                onclick="loadFrame('../teacher_v2.html', 'Teachers')">
+                <span class="text-sm">🧑‍🏫</span> Teachers
+            </button>
 
-        <span style="color: #555; font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">SITE & IDENTITY</span>
-        <div style="margin: 4px 0 12px 0;">
-            <div onclick="loadFrame('../franchise.html', 'Franchise Manager')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Franchise Manager</div>
-            <div onclick="loadFrame('../parents.html', 'Parent Management')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Parent Management</div>
-            <div onclick="loadFrame('../students.html', 'Student Management')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Student Management</div>
-            <div onclick="loadFrame('../teacher_v2.html', 'Teacher Management')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Teacher Management</div>
-            <div onclick="loadFrame('../admin_roles.html', 'Admin Roles')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Admin Roles & Permissions</div>
-        </div>
+            <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">CRM & Leads</div>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
+                onclick="loadFrame('../lead_profile.html', 'Lead Profiles')">
+                <span class="text-sm">📱</span> Lead Profiles
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
+                onclick="loadFrame('../winning_patterns.html', 'Winning Patterns')">
+                <span class="text-sm">✨</span> Winning Patterns
+            </button>
 
-        <span style="color: #555; font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">CRM & LEADS</span>
-        <div style="margin: 4px 0 12px 0;">
-            <div onclick="loadFrame('../message_raw.html', 'Raw Message Log')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Raw Message Log</div>
-            <div onclick="loadFrame('../winning_patterns.html', 'Winning Patterns')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Winning Patterns</div>
-            <div onclick="loadFrame('../lead_profile.html', 'Lead Profiles')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Lead Profiles</div>
-        </div>
+            <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Academic DNA</div>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
+                onclick="loadFrame('../students.html', 'Students')">
+                <span class="text-sm">🏫</span> Students
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
+                onclick="loadFrame('../student_assessment.html', 'Assessments')">
+                <span class="text-sm">📝</span> Assessments
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
+                onclick="loadFrame('../student_progress.html', 'Progress Tracking')">
+                <span class="text-sm">📈</span> Student Progress
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
+                onclick="loadFrame('../session_details.html', 'Session Master')">
+                <span class="text-sm">🗓️</span> Session Master
+            </button>
 
-        <span style="color: #555; font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">ACADEMIC DNA</span>
-        <div style="margin: 4px 0 12px 0;">
-            <div onclick="loadFrame('../new_enrollment.html', 'New Enrollment')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">New Enrollment</div>
-            <div onclick="loadFrame('../student_assessment.html', 'Student Assessments')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Student Assessments</div>
-            <div onclick="loadFrame('../student_assessment_questions.html', 'Assessment Questions')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Assessment Questions</div>
-            <div onclick="loadFrame('../student_progress.html', 'Student Progress')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Student Progress</div>
-            <div onclick="loadFrame('../student_progress_questions.html', 'Progress Questions')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Progress Questions</div>
-            <div onclick="loadFrame('../session.html', 'Session Details')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Session Details</div>
-            <div onclick="loadFrame('../session_details.html', 'Session Master List')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Session Master List</div>
-        </div>
+            <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Operations</div>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" 
+                onclick="loadFrame('../digital_file.html', 'Vault')">
+                <span class="text-sm">🔐</span> Digital Vault
+            </button>
+        </nav>
+    </aside>
 
-        <span style="color: #555; font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">OPERATIONS</span>
-        <div style="margin: 4px 0 12px 0;">
-            <div onclick="loadFrame('../franchise_dashboard.html', 'Franchise Dashboard')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Franchise Dashboard</div>
-            <div onclick="loadFrame('../teacher_dashboard.html', 'Teacher Dashboard')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Teacher Dashboard</div>
-            <div onclick="loadFrame('../digital_file.html', 'Vault')" style="color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 3px 0;">Digital File Vault</div>
-        </div>
-    </div>
-</div>
+    <script>
+        function loadFrame(file, title) {
+            // Logic to update local UI indicator
+            const nameEl = document.getElementById('screen-name');
+            if(nameEl) nameEl.innerText = title;
+            
+            // Execute the parent page's loadFrame function
+            if (typeof window.parent.loadFrame === 'function') {
+                window.parent.loadFrame(file, title);
+            } else {
+                console.warn("Parent loadFrame function not found.");
+            }
+        }
+    </script>
+</body>
+</html>
