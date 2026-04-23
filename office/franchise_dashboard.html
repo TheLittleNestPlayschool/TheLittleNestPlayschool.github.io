@@ -102,26 +102,18 @@
             const data = await res.json();
             const franchises = Array.isArray(data) ? data : (data.items || []);
 
-            // Check if we are using an Access Key (URL Pattern)
             if (tlnpKey) {
                 const matched = franchises.find(f => f.access_key === tlnpKey);
-                
                 if (matched) {
-                    // Lock identity
                     localStorage.setItem('locked_franchise_id', matched.id);
                     localStorage.setItem('locked_franchise_name', matched.name);
-                    
-                    // Finalize UI appearance
                     finalizeUnlock(matched.name);
-                    
-                    // Clean URL
                     window.history.replaceState({}, document.title, window.location.pathname);
                 } else {
                     statusText.innerText = "Access Denied: Invalid Security Key.";
                     statusText.classList.add('text-red-500');
                 }
             } else {
-                // No Key found: Fallback to manual selection mode (Admin behavior)
                 select.classList.remove('hidden');
                 select.innerHTML = '<option value="">-- Select Branch --</option>';
                 franchises.forEach(f => {
@@ -132,14 +124,12 @@
                 });
                 statusText.innerText = "Please select a branch to initialize portal.";
             }
-
         } catch (e) { 
             console.error("Identity initialization failed", e);
             statusText.innerText = "Connection Error. Please refresh.";
         }
     }
 
-    // This handles the transition from locked/select state to authenticated state
     function finalizeUnlock(fname) {
         const select = document.getElementById('branch-select');
         const branchDisplay = document.getElementById('active-branch-name');
@@ -155,7 +145,6 @@
         if(statusText) statusText.innerText = "Identity Verified: " + fname;
     }
 
-    // Function for manual dropdown selection (if no key is used)
     function unlockDashboard() {
         const select = document.getElementById('branch-select');
         const fid = select.value;
@@ -164,7 +153,6 @@
         const fname = select.options[select.selectedIndex].text;
         localStorage.setItem('locked_franchise_id', fid);
         localStorage.setItem('locked_franchise_name', fname);
-        
         finalizeUnlock(fname);
     }
 
@@ -173,7 +161,6 @@
         const breadcrumbText = document.getElementById('breadcrumb-text');
         
         workspace.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic text-sm animate-pulse">Synchronizing ${title}...</div>`;
-        
         if(breadcrumbText) breadcrumbText.innerText = title;
 
         try {
@@ -188,7 +175,9 @@
                 else newScript.text = oldScript.text;
                 document.head.appendChild(newScript).parentNode.removeChild(newScript);
             });
-        } catch (e) { workspace.innerHTML = `<div class="p-10 text-red-500 font-bold">${e.message}</div>`; }
+        } catch (e) { 
+            workspace.innerHTML = `<div class="p-10 text-red-500 font-bold">${e.message}</div>`; 
+        }
     }
 
     window.onload = init;
