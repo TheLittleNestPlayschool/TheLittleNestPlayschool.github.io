@@ -1,6 +1,11 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
+<link rel="stylesheet" href="../nest_style.css">
+
+<script src="../security.js"></script>
+<script src="../api_config.js"></script>
+
 <div class="flex h-screen w-full bg-[#f8fafc] overflow-hidden font-['Inter',_sans-serif]">
     <aside class="w-[240px] bg-[#0f172a] flex-shrink-0 flex flex-col border-r border-[#1e293b] z-50">
         <div class="p-5">
@@ -19,14 +24,14 @@
                 
                 <div id="breadcrumb-container" class="hidden mt-2 pt-2 border-t border-slate-700/30">
                     <div class="flex items-center justify-center gap-1.5">
-                        <div class="w-1 h-1 rounded-full bg-[#00d1b2] animate-pulse"></div>
+                        <div id="status-dot" class="w-1.5 h-1.5 rounded-full bg-[#00d1b2] animate-pulse-teal"></div>
                         <span id="breadcrumb-text" class="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">Portal Root</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <nav id="nav-menu" class="hidden px-2 overflow-y-auto space-y-0.5 custom-scrollbar">
+        <nav id="nav-menu" class="hidden px-2 overflow-y-auto space-y-0.5 custom-scrollbar pb-10">
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Management</div>
             
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('franchise_performance.html', 'Performance')">
@@ -34,6 +39,9 @@
             </button>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('parents.html', 'Parents')">
                 <span class="text-sm">👨‍👩‍👧</span> Parents
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('students.html', 'Students')">
+                <span class="text-sm">🏫</span> Students
             </button>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('teacher_v2.html', 'Teachers')">
                 <span class="text-sm">🧑‍🏫</span> Teachers
@@ -43,9 +51,6 @@
             
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('new_enrollment.html', 'New Enrollment')">
                 <span class="text-sm">✨</span> Enrollment
-            </button>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('students.html', 'Students')">
-                <span class="text-sm">🏫</span> Students
             </button>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('student_assessment.html', 'Assessments')">
                 <span class="text-sm">📝</span> Assessments
@@ -81,15 +86,8 @@
     </main>
 </div>
 
-<style>
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-</style>
-
 <script>
     const GITHUB_ROOT = "https://thelittlenestplayschool.github.io/";
-    const XANO_FRANCHISE_API = "https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise";
 
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -98,16 +96,29 @@
         const statusText = document.getElementById('status-text');
 
         try {
-            const res = await fetch(XANO_FRANCHISE_API);
+            const res = await fetch(window.NEST_ENDPOINTS.franchise.list);
             const data = await res.json();
             const franchises = Array.isArray(data) ? data : (data.items || []);
 
             if (tlnpKey) {
                 const matched = franchises.find(f => f.access_key === tlnpKey);
                 if (matched) {
-                    localStorage.setItem('locked_franchise_id', matched.id);
-                    localStorage.setItem('locked_franchise_name', matched.name);
-                    finalizeUnlock(matched.name);
+                    localStorage.setItem('nestmind_access_key', tlnpKey);
+                    
+                    // SECURITY LOGIC: Detect Head Office Master
+                    const isMaster = (matched.id === 1 || matched.name.toLowerCase().includes('head office'));
+
+                    if (isMaster) {
+                        localStorage.setItem('is_head_office', 'true');
+                        localStorage.setItem('locked_franchise_id', 'all');
+                        finalizeUnlock("HEAD OFFICE");
+                    } else {
+                        localStorage.setItem('is_head_office', 'false');
+                        localStorage.setItem('locked_franchise_id', matched.id);
+                        localStorage.setItem('locked_franchise_name', matched.name);
+                        finalizeUnlock(matched.name);
+                    }
+                    
                     window.history.replaceState({}, document.title, window.location.pathname);
                 } else {
                     statusText.innerText = "Access Denied: Invalid Security Key.";
@@ -137,7 +148,8 @@
         const statusText = document.getElementById('status-text');
         
         select.classList.add('hidden');
-        branchDisplay.innerText = fname;
+        // UI uses SecurityManager to generate the master label
+        branchDisplay.innerText = SecurityManager.getSystemLabel(fname);
         branchDisplay.classList.remove('hidden');
         breadcrumbBox.classList.remove('hidden'); 
         document.getElementById('nav-menu').classList.remove('hidden');
@@ -151,6 +163,8 @@
         if(!fid) return;
 
         const fname = select.options[select.selectedIndex].text;
+        localStorage.setItem('nestmind_access_key', 'MANUAL_SELECTION'); 
+        localStorage.setItem('is_head_office', 'false');
         localStorage.setItem('locked_franchise_id', fid);
         localStorage.setItem('locked_franchise_name', fname);
         finalizeUnlock(fname);
@@ -163,8 +177,12 @@
         workspace.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic text-sm animate-pulse">Synchronizing ${title}...</div>`;
         if(breadcrumbText) breadcrumbText.innerText = title;
 
+        // Construct Secured URL
+        const authParams = SecurityManager.getAuthQuery();
+        const secureUrl = GITHUB_ROOT + file + authParams;
+
         try {
-            const res = await fetch(GITHUB_ROOT + file + '?v=' + Date.now());
+            const res = await fetch(secureUrl + (secureUrl.includes('?') ? '&' : '?') + 'v=' + Date.now());
             const html = await res.text();
             workspace.innerHTML = `<div class="p-8">${html}</div>`;
             
