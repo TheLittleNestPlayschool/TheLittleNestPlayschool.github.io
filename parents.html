@@ -25,7 +25,7 @@
     <div class="col-span-2">Contact</div>
     <div class="col-span-4">Home Address</div>
     <div class="col-span-1 text-center">Status</div>
-    <div class="col-span-2 text-right">Actions</div>
+    <div class="col-span-2 text-right pr-4">Actions</div>
 </div>
 
 <div id="parent-list-container" class="space-y-2">
@@ -172,8 +172,9 @@
                                     ${p.is_active ? 'Active' : 'Arch'}
                                 </span>
                             </div>
-                            <div class="col-span-2 text-right">
+                            <div class="col-span-2 text-right flex justify-end gap-2">
                                 <button data-id="${p.id}" class="parent-edit-btn px-3 py-1 bg-slate-50 border border-slate-200 rounded text-[8px] font-black text-slate-600 hover:bg-slate-800 hover:text-white transition-all uppercase">Edit Record</button>
+                                <button data-id="${p.id}" class="parent-delete-btn px-3 py-1 bg-red-50 border border-red-200 rounded text-[8px] font-black text-red-600 hover:bg-red-600 hover:text-white transition-all uppercase">Delete</button>
                             </div>
                         </div>
                     </div>
@@ -183,6 +184,18 @@
             container.querySelectorAll('.parent-edit-btn').forEach(b => {
                 b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id));
             });
+            container.querySelectorAll('.parent-delete-btn').forEach(b => {
+                b.onclick = () => this.deleteRecord(b.dataset.id);
+            });
+        },
+
+        async deleteRecord(id) {
+            if (!confirm("Are you sure you want to permanently delete this parent record?")) return;
+            const accessKey = window.SecurityManager.getAccessKey();
+            try {
+                const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}/${id}?access_key=${accessKey}`, { method: 'DELETE' });
+                if (res.ok) this.init();
+            } catch (err) { console.error("Delete Error:", err); }
         },
 
         openModal(p = null) {
