@@ -5,9 +5,9 @@
     <title>NestMind Enrollment Master</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="../nest_style.css">
-    <script src="../api_config.js"></script>
-    <script src="../security.js"></script>
+    <link rel="stylesheet" href="nest_style.css">
+    <script src="api_config.js"></script>
+    <script src="security.js"></script>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -29,6 +29,7 @@
         .btn-teal { background: var(--nest-teal); color: #fff; padding: 14px 24px; border-radius: 6px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; width: 100%; margin-top: 15px; }
         .badge-step { background: var(--nest-dark); color: white; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; }
         .qa-row { display: grid; grid-template-columns: 40px 2fr 1.5fr; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; }
+        .qa-row.selected { background: #f0fdfa; }
         .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
     </style>
 </head>
@@ -123,24 +124,24 @@
     window.state = { currentParentId: null, currentStudentId: null, currentFranchiseId: null, pickupContacts: [], allParents: [], selectedQuestionCount: 0 };
 
     async function init() {
-        const accessKey = SecurityManager.getAccessKey();
-        const sel = document.getElementById('ho_franchise_selector');
-        
-        // Identity Lock Check
+        if (typeof SecurityManager === 'undefined') {
+            console.error("SecurityManager not loaded. Path is wrong.");
+            return;
+        }
+
         const isHeadOffice = localStorage.getItem('is_head_office') === 'true';
         const lockedId = localStorage.getItem('locked_franchise_id');
 
         if (!isHeadOffice && lockedId) {
-            // BYPASS STEP 0: Auto-lock to local variable
             window.state.currentFranchiseId = parseInt(lockedId);
             document.getElementById('step-location').style.display = 'none';
             window.lockLocation(); 
         } else {
-            // HEAD OFFICE MODE: Show menu
             try {
-                const res = await fetch(`${window.NEST_ENDPOINTS.franchise.list}?access_key=${accessKey}`);
+                const res = await fetch(`${window.NEST_ENDPOINTS.franchise.list}?access_key=${SecurityManager.getAccessKey()}`);
                 const data = await res.json();
                 const list = Array.isArray(data) ? data : (data.items || []);
+                const sel = document.getElementById('ho_franchise_selector');
                 sel.innerHTML = '<option value="">-- Choose Branch --</option>';
                 list.sort((a,b) => a.name.localeCompare(b.name)).forEach(f => {
                     sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
@@ -151,7 +152,6 @@
 
     window.lockLocation = async () => {
         const sel = document.getElementById('ho_franchise_selector');
-        // Use selector if HO, otherwise use state set by init
         if(!window.state.currentFranchiseId && sel.value) {
             window.state.currentFranchiseId = parseInt(sel.value);
         }
@@ -167,7 +167,7 @@
             window.moveToStep('step-location', 'step-parent', 1);
             if(window.initParentStep) await window.initParentStep();
             fetchOtherBranchData();
-        } catch(e) { console.error("Error loading Parent Section:", e); }
+        } catch(e) { console.error(e); }
     };
 
     window.moveToStep = (c, n, num) => {
