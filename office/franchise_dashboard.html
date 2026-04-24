@@ -15,6 +15,46 @@
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+
+        /* Hero Animation for the Main View */
+        .nestmind-hero {
+            font-size: 12vw; /* Massive fluid typography */
+            line-height: 1;
+            background: linear-gradient(180deg, var(--nest-dark) 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 40vw;
+            height: 40vw;
+            background: radial-gradient(circle, rgba(0, 209, 178, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            animation: breathe 8s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.15); opacity: 0.8; }
+        }
+
+        .system-status-pill {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 99px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
     </style>
 </head>
 <body class="bg-[#f8fafc] font-['Inter',_sans-serif]">
@@ -33,11 +73,11 @@
                     <option value="">-- Select Branch --</option>
                 </select>
 
-                <div id="active-branch-name" class="hidden text-white font-bold text-sm tracking-tight"></div>
+                <div id="active-branch-name" class="hidden text-white font-bold text-sm tracking-tight uppercase"></div>
                 
                 <div id="breadcrumb-container" class="hidden mt-2 pt-2 border-t border-slate-700/30">
                     <div class="flex items-center justify-center gap-1.5">
-                        <div id="status-dot" class="w-1.5 h-1.5 rounded-full bg-[#00d1b2] animate-pulse-teal"></div>
+                        <div id="status-dot" class="w-1.5 h-1.5 rounded-full bg-[#00d1b2] animate-pulse"></div>
                         <span id="breadcrumb-text" class="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">Portal Root</span>
                     </div>
                 </div>
@@ -62,7 +102,7 @@
             
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Academic DNA</div>
             
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('new_enrollment.html', 'New Enrollment')">
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('new_enrollment.html', 'Enrollment')">
                 <span class="text-sm">✨</span> Enrollment
             </button>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('student_assessment.html', 'Assessments')">
@@ -92,9 +132,15 @@
     </aside>
 
     <main id="main-workspace" class="flex-grow overflow-y-auto relative bg-[#f8fafc]">
-        <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full">
-            <h1 class="text-7xl font-black text-slate-800 tracking-tighter mb-2">NestMind</h1>
-            <p id="status-text" class="text-slate-400 font-medium text-sm italic">Authenticating security key...</p>
+        <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full relative">
+            <div class="hero-glow"></div>
+            
+            <h1 class="nestmind-hero font-black tracking-tighter select-none">NestMind</h1>
+            
+            <div id="system-status-container" class="system-status-pill">
+                <div class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></div>
+                <p id="status-text" class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Awaiting Identity...</p>
+            </div>
         </div>
     </main>
 </div>
@@ -108,7 +154,6 @@
         const select = document.getElementById('branch-select');
         const statusText = document.getElementById('status-text');
 
-        // 1. FORCED MASTER CHECK - Clear stale storage immediately
         if (tlnpKey === 'TLNP624163') {
             localStorage.clear();
             localStorage.setItem('nestmind_access_key', tlnpKey);
@@ -138,7 +183,7 @@
                     window.history.replaceState({}, document.title, window.location.pathname);
                 } else {
                     statusText.innerText = "Access Denied: Invalid Security Key.";
-                    statusText.classList.add('text-red-500');
+                    statusText.classList.replace('text-slate-500', 'text-red-500');
                 }
             } else {
                 select.classList.remove('hidden');
@@ -148,7 +193,7 @@
                     opt.value = f.id; opt.innerText = f.name;
                     select.appendChild(opt);
                 });
-                statusText.innerText = "Please select a branch to initialize portal.";
+                statusText.innerText = "Select branch to initialize portal.";
             }
         } catch (e) { 
             console.error("Auth failed", e);
