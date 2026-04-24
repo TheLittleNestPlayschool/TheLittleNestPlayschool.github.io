@@ -63,6 +63,7 @@
 (function() {
     const ParentModule = {
         data: [],
+        franchises: {}, // Store franchise names here
         schema: null,
 
         async init() {
@@ -74,9 +75,19 @@
             this.buildFormUI(); 
             
             const isSuper = window.SecurityManager.isHeadOffice();
-            const branchName = localStorage.getItem('locked_franchise_name') || 'Main';
             const accessKey = window.SecurityManager.getAccessKey();
+
+            // 1. Fetch Franchises for mapping if Head Office
+            if (isSuper) {
+                try {
+                    const fRes = await fetch(`${window.NEST_ENDPOINTS.franchise.list}?access_key=${accessKey}`);
+                    const fData = await fRes.json();
+                    const fList = Array.isArray(fData) ? fData : (fData.items || []);
+                    fList.forEach(f => { this.franchises[f.id] = f.name; });
+                } catch(e) { console.error("Franchise load error", e); }
+            }
             
+            const branchName = localStorage.getItem('locked_franchise_name') || 'Main';
             document.getElementById('module-subheader').innerText = isSuper 
                 ? "Full Network Records • Master View" 
                 : `Active Guardian Records • ${branchName}`;
@@ -85,12 +96,10 @@
                 ? "Global System Master" 
                 : `${branchName} Branch`;
 
-            let fetchUrl = window.NEST_ENDPOINTS.parent.list;
-            if (isSuper) {
-                fetchUrl += `?access_key=${accessKey}`;
-            } else {
+            let fetchUrl = window.NEST_ENDPOINTS.parent.list + `?access_key=${accessKey}`;
+            if (!isSuper) {
                 const fid = localStorage.getItem('locked_franchise_id');
-                fetchUrl += `?franchise_id=${fid}&access_key=${accessKey}`;
+                fetchUrl += `&franchise_id=${fid}`;
             }
 
             try {
@@ -99,9 +108,7 @@
                 this.data = Array.isArray(result) ? result : (result.items || []);
                 this.render();
                 this.setupListeners();
-            } catch (err) {
-                console.error("Fetch Error:", err);
-            }
+            } catch (err) { console.error(err); }
         },
 
         buildFormUI() {
@@ -130,30 +137,20 @@
             const sortType = document.getElementById('parent-sort').value;
             const isSuper = window.SecurityManager.isHeadOffice();
             
-            let filtered = this.data.filter(p => 
-                `${p.first_name} ${p.last_name} ${p.email} ${p.phone}`.toLowerCase().includes(search)
-            );
+            let filtered = this.data.filter(p => `${p.first_name} ${p.last_name} ${p.email} ${p.phone}`.toLowerCase().includes(search));
 
             filtered.sort((a, b) => {
-                if (sortType === 'franchise') {
-                    return (a.franchise_id || 0) - (b.franchise_id || 0) || (a.last_name || '').localeCompare(b.last_name || '');
-                } else if (sortType === 'status') {
-                    return (b.is_active === a.is_active) ? (a.last_name || '').localeCompare(b.last_name || '') : (b.is_active ? 1 : -1);
-                } else {
-                    const lnSort = (a.last_name || '').localeCompare(b.last_name || '');
-                    return lnSort !== 0 ? lnSort : (a.first_name || '').localeCompare(b.first_name || '');
-                }
+                if (sortType === 'franchise') return (a.franchise_id || 0) - (b.franchise_id || 0) || (a.last_name || '').localeCompare(b.last_name || '');
+                if (sortType === 'status') return (b.is_active === a.is_active) ? (a.last_name || '').localeCompare(b.last_name || '') : (b.is_active ? -1 : 1);
+                return (a.last_name || '').localeCompare(b.last_name || '') || (a.first_name || '').localeCompare(b.first_name || '');
             });
-
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="p-10 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">No matching records.</div>`;
-                return;
-            }
 
             container.innerHTML = '';
             filtered.forEach(p => {
-                const branchBadge = isSuper ? `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-white text-[7px] font-black uppercase ml-1">BRANCH ID: ${p.franchise_id}</span>` : '';
-
+                // Show actual franchise name if available, fallback to FID if not
+                const fName = this.franchises[p.franchise_id] || `ID: ${p.franchise_id}`;
+                const branchBadge = isSuper ? `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-white text-[7px] font-black uppercase ml-1">${fName}</span>` : '';
+                
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-200 rounded-lg shadow-sm hover:border-teal-400 transition-all px-4 py-2">
                         <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
@@ -161,46 +158,35 @@
                                 <div class="text-[11px] font-black text-slate-800 uppercase leading-none">${p.last_name}, ${p.first_name} ${branchBadge}</div>
                                 <div class="text-[9px] text-slate-400 font-bold lowercase mt-0.5">${p.email || 'no email'}</div>
                             </div>
-                            <div class="col-span-2">
-                                <div class="text-[10px] font-mono text-teal-600 font-bold">${p.phone || '---'}</div>
-                            </div>
-                            <div class="col-span-4">
-                                <div class="text-[9px] text-slate-500 font-bold uppercase truncate pr-4">${p.address || '---'}</div>
-                            </div>
+                            <div class="col-span-2"><div class="text-[10px] font-mono text-teal-600 font-bold">${p.phone || '---'}</div></div>
+                            <div class="col-span-4"><div class="text-[9px] text-slate-500 font-bold uppercase truncate pr-4">${p.address || '---'}</div></div>
                             <div class="col-span-1 text-center">
-                                <span class="px-2 py-0.5 rounded text-[7px] font-black uppercase border ${p.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">
-                                    ${p.is_active ? 'Active' : 'Arch'}
-                                </span>
+                                <span class="px-2 py-0.5 rounded text-[7px] font-black uppercase border ${p.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">${p.is_active ? 'Active' : 'Arch'}</span>
                             </div>
                             <div class="col-span-2 text-right flex justify-end gap-2">
-                                <button data-id="${p.id}" class="parent-edit-btn px-3 py-1 bg-slate-50 border border-slate-200 rounded text-[8px] font-black text-slate-600 hover:bg-slate-800 hover:text-white transition-all uppercase">Edit Record</button>
-                                <button data-id="${p.id}" class="parent-delete-btn px-3 py-1 bg-red-50 border border-red-200 rounded text-[8px] font-black text-red-600 hover:bg-red-600 hover:text-white transition-all uppercase">Delete</button>
+                                <button data-id="${p.id}" class="parent-edit-btn px-3 py-1 bg-slate-50 border border-slate-200 rounded text-[8px] font-black text-slate-600 hover:bg-slate-800 hover:text-white transition-all uppercase">Edit</button>
+                                <button data-id="${p.id}" class="parent-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-[8px] font-black text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all uppercase">Delete</button>
                             </div>
                         </div>
                     </div>
                 `);
             });
 
-            container.querySelectorAll('.parent-edit-btn').forEach(b => {
-                b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id));
-            });
-            container.querySelectorAll('.parent-delete-btn').forEach(b => {
-                b.onclick = () => this.deleteRecord(b.dataset.id);
-            });
+            container.querySelectorAll('.parent-edit-btn').forEach(b => { b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id)); });
+            container.querySelectorAll('.parent-delete-btn').forEach(b => { b.onclick = () => this.deleteRecord(b.dataset.id); });
         },
 
         async deleteRecord(id) {
-            if (!confirm("Are you sure you want to permanently delete this parent record?")) return;
+            if (!confirm("Are you sure you want to permanently delete this parent record? This cannot be undone.")) return;
             const accessKey = window.SecurityManager.getAccessKey();
             try {
                 const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}/${id}?access_key=${accessKey}`, { method: 'DELETE' });
                 if (res.ok) this.init();
-            } catch (err) { console.error("Delete Error:", err); }
+            } catch (err) { console.error(err); }
         },
 
         openModal(p = null) {
             document.getElementById('parent-modal').classList.remove('hidden');
-            document.getElementById('parent-form').reset();
             document.getElementById('p-edit-id').value = p ? p.id : '';
             this.schema.fields.forEach(f => {
                 const el = document.getElementById(f.id);
@@ -226,31 +212,25 @@
                 const accessKey = window.SecurityManager.getAccessKey();
                 const fid = localStorage.getItem('locked_franchise_id');
                 const payload = { franchise_id: parseInt(fid) };
-                
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
-                    if (el && f.id !== 'id' && !f.readonly) {
-                        payload[f.id] = (f.type === 'bool' || f.type === 'checkbox') ? el.checked : el.value;
-                    }
+                    if (el && f.id !== 'id' && !f.readonly) payload[f.id] = (f.type === 'bool' || f.type === 'checkbox') ? el.checked : el.value;
                 });
-
                 const url = id ? `${window.NEST_ENDPOINTS.parent.list}/${id}?access_key=${accessKey}` : `${window.NEST_ENDPOINTS.parent.list}?access_key=${accessKey}`;
-                const res = await fetch(url, { 
-                    method: id ? 'PATCH' : 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(payload) 
-                });
-                
+                const res = await fetch(url, { method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 if (res.ok) { this.closeModal(); this.init(); }
             };
         },
 
         async loadScript(src) {
             return new Promise(resolve => {
-                const s = document.createElement('script'); s.src = src; s.onload = resolve;
+                const s = document.createElement('script'); 
+                s.src = src; 
+                s.onload = resolve;
                 s.onerror = () => { 
-                    const fallback = src.replace('../', '');
-                    const s2 = document.createElement('script'); s2.src = fallback; s2.onload = resolve;
+                    const s2 = document.createElement('script'); 
+                    s2.src = src.replace('../', ''); 
+                    s2.onload = resolve;
                     document.head.appendChild(s2);
                 };
                 document.head.appendChild(s);
