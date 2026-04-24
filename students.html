@@ -57,17 +57,20 @@
         schema: null,
 
         async init() {
-            // Standardizing relative paths to root config files
             if (!window.NEST_SCHEMA) await this.loadScript('../schema_config.js');
             if (!window.NEST_ENDPOINTS) await this.loadScript('../api_config.js');
             if (!window.SecurityManager) await this.loadScript('../security.js');
             
             this.schema = window.NEST_SCHEMA.student;
             const isSuper = SecurityManager.isHeadOffice();
-            const authQuery = SecurityManager.getAuthQuery();
             const branchName = localStorage.getItem('locked_franchise_name') || 'Main';
+            const accessKey = SecurityManager.getAccessKey();
 
-            // Update UI Labels
+            // Constructing auth query based on role
+            let authQuery = isSuper 
+                ? `?access_key=${accessKey}` 
+                : `?franchise_id=${localStorage.getItem('locked_franchise_id')}&access_key=${accessKey}`;
+
             document.getElementById('student-subheader').innerText = isSuper 
                 ? "Global Network Records • All Branches" 
                 : `Full Enrollment Directory • ${branchName}`;
@@ -77,22 +80,29 @@
                 : `${branchName} Branch Records`;
 
             try {
-                // Parallel fetch using the dynamic auth query
                 const [sRes, pRes, sessRes] = await Promise.all([
                     fetch(`${window.NEST_ENDPOINTS.student.list}${authQuery}`),
                     fetch(`${window.NEST_ENDPOINTS.parent.list}${authQuery}`),
                     fetch(`${window.NEST_ENDPOINTS.session.list}${authQuery}`)
                 ]);
                 
-                this.data = await sRes.json();
-                this.parents = await pRes.json();
-                this.sessions = await sessRes.json();
+                const sRaw = await sRes.json();
+                const pRaw = await pRes.json();
+                const sessRaw = await sessRes.json();
+
+                // Logic to extract array from Xano response (handling pagination wrappers)
+                this.data = Array.isArray(sRaw) ? sRaw : (sRaw.items || sRaw.data || []);
+                this.parents = Array.isArray(pRaw) ? pRaw : (pRaw.items || pRaw.data || []);
+                this.sessions = Array.isArray(sessRaw) ? sessRaw : (sessRaw.items || sessRaw.data || []);
                 
+                if (!Array.isArray(this.data)) this.data = [];
+
                 this.buildFormUI(); 
                 this.render();
                 this.setupListeners();
             } catch (err) {
                 console.error("Data Sync Error:", err);
+                document.getElementById('student-table-body').innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-400 font-bold uppercase text-[10px]">Sync Error: ${err.message}</td></tr>`;
             }
         },
 
@@ -136,7 +146,7 @@
                     inputHTML = `
                         <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
                             <input type="checkbox" id="${f.id}" class="w-4 h-4 accent-teal-500">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase">Active Status</span>
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">${f.label} Status</span>
                         </div>`;
                 } else {
                     const readonly = f.readonly ? 'readonly' : '';
@@ -146,7 +156,7 @@
 
                 grid.insertAdjacentHTML('beforeend', `
                     <div class="${spanClass}">
-                        <label class="text-[9px] text-slate-400 block uppercase font-black mb-1.5 ml-1 tracking-wider">${f.label === 'Parent ID' ? 'Parent' : (f.label === 'Session Enrolled' ? 'Session' : f.label)}</label>
+                        <label class="text-[9px] text-slate-400 block uppercase font-black mb-1.5 ml-1 tracking-wider">${f.label}</label>
                         ${inputHTML}
                     </div>
                 `);
@@ -161,7 +171,6 @@
             let filtered = this.data.filter(s => (s.name && s.name.toLowerCase().includes(search)));
 
             tbody.innerHTML = '';
-            
             if (filtered.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-300 text-[10px] font-black uppercase tracking-widest">No Student Records Found.</td></tr>';
                 return;
@@ -170,9 +179,9 @@
             filtered.forEach((s, idx) => {
                 const bg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40';
                 const parent = this.parents.find(p => p.id === s.parent_id);
-                const parentDisplay = parent ? `${parent.first_name} ${parent.last_name}` : `Guardian ID: ${s.parent_id}`;
+                const parentDisplay = parent ? `${parent.first_name} ${parent.last_name}` : `ID: ${s.parent_id}`;
                 const session = this.sessions.find(sess => sess.id === s.session_enrolled);
-                const sessionDisplay = session ? session.name : `${s.session_enrolled || 'Not Assigned'}`;
+                const sessionDisplay = session ? session.name : `ID: ${s.session_enrolled || '---'}`;
                 const branchBadge = isSuper ? `<span class="ml-2 px-2 py-0.5 rounded bg-slate-200 text-slate-600 text-[7px] font-black uppercase tracking-tighter">BID: ${s.franchise_id}</span>` : '';
 
                 tbody.insertAdjacentHTML('beforeend', `
@@ -189,39 +198,24 @@
                                     </div>
                                     <div class="grid grid-cols-2 gap-y-3 gap-x-4">
                                         <div class="col-span-2">
-                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Parent</p>
+                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Parent/Guardian</p>
                                             <p class="text-[11px] text-slate-800 uppercase font-black">${parentDisplay}</p>
                                         </div>
-                                        <div>
-                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Preferred Name</p>
-                                            <p class="text-[11px] font-black text-slate-800 uppercase">${s.preferred_name || '---'}</p>
-                                        </div>
-                                        <div>
-                                            <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Birth Date</p>
-                                            <p class="text-[11px] font-mono font-black text-slate-800">${s.date_of_birth || '---'}</p>
-                                        </div>
+                                        <div><p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Birth Date</p><p class="text-[11px] font-mono font-black text-slate-800">${s.date_of_birth || '---'}</p></div>
                                     </div>
                                 </div>
-
                                 <div class="flex-1 border-l border-slate-100 pl-8">
                                     <div class="grid grid-cols-2 gap-y-3 gap-x-4">
                                         <div class="col-span-2">
                                             <p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Session</p>
                                             <p class="text-[11px] text-slate-800 uppercase font-black">${sessionDisplay}</p>
                                         </div>
-                                        <div><p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Start Date</p><p class="text-[11px] font-black text-slate-800 uppercase">${s.start_date || '---'}</p></div>
-                                        <div><p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Nationality</p><p class="text-[11px] font-black text-slate-800 uppercase">${s.nationality || '---'}</p></div>
                                         <div class="col-span-2"><p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Home Address</p><p class="text-[11px] font-black text-slate-800 uppercase leading-tight">${s.home_address || '---'}</p></div>
                                     </div>
                                 </div>
-
                                 <div class="flex-none w-52 border-l border-slate-100 pl-8 flex flex-col justify-between">
-                                    <div class="grid grid-cols-1 gap-y-3">
-                                        <div><p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Primary Language</p><p class="text-[11px] font-black text-slate-800 uppercase">${s.primary_language || '---'}</p></div>
-                                        <div><p class="text-[8px] text-slate-400 font-black uppercase tracking-widest mb-0.5">Gender</p><p class="text-[11px] font-black text-slate-800 uppercase">${s.gender || '---'}</p></div>
-                                    </div>
                                     <div class="flex gap-2 mt-6">
-                                        <button data-id="${s.id}" class="student-edit-btn flex-1 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:text-teal-600 hover:border-teal-300 hover:shadow-sm transition-all uppercase font-black text-[9px]">Edit</button>
+                                        <button data-id="${s.id}" class="student-edit-btn flex-1 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:text-teal-600 transition-all uppercase font-black text-[9px]">Edit</button>
                                         <button data-id="${s.id}" class="student-delete-btn flex-1 py-2 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition-all uppercase font-black text-[9px]">Delete</button>
                                     </div>
                                 </div>
@@ -237,7 +231,8 @@
 
         async deleteRecord(id) {
             if (!confirm("Permanently remove this student record?")) return;
-            const authQuery = SecurityManager.getAuthQuery();
+            const accessKey = SecurityManager.getAccessKey();
+            const authQuery = `?access_key=${accessKey}`;
             try {
                 const res = await fetch(`${window.NEST_ENDPOINTS.student.list}/${id}${authQuery}`, { method: 'DELETE' });
                 if (res.ok) this.init();
@@ -248,7 +243,6 @@
             document.getElementById('student-modal').classList.remove('hidden');
             document.getElementById('student-form').reset();
             document.getElementById('s-edit-id').value = s.id;
-
             this.schema.fields.forEach(f => {
                 const el = document.getElementById(f.id);
                 if (el) {
@@ -269,7 +263,8 @@
             document.getElementById('student-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('s-edit-id').value;
-                const authQuery = SecurityManager.getAuthQuery();
+                const accessKey = SecurityManager.getAccessKey();
+                const authQuery = `?access_key=${accessKey}`;
                 const payload = {};
                 
                 this.schema.fields.forEach(f => {
@@ -285,7 +280,6 @@
                     headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify(payload) 
                 });
-                
                 if (res.ok) { this.closeModal(); this.init(); }
             };
         },
@@ -302,7 +296,6 @@
             });
         }
     };
-
     StudentModule.init();
 })();
 </script>
