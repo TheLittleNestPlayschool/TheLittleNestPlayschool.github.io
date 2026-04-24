@@ -1,118 +1,135 @@
-<link rel="stylesheet" href="../nest_style.css">
-<script src="../api_config.js"></script>
-<script src="../security.js"></script>
-
-<div id="step-parent" class="step-container step-active">
-    <h2 class="nest-header"><span class="badge-step">1</span> Parent Profile</h2>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NestMind Enrollment Master</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     
-    <div id="parent-profile-view" style="display:none;" class="profile-display mb-4">
-        <button class="edit-pill" onclick="unlockStep('step-parent', 'parent-profile-view')">Modify</button>
-        <div class="profile-item"><div class="profile-label">Name</div><div id="disp-p-name" class="profile-value font-bold"></div></div>
-        <div class="profile-item"><div class="profile-label">Phone</div><div id="disp-p-phone" class="profile-value font-bold"></div></div>
-        <div class="profile-item"><div class="profile-label">Email</div><div id="disp-p-email" class="profile-value font-bold"></div></div>
+    <link rel="stylesheet" href="../nest_style.css">
+    <script src="../api_config.js"></script>
+    <script src="../security.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --nest-teal: #00d1b2; --nest-dark: #1e293b; --nest-bg: #f1f5f9; --nest-border: #e2e8f0; }
+        body { background: var(--nest-bg); font-family: 'Inter', sans-serif; color: var(--nest-dark); margin: 0; }
+        .enrollment-wrapper { width: 100%; max-width: 900px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
+        .nest-header { color: var(--nest-dark); font-weight: 800; font-size: 1.3rem; letter-spacing: -0.5px; display: flex; align-items: center; margin-bottom: 8px; }
+        .progress-bar { text-align: right; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 12px; text-transform: uppercase; }
+        .step-container { background: white; border: 1px solid var(--nest-border); border-radius: 8px; padding: 25px; margin-bottom: 15px; position: relative; transition: all 0.3s ease; }
+        .step-locked { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
+        .step-active { border-left: 6px solid var(--nest-teal); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .step-saved { border-left: 6px solid #cbd5e1; background: #f8fafc; }
+        .step-saved .step-content { display: none; }
+        .profile-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid var(--nest-border); margin-top: 10px; position: relative; }
+        .profile-label { font-size: 0.55rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+        .profile-value { font-size: 0.85rem; color: #334155; font-weight: 600; }
+        label { display: block; font-size: 0.6rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; margin-top: 10px; }
+        input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; font-size: 0.8rem; background: #f8fafc; font-weight: 700; text-transform: uppercase; }
+        .btn-teal { background: var(--nest-teal); color: #fff; padding: 14px 24px; border-radius: 6px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; width: 100%; margin-top: 15px; }
+        .badge-step { background: var(--nest-dark); color: white; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; }
+        .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<div id="enrollment-ui" class="enrollment-wrapper">
+    <div id="enrollment-progress" class="progress-bar">Step 0 of 6</div>
+
+    <div id="step-location" class="step-container step-active">
+        <h2 class="nest-header"><span class="badge-step">0</span> Select Branch</h2>
+        <div class="step-content">
+            <label>Operating Location</label>
+            <select id="ho_franchise_selector"><option value="">Syncing Network...</option></select>
+            <button id="init-btn" onclick="lockLocation()" class="btn-teal">Initialize System</button>
+        </div>
     </div>
 
-    <div class="step-content">
-        <div id="parent-select-mode">
-            <label>Search Existing Records</label>
-            <input type="text" id="p_search" placeholder="Type name to filter..." onkeyup="filterParents()" class="mb-2">
-            <select id="p_select_id" size="5" class="mt-2 outline-none font-bold uppercase"></select>
-        </div>
+    <div id="parent-step-container"></div>
 
-        <div id="parent-create-mode" style="display:none;">
-            <div class="grid grid-cols-2 gap-4">
-                <div><label>First Name</label><input type="text" id="p_fn"></div>
-                <div><label>Last Name</label><input type="text" id="p_ln"></div>
+    <div id="step-student" class="step-container step-locked">
+        <h2 class="nest-header"><span class="badge-step">2</span> Student Profile</h2>
+        <div id="student-profile-view" style="display:none;" class="profile-display mb-4">
+            <button class="edit-pill" onclick="unlockStep('step-student', 'student-profile-view')">Modify</button>
+            <div class="profile-item"><div class="profile-label">Student</div><div id="disp-s-name" class="profile-value"></div></div>
+            <div class="profile-item"><div class="profile-label">DOB</div><div id="disp-s-dob" class="profile-value"></div></div>
+        </div>
+        <div class="step-content">
+            <div id="student-select-mode">
+                <label>Linked Students</label>
+                <select id="s_select_id" class="font-bold uppercase"></select>
             </div>
-            <label>Phone Number</label><input type="text" id="p_phone">
-            <label>Email Address</label><input type="email" id="p_email">
-            <label>Home Address</label><input type="text" id="p_address">
+            <div id="student-create-mode" style="display:none;">
+                <label>Full Legal Name</label><input type="text" id="s_name_new">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label>Date of Birth</label><input type="date" id="s_dob_new"></div>
+                    <div><label>Gender</label><input type="text" id="s_gender"></div>
+                </div>
+            </div>
+            <button class="bg-slate-500 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase mt-4" onclick="toggleStudentMode()">Toggle New/Existing</button>
+            <button onclick="processStudentStep()" class="btn-teal">Confirm Student Data</button>
         </div>
-
-        <button class="bg-slate-500 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md mt-4" onclick="toggleParentMode()">Toggle New/Existing</button>
-        <button onclick="processParentStep()" class="btn-teal">Confirm Parent Data</button>
     </div>
-</div>
+    </div>
 
 <script>
-// Logic to initialize using the Master's state
-window.initParentStep = async () => {
-    // Accessing the state defined in new_enrollment.html
-    const masterState = window.state; 
-    const auth = `?access_key=${SecurityManager.getAccessKey()}&franchise_id=${masterState.currentFranchiseId}`;
-    
-    try {
-        const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}${auth}`);
-        const data = await res.json();
-        const raw = Array.isArray(data) ? data : (data.items || []);
-        
-        // Update the Master's shared state
-        masterState.allParents = raw.filter(p => p.franchise_id === masterState.currentFranchiseId);
-        renderParentList(masterState.allParents);
-    } catch(e) { console.error("Parent Fragment Init Error", e); }
-};
+(function() {
+    window.state = { currentParentId: null, currentStudentId: null, currentFranchiseId: null, allParents: [] };
 
-window.filterParents = () => {
-    const t = document.getElementById('p_search').value.toLowerCase();
-    renderParentList(window.state.allParents.filter(p => `${p.first_name} ${p.last_name}`.toLowerCase().includes(t)));
-};
-
-function renderParentList(list) {
-    const sel = document.getElementById('p_select_id'); 
-    if(!sel) return;
-    sel.innerHTML = '';
-    list.forEach(p => { 
-        sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name} — ${p.phone || 'N/A'}</option>`; 
-    });
-}
-
-window.processParentStep = async () => {
-    const isNew = document.getElementById('parent-create-mode').style.display === 'block';
-    const accessKey = SecurityManager.getAccessKey();
-    const masterState = window.state;
-
-    if (isNew) {
-        const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}?access_key=${accessKey}`, {
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                first_name: document.getElementById('p_fn').value,
-                last_name: document.getElementById('p_ln').value,
-                phone: document.getElementById('p_phone').value,
-                email: document.getElementById('p_email').value,
-                address: document.getElementById('p_address').value,
-                franchise_id: masterState.currentFranchiseId,
-                is_active: true
-            })
-        });
-        const data = await res.json();
-        masterState.currentParentId = data.id;
-        updateParentSummary(data);
-    } else {
-        masterState.currentParentId = parseInt(document.getElementById('p_select_id').value);
-        if(!masterState.currentParentId) return alert("Select a parent");
-        const selected = masterState.allParents.find(x => x.id === masterState.currentParentId);
-        updateParentSummary(selected);
+    async function init() {
+        const accessKey = SecurityManager.getAccessKey();
+        const sel = document.getElementById('ho_franchise_selector');
+        try {
+            const res = await fetch(`${window.NEST_ENDPOINTS.franchise.list}?access_key=${accessKey}`);
+            const data = await res.json();
+            const list = Array.isArray(data) ? data : (data.items || []);
+            sel.innerHTML = '<option value="">-- Choose Branch --</option>';
+            list.sort((a,b) => a.name.localeCompare(b.name)).forEach(f => {
+                sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
+            });
+            if (!SecurityManager.isHeadOffice()) {
+                const savedId = localStorage.getItem('locked_franchise_id');
+                if (savedId) { sel.value = savedId; window.lockLocation(); }
+            }
+        } catch(e) { console.error(e); }
     }
-    
-    // Call the student prep logic sitting in the Master file
-    if(window.prepStudentStep) window.prepStudentStep();
-    
-    // Call the navigation logic sitting in the Master file
-    moveToStep('step-parent', 'step-student', 2);
-};
 
-function updateParentSummary(p) {
-    if(!p) return;
-    document.getElementById('disp-p-name').innerText = `${p.first_name || ''} ${p.last_name || ''}`;
-    document.getElementById('disp-p-phone').innerText = p.phone || 'N/A';
-    document.getElementById('disp-p-email').innerText = p.email || 'N/A';
-    document.getElementById('parent-profile-view').style.display = 'grid';
-}
+    window.lockLocation = async () => {
+        const sel = document.getElementById('ho_franchise_selector');
+        if(!sel.value) return;
+        window.state.currentFranchiseId = parseInt(sel.value);
+        
+        try {
+            const res = await fetch('new_enrollment_parent.html');
+            if(!res.ok) throw new Error("Could not find parent fragment");
+            document.getElementById('parent-step-container').innerHTML = await res.text();
+            
+            moveToStep('step-location', 'step-parent', 1);
+            if(window.initParentStep) window.initParentStep();
+        } catch(e) { alert("Error loading Parent Section: Check filename."); }
+    };
 
-window.toggleParentMode = () => {
-    const s = document.getElementById('parent-select-mode'), c = document.getElementById('parent-create-mode');
-    s.style.display = s.style.display === 'none' ? 'block' : 'none';
-    c.style.display = c.style.display === 'none' ? 'block' : 'none';
-};
+    window.moveToStep = (c, n, num) => {
+        const cEl = document.getElementById(c);
+        const nEl = document.getElementById(n);
+        if(cEl) cEl.classList.replace('step-active', 'step-saved');
+        if(nEl) { nEl.classList.remove('step-locked'); nEl.classList.add('step-active'); }
+        document.getElementById('enrollment-progress').innerText = `Step ${num} of 6`;
+    };
+
+    window.unlockStep = (sId, vId) => {
+        document.getElementById(sId).classList.replace('step-saved', 'step-active');
+        document.getElementById(vId).style.display = 'none';
+    };
+
+    window.toggleStudentMode = () => {
+        const s = document.getElementById('student-select-mode'), c = document.getElementById('student-create-mode');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        c.style.display = c.style.display === 'none' ? 'block' : 'none';
+    };
+
+    init();
+})();
 </script>
+</body>
+</html>
