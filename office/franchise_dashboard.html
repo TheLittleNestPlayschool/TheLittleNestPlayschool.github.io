@@ -64,17 +64,7 @@
         <div class="px-3 mb-4">
             <div class="bg-[#1e293b] p-3 rounded-xl border border-slate-700/50 text-center shadow-lg">
                 <p class="text-[9px] font-black text-[#2dd4bf] uppercase mb-2 tracking-widest opacity-80">Identity Lock</p>
-                <select id="branch-select" onchange="unlockDashboard()" class="hidden w-full bg-[#0f172a] text-white py-1.5 px-2 rounded-md border border-slate-600 text-[11px] outline-none cursor-pointer">
-                    <option value="">-- Select Branch --</option>
-                </select>
-                <div id="active-branch-name" class="hidden text-white font-bold text-sm tracking-tight uppercase"></div>
-                
-                <div id="breadcrumb-container" class="hidden mt-2 pt-2 border-t border-slate-700/30">
-                    <div class="flex items-center justify-center gap-1.5">
-                        <div id="status-dot" class="w-1.5 h-1.5 rounded-full bg-[#00d1b2] animate-pulse"></div>
-                        <span id="breadcrumb-text" class="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">Portal Root</span>
-                    </div>
-                </div>
+                <div id="active-branch-name" class="text-white font-bold text-sm tracking-tight uppercase">---</div>
             </div>
         </div>
 
@@ -107,84 +97,39 @@
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
         const tlnpKey = urlParams.get('tlnp');
-        const select = document.getElementById('branch-select');
 
-        // Initial setup - clear if specifically logging in
-        if (tlnpKey) localStorage.clear();
+        if (!tlnpKey) return;
 
+        // One-time setup based on the key
         try {
             const res = await fetch(window.NEST_ENDPOINTS.franchise.list);
             const data = await res.json();
             const franchises = Array.isArray(data) ? data : (data.items || []);
 
+            localStorage.clear(); // Ensure fresh start
+
             if (tlnpKey === 'TLNP624163') {
-                // HEAD OFFICE VIEW
-                localStorage.setItem('nestmind_access_key', tlnpKey);
                 localStorage.setItem('is_head_office', 'true');
                 localStorage.setItem('locked_franchise_id', 'all');
                 localStorage.setItem('locked_franchise_name', 'HEAD OFFICE');
-                
-                // Keep select visible so Head Office can switch branches
-                select.classList.remove('hidden');
-                populateSelect(select, franchises);
-                finalizeUnlock("HEAD OFFICE", true);
-            } else if (tlnpKey) {
-                // FRANCHISE DIRECT VIEW
+                finalizeUnlock("HEAD OFFICE");
+            } else {
                 const matched = franchises.find(f => f.access_key === tlnpKey);
                 if (matched) {
-                    localStorage.setItem('nestmind_access_key', tlnpKey);
                     localStorage.setItem('is_head_office', 'false');
                     localStorage.setItem('locked_franchise_id', matched.id);
                     localStorage.setItem('locked_franchise_name', matched.name);
-                    finalizeUnlock(matched.name, false);
+                    finalizeUnlock(matched.name);
                 }
-            } else {
-                // NO KEY - Manual Selection Mode
-                select.classList.remove('hidden');
-                populateSelect(select, franchises);
             }
-        } catch (e) { console.error("Identity Lock failure", e); }
+            // Clean the URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (e) { console.error("Init failed", e); }
     }
 
-    function populateSelect(select, franchises) {
-        select.innerHTML = '<option value="">-- Select Branch --</option>';
-        franchises.forEach(f => {
-            let opt = document.createElement('option');
-            opt.value = f.id; opt.innerText = f.name;
-            select.appendChild(opt);
-        });
-    }
-
-    function finalizeUnlock(fname, isHO) {
-        const branchDisplay = document.getElementById('active-branch-name');
-        const navMenu = document.getElementById('nav-menu');
-        const breadcrumb = document.getElementById('breadcrumb-container');
-        
-        branchDisplay.innerText = fname;
-        branchDisplay.classList.remove('hidden');
-        navMenu.classList.remove('hidden');
-        if(breadcrumb) breadcrumb.classList.remove('hidden');
-        
-        // If it's a specific branch, we can hide the select. 
-        // If it's HO, we keep the select visible to allow switching.
-        if (!isHO) document.getElementById('branch-select').classList.add('hidden');
-    }
-
-    function unlockDashboard() {
-        const select = document.getElementById('branch-select');
-        const fid = select.value;
-        if(!fid) return;
-        const fname = select.options[select.selectedIndex].text;
-        
-        // When HO selects a branch, we keep is_head_office true but set the specific ID
-        localStorage.setItem('locked_franchise_id', fid);
-        localStorage.setItem('locked_franchise_name', fname);
-        
-        const branchDisplay = document.getElementById('active-branch-name');
-        branchDisplay.innerText = fname;
-        branchDisplay.classList.remove('hidden');
+    function finalizeUnlock(fname) {
+        document.getElementById('active-branch-name').innerText = fname;
         document.getElementById('nav-menu').classList.remove('hidden');
-        document.getElementById('breadcrumb-container')?.classList.remove('hidden');
     }
 
     async function loadModule(file, title) {
@@ -192,10 +137,7 @@
         currentController = new AbortController();
 
         const container = document.getElementById('view-container');
-        const breadcrumb = document.getElementById('breadcrumb-text');
-        
         container.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic animate-pulse">Syncing ${title}...</div>`;
-        if(breadcrumb) breadcrumb.innerText = title;
 
         const authParams = SecurityManager.getAuthQuery();
         const secureUrl = `${GITHUB_ROOT}${file}${authParams}`;
@@ -205,6 +147,8 @@
                 signal: currentController.signal 
             });
             const html = await res.text();
+            
+            // Hard replacement of current view
             container.innerHTML = `<div class="p-8">${html}</div>`;
 
             const scripts = container.querySelectorAll('script');
