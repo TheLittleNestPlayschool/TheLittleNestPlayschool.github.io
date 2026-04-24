@@ -16,45 +16,44 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
 
-        /* Hero Animation for the Main View */
+        /* Massive Typography */
         .nestmind-hero {
-            font-size: 12vw; /* Massive fluid typography */
+            font-size: 14vw; 
             line-height: 1;
-            background: linear-gradient(180deg, var(--nest-dark) 0%, #334155 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+            color: var(--nest-dark);
+            letter-spacing: -0.05em;
             position: relative;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Amplified Breathing Animation */
+        .hero-glow-container {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             z-index: 1;
+            overflow: hidden;
         }
 
         .hero-glow {
-            position: absolute;
-            width: 40vw;
-            height: 40vw;
-            background: radial-gradient(circle, rgba(0, 209, 178, 0.12) 0%, transparent 70%);
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(0, 209, 178, 0.18) 0%, rgba(0, 209, 178, 0.05) 40%, transparent 70%);
             border-radius: 50%;
-            z-index: 0;
-            animation: breathe 8s ease-in-out infinite;
+            animation: breathe 6s ease-in-out infinite;
         }
 
         @keyframes breathe {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.15); opacity: 0.8; }
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.3); opacity: 1; }
         }
 
-        .system-status-pill {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            padding: 6px 12px;
-            border-radius: 99px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        }
+        /* Remove any status indicator overlays */
+        #system-status-container { display: none !important; }
     </style>
 </head>
 <body class="bg-[#f8fafc] font-['Inter',_sans-serif]">
@@ -133,14 +132,13 @@
 
     <main id="main-workspace" class="flex-grow overflow-y-auto relative bg-[#f8fafc]">
         <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full relative">
-            <div class="hero-glow"></div>
-            
-            <h1 class="nestmind-hero font-black tracking-tighter select-none">NestMind</h1>
-            
-            <div id="system-status-container" class="system-status-pill">
-                <div class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></div>
-                <p id="status-text" class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Awaiting Identity...</p>
+            <div class="hero-glow-container">
+                <div class="hero-glow"></div>
             </div>
+            
+            <h1 class="nestmind-hero select-none">NestMind</h1>
+            
+            <p id="status-text" class="hidden"></p>
         </div>
     </main>
 </div>
@@ -182,8 +180,7 @@
                     finalizeUnlock(matched.name);
                     window.history.replaceState({}, document.title, window.location.pathname);
                 } else {
-                    statusText.innerText = "Access Denied: Invalid Security Key.";
-                    statusText.classList.replace('text-slate-500', 'text-red-500');
+                    console.error("Invalid Security Key.");
                 }
             } else {
                 select.classList.remove('hidden');
@@ -193,11 +190,9 @@
                     opt.value = f.id; opt.innerText = f.name;
                     select.appendChild(opt);
                 });
-                statusText.innerText = "Select branch to initialize portal.";
             }
         } catch (e) { 
             console.error("Auth failed", e);
-            statusText.innerText = "Connection Error.";
         }
     }
 
@@ -210,10 +205,6 @@
         branchDisplay.classList.remove('hidden');
         document.getElementById('breadcrumb-container').classList.remove('hidden'); 
         navMenu.classList.remove('hidden');
-        
-        if(document.getElementById('status-text')) {
-            document.getElementById('status-text').innerText = "Identity Verified: " + fname;
-        }
     }
 
     function unlockDashboard() {
