@@ -20,105 +20,121 @@
     <div id="parent-form-content" class="step-content">
         <div id="parent-select-mode">
             <label>Search Existing Records</label>
-            <input type="text" id="p_search" placeholder="Type name to filter..." onkeyup="filterParents()" class="w-full border p-2 rounded text-xs mb-2 mt-1">
+            <input type="text" id="p_search" placeholder="Type name to filter..." onkeyup="window.filterParents()" class="w-full border p-2 rounded text-xs mb-2 mt-1">
             <select id="p_select_id" size="5" class="w-full border rounded p-2 text-xs font-bold uppercase outline-none bg-white"></select>
         </div>
 
         <div id="parent-create-mode" style="display:none;">
             <div class="grid grid-cols-2 gap-4">
-                <div><label>First Name</label><input type="text" id="p_fn" class="w-full border p-2 rounded"></div>
-                <div><label>Last Name</label><input type="text" id="p_ln" class="w-full border p-2 rounded"></div>
+                <div><label>First Name</label><input type="text" id="p_fn" class="w-full border p-2 rounded bg-white"></div>
+                <div><label>Last Name</label><input type="text" id="p_ln" class="w-full border p-2 rounded bg-white"></div>
             </div>
-            <label>Phone Number</label><input type="text" id="p_phone" class="w-full border p-2 rounded">
-            <label>Email Address</label><input type="email" id="p_email" class="w-full border p-2 rounded">
-            <label>Home Address</label><input type="text" id="p_address" class="w-full border p-2 rounded">
+            <label>Phone Number</label><input type="text" id="p_phone" class="w-full border p-2 rounded bg-white">
+            <label>Email Address</label><input type="email" id="p_email" class="w-full border p-2 rounded bg-white">
+            <label>Home Address</label><input type="text" id="p_address" class="w-full border p-2 rounded bg-white">
         </div>
 
-        <button class="bg-slate-500 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase mt-4 shadow-md" onclick="toggleParentMode()">Toggle New/Existing</button>
-        <button onclick="processParentStep()" class="btn-teal">Confirm Parent Data</button>
+        <button class="bg-slate-500 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase mt-4 shadow-md" onclick="window.toggleParentMode()">Toggle New/Existing</button>
+        <button onclick="window.processParentStep()" class="btn-teal">Confirm Parent Data</button>
     </div>
 </div>
 
 <script>
-// Called automatically by Master when franchise is locked
-window.initParentStep = async () => {
-    const auth = `?access_key=${SecurityManager.getAccessKey()}&franchise_id=${window.state.currentFranchiseId}`;
-    try {
-        const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}${auth}`);
-        const data = await res.json();
-        window.state.allParents = (Array.isArray(data) ? data : (data.items || [])).filter(p => p.franchise_id === window.state.currentFranchiseId);
-        renderParentList(window.state.allParents);
-    } catch(e) { console.error("Parent sync failed", e); }
-};
+(function() {
+    // Fail-safe initialization for the Fragment
+    window.initParentStep = async () => {
+        // Use the parents.html pattern to find the brain files if the master missed them
+        if (!window.NEST_ENDPOINTS) await loadParentScript('../api_config.js');
+        if (!window.SecurityManager) await loadParentScript('../security.js');
 
-window.filterParents = () => {
-    const term = document.getElementById('p_search').value.toLowerCase();
-    renderParentList(window.state.allParents.filter(p => 
-        `${p.first_name} ${p.last_name}`.toLowerCase().includes(term)
-    ));
-};
+        const auth = `?access_key=${SecurityManager.getAccessKey()}&franchise_id=${window.state.currentFranchiseId}`;
+        try {
+            const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}${auth}`);
+            const data = await res.json();
+            window.state.allParents = (Array.isArray(data) ? data : (data.items || [])).filter(p => p.franchise_id === window.state.currentFranchiseId);
+            renderParentList(window.state.allParents);
+        } catch(e) { console.error("Parent sync failed", e); }
+    };
 
-function renderParentList(list) {
-    const sel = document.getElementById('p_select_id');
-    if(!sel) return;
-    sel.innerHTML = '';
-    list.forEach(p => { 
-        sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name} — ${p.phone || 'N/A'}</option>`; 
-    });
-}
+    window.filterParents = () => {
+        const term = document.getElementById('p_search').value.toLowerCase();
+        renderParentList(window.state.allParents.filter(p => 
+            `${p.first_name} ${p.last_name}`.toLowerCase().includes(term)
+        ));
+    };
 
-window.processParentStep = async () => {
-    const isNew = document.getElementById('parent-create-mode').style.display === 'block';
-    const accessKey = SecurityManager.getAccessKey();
-
-    if (isNew) {
-        const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}?access_key=${accessKey}`, {
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                first_name: document.getElementById('p_fn').value,
-                last_name: document.getElementById('p_ln').value,
-                phone: document.getElementById('p_phone').value,
-                email: document.getElementById('p_email').value,
-                address: document.getElementById('p_address').value,
-                franchise_id: window.state.currentFranchiseId,
-                is_active: true
-            })
+    function renderParentList(list) {
+        const sel = document.getElementById('p_select_id');
+        if(!sel) return;
+        sel.innerHTML = '';
+        list.forEach(p => { 
+            sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name} — ${p.phone || 'N/A'}</option>`; 
         });
-        const data = await res.json();
-        window.state.currentParentId = data.id;
-        updateParentSummary(data);
-    } else {
-        window.state.currentParentId = parseInt(document.getElementById('p_select_id').value);
-        if(!window.state.currentParentId) return alert("Select a parent record.");
-        const selected = window.state.allParents.find(x => x.id === window.state.currentParentId);
-        updateParentSummary(selected);
     }
-    
-    // Switch UI to Step 2
-    document.getElementById('parent-form-content').style.display = 'none';
-    document.getElementById('parent-profile-view').style.display = 'grid';
 
-    // IMPORTANT: Trigger the Master's logic to fetch students for THIS parent
-    if(window.prepStudentStep) window.prepStudentStep();
-    window.moveToStep('step-parent', 'step-student', 2);
-};
+    window.toggleParentMode = () => {
+        const s = document.getElementById('parent-select-mode'), c = document.getElementById('parent-create-mode');
+        if (s.style.display === 'none') {
+            s.style.display = 'block';
+            c.style.display = 'none';
+        } else {
+            s.style.display = 'none';
+            c.style.display = 'block';
+        }
+    };
 
-function updateParentSummary(p) {
-    if(!p) return;
-    document.getElementById('disp-p-name').innerText = `${p.first_name || ''} ${p.last_name || ''}`;
-    document.getElementById('disp-p-phone').innerText = p.phone || 'N/A';
-    document.getElementById('disp-p-email').innerText = p.email || 'N/A';
-}
+    window.processParentStep = async () => {
+        const isNew = document.getElementById('parent-create-mode').style.display === 'block';
+        const accessKey = SecurityManager.getAccessKey();
 
-window.toggleParentMode = () => {
-    const s = document.getElementById('parent-select-mode'), c = document.getElementById('parent-create-mode');
-    if (s.style.display === 'none') {
-        s.style.display = 'block';
-        c.style.display = 'none';
-    } else {
-        s.style.display = 'none';
-        c.style.display = 'block';
+        if (isNew) {
+            const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}?access_key=${accessKey}`, {
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    first_name: document.getElementById('p_fn').value,
+                    last_name: document.getElementById('p_ln').value,
+                    phone: document.getElementById('p_phone').value,
+                    email: document.getElementById('p_email').value,
+                    address: document.getElementById('p_address').value,
+                    franchise_id: window.state.currentFranchiseId,
+                    is_active: true
+                })
+            });
+            const data = await res.json();
+            window.state.currentParentId = data.id;
+            updateParentSummary(data);
+        } else {
+            window.state.currentParentId = parseInt(document.getElementById('p_select_id').value);
+            if(!window.state.currentParentId) return alert("Select a parent record.");
+            const selected = window.state.allParents.find(x => x.id === window.state.currentParentId);
+            updateParentSummary(selected);
+        }
+        
+        document.getElementById('parent-form-content').style.display = 'none';
+        document.getElementById('parent-profile-view').style.display = 'grid';
+
+        if(window.prepStudentStep) window.prepStudentStep();
+        window.moveToStep('step-parent', 'step-student', 2);
+    };
+
+    function updateParentSummary(p) {
+        if(!p) return;
+        document.getElementById('disp-p-name').innerText = `${p.first_name || ''} ${p.last_name || ''}`;
+        document.getElementById('disp-p-phone').innerText = p.phone || 'N/A';
+        document.getElementById('disp-p-email').innerText = p.email || 'N/A';
     }
-};
+
+    async function loadParentScript(src) {
+        return new Promise(resolve => {
+            const s = document.createElement('script'); s.src = src; s.onload = resolve;
+            s.onerror = () => { 
+                const fallback = src.replace('../', '');
+                const s2 = document.createElement('script'); s2.src = fallback; s2.onload = resolve;
+                document.head.appendChild(s2);
+            };
+            document.head.appendChild(s);
+        });
+    }
+})();
 </script>
