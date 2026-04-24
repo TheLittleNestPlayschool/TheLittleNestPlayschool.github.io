@@ -16,6 +16,7 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
 
+        /* Massive Hero Typography */
         .nestmind-hero {
             font-size: 15vw; 
             line-height: 1;
@@ -25,8 +26,10 @@
             position: relative;
             z-index: 10;
             pointer-events: none;
+            text-shadow: 0 20px 50px rgba(0,0,0,0.05);
         }
 
+        /* High-Intensity System Pulse */
         .system-pulse-container {
             position: absolute;
             inset: 0;
@@ -34,38 +37,26 @@
             align-items: center;
             justify-content: center;
             z-index: 1;
+            overflow: hidden;
         }
 
         .pulse-core {
             position: absolute;
-            width: 45vw;
-            height: 45vw;
-            background: radial-gradient(circle, rgba(0, 209, 178, 0.2) 0%, transparent 70%);
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(0, 209, 178, 0.35) 0%, rgba(0, 209, 178, 0.1) 40%, transparent 70%);
             border-radius: 50%;
+            filter: blur(40px);
             animation: systemPulse 4s ease-in-out infinite;
         }
 
-        /* Giraffe stays in the corner of the home view */
-        .char-giraffe {
-            position: absolute;
-            bottom: 2%;
-            right: 5%;
-            width: 18vw;
-            z-index: 5;
-            pointer-events: none;
-            mix-blend-mode: multiply;
-            animation: giraffeFloat 10s ease-in-out infinite;
-        }
-
-        @keyframes giraffeFloat {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-15px) rotate(-1.5deg); }
-        }
-
         @keyframes systemPulse {
-            0%, 100% { transform: scale(0.8); opacity: 0.3; }
-            50% { transform: scale(1.2); opacity: 0.8; }
+            0%, 100% { transform: scale(0.8); opacity: 0.4; }
+            50% { transform: scale(1.45); opacity: 1; }
         }
+
+        /* Clean UI Overrides */
+        #status-text, .system-status-pill { display: none !important; visibility: hidden !important; }
     </style>
 </head>
 <body class="bg-[#f8fafc] font-['Inter',_sans-serif]">
@@ -77,29 +68,35 @@
         </div>
         
         <div class="px-3 mb-4">
-            <div class="bg-[#1e293b] p-3 rounded-xl border border-slate-700/50 text-center">
-                <p class="text-[9px] font-black text-[#2dd4bf] uppercase mb-1 tracking-widest">Identity Lock</p>
-                <select id="branch-select" onchange="unlockDashboard()" class="hidden w-full bg-[#0f172a] text-white py-1 rounded border border-slate-600 text-[10px]">
+            <div class="bg-[#1e293b] p-3 rounded-xl border border-slate-700/50 text-center shadow-lg">
+                <p class="text-[9px] font-black text-[#2dd4bf] uppercase mb-2 tracking-widest opacity-80">Identity Lock</p>
+                <select id="branch-select" onchange="unlockDashboard()" class="hidden w-full bg-[#0f172a] text-white py-1.5 px-2 rounded-md border border-slate-600 text-[11px] focus:ring-1 focus:ring-[#00d1b2] outline-none cursor-pointer">
                     <option value="">-- Select Branch --</option>
                 </select>
-                <div id="active-branch-name" class="hidden text-white font-bold text-xs uppercase tracking-tight"></div>
+                <div id="active-branch-name" class="hidden text-white font-bold text-sm tracking-tight uppercase"></div>
+                <div id="breadcrumb-container" class="hidden mt-2 pt-2 border-t border-slate-700/30">
+                    <div class="flex items-center justify-center gap-1.5">
+                        <div id="status-dot" class="w-1.5 h-1.5 rounded-full bg-[#00d1b2] animate-pulse"></div>
+                        <span id="breadcrumb-text" class="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">Portal Root</span>
+                    </div>
+                </div>
             </div>
         </div>
 
         <nav id="nav-menu" class="hidden px-2 overflow-y-auto space-y-0.5 custom-scrollbar pb-10">
-            <div class="text-[10px] font-bold text-[#475569] uppercase px-3 py-2">Management</div>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-colors" onclick="loadModule('franchise_performance.html', 'Performance')">📈 Performance</button>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-colors" onclick="loadModule('parents.html', 'Parents')">👨‍👩‍👧 Parents</button>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-colors" onclick="loadModule('students.html', 'Students')">🏫 Students</button>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-colors" onclick="loadModule('teacher_v2.html', 'Teachers')">🧑‍🏫 Teachers</button>
+            <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Management</div>
+            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('franchise_performance.html', 'Performance')">📈 Performance</button>
+            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('parents.html', 'Parents')">👨‍👩‍👧 Parents</button>
+            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('students.html', 'Students')">🏫 Students</button>
+            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('teacher_v2.html', 'Teachers')">🧑‍🏫 Teachers</button>
             
-            <div class="text-[10px] font-bold text-[#475569] uppercase px-3 py-2">Academic DNA</div>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-colors" onclick="loadModule('new_enrollment.html', 'Enrollment')">✨ Enrollment</button>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-colors" onclick="loadModule('student_assessment.html', 'Assessments')">📝 Assessments</button>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-colors" onclick="loadModule('session_display.html', 'Sessions')">🗓️ Sessions</button>
+            <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Academic DNA</div>
+            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('new_enrollment.html', 'Enrollment')">✨ Enrollment</button>
+            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('student_assessment.html', 'Assessments')">📝 Assessments</button>
+            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('session_display.html', 'Sessions')">🗓️ Sessions</button>
 
-            <div class="text-[10px] font-bold text-[#475569] uppercase px-3 py-2">Logistics</div>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-colors" onclick="loadModule('forms_vault.html', 'Forms Vault')">📂 Forms Vault</button>
+            <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Logistics</div>
+            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('forms_vault.html', 'Forms Vault')">📂 Forms Vault</button>
         </nav>
     </aside>
 
@@ -107,9 +104,6 @@
         <div id="view-container" class="h-full">
             <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full relative">
                 <div class="system-pulse-container"><div class="pulse-core"></div></div>
-                
-                <img src="giraffe_pixar.png" class="char-giraffe" alt="Giraffe">
-                
                 <h1 class="nestmind-hero select-none">NestMind</h1>
             </div>
         </div>
@@ -160,6 +154,7 @@
         branchDisplay.innerText = fname;
         branchDisplay.classList.remove('hidden');
         document.getElementById('nav-menu').classList.remove('hidden');
+        document.getElementById('breadcrumb-container')?.classList.remove('hidden');
     }
 
     function unlockDashboard() {
@@ -174,14 +169,16 @@
         currentController = new AbortController();
 
         const container = document.getElementById('view-container');
-        container.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic animate-pulse">Loading ${title}...</div>`;
+        const breadcrumb = document.getElementById('breadcrumb-text');
+        
+        container.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic animate-pulse">Syncing ${title}...</div>`;
+        if(breadcrumb) breadcrumb.innerText = title;
 
         try {
             const authParams = SecurityManager.getAuthQuery();
             const response = await fetch(`${GITHUB_ROOT}${file}${authParams}&v=${Date.now()}`, { signal: currentController.signal });
             const html = await response.text();
             
-            // This replaces the giraffe/hero screen with your module data
             container.innerHTML = `<div class="p-8">${html}</div>`;
 
             const scripts = container.querySelectorAll('script');
@@ -191,7 +188,9 @@
                 else newScript.text = oldScript.text;
                 document.head.appendChild(newScript).parentNode.removeChild(newScript);
             });
-        } catch (e) { if (e.name !== 'AbortError') container.innerHTML = `<div class="p-10 text-red-500">Sync Error: ${e.message}</div>`; }
+        } catch (e) { 
+            if (e.name !== 'AbortError') container.innerHTML = `<div class="p-10 text-red-500">Sync Error: ${e.message}</div>`; 
+        }
     }
 
     window.onload = init;
