@@ -1,37 +1,46 @@
 <div id="step-parent" class="step-container step-active">
     <h2 class="nest-header"><span class="badge-step">1</span> Parent Profile</h2>
     
-    <div id="parent-profile-view" style="display:none;" class="profile-display mb-4">
+    <div id="parent-profile-view" style="display:none;" class="profile-display mb-4 p-4 border rounded relative bg-slate-50">
         <button class="edit-pill" onclick="unlockStep('step-parent', 'parent-profile-view')">Modify</button>
-        <div class="profile-item"><div class="profile-label">Name</div><div id="disp-p-name" class="profile-value"></div></div>
-        <div class="profile-item"><div class="profile-label">Phone</div><div id="disp-p-phone" class="profile-value"></div></div>
-        <div class="profile-item"><div class="profile-label">Email</div><div id="disp-p-email" class="profile-value"></div></div>
+        <div class="profile-item">
+            <div class="profile-label">Name</div>
+            <div id="disp-p-name" class="profile-value font-bold text-slate-800"></div>
+        </div>
+        <div class="profile-item">
+            <div class="profile-label">Phone</div>
+            <div id="disp-p-phone" class="profile-value font-bold text-slate-800"></div>
+        </div>
+        <div class="profile-item">
+            <div class="profile-label">Email</div>
+            <div id="disp-p-email" class="profile-value font-bold text-slate-800"></div>
+        </div>
     </div>
 
     <div id="parent-form-content" class="step-content">
         <div id="parent-select-mode">
             <label>Search Existing Records</label>
-            <input type="text" id="p_search" placeholder="Type name to filter..." onkeyup="filterParents()" class="mb-2">
-            <select id="p_select_id" size="5" class="mt-2 outline-none font-bold uppercase"></select>
+            <input type="text" id="p_search" placeholder="Type name to filter..." onkeyup="filterParents()" class="w-full border p-2 rounded text-xs mb-2 mt-1">
+            <select id="p_select_id" size="5" class="w-full border rounded p-2 text-xs font-bold uppercase outline-none"></select>
         </div>
 
         <div id="parent-create-mode" style="display:none;">
             <div class="grid grid-cols-2 gap-4">
-                <div><label>First Name</label><input type="text" id="p_fn"></div>
-                <div><label>Last Name</label><input type="text" id="p_ln"></div>
+                <div><label>First Name</label><input type="text" id="p_fn" class="w-full border p-2 rounded"></div>
+                <div><label>Last Name</label><input type="text" id="p_ln" class="w-full border p-2 rounded"></div>
             </div>
-            <label>Phone Number</label><input type="text" id="p_phone">
-            <label>Email Address</label><input type="email" id="p_email">
-            <label>Home Address</label><input type="text" id="p_address">
+            <label>Phone Number</label><input type="text" id="p_phone" class="w-full border p-2 rounded">
+            <label>Email Address</label><input type="email" id="p_email" class="w-full border p-2 rounded">
+            <label>Home Address</label><input type="text" id="p_address" class="w-full border p-2 rounded">
         </div>
 
-        <button class="bg-slate-500 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md mt-4" onclick="toggleParentMode()">Toggle New/Existing</button>
+        <button class="bg-slate-500 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase mt-4 shadow-md" onclick="toggleParentMode()">Toggle New/Existing</button>
         <button onclick="processParentStep()" class="btn-teal">Confirm Parent Data</button>
     </div>
 </div>
 
 <script>
-// This function is triggered by lockLocation() in the master file
+// Logic to initialize using the Master's state
 window.initParentStep = async () => {
     const auth = `?access_key=${SecurityManager.getAccessKey()}&franchise_id=${window.state.currentFranchiseId}`;
     try {
@@ -39,10 +48,12 @@ window.initParentStep = async () => {
         const data = await res.json();
         const raw = Array.isArray(data) ? data : (data.items || []);
         
-        // Filter and update global state
+        // Update global state in Master
         window.state.allParents = raw.filter(p => p.franchise_id === window.state.currentFranchiseId);
         renderParentList(window.state.allParents);
-    } catch(e) { console.error("Parent Sync Error:", e); }
+    } catch(e) { 
+        console.error("Parent Fragment Sync Failed", e); 
+    }
 };
 
 window.filterParents = () => {
@@ -53,7 +64,7 @@ window.filterParents = () => {
 };
 
 function renderParentList(list) {
-    const sel = document.getElementById('p_select_id'); 
+    const sel = document.getElementById('p_select_id');
     if(!sel) return;
     sel.innerHTML = '';
     list.forEach(p => { 
@@ -84,19 +95,19 @@ window.processParentStep = async () => {
         updateParentSummary(data);
     } else {
         window.state.currentParentId = parseInt(document.getElementById('p_select_id').value);
-        if(!window.state.currentParentId) return alert("Please select a parent record.");
+        if(!window.state.currentParentId) return alert("Select a parent record to continue.");
         const selected = window.state.allParents.find(x => x.id === window.state.currentParentId);
         updateParentSummary(selected);
     }
     
-    // Hide form and show summary
+    // Hide form content and show the saved summary
     document.getElementById('parent-form-content').style.display = 'none';
     document.getElementById('parent-profile-view').style.display = 'grid';
 
-    // Move to Step 2 (Student) in the master file
+    // Move to Step 2 defined in the Master File
     window.moveToStep('step-parent', 'step-student', 2);
     
-    // If Step 2 needs to prepopulate linked students, trigger it here
+    // Trigger Step 2 prep logic if it exists in Master
     if(window.prepStudentStep) window.prepStudentStep();
 };
 
@@ -109,7 +120,12 @@ function updateParentSummary(p) {
 
 window.toggleParentMode = () => {
     const s = document.getElementById('parent-select-mode'), c = document.getElementById('parent-create-mode');
-    s.style.display = s.style.display === 'none' ? 'block' : 'none';
-    c.style.display = c.style.display === 'none' ? 'block' : 'none';
+    if (s.style.display === 'none') {
+        s.style.display = 'block';
+        c.style.display = 'none';
+    } else {
+        s.style.display = 'none';
+        c.style.display = 'block';
+    }
 };
 </script>
