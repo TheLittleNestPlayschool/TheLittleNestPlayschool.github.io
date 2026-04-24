@@ -98,7 +98,7 @@
 
         if (!tlnpKey) return;
 
-        // 1. Save key immediately so SecurityManager can use it for the fetch
+        // Set access key immediately before any fetch attempts
         localStorage.setItem('nestmind_access_key', tlnpKey);
 
         try {
@@ -121,7 +121,7 @@
                 }
             }
             window.history.replaceState({}, document.title, window.location.pathname);
-        } catch (e) { console.error("Identity Sync Failed", e); }
+        } catch (e) { console.error("Critical Init Error:", e); }
     }
 
     function finalizeUnlock(fname) {
@@ -136,16 +136,13 @@
         const container = document.getElementById('view-container');
         container.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic animate-pulse">Syncing ${title}...</div>`;
 
-        // 2. This helper (from security.js) relies on nestmind_access_key being in storage
+        // SecurityManager uses 'nestmind_access_key' from localStorage
         const authParams = SecurityManager.getAuthQuery();
-        const secureUrl = `${GITHUB_ROOT}${file}${authParams}`;
+        const secureUrl = `${GITHUB_ROOT}${file}${authParams}&v=${Date.now()}`;
         
         try {
-            const res = await fetch(`${secureUrl}${secureUrl.includes('?') ? '&' : '?' }v=${Date.now()}`, { 
-                signal: currentController.signal 
-            });
+            const res = await fetch(secureUrl, { signal: currentController.signal });
             const html = await res.text();
-            
             container.innerHTML = `<div class="p-8">${html}</div>`;
 
             const scripts = container.querySelectorAll('script');
@@ -157,7 +154,7 @@
             });
         } catch (e) { 
             if (e.name !== 'AbortError') {
-                container.innerHTML = `<div class="p-10 text-red-500">Sync Error: ${e.message}</div>`; 
+                container.innerHTML = `<div class="p-10 text-red-500 font-bold">Failed to load ${title}. Verify endpoint permissions.</div>`;
             }
         }
     }
