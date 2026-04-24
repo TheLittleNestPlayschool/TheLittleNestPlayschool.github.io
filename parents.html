@@ -14,8 +14,8 @@
         <input type="text" id="parent-search" placeholder="Search parents..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all font-bold">
         
-        <button id="add-parent-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-[10px] uppercase tracking-wider shadow-md">
-            + ADD NEW PARENT
+        <button id="add-parent-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-[10px] shadow-md">
+            + Add New Parent
         </button>
     </div>
 </div>
@@ -134,14 +134,12 @@
                 `${p.first_name} ${p.last_name} ${p.email} ${p.phone}`.toLowerCase().includes(search)
             );
 
-            // Sorting Logic
             filtered.sort((a, b) => {
                 if (sortType === 'franchise') {
                     return (a.franchise_id || 0) - (b.franchise_id || 0) || (a.last_name || '').localeCompare(b.last_name || '');
                 } else if (sortType === 'status') {
                     return (b.is_active === a.is_active) ? (a.last_name || '').localeCompare(b.last_name || '') : (b.is_active ? 1 : -1);
                 } else {
-                    // Default Name Sort
                     const lnSort = (a.last_name || '').localeCompare(b.last_name || '');
                     return lnSort !== 0 ? lnSort : (a.first_name || '').localeCompare(b.first_name || '');
                 }
@@ -204,7 +202,7 @@
 
         setupListeners() {
             document.getElementById('parent-search').oninput = () => this.render();
-            document.getElementById('parent-sort').onchange = () => this.render(); // Re-render when sort changes
+            document.getElementById('parent-sort').onchange = () => this.render();
             document.getElementById('add-parent-btn').onclick = () => this.openModal();
             document.getElementById('close-modal-x').onclick = () => this.closeModal();
             document.getElementById('cancel-modal-btn').onclick = () => this.closeModal();
