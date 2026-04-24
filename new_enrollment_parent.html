@@ -2,7 +2,7 @@
     <h2 class="nest-header"><span class="badge-step">1</span> Parent Profile</h2>
     
     <div id="parent-profile-view" style="display:none;" class="profile-display mb-4 p-4 border rounded relative bg-slate-50">
-        <button class="edit-pill" onclick="unlockStep('step-parent', 'parent-profile-view')">Modify</button>
+        <button class="edit-pill" onclick="unlockStep('step-parent', 'parent-profile-view'); document.getElementById('parent-form-content').style.display='block'">Modify</button>
         <div class="profile-item">
             <div class="profile-label">Name</div>
             <div id="disp-p-name" class="profile-value font-bold text-slate-800"></div>
@@ -21,17 +21,17 @@
         <div id="parent-select-mode">
             <label>Search Existing Records</label>
             <input type="text" id="p_search" placeholder="Type name to filter..." onkeyup="filterParents()" class="w-full border p-2 rounded text-xs mb-2 mt-1">
-            <select id="p_select_id" size="5" class="w-full border rounded p-2 text-xs font-bold uppercase outline-none"></select>
+            <select id="p_select_id" size="5" class="w-full border rounded p-2 text-xs font-bold uppercase outline-none bg-white"></select>
         </div>
 
         <div id="parent-create-mode" style="display:none;">
             <div class="grid grid-cols-2 gap-4">
-                <div><label>First Name</label><input type="text" id="p_fn" class="w-full border p-2 rounded"></div>
-                <div><label>Last Name</label><input type="text" id="p_ln" class="w-full border p-2 rounded"></div>
+                <div><label>First Name</label><input type="text" id="p_fn" class="w-full border p-2 rounded bg-white"></div>
+                <div><label>Last Name</label><input type="text" id="p_ln" class="w-full border p-2 rounded bg-white"></div>
             </div>
-            <label>Phone Number</label><input type="text" id="p_phone" class="w-full border p-2 rounded">
-            <label>Email Address</label><input type="email" id="p_email" class="w-full border p-2 rounded">
-            <label>Home Address</label><input type="text" id="p_address" class="w-full border p-2 rounded">
+            <label>Phone Number</label><input type="text" id="p_phone" class="w-full border p-2 rounded bg-white">
+            <label>Email Address</label><input type="email" id="p_email" class="w-full border p-2 rounded bg-white">
+            <label>Home Address</label><input type="text" id="p_address" class="w-full border p-2 rounded bg-white">
         </div>
 
         <button class="bg-slate-500 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase mt-4 shadow-md" onclick="toggleParentMode()">Toggle New/Existing</button>
@@ -40,7 +40,10 @@
 </div>
 
 <script>
-// Logic to initialize using the Master's state
+/** * This script runs once the fragment is injected. 
+ * It relies on window.state and NEST_ENDPOINTS from the Master.
+ */
+
 window.initParentStep = async () => {
     const auth = `?access_key=${SecurityManager.getAccessKey()}&franchise_id=${window.state.currentFranchiseId}`;
     try {
@@ -48,11 +51,11 @@ window.initParentStep = async () => {
         const data = await res.json();
         const raw = Array.isArray(data) ? data : (data.items || []);
         
-        // Update global state in Master
+        // Save to global state so Master can use it later
         window.state.allParents = raw.filter(p => p.franchise_id === window.state.currentFranchiseId);
         renderParentList(window.state.allParents);
     } catch(e) { 
-        console.error("Parent Fragment Sync Failed", e); 
+        console.error("Parent sync failed", e); 
     }
 };
 
@@ -95,20 +98,17 @@ window.processParentStep = async () => {
         updateParentSummary(data);
     } else {
         window.state.currentParentId = parseInt(document.getElementById('p_select_id').value);
-        if(!window.state.currentParentId) return alert("Select a parent record to continue.");
+        if(!window.state.currentParentId) return alert("Please select a parent record.");
         const selected = window.state.allParents.find(x => x.id === window.state.currentParentId);
         updateParentSummary(selected);
     }
     
-    // Hide form content and show the saved summary
     document.getElementById('parent-form-content').style.display = 'none';
     document.getElementById('parent-profile-view').style.display = 'grid';
 
-    // Move to Step 2 defined in the Master File
-    window.moveToStep('step-parent', 'step-student', 2);
-    
-    // Trigger Step 2 prep logic if it exists in Master
+    // Proceed to Step 2 in Master
     if(window.prepStudentStep) window.prepStudentStep();
+    window.moveToStep('step-parent', 'step-student', 2);
 };
 
 function updateParentSummary(p) {
