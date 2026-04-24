@@ -1,7 +1,7 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
         <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Parent Directory</h1>
-        <p id="module-subheader" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Loading Records...</p>
+        <p id="module-subheader" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Full Guardian Records</p>
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
@@ -16,7 +16,7 @@
 
 <div id="parent-list-container" class="space-y-6">
     <div class="p-20 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
-        Synchronizing Global Records...
+        Loading Records...
     </div>
 </div>
 
@@ -52,7 +52,6 @@
         schema: null,
 
         async init() {
-            // Load root-level configs using relative paths
             if (!window.NEST_SCHEMA) await this.loadScript('../schema_config.js');
             if (!window.NEST_ENDPOINTS) await this.loadScript('../api_config.js');
             if (!window.SecurityManager) await this.loadScript('../security.js');
@@ -63,7 +62,7 @@
             const isSuper = SecurityManager.isHeadOffice();
             const branchName = localStorage.getItem('locked_franchise_name') || 'Main';
             
-            // Update Headers
+            // Update UI context
             document.getElementById('module-subheader').innerText = isSuper 
                 ? "Full Network Records • Master View" 
                 : `Full Guardian Records • ${branchName}`;
@@ -72,7 +71,7 @@
                 ? "Global Administrator" 
                 : `${branchName} Branch`;
 
-            // Build dynamic authenticated URL
+            // MASTER LOGIC: getAuthQuery() handles the "pull all" vs "pull matching" logic
             const authQuery = SecurityManager.getAuthQuery();
             const fetchUrl = window.NEST_ENDPOINTS.parent.list + authQuery;
 
@@ -83,7 +82,6 @@
                 this.setupListeners();
             } catch (err) {
                 console.error("Fetch Error:", err);
-                document.getElementById('parent-list-container').innerHTML = `<div class="p-20 text-center text-red-500 font-bold uppercase text-xs">Security Handshake Failed</div>`;
             }
         },
 
@@ -106,10 +104,10 @@
                 const readonly = f.readonly ? 'readonly' : '';
                 const bgClass = f.readonly ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-50';
                 let inputHTML = (f.type === 'textarea') 
-                    ? `<textarea id="${f.id}" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 outline-none transition-all"></textarea>`
+                    ? `<textarea id="${f.id}" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none transition-all"></textarea>`
                     : (f.type === 'bool' || f.type === 'checkbox')
                     ? `<div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg"><input type="checkbox" id="${f.id}" class="w-4 h-4 accent-teal-500"><span class="text-[10px] font-bold text-slate-500 uppercase">${f.label} Status</span></div>`
-                    : `<input type="${f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 outline-none transition-all">`;
+                    : `<input type="${f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs outline-none transition-all">`;
 
                 grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[9px] text-slate-400 block uppercase font-black mb-1.5 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
             });
@@ -121,15 +119,14 @@
             const isSuper = SecurityManager.isHeadOffice();
             
             let filtered = this.data.filter(p => 
-                `${p.first_name} ${p.last_name} ${p.email} ${p.phone} ${p.second_parent_full_name}`.toLowerCase().includes(search)
+                `${p.first_name} ${p.last_name} ${p.email} ${p.phone}`.toLowerCase().includes(search)
             );
 
-            container.innerHTML = filtered.length ? '' : '<div class="p-20 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">No records found matching search.</div>';
+            container.innerHTML = filtered.length ? '' : '<div class="p-20 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">No records found.</div>';
             
             filtered.forEach(p => {
                 const createdDate = p.created_at ? new Date(p.created_at).toLocaleDateString() : '---';
-                // Only show branch badge if Head Office is viewing
-                const branchBadge = isSuper ? `<span class="ml-2 px-2 py-0.5 rounded bg-slate-200 text-slate-600 text-[8px] font-black uppercase">Branch ID: ${p.franchise_id}</span>` : '';
+                const branchBadge = isSuper ? `<span class="ml-2 px-2 py-0.5 rounded bg-slate-200 text-slate-600 text-[8px] font-black uppercase">FID: ${p.franchise_id}</span>` : '';
 
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:border-teal-400 transition-all">
@@ -145,38 +142,11 @@
                                 <span class="text-xs text-slate-600 leading-snug font-medium">${p.address || '---'}</span>
                             </div>
                             <div class="flex items-center gap-3">
-                                <div class="text-right mr-2">
-                                    <span class="text-[8px] text-slate-400 font-black uppercase block">Registration</span>
-                                    <span class="text-[10px] font-mono text-slate-500">${createdDate}</span>
-                                </div>
                                 <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${p.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">
                                     ${p.is_active ? 'Active' : 'Archived'}
                                 </span>
-                                <button data-id="${p.id}" class="parent-edit-btn px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-[10px] font-black hover:text-teal-600 hover:border-teal-300 transition-all uppercase">Edit</button>
+                                <button data-id="${p.id}" class="parent-edit-btn px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-[10px] font-black hover:text-teal-600 uppercase">Edit</button>
                                 <button data-id="${p.id}" class="parent-delete-btn px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-red-500 text-[10px] font-black hover:bg-red-500 hover:text-white transition-all uppercase">Delete</button>
-                            </div>
-                        </div>
-
-                        <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-[11px] bg-white">
-                            <div class="space-y-2">
-                                <span class="text-[9px] font-black text-teal-600 uppercase tracking-widest block border-b border-teal-50 pb-1.5 mb-2">Secondary Guardian</span>
-                                <div class="font-black text-slate-800 text-[10px] uppercase">${p.second_parent_full_name || 'NOT PROVIDED'}</div>
-                                <div class="text-slate-500 font-bold uppercase text-[9px] tracking-tighter">${p.second_parent_relationship || ''}</div>
-                                <div class="text-slate-600 font-mono font-bold">${p.second_parent_phone_number || ''}</div>
-                            </div>
-                            <div class="space-y-2">
-                                <span class="text-[9px] font-black text-orange-500 uppercase tracking-widest block border-b border-orange-50 pb-1.5 mb-2">Emergency Contact 1</span>
-                                <div class="font-black text-slate-800 text-[10px] uppercase">${p.emergency_contact_1_name || '---'}</div>
-                                <div class="text-slate-600 font-mono font-black text-xs mt-1">${p.emergency_contact_1_phone_number || ''}</div>
-                            </div>
-                            <div class="space-y-2">
-                                <span class="text-[9px] font-black text-orange-500 uppercase tracking-widest block border-b border-orange-50 pb-1.5 mb-2">Emergency Contact 2</span>
-                                <div class="font-black text-slate-800 text-[10px] uppercase">${p.emergency_contact_2_name || '---'}</div>
-                                <div class="text-slate-600 font-mono font-black text-xs mt-1">${p.emergency_contact_2_phone_number || ''}</div>
-                            </div>
-                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
-                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block border-b border-slate-200 pb-1.5">Admin Notes</span>
-                                <div class="text-[10px] text-slate-600 leading-relaxed font-medium">${p.inactivation_reason_comments || 'No internal notes.'}</div>
                             </div>
                         </div>
                     </div>
@@ -204,8 +174,6 @@
             document.getElementById('parent-modal').classList.remove('hidden');
             document.getElementById('parent-form').reset();
             document.getElementById('p-edit-id').value = p ? p.id : '';
-            document.getElementById('p-modal-title').innerText = p ? 'Edit Guardian Profile' : 'Register New Parent';
-
             this.schema.fields.forEach(f => {
                 const el = document.getElementById(f.id);
                 if (el) {
@@ -226,11 +194,9 @@
             document.getElementById('parent-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('p-edit-id').value;
-                const isSuper = SecurityManager.isHeadOffice();
                 const authQuery = SecurityManager.getAuthQuery();
                 
-                // If super, we might need a default franchise_id or handle it via schema
-                const payload = { franchise_id: isSuper ? 1 : parseInt(localStorage.getItem('locked_franchise_id')) };
+                const payload = { franchise_id: SecurityManager.isHeadOffice() ? 1 : parseInt(localStorage.getItem('locked_franchise_id')) };
                 
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
@@ -254,7 +220,6 @@
             return new Promise(resolve => {
                 const s = document.createElement('script'); s.src = src; s.onload = resolve;
                 s.onerror = () => { 
-                    // Fallback attempt for different relative environments
                     const fallback = src.replace('../', '');
                     const s2 = document.createElement('script'); s2.src = fallback; s2.onload = resolve;
                     document.head.appendChild(s2);
