@@ -88,16 +88,16 @@
             <div class="profile-item"><div class="profile-label">DOB</div><div id="disp-s-dob" class="profile-value"></div></div>
         </div>
         <div class="step-content">
-            <div id="student-select-mode" style="display:none;">
-                <label>Linked Students</label>
-                <select id="s_select_id" class="font-bold uppercase"></select>
-            </div>
             <div id="student-create-mode" style="display:block;">
                 <label>Full Legal Name</label><input type="text" id="s_name_new">
                 <div class="grid grid-cols-2 gap-4">
                     <div><label>Date of Birth</label><input type="date" id="s_dob_new"></div>
                     <div><label>Gender</label><input type="text" id="s_gender"></div>
                 </div>
+            </div>
+            <div id="student-select-mode" style="display:none;">
+                <label>Linked Students</label>
+                <select id="s_select_id" class="font-bold uppercase"></select>
             </div>
             <button class="bg-slate-500 text-white px-5 py-2 rounded-lg font-bold text-xs uppercase mt-4" onclick="toggleStudentMode()">Toggle New/Existing</button>
             <button onclick="processStudentStep()" class="btn-teal">Confirm Student Data</button>
@@ -353,14 +353,19 @@
         const sessId = parseInt(document.getElementById('enrollment_session_id').value);
         const eDate = document.getElementById('final_enroll_date').value;
         const sDate = document.getElementById('final_start_date').value;
+
         try {
             updateProgress(30, "Updating Student Record...");
             await fetch(`${window.NEST_ENDPOINTS.student.list}/${window.state.currentStudentId}${auth}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: sessId }) });
+            
             updateProgress(60, "Creating Enrollment Workspace...");
             await fetch(`${window.NEST_ENDPOINTS.session_enrollment.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: window.state.currentStudentId, session_id: sessId, franchise_id: window.state.currentFranchiseId, enrollment_date: eDate, start_date: sDate }) });
+            
             updateProgress(90, "Registering Pickup Security...");
             for (let c of window.state.pickupContacts) { await fetch(`${window.NEST_ENDPOINTS.uploader.register}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) }); }
+            
             updateProgress(100, "Complete.");
+            
             setTimeout(() => {
                 document.getElementById('processing-modal').style.display = 'none';
                 document.getElementById('modal-disp-parent').innerText = document.getElementById('disp-p-name').innerText;
@@ -368,7 +373,7 @@
                 document.getElementById('modal-disp-session').innerText = document.getElementById('disp-sess-name').innerText;
                 document.getElementById('success-modal').style.display = 'flex';
             }, 500);
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error(e); alert("Error in transmission."); }
     };
 
     window.exitToDashboard = () => {
