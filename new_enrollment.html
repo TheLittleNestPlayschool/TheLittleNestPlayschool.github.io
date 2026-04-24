@@ -12,45 +12,47 @@
     
     <style>
         :root { --nest-teal: #00d1b2; --nest-dark: #1e293b; --nest-bg: #f1f5f9; --nest-border: #e2e8f0; }
-        body { background: var(--nest-bg); font-family: 'Inter', sans-serif; color: var(--nest-dark); margin: 0; }
+        body { background: var(--nest-bg); font-family: 'Inter', sans-serif; color: var(--nest-dark); margin: 0; padding: 10px; }
         
-        /* Tightened Wrapper */
-        .enrollment-wrapper { width: 100%; max-width: 850px; margin: 0 auto; padding: 10px 20px; box-sizing: border-box; }
+        .enrollment-wrapper { width: 100%; max-width: 1200px; margin: 0 auto; }
+        .nest-header { color: var(--nest-dark); font-weight: 800; font-size: 1rem; letter-spacing: -0.5px; display: flex; align-items: center; margin-bottom: 4px; }
+        .progress-bar { text-align: right; font-size: 0.6rem; font-weight: 800; color: #64748b; margin-bottom: 6px; text-transform: uppercase; }
         
-        .nest-header { color: var(--nest-dark); font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px; display: flex; align-items: center; margin-bottom: 4px; }
-        .progress-bar { text-align: right; font-size: 0.65rem; font-weight: 800; color: #64748b; margin-bottom: 8px; text-transform: uppercase; }
+        /* Grid Layout */
+        .step-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+        .full-row { grid-column: span 2; }
+
+        .step-container { background: white; border: 1px solid var(--nest-border); border-radius: 6px; padding: 12px 15px; margin-bottom: 8px; position: relative; transition: all 0.3s ease; }
+        .step-locked { opacity: 0.35; pointer-events: none; filter: grayscale(1); }
+        .step-active { border-top: 3px solid var(--nest-teal); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         
-        /* Tightened Step Containers */
-        .step-container { background: white; border: 1px solid var(--nest-border); border-radius: 6px; padding: 15px 20px; margin-bottom: 10px; position: relative; transition: all 0.3s ease; }
-        .step-locked { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
-        .step-active { border-left: 4px solid var(--nest-teal); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .step-saved { border-left: 4px solid #cbd5e1; background: #f8fafc; padding: 10px 20px; }
+        /* Ultra-Compact Saved State */
+        .step-saved { border-left: 3px solid #cbd5e1; background: #f8fafc; padding: 6px 15px; }
         .step-saved .step-content { display: none; }
+        .step-saved .nest-header { font-size: 0.75rem; margin-bottom: 0; opacity: 0.7; }
         
-        /* Compact Profile Display */
-        .profile-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; background: #fff; padding: 10px; border-radius: 4px; border: 1px solid var(--nest-border); margin-top: 5px; position: relative; }
-        .profile-label { font-size: 0.5rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 1px; }
-        .profile-value { font-size: 0.75rem; color: #334155; font-weight: 700; }
+        .profile-display { display: flex; flex-wrap: wrap; gap: 15px; padding: 4px 0; border-top: 1px solid #e2e8f0; margin-top: 4px; }
+        .profile-item { display: flex; align-items: center; gap: 6px; }
+        .profile-label { font-size: 0.5rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+        .profile-value { font-size: 0.7rem; color: #334155; font-weight: 700; }
+
+        label { display: block; font-size: 0.5rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 1px; margin-top: 4px; }
+        input, select { width: 100%; border: 1px solid #cbd5e1; padding: 5px 8px; border-radius: 4px; font-size: 0.7rem; background: #f8fafc; font-weight: 700; text-transform: uppercase; }
         
-        /* Shrinking Forms */
-        label { display: block; font-size: 0.55rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; margin-top: 6px; }
-        input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 4px; font-size: 0.75rem; background: #f8fafc; font-weight: 700; text-transform: uppercase; }
+        .btn-teal { background: var(--nest-teal); color: #fff; padding: 8px 16px; border-radius: 4px; font-weight: 700; border: none; cursor: pointer; font-size: 0.65rem; text-transform: uppercase; width: 100%; margin-top: 8px; }
+        .badge-step { background: var(--nest-dark); color: white; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.6rem; margin-right: 8px; }
         
-        .btn-teal { background: var(--nest-teal); color: #fff; padding: 10px 20px; border-radius: 4px; font-weight: 700; border: none; cursor: pointer; font-size: 0.7rem; text-transform: uppercase; width: 100%; margin-top: 10px; }
-        .badge-step { background: var(--nest-dark); color: white; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.7rem; margin-right: 10px; }
-        
-        /* Compact Grid */
-        .qa-row { display: grid; grid-template-columns: 30px 2fr 1.2fr; gap: 8px; align-items: center; padding: 6px; border-bottom: 1px solid #f1f5f9; }
-        .qa-row.selected { background: #f0fdfa; }
-        
-        .edit-pill { position: absolute; top: 8px; right: 8px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 3px 8px; border-radius: 4px; font-size: 0.55rem; font-weight: 800; cursor: pointer; text-transform: uppercase; z-index: 20; }
+        /* Assessment Multi-Column Grid */
+        #assessment-qa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; border: 1px solid #f1f5f9; padding: 8px; border-radius: 4px; max-height: 250px; overflow-y: auto; }
+        .qa-row { display: grid; grid-template-columns: 20px 1fr 80px; gap: 6px; align-items: center; padding: 4px; border-bottom: 1px solid #f8fafc; }
+        .qa-row.selected { background: #f0fdfa; border-radius: 4px; }
+
+        .edit-pill { position: absolute; top: 6px; right: 10px; background: #fff; color: #64748b; border: 1px solid var(--nest-border); padding: 2px 6px; border-radius: 3px; font-size: 0.5rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
         
         /* Modals */
         .nest-modal-overlay { position: fixed; inset: 0; background: rgba(30, 41, 59, 0.9); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 25px; text-align: center; }
         .summary-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 15px 0; text-align: left; }
-        .loader-track { width: 100%; height: 5px; background: #e2e8f0; border-radius: 10px; overflow: hidden; margin: 15px 0; }
-        .loader-fill { width: 0%; height: 100%; background: var(--nest-teal); transition: width 0.4s ease; }
     </style>
 </head>
 <body>
@@ -58,145 +60,143 @@
 <div id="enrollment-ui" class="enrollment-wrapper">
     <div id="enrollment-progress" class="progress-bar">Step 0 of 6</div>
 
-    <div id="step-location" class="step-container step-active">
-        <h2 class="nest-header"><span class="badge-step">0</span> Select Branch</h2>
-        <div class="step-content">
-            <select id="ho_franchise_selector" class="mt-1 w-full bg-slate-50"></select>
-            <button id="init-btn" onclick="lockLocation()" class="btn-teal">Initialize System</button>
+    <div class="step-grid">
+        <div id="step-location" class="step-container step-active full-row">
+            <h2 class="nest-header"><span class="badge-step">0</span> Select Branch</h2>
+            <div class="step-content flex gap-3">
+                <select id="ho_franchise_selector" class="bg-slate-50"></select>
+                <button id="init-btn" onclick="lockLocation()" class="btn-teal !mt-0 !w-48">Initialize</button>
+            </div>
         </div>
-    </div>
 
-    <div id="step-parent" class="step-container step-locked">
-        <h2 class="nest-header"><span class="badge-step">1</span> Parent Profile</h2>
-        <div id="parent-profile-view" style="display:none;" class="profile-display mb-2">
+        <div id="step-parent" class="step-container step-locked">
+            <h2 class="nest-header"><span class="badge-step">1</span> Parent Profile</h2>
             <button class="edit-pill" onclick="unlockStep('step-parent', 'parent-profile-view'); document.getElementById('parent-form-content').style.display='block'">Modify</button>
-            <div class="profile-item"><div class="profile-label">Parent</div><div id="disp-p-name" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Phone</div><div id="disp-p-phone" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">Email</div><div id="disp-p-email" class="profile-value"></div></div>
-        </div>
-        <div id="parent-form-content" class="step-content">
-            <div id="parent-create-mode" style="display:block;">
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label>First Name</label><input type="text" id="p_fn"></div>
-                    <div><label>Last Name</label><input type="text" id="p_ln"></div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label>Phone</label><input type="text" id="p_phone"></div>
-                    <div><label>Email</label><input type="email" id="p_email"></div>
-                </div>
-                <label>Address</label><input type="text" id="p_address">
+            <div id="parent-profile-view" style="display:none;" class="profile-display">
+                <div class="profile-item"><div class="profile-label">Name:</div><div id="disp-p-name" class="profile-value"></div></div>
+                <div class="profile-item"><div class="profile-label">PH:</div><div id="disp-p-phone" class="profile-value"></div></div>
             </div>
-            <div id="parent-select-mode" style="display:none;">
-                <label>Search Existing Records</label>
-                <input type="text" id="p_search" placeholder="Type name..." onkeyup="filterParents()" class="mb-1">
-                <select id="p_select_id" size="4" class="font-bold uppercase"></select>
+            <div id="parent-form-content" class="step-content">
+                <div id="parent-create-mode">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label>First Name</label><input type="text" id="p_fn"></div>
+                        <div><label>Last Name</label><input type="text" id="p_ln"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label>Phone</label><input type="text" id="p_phone"></div>
+                        <div><label>Email</label><input type="email" id="p_email"></div>
+                    </div>
+                    <label>Address</label><input type="text" id="p_address">
+                </div>
+                <div id="parent-select-mode" style="display:none;">
+                    <label>Search Parents</label>
+                    <input type="text" id="p_search" placeholder="..." onkeyup="filterParents()" class="mb-1">
+                    <select id="p_select_id" size="4"></select>
+                </div>
+                <div class="flex gap-2">
+                    <button class="bg-slate-500 text-white px-2 py-1 rounded font-bold text-[8px] uppercase mt-2" onclick="toggleParentMode()">Toggle Search</button>
+                    <button onclick="processParentStep()" class="btn-teal">Confirm Parent</button>
+                </div>
             </div>
-            <button class="bg-slate-500 text-white px-4 py-1.5 rounded font-bold text-[10px] uppercase mt-3" onclick="toggleParentMode()">Toggle New/Existing</button>
-            <button onclick="processParentStep()" class="btn-teal">Confirm Parent Data</button>
         </div>
-    </div>
 
-    <div id="step-student" class="step-container step-locked">
-        <h2 class="nest-header"><span class="badge-step">2</span> Student Profile</h2>
-        <div id="student-profile-view" style="display:none;" class="profile-display mb-2">
+        <div id="step-student" class="step-container step-locked">
+            <h2 class="nest-header"><span class="badge-step">2</span> Student Profile</h2>
             <button class="edit-pill" onclick="unlockStep('step-student', 'student-profile-view')">Modify</button>
-            <div class="profile-item"><div class="profile-label">Student</div><div id="disp-s-name" class="profile-value"></div></div>
-            <div class="profile-item"><div class="profile-label">DOB</div><div id="disp-s-dob" class="profile-value"></div></div>
-        </div>
-        <div class="step-content">
-            <div id="student-create-mode" style="display:block;">
-                <label>Full Legal Name</label><input type="text" id="s_name_new">
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label>Date of Birth</label><input type="date" id="s_dob_new"></div>
-                    <div><label>Gender</label><input type="text" id="s_gender"></div>
+            <div id="student-profile-view" style="display:none;" class="profile-display">
+                <div class="profile-item"><div class="profile-label">Name:</div><div id="disp-s-name" class="profile-value"></div></div>
+                <div class="profile-item"><div class="profile-label">DOB:</div><div id="disp-s-dob" class="profile-value"></div></div>
+            </div>
+            <div class="step-content">
+                <div id="student-create-mode">
+                    <label>Full Legal Name</label><input type="text" id="s_name_new">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label>Date of Birth</label><input type="date" id="s_dob_new"></div>
+                        <div><label>Gender</label><input type="text" id="s_gender"></div>
+                    </div>
+                </div>
+                <div id="student-select-mode" style="display:none;">
+                    <label>Linked Students</label>
+                    <select id="s_select_id" class="font-bold uppercase"></select>
+                </div>
+                <div class="flex gap-2">
+                    <button class="bg-slate-500 text-white px-2 py-1 rounded font-bold text-[8px] uppercase mt-2" onclick="toggleStudentMode()">Toggle Search</button>
+                    <button onclick="processStudentStep()" class="btn-teal">Confirm Student</button>
                 </div>
             </div>
-            <div id="student-select-mode" style="display:none;">
-                <label>Linked Students</label>
-                <select id="s_select_id" class="font-bold uppercase"></select>
-            </div>
-            <button class="bg-slate-500 text-white px-4 py-1.5 rounded font-bold text-[10px] uppercase mt-3" onclick="toggleStudentMode()">Toggle New/Existing</button>
-            <button onclick="processStudentStep()" class="btn-teal">Confirm Student Data</button>
         </div>
-    </div>
 
-    <div id="step-assessment" class="step-container step-locked">
-        <h2 class="nest-header"><span class="badge-step">3</span> Nest Assessment</h2>
-        <div id="assessment-summary-view" style="display:none;" class="profile-display mb-2">
+        <div id="step-assessment" class="step-container step-locked full-row">
+            <h2 class="nest-header"><span class="badge-step">3</span> Nest Assessment</h2>
             <button class="edit-pill" onclick="unlockStep('step-assessment', 'assessment-summary-view')">Modify</button>
-            <div class="profile-item"><div class="profile-label">Assessed By</div><div id="disp-a-teacher" class="profile-value"></div></div>
-        </div>
-        <div class="step-content">
-            <div class="grid grid-cols-2 gap-3">
-                <div><label>Assessing Teacher</label><select id="a_teacher_id"></select></div>
-                <div><label>Assessment Date</label><input type="date" id="a_assessment_date"></div>
+            <div id="assessment-summary-view" style="display:none;" class="profile-display">
+                <div class="profile-item"><div class="profile-label">Assessed By:</div><div id="disp-a-teacher" class="profile-value"></div></div>
             </div>
-            <div id="selection-counter" class="text-[9px] font-black text-teal-600 my-2 uppercase tracking-widest">Items Selected: 0 / 10</div>
-            <div id="assessment-qa-grid" class="border border-slate-200 rounded max-h-48 overflow-y-auto"></div>
-            <button onclick="processAssessmentStep()" class="btn-teal">Save Evaluation</button>
-        </div>
-    </div>
-
-    <div id="step-session" class="step-container step-locked">
-        <h2 class="nest-header"><span class="badge-step">4</span> Academic Session</h2>
-        <div id="session-profile-view" style="display:none;" class="profile-display mb-2">
-            <button class="edit-pill" onclick="unlockStep('step-session', 'session-profile-view')">Modify</button>
-            <div class="profile-item"><div class="profile-label">Slot</div><div id="disp-sess-name" class="profile-value"></div></div>
-        </div>
-        <div class="step-content">
-            <label>Select Session Slot</label>
-            <select id="enrollment_session_id"></select>
-            <button onclick="processSessionStep()" class="btn-teal">Lock Session Slot</button>
-        </div>
-    </div>
-
-    <div id="step-pickup" class="step-container step-locked">
-        <h2 class="nest-header"><span class="badge-step">5</span> Pickup Security</h2>
-        <div class="step-content">
-            <div id="pickup-entry-list" class="mb-2 space-y-1"></div>
-            <div class="p-3 bg-slate-50 border rounded">
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label>Authorized Name</label><input type="text" id="pu_name"></div>
-                    <div><label>Phone Number</label><input type="text" id="pu_phone"></div>
+            <div class="step-content">
+                <div class="grid grid-cols-3 gap-4 items-end mb-2">
+                    <div><label>Assessing Teacher</label><select id="a_teacher_id"></select></div>
+                    <div><label>Date</label><input type="date" id="a_assessment_date"></div>
+                    <div id="selection-counter" class="text-[8px] font-black text-teal-600 uppercase pb-2">Items: 0 / 10</div>
                 </div>
-                <button onclick="addPickupLocal()" class="bg-slate-600 text-white px-4 py-1 rounded font-bold uppercase text-[9px] mt-2">+ Add Authorized Person</button>
+                <div id="assessment-qa-grid"></div>
+                <button onclick="processAssessmentStep()" class="btn-teal">Save Evaluation</button>
             </div>
-            <button onclick="finalizePickups()" class="btn-teal">Finalize List</button>
         </div>
-    </div>
 
-    <div id="step-final" class="step-container step-locked">
-        <h2 class="nest-header"><span class="badge-step">6</span> Finalize</h2>
-        <div class="step-content">
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div><label>Enrollment Date</label><input type="date" id="final_enroll_date"></div>
-                <div><label>School Start Date</label><input type="date" id="final_start_date"></div>
+        <div id="step-session" class="step-container step-locked">
+            <h2 class="nest-header"><span class="badge-step">4</span> Academic Session</h2>
+            <button class="edit-pill" onclick="unlockStep('step-session', 'session-profile-view')">Modify</button>
+            <div id="session-profile-view" style="display:none;" class="profile-display">
+                <div class="profile-item"><div class="profile-label">Slot:</div><div id="disp-sess-name" class="profile-value"></div></div>
             </div>
-            <button onclick="submitFinalEnrollment()" class="btn-teal bg-slate-800 font-black">Generate & Enroll Student</button>
+            <div class="step-content">
+                <label>Select Session Slot</label>
+                <select id="enrollment_session_id"></select>
+                <button onclick="processSessionStep()" class="btn-teal">Lock Session</button>
+            </div>
+        </div>
+
+        <div id="step-pickup" class="step-container step-locked">
+            <h2 class="nest-header"><span class="badge-step">5</span> Pickup Security</h2>
+            <div class="step-content">
+                <div id="pickup-entry-list" class="mb-1 space-y-1"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="pu_name" placeholder="NAME">
+                    <input type="text" id="pu_phone" placeholder="PHONE">
+                </div>
+                <button onclick="addPickupLocal()" class="btn-teal !bg-slate-600">+ Add Person</button>
+                <button onclick="finalizePickups()" class="btn-teal">Finalize List</button>
+            </div>
+        </div>
+
+        <div id="step-final" class="step-container step-locked full-row">
+            <h2 class="nest-header"><span class="badge-step">6</span> Finalize Registration</h2>
+            <div class="step-content flex gap-4 items-end">
+                <div class="flex-1"><label>Enrollment Date</label><input type="date" id="final_enroll_date"></div>
+                <div class="flex-1"><label>School Start Date</label><input type="date" id="final_start_date"></div>
+                <button onclick="submitFinalEnrollment()" class="btn-teal !mt-0 !h-10 !bg-slate-800 font-black">Generate & Enroll</button>
+            </div>
         </div>
     </div>
 </div>
 
 <div id="processing-modal" class="nest-modal-overlay">
     <div class="modal-card">
-        <h2 class="text-lg font-black text-slate-800 uppercase tracking-tight">Syncing Database</h2>
-        <p id="processing-status" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Initializing...</p>
+        <h2 class="text-lg font-black uppercase">Syncing Database</h2>
+        <p id="processing-status" class="text-[9px] text-slate-500 font-bold mt-1">Initializing...</p>
         <div class="loader-track"><div id="loader-fill" class="loader-fill"></div></div>
     </div>
 </div>
 
 <div id="success-modal" class="nest-modal-overlay">
     <div class="modal-card">
-        <div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-3">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-        </div>
-        <h2 class="text-xl font-black text-slate-800 uppercase tracking-tight">Registration Success</h2>
+        <h2 class="text-xl font-black uppercase">Registration Success</h2>
         <div class="summary-box">
-            <div class="mb-2"><div class="text-[7px] font-black text-slate-400 uppercase tracking-widest">Parent</div><div id="modal-disp-parent" class="text-[11px] font-bold text-slate-700 uppercase">---</div></div>
-            <div class="mb-2"><div class="text-[7px] font-black text-slate-400 uppercase tracking-widest">Student</div><div id="modal-disp-child" class="text-[11px] font-bold text-slate-700 uppercase">---</div></div>
-            <div><div class="text-[7px] font-black text-slate-400 uppercase tracking-widest">Session</div><div id="modal-disp-session" class="text-[11px] font-bold text-slate-700 uppercase">---</div></div>
+            <div class="mb-2"><div class="text-[7px] font-black uppercase text-slate-400">Parent</div><div id="modal-disp-parent" class="text-[10px] font-bold">---</div></div>
+            <div class="mb-2"><div class="text-[7px] font-black uppercase text-slate-400">Student</div><div id="modal-disp-child" class="text-[10px] font-bold">---</div></div>
+            <div><div class="text-[7px] font-black uppercase text-slate-400">Session</div><div id="modal-disp-session" class="text-[10px] font-bold">---</div></div>
         </div>
-        <button onclick="exitToDashboard()" class="btn-teal w-full py-3 rounded-lg font-black uppercase">Registration Complete</button>
+        <button onclick="exitToDashboard()" class="btn-teal !h-12 !text-[10px]">Registration Complete</button>
     </div>
 </div>
 
@@ -243,7 +243,7 @@
     function renderParentList(list) {
         const sel = document.getElementById('p_select_id');
         if(!sel) return; sel.innerHTML = '';
-        list.forEach(p => { sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name} — ${p.phone || 'N/A'}</option>`; });
+        list.forEach(p => { sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`; });
     }
 
     window.filterParents = () => {
@@ -266,7 +266,7 @@
         if(!window.state.currentParentId) return alert("Select Parent");
         const p = isNew ? { first_name: document.getElementById('p_fn').value, last_name: document.getElementById('p_ln').value } : window.state.allParents.find(x => x.id === window.state.currentParentId);
         document.getElementById('disp-p-name').innerText = `${p.first_name} ${p.last_name}`;
-        document.getElementById('parent-profile-view').style.display = 'grid';
+        document.getElementById('parent-profile-view').style.display = 'flex';
         document.getElementById('parent-form-content').style.display = 'none';
         window.prepStudentStep();
         window.moveToStep('step-parent', 'step-student', 2);
@@ -282,21 +282,21 @@
             ]);
             const tData = await tRes.json();
             const tSel = document.getElementById('a_teacher_id');
-            tSel.innerHTML = '<option value="">-- Teacher --</option>';
+            tSel.innerHTML = '<option value="">-- TEACHER --</option>';
             (Array.isArray(tData) ? tData : tData.items || []).forEach(t => { if(t.is_active) tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; });
             
             const sData = await sRes.json();
             const sessSel = document.getElementById('enrollment_session_id');
-            sessSel.innerHTML = '<option value="">-- Session --</option>';
+            sessSel.innerHTML = '<option value="">-- SELECT SLOT --</option>';
             (Array.isArray(sData) ? sData : sData.items || []).forEach(s => { sessSel.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
             
             const qData = await qRes.json();
             const qGrid = document.getElementById('assessment-qa-grid');
             qGrid.innerHTML = '';
-            (Array.isArray(qData) ? qData : (qData.items || [])).forEach(q => {
+            (Array.isArray(qData) ? qData : qData.items || []).forEach(q => {
                 const opts = [q.answer_1, q.answer_2, q.answer_3, q.answer_4].filter(a => a);
                 let optHtml = opts.map(o => `<option value="${o}">${o}</option>`).join('');
-                qGrid.innerHTML += `<div class="qa-row" data-qid="${q.id}"> <input type="checkbox" data-qid="${q.id}" onchange="handleQS(this)"> <div class="text-[9px] font-bold uppercase">${q.the_question}</div> <div class="q-select-ans"><select class="text-[9px]">${optHtml}</select></div> </div>`;
+                qGrid.innerHTML += `<div class="qa-row" data-qid="${q.id}"> <input type="checkbox" data-qid="${q.id}" onchange="handleQS(this)"> <div class="text-[8px] font-bold">${q.the_question}</div> <div class="q-select-ans"><select class="text-[8px] !p-1">${optHtml}</select></div> </div>`;
             });
         } catch(e) { console.error(e); }
     }
@@ -326,7 +326,7 @@
         const student = await sRes.json();
         document.getElementById('disp-s-name').innerText = student.name;
         document.getElementById('disp-s-dob').innerText = student.date_of_birth;
-        document.getElementById('student-profile-view').style.display = 'grid';
+        document.getElementById('student-profile-view').style.display = 'flex';
         window.moveToStep('step-student', 'step-assessment', 3);
     };
 
@@ -342,21 +342,21 @@
             });
         }
         document.getElementById('disp-a-teacher').innerText = document.getElementById('a_teacher_id').options[document.getElementById('a_teacher_id').selectedIndex].text;
-        document.getElementById('assessment-summary-view').style.display = 'grid';
+        document.getElementById('assessment-summary-view').style.display = 'flex';
         window.moveToStep('step-assessment', 'step-session', 4);
     };
 
     window.processSessionStep = () => {
         const s = document.getElementById('enrollment_session_id');
         document.getElementById('disp-sess-name').innerText = s.options[s.selectedIndex].text;
-        document.getElementById('session-profile-view').style.display = 'grid';
+        document.getElementById('session-profile-view').style.display = 'flex';
         window.moveToStep('step-session', 'step-pickup', 5);
     };
 
     window.addPickupLocal = () => {
         const c = { student_id: window.state.currentStudentId, name: document.getElementById('pu_name').value, phone: document.getElementById('pu_phone').value, is_active: true };
         window.state.pickupContacts.push(c);
-        document.getElementById('pickup-entry-list').innerHTML += `<div class="p-1 bg-white border rounded text-[9px] font-bold uppercase">${c.name} — ${c.phone}</div>`;
+        document.getElementById('pickup-entry-list').innerHTML += `<div class="p-1 bg-white border rounded text-[8px] font-bold">${c.name} — ${c.phone}</div>`;
         document.getElementById('pu_name').value = ''; document.getElementById('pu_phone').value = '';
     };
 
@@ -399,7 +399,7 @@
     window.handleQS = (cb) => {
         const row = cb.closest('.qa-row');
         cb.checked ? (window.state.selectedQuestionCount++, row.classList.add('selected')) : (window.state.selectedQuestionCount--, row.classList.remove('selected'));
-        document.getElementById('selection-counter').innerText = `Items Selected: ${window.state.selectedQuestionCount} / 10`;
+        document.getElementById('selection-counter').innerText = `Items: ${window.state.selectedQuestionCount} / 10`;
     };
 
     window.toggleParentMode = () => {
