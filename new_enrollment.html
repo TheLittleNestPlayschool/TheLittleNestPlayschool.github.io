@@ -196,6 +196,7 @@
 
     function renderParentList(list) {
         const sel = document.getElementById('p_select_id');
+        if(!sel) return;
         sel.innerHTML = '';
         list.forEach(p => { sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name} — ${p.phone || 'N/A'}</option>`; });
     }
@@ -243,10 +244,12 @@
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
             (Array.isArray(tData) ? tData : (tData.items || [])).forEach(t => { if(t.is_active) tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; });
+            
             const sData = await sRes.json();
             const sessSel = document.getElementById('enrollment_session_id');
             sessSel.innerHTML = '<option value="">-- Select Session --</option>';
             (Array.isArray(sData) ? sData : (sData.items || [])).forEach(s => { sessSel.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
+            
             const qData = await qRes.json();
             const qGrid = document.getElementById('assessment-qa-grid');
             qGrid.innerHTML = '';
@@ -324,11 +327,14 @@
         const sessId = parseInt(document.getElementById('enrollment_session_id').value);
         const eDate = document.getElementById('final_enroll_date').value;
         const sDate = document.getElementById('final_start_date').value;
+        const fid = window.state.currentFranchiseId;
+
         try {
             await fetch(`${window.NEST_ENDPOINTS.student.list}/${window.state.currentStudentId}${auth}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: sessId }) });
-            await fetch(`${window.NEST_ENDPOINTS.session_enrollment.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: window.state.currentStudentId, session_id: sessId, franchise_id: window.state.currentFranchiseId, enrollment_date: eDate, start_date: sDate }) });
+            await fetch(`${window.NEST_ENDPOINTS.session_enrollment.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: window.state.currentStudentId, session_id: sessId, franchise_id: fid, enrollment_date: eDate, start_date: sDate }) });
             for (let c of window.state.pickupContacts) { await fetch(`${window.NEST_ENDPOINTS.uploader.register}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) }); }
-            alert("Enrollment Successful"); location.reload();
+            alert("Enrollment Successful");
+            window.location.href = `franchise_dashboard.html?franchise_id=${fid}`;
         } catch(e) { console.error(e); }
     };
 
