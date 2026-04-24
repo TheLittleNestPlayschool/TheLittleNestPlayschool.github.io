@@ -5,9 +5,9 @@
     <title>NestMind Enrollment Master</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="../nest_style.css">
-    <script src="../api_config.js"></script>
-    <script src="../security.js"></script>
+    <link rel="stylesheet" href="nest_style.css">
+    <script src="api_config.js"></script>
+    <script src="security.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
@@ -48,14 +48,12 @@
 
     <div id="step-parent" class="step-container step-locked">
         <h2 class="nest-header"><span class="badge-step">1</span> Parent Profile</h2>
-        
         <div id="parent-profile-view" style="display:none;" class="profile-display mb-4">
             <button class="edit-pill" onclick="unlockStep('step-parent', 'parent-profile-view'); document.getElementById('parent-form-content').style.display='block'">Modify</button>
             <div class="profile-item"><div class="profile-label">Parent</div><div id="disp-p-name" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Phone</div><div id="disp-p-phone" class="profile-value"></div></div>
             <div class="profile-item"><div class="profile-label">Email</div><div id="disp-p-email" class="profile-value"></div></div>
         </div>
-
         <div id="parent-form-content" class="step-content">
             <div id="parent-select-mode">
                 <label>Search Existing Records</label>
@@ -182,13 +180,10 @@
         
         const auth = `?access_key=${SecurityManager.getAccessKey()}&franchise_id=${window.state.currentFranchiseId}`;
         try {
-            // Load Parents for the branch
             const pRes = await fetch(`${window.NEST_ENDPOINTS.parent.list}${auth}`);
             const pData = await pRes.json();
             window.state.allParents = Array.isArray(pData) ? pData : (pData.items || []);
             renderParentList(window.state.allParents);
-
-            // Background fetch other branch data
             fetchOtherBranchData();
         } catch(e) { console.error(e); }
     };
@@ -237,8 +232,9 @@
             const [tRes, sRes, qRes] = await Promise.all([ 
                 fetch(`${window.NEST_ENDPOINTS.teacher.list}${auth}`), 
                 fetch(`${window.NEST_ENDPOINTS.session.list}${auth}`), 
-                fetch(`${window.NEST_ENDPOINTS.questions.list}${auth}`) 
+                fetch(`${window.NEST_ENDPOINTS.student_assessment_question.list}${auth}`) 
             ]);
+            
             const tData = await tRes.json();
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
@@ -295,9 +291,9 @@
         const auth = `?access_key=${SecurityManager.getAccessKey()}`;
         const selected = document.querySelectorAll('.qa-row.selected');
         for(let row of selected) {
-            await fetch(`${window.NEST_ENDPOINTS.assessment_submit.list}${auth}`, {
+            await fetch(`${window.NEST_ENDPOINTS.student_assessment_filled.list}${auth}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ student_id: window.state.currentStudentId, teacher_id: parseInt(tId), question_id: parseInt(row.querySelector('input').dataset.qid), answer_text: row.querySelector('select').value, assessment_date: date })
+                body: JSON.stringify({ student_id: window.state.currentStudentId, teacher_id: parseInt(tId), student_assessment_question_id: parseInt(row.querySelector('input').dataset.qid), answer_text: row.querySelector('select').value, assessment_date: date })
             });
         }
         document.getElementById('disp-a-teacher').innerText = document.getElementById('a_teacher_id').options[document.getElementById('a_teacher_id').selectedIndex].text;
@@ -319,15 +315,13 @@
         document.getElementById('pu_name').value = ''; document.getElementById('pu_phone').value = '';
     };
 
-    window.finalizePickups = () => { window.moveToStep('step-pickup', 'step-final', 6); };
-
     window.submitFinalEnrollment = async () => {
         const auth = `?access_key=${SecurityManager.getAccessKey()}`;
         const sessId = parseInt(document.getElementById('enrollment_session_id').value);
         try {
             await fetch(`${window.NEST_ENDPOINTS.student.list}/${window.state.currentStudentId}${auth}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: sessId }) });
-            await fetch(`${window.NEST_ENDPOINTS.enrollment.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: window.state.currentStudentId, session_id: sessId, franchise_id: window.state.currentFranchiseId }) });
-            for (let c of window.state.pickupContacts) { await fetch(`${window.NEST_ENDPOINTS.pickup.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) }); }
+            await fetch(`${window.NEST_ENDPOINTS.session_enrollment.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: window.state.currentStudentId, session_id: sessId, franchise_id: window.state.currentFranchiseId }) });
+            for (let c of window.state.pickupContacts) { await fetch(`${window.NEST_ENDPOINTS.uploader.register}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) }); }
             alert("Enrollment Successful"); location.reload();
         } catch(e) { console.error(e); }
     };
