@@ -20,7 +20,7 @@
     <div id="parent-form-content" class="step-content">
         <div id="parent-select-mode">
             <label>Search Existing Records</label>
-            <input type="text" id="p_search" placeholder="Type name to filter..." onkeyup="window.filterParents()" class="w-full border p-2 rounded text-xs mb-2 mt-1">
+            <input type="text" id="p_search" placeholder="Search names, phones, or emails..." onkeyup="window.filterParents()" class="w-full border p-2 rounded text-xs mb-2 mt-1">
             <select id="p_select_id" size="5" class="w-full border rounded p-2 text-xs font-bold uppercase outline-none bg-white"></select>
         </div>
 
@@ -41,26 +41,35 @@
 
 <script>
 (function() {
-    // Fail-safe initialization for the Fragment
+    // 1. DATA FETCHING (Using franchise_id parameter)
     window.initParentStep = async () => {
-        // Use the parents.html pattern to find the brain files if the master missed them
         if (!window.NEST_ENDPOINTS) await loadParentScript('../api_config.js');
         if (!window.SecurityManager) await loadParentScript('../security.js');
 
-        const auth = `?access_key=${SecurityManager.getAccessKey()}&franchise_id=${window.state.currentFranchiseId}`;
+        const accessKey = window.SecurityManager.getAccessKey();
+        const fid = window.state.currentFranchiseId || localStorage.getItem('locked_franchise_id');
+        
+        // CONSTRUCT URL MATCHING PARENTS.HTML
+        const fetchUrl = `${window.NEST_ENDPOINTS.parent.list}?franchise_id=${fid}&access_key=${accessKey}`;
+        
         try {
-            const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}${auth}`);
-            const data = await res.json();
-            window.state.allParents = (Array.isArray(data) ? data : (data.items || [])).filter(p => p.franchise_id === window.state.currentFranchiseId);
+            const res = await fetch(fetchUrl);
+            const result = await res.json();
+            // Store results to global state for filtering
+            window.state.allParents = Array.isArray(result) ? result : (result.items || []);
             renderParentList(window.state.allParents);
-        } catch(e) { console.error("Parent sync failed", e); }
+        } catch(e) { 
+            console.error("Xano Parent Fetch Failed:", e); 
+        }
     };
 
+    // 2. FILTERING
     window.filterParents = () => {
         const term = document.getElementById('p_search').value.toLowerCase();
-        renderParentList(window.state.allParents.filter(p => 
-            `${p.first_name} ${p.last_name}`.toLowerCase().includes(term)
-        ));
+        const filtered = window.state.allParents.filter(p => 
+            `${p.first_name} ${p.last_name} ${p.phone} ${p.email}`.toLowerCase().includes(term)
+        );
+        renderParentList(filtered);
     };
 
     function renderParentList(list) {
@@ -72,6 +81,7 @@
         });
     }
 
+    // 3. UI TOGGLE
     window.toggleParentMode = () => {
         const s = document.getElementById('parent-select-mode'), c = document.getElementById('parent-create-mode');
         if (s.style.display === 'none') {
@@ -83,6 +93,7 @@
         }
     };
 
+    // 4. SUBMISSION
     window.processParentStep = async () => {
         const isNew = document.getElementById('parent-create-mode').style.display === 'block';
         const accessKey = SecurityManager.getAccessKey();
