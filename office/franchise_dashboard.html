@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="../nest_style.css">
-
     <script src="../api_config.js"></script>
     <script src="../security.js"></script>
 
@@ -109,8 +108,9 @@
         const select = document.getElementById('branch-select');
         const statusText = document.getElementById('status-text');
 
-        // 1. IMMEDIATE HEAD OFFICE BYPASS
+        // 1. FORCED MASTER CHECK - Clear stale storage immediately
         if (tlnpKey === 'TLNP624163') {
+            localStorage.clear();
             localStorage.setItem('nestmind_access_key', tlnpKey);
             localStorage.setItem('is_head_office', 'true');
             localStorage.setItem('locked_franchise_id', 'all');
@@ -118,15 +118,10 @@
             
             finalizeUnlock("HEAD OFFICE");
             window.history.replaceState({}, document.title, window.location.pathname);
-            return;
+            return; 
         }
 
         try {
-            if (!window.NEST_ENDPOINTS) {
-                statusText.innerText = "Config load error. Check paths.";
-                return;
-            }
-
             const res = await fetch(window.NEST_ENDPOINTS.franchise.list);
             const data = await res.json();
             const franchises = Array.isArray(data) ? data : (data.items || []);
@@ -156,7 +151,7 @@
                 statusText.innerText = "Please select a branch to initialize portal.";
             }
         } catch (e) { 
-            console.error("Initialization failed", e);
+            console.error("Auth failed", e);
             statusText.innerText = "Connection Error.";
         }
     }
@@ -164,14 +159,9 @@
     function finalizeUnlock(fname) {
         const branchDisplay = document.getElementById('active-branch-name');
         const navMenu = document.getElementById('nav-menu');
-        
         document.getElementById('branch-select').classList.add('hidden');
-        if (window.SecurityManager) {
-            branchDisplay.innerText = SecurityManager.getSystemLabel(fname);
-        } else {
-            branchDisplay.innerText = fname;
-        }
         
+        branchDisplay.innerText = SecurityManager.getSystemLabel(fname);
         branchDisplay.classList.remove('hidden');
         document.getElementById('breadcrumb-container').classList.remove('hidden'); 
         navMenu.classList.remove('hidden');
@@ -200,7 +190,7 @@
         workspace.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic text-sm animate-pulse">Syncing ${title}...</div>`;
         if(breadcrumbText) breadcrumbText.innerText = title;
 
-        const authParams = window.SecurityManager ? SecurityManager.getAuthQuery() : "";
+        const authParams = SecurityManager.getAuthQuery();
         const secureUrl = GITHUB_ROOT + file + authParams;
 
         try {
