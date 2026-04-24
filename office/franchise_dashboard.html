@@ -45,12 +45,29 @@
             animation: systemPulse 4s ease-in-out infinite;
         }
 
+        /* GIRAFFE GLOBAL POSITIONING */
+        .char-giraffe {
+            position: absolute;
+            bottom: 2%;
+            right: 5%;
+            width: 18vw;
+            z-index: 5; /* Behind content, above background */
+            pointer-events: none;
+            mix-blend-mode: multiply;
+            animation: giraffeFloat 10s ease-in-out infinite;
+            transition: opacity 0.5s ease;
+        }
+
+        @keyframes giraffeFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(-1.5deg); }
+        }
+
         @keyframes systemPulse {
             0%, 100% { transform: scale(0.8); opacity: 0.3; }
             50% { transform: scale(1.2); opacity: 0.8; }
         }
 
-        /* Clean UI Override */
         #status-text, .system-status-pill { display: none !important; }
     </style>
 </head>
@@ -90,7 +107,10 @@
     </aside>
 
     <main id="main-workspace" class="flex-grow overflow-y-auto relative bg-[#f8fafc]">
-        <div id="view-container" class="h-full">
+        
+        <img src="giraffe_pixar.png" id="global-giraffe" class="char-giraffe" alt="Giraffe">
+
+        <div id="view-container" class="h-full relative z-10">
             <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full">
                 <div class="system-pulse-container"><div class="pulse-core"></div></div>
                 <h1 class="nestmind-hero select-none">NestMind</h1>
@@ -153,11 +173,15 @@
     }
 
     async function loadModule(file, title) {
-        // 1. Kill any existing request to prevent stacking
         if (currentController) currentController.abort();
         currentController = new AbortController();
 
         const container = document.getElementById('view-container');
+        
+        // Optional: Hide giraffe when data is on screen to keep things clean
+        // const giraffe = document.getElementById('global-giraffe');
+        // if(giraffe) giraffe.style.opacity = '0.1';
+
         container.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic animate-pulse">Loading ${title}...</div>`;
 
         try {
@@ -165,10 +189,8 @@
             const response = await fetch(`${GITHUB_ROOT}${file}${authParams}&v=${Date.now()}`, { signal: currentController.signal });
             const html = await response.text();
             
-            // 2. HARD RESET: Wipe everything before injecting new HTML
             container.innerHTML = `<div class="p-8">${html}</div>`;
 
-            // 3. Script Execution
             const scripts = container.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
