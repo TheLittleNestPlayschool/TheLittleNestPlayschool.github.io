@@ -5,6 +5,12 @@
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
+        <select id="parent-sort" class="pl-3 pr-8 py-2 bg-slate-100 border-none rounded-lg text-[10px] font-black uppercase outline-none focus:ring-2 focus:ring-teal-500 transition-all cursor-pointer">
+            <option value="name">Sort: Name (A-Z)</option>
+            <option value="franchise">Sort: Branch Location</option>
+            <option value="status">Sort: Active Status</option>
+        </select>
+
         <input type="text" id="parent-search" placeholder="Search parents..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all font-bold">
         
@@ -15,7 +21,7 @@
 </div>
 
 <div class="grid grid-cols-12 px-5 mb-2 text-[8px] font-black text-slate-400 uppercase tracking-widest hidden md:grid">
-    <div class="col-span-3">Guardian Info (Sorted A-Z)</div>
+    <div class="col-span-3">Guardian Info</div>
     <div class="col-span-2">Contact</div>
     <div class="col-span-4">Home Address</div>
     <div class="col-span-1 text-center">Status</div>
@@ -102,16 +108,11 @@
             const grid = document.getElementById('dynamic-fields-grid');
             grid.innerHTML = '';
             let currentSection = "";
-
             this.schema.fields.forEach(f => {
                 if (f.id === 'id') return;
                 if (f.section && f.section !== currentSection) {
                     currentSection = f.section;
-                    grid.insertAdjacentHTML('beforeend', `
-                        <div class="col-span-full mt-4 mb-1 border-b border-slate-100 pb-1">
-                            <span class="text-[8px] font-black text-teal-600 uppercase tracking-widest">${currentSection}</span>
-                        </div>
-                    `);
+                    grid.insertAdjacentHTML('beforeend', `<div class="col-span-full mt-4 mb-1 border-b border-slate-100 pb-1"><span class="text-[8px] font-black text-teal-600 uppercase tracking-widest">${currentSection}</span></div>`);
                 }
                 const spanClass = f.width === 'full' || f.type === 'textarea' ? 'col-span-full' : 'col-span-1';
                 let inputHTML = (f.type === 'textarea') 
@@ -119,7 +120,6 @@
                     : (f.type === 'bool' || f.type === 'checkbox')
                     ? `<div class="flex items-center gap-3 p-2 bg-slate-50 border border-slate-200 rounded-lg"><input type="checkbox" id="${f.id}" class="w-3.5 h-3.5 accent-teal-500"><span class="text-[9px] font-bold text-slate-500 uppercase">${f.label}</span></div>`
                     : `<input type="${f.type}" id="${f.id}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] outline-none font-bold">`;
-
                 grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[8px] text-slate-400 block uppercase font-black mb-1 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
             });
         },
@@ -127,16 +127,25 @@
         render() {
             const container = document.getElementById('parent-list-container');
             const search = (document.getElementById('parent-search')?.value || '').toLowerCase();
+            const sortType = document.getElementById('parent-sort').value;
             const isSuper = window.SecurityManager.isHeadOffice();
             
-            // Filter and then Sort by Last Name, then First Name
-            let filtered = this.data
-                .filter(p => `${p.first_name} ${p.last_name} ${p.email} ${p.phone}`.toLowerCase().includes(search))
-                .sort((a, b) => {
+            let filtered = this.data.filter(p => 
+                `${p.first_name} ${p.last_name} ${p.email} ${p.phone}`.toLowerCase().includes(search)
+            );
+
+            // Sorting Logic
+            filtered.sort((a, b) => {
+                if (sortType === 'franchise') {
+                    return (a.franchise_id || 0) - (b.franchise_id || 0) || (a.last_name || '').localeCompare(b.last_name || '');
+                } else if (sortType === 'status') {
+                    return (b.is_active === a.is_active) ? (a.last_name || '').localeCompare(b.last_name || '') : (b.is_active ? 1 : -1);
+                } else {
+                    // Default Name Sort
                     const lnSort = (a.last_name || '').localeCompare(b.last_name || '');
-                    if (lnSort !== 0) return lnSort;
-                    return (a.first_name || '').localeCompare(b.first_name || '');
-                });
+                    return lnSort !== 0 ? lnSort : (a.first_name || '').localeCompare(b.first_name || '');
+                }
+            });
 
             if (filtered.length === 0) {
                 container.innerHTML = `<div class="p-10 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">No matching records.</div>`;
@@ -145,7 +154,7 @@
 
             container.innerHTML = '';
             filtered.forEach(p => {
-                const branchBadge = isSuper ? `<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[7px] font-black uppercase ml-1">ID:${p.franchise_id}</span>` : '';
+                const branchBadge = isSuper ? `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-white text-[7px] font-black uppercase ml-1">BRANCH ID: ${p.franchise_id}</span>` : '';
 
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-200 rounded-lg shadow-sm hover:border-teal-400 transition-all px-4 py-2">
@@ -166,7 +175,7 @@
                                 </span>
                             </div>
                             <div class="col-span-2 text-right">
-                                <button data-id="${p.id}" class="parent-edit-btn px-3 py-1 bg-slate-50 border border-slate-200 rounded text-[8px] font-black text-slate-600 hover:bg-slate-800 hover:text-white hover:border-slate-800 transition-all uppercase">Edit Record</button>
+                                <button data-id="${p.id}" class="parent-edit-btn px-3 py-1 bg-slate-50 border border-slate-200 rounded text-[8px] font-black text-slate-600 hover:bg-slate-800 hover:text-white transition-all uppercase">Edit Record</button>
                             </div>
                         </div>
                     </div>
@@ -195,6 +204,7 @@
 
         setupListeners() {
             document.getElementById('parent-search').oninput = () => this.render();
+            document.getElementById('parent-sort').onchange = () => this.render(); // Re-render when sort changes
             document.getElementById('add-parent-btn').onclick = () => this.openModal();
             document.getElementById('close-modal-x').onclick = () => this.closeModal();
             document.getElementById('cancel-modal-btn').onclick = () => this.closeModal();
@@ -203,8 +213,8 @@
                 e.preventDefault();
                 const id = document.getElementById('p-edit-id').value;
                 const accessKey = window.SecurityManager.getAccessKey();
-                const isSuper = window.SecurityManager.isHeadOffice();
-                const payload = { franchise_id: isSuper ? 1 : parseInt(localStorage.getItem('locked_franchise_id')) };
+                const fid = localStorage.getItem('locked_franchise_id');
+                const payload = { franchise_id: parseInt(fid) };
                 
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
@@ -236,7 +246,6 @@
             });
         }
     };
-
     ParentModule.init();
 })();
 </script>
