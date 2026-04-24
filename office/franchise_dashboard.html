@@ -50,24 +50,29 @@
             animation: systemPulse 4s ease-in-out infinite;
         }
 
-        .pulse-ring {
+        /* Pixar Character Styling */
+        .character {
             position: absolute;
-            width: 30vw;
-            height: 30vw;
-            border: 2px solid rgba(0, 209, 178, 0.2);
-            border-radius: 50%;
-            animation: ringExpand 4s linear infinite;
+            z-index: 5;
+            pointer-events: none;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));
+        }
+
+        .char-elephant {
+            width: 22vw;
+            bottom: 5%;
+            left: 3%;
+            animation: elephantFloat 8s ease-in-out infinite;
+        }
+
+        @keyframes elephantFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(2deg); }
         }
 
         @keyframes systemPulse {
             0%, 100% { transform: scale(0.8); opacity: 0.4; }
             50% { transform: scale(1.45); opacity: 1; }
-        }
-
-        @keyframes ringExpand {
-            0% { transform: scale(0.5); opacity: 0; }
-            50% { opacity: 0.6; }
-            100% { transform: scale(3); opacity: 0; }
         }
 
         /* Enforce No Pill at Bottom Right */
@@ -122,10 +127,13 @@
 
     <main id="main-workspace" class="flex-grow overflow-y-auto relative bg-[#f8fafc]">
         <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full relative">
+            
             <div class="system-pulse-container">
                 <div class="pulse-core"></div>
-                <div class="pulse-ring"></div>
             </div>
+
+            <img src="elephant_pixar.png" class="character char-elephant" alt="Elephant">
+
             <h1 class="nestmind-hero select-none">NestMind</h1>
         </div>
     </main>
@@ -185,7 +193,6 @@
         branchDisplay.classList.remove('hidden');
         document.getElementById('breadcrumb-container').classList.remove('hidden'); 
         navMenu.classList.remove('hidden');
-        // Any logic re-injecting status-text has been removed
     }
 
     function unlockDashboard() {
