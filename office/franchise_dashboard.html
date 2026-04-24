@@ -45,17 +45,16 @@
             animation: systemPulse 4s ease-in-out infinite;
         }
 
-        /* GIRAFFE GLOBAL POSITIONING */
+        /* Giraffe stays in the corner of the home view */
         .char-giraffe {
             position: absolute;
             bottom: 2%;
             right: 5%;
             width: 18vw;
-            z-index: 5; /* Behind content, above background */
+            z-index: 5;
             pointer-events: none;
             mix-blend-mode: multiply;
             animation: giraffeFloat 10s ease-in-out infinite;
-            transition: opacity 0.5s ease;
         }
 
         @keyframes giraffeFloat {
@@ -67,8 +66,6 @@
             0%, 100% { transform: scale(0.8); opacity: 0.3; }
             50% { transform: scale(1.2); opacity: 0.8; }
         }
-
-        #status-text, .system-status-pill { display: none !important; }
     </style>
 </head>
 <body class="bg-[#f8fafc] font-['Inter',_sans-serif]">
@@ -107,12 +104,12 @@
     </aside>
 
     <main id="main-workspace" class="flex-grow overflow-y-auto relative bg-[#f8fafc]">
-        
-        <img src="giraffe_pixar.png" id="global-giraffe" class="char-giraffe" alt="Giraffe">
-
-        <div id="view-container" class="h-full relative z-10">
-            <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full">
+        <div id="view-container" class="h-full">
+            <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full relative">
                 <div class="system-pulse-container"><div class="pulse-core"></div></div>
+                
+                <img src="giraffe_pixar.png" class="char-giraffe" alt="Giraffe">
+                
                 <h1 class="nestmind-hero select-none">NestMind</h1>
             </div>
         </div>
@@ -177,11 +174,6 @@
         currentController = new AbortController();
 
         const container = document.getElementById('view-container');
-        
-        // Optional: Hide giraffe when data is on screen to keep things clean
-        // const giraffe = document.getElementById('global-giraffe');
-        // if(giraffe) giraffe.style.opacity = '0.1';
-
         container.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic animate-pulse">Loading ${title}...</div>`;
 
         try {
@@ -189,6 +181,7 @@
             const response = await fetch(`${GITHUB_ROOT}${file}${authParams}&v=${Date.now()}`, { signal: currentController.signal });
             const html = await response.text();
             
+            // This replaces the giraffe/hero screen with your module data
             container.innerHTML = `<div class="p-8">${html}</div>`;
 
             const scripts = container.querySelectorAll('script');
