@@ -4,10 +4,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NestMind Enrollment Master</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="../nest_style.css">
     <script src="../api_config.js"></script>
     <script src="../security.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
         :root { --nest-teal: #00d1b2; --nest-dark: #1e293b; --nest-bg: #f1f5f9; --nest-border: #e2e8f0; }
         body { background: var(--nest-bg); font-family: 'Inter', sans-serif; color: var(--nest-dark); margin: 0; }
@@ -28,8 +30,6 @@
         .badge-step { background: var(--nest-dark); color: white; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; }
         .qa-row { display: grid; grid-template-columns: 40px 2fr 1.5fr; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; }
         .qa-row.selected { background: #f0fdfa; }
-        .qa-row.selected .q-select-ans { visibility: visible; }
-        .q-select-ans { visibility: hidden; }
         .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
     </style>
 </head>
@@ -135,7 +135,6 @@
                 sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
             });
 
-            // Automatic bypass for franchise admins
             if (!SecurityManager.isHeadOffice()) {
                 const savedId = localStorage.getItem('locked_franchise_id');
                 if (savedId) {
@@ -143,7 +142,7 @@
                     window.lockLocation();
                 }
             }
-        } catch(e) { console.error("Init failed:", e); }
+        } catch(e) { console.error(e); }
     }
 
     window.lockLocation = async () => {
@@ -153,7 +152,8 @@
         window.state.currentFranchiseId = parseInt(fId);
 
         try {
-            const res = await fetch('new_enrollment_parent.html');
+            // Updated fetch path to force local directory look-up
+            const res = await fetch('./new_enrollment_parent.html');
             if(!res.ok) throw new Error("Fragment 404");
             const html = await res.text();
             document.getElementById('parent-step-container').innerHTML = html;
@@ -161,7 +161,10 @@
             window.moveToStep('step-location', 'step-parent', 1);
             if(window.initParentStep) await window.initParentStep();
             fetchOtherBranchData();
-        } catch(e) { console.error("Error loading Parent Section:", e); }
+        } catch(e) { 
+            console.error("Error loading Parent Section:", e);
+            alert("Critical: Could not find new_enrollment_parent.html. Ensure it is pushed to GitHub in the same folder.");
+        }
     };
 
     window.moveToStep = (c, n, num) => {
@@ -179,21 +182,14 @@
                 fetch(`${window.NEST_ENDPOINTS.session.list}${auth}`), 
                 fetch(`${window.NEST_ENDPOINTS.questions.list}${auth}`) 
             ]);
-            
             const tData = await tRes.json();
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
-            (Array.isArray(tData) ? tData : (tData.items || [])).forEach(t => { 
-                if(t.is_active) tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; 
-            });
-
+            (Array.isArray(tData) ? tData : (tData.items || [])).forEach(t => { if(t.is_active) tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; });
             const sData = await sRes.json();
             const sessSel = document.getElementById('enrollment_session_id');
             sessSel.innerHTML = '<option value="">-- Select Session --</option>';
-            (Array.isArray(sData) ? sData : (sData.items || [])).forEach(s => { 
-                sessSel.innerHTML += `<option value="${s.id}">${s.name}</option>`; 
-            });
-
+            (Array.isArray(sData) ? sData : (sData.items || [])).forEach(s => { sessSel.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
             const qData = await qRes.json();
             const qGrid = document.getElementById('assessment-qa-grid');
             qGrid.innerHTML = '';
@@ -202,7 +198,7 @@
                 let optHtml = opts.map(o => `<option value="${o}">${o}</option>`).join('');
                 qGrid.innerHTML += `<div class="qa-row" data-qid="${q.id}"> <input type="checkbox" data-qid="${q.id}" onchange="handleQS(this)"> <div class="text-[10px] font-bold uppercase">${q.the_question}</div> <div class="q-select-ans"><select class="text-[10px]">${optHtml}</select></div> </div>`;
             });
-        } catch(e) { console.error("Data fetch failed:", e); }
+        } catch(e) { console.error(e); }
     }
 
     window.prepStudentStep = async () => {
@@ -211,9 +207,7 @@
         const kids = await res.json();
         const sSel = document.getElementById('s_select_id');
         sSel.innerHTML = '<option value="">-- Select Child --</option>';
-        (Array.isArray(kids) ? kids : (kids.items || [])).forEach(k => {
-            sSel.innerHTML += `<option value="${k.id}">${k.name}</option>`;
-        });
+        (Array.isArray(kids) ? kids : (kids.items || [])).forEach(k => { sSel.innerHTML += `<option value="${k.id}">${k.name}</option>`; });
     };
 
     window.processStudentStep = async () => {
@@ -276,7 +270,7 @@
             await fetch(`${window.NEST_ENDPOINTS.enrollment.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: window.state.currentStudentId, session_id: sessId, franchise_id: window.state.currentFranchiseId }) });
             for (let c of window.state.pickupContacts) { await fetch(`${window.NEST_ENDPOINTS.pickup.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) }); }
             alert("Enrollment Successful"); location.reload();
-        } catch(e) { console.error("Final submit failed:", e); }
+        } catch(e) { console.error(e); }
     };
 
     window.handleQS = (cb) => {
