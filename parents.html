@@ -1,12 +1,12 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
         <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Parent Directory</h1>
-        <p id="module-subheader" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Full Guardian Records</p>
+        <p id="module-subheader" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Loading Records...</p>
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
         <input type="text" id="parent-search" placeholder="Search names, phones, or emails..." 
-            class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all">
+            class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all font-bold">
         
         <button id="add-parent-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
             + REGISTER PARENT
@@ -16,7 +16,7 @@
 
 <div id="parent-list-container" class="space-y-6">
     <div class="p-20 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
-        Loading Records...
+        Synchronizing Global Database...
     </div>
 </div>
 
@@ -59,7 +59,7 @@
             this.schema = window.NEST_SCHEMA.parent;
             this.buildFormUI(); 
             
-            const isSuper = SecurityManager.isHeadOffice();
+            const isSuper = window.SecurityManager.isHeadOffice();
             const branchName = localStorage.getItem('locked_franchise_name') || 'Main';
             
             // Update UI context
@@ -68,12 +68,20 @@
                 : `Full Guardian Records • ${branchName}`;
             
             document.getElementById('modal-branch-label').innerText = isSuper 
-                ? "Global Administrator" 
+                ? "Global System Master" 
                 : `${branchName} Branch`;
 
-            // MASTER LOGIC: getAuthQuery() handles the "pull all" vs "pull matching" logic
-            const authQuery = SecurityManager.getAuthQuery();
-            const fetchUrl = window.NEST_ENDPOINTS.parent.list + authQuery;
+            // MASTER OVERRIDE LOGIC
+            let fetchUrl = window.NEST_ENDPOINTS.parent.list;
+            const accessKey = window.SecurityManager.getAccessKey();
+
+            if (isSuper) {
+                // If Head Office, bypass the franchise_id filter entirely
+                fetchUrl += `?access_key=${accessKey}`;
+            } else {
+                // Otherwise, use the standard franchise filter
+                fetchUrl += window.SecurityManager.getAuthQuery();
+            }
 
             try {
                 const response = await fetch(fetchUrl);
@@ -82,6 +90,8 @@
                 this.setupListeners();
             } catch (err) {
                 console.error("Fetch Error:", err);
+                document.getElementById('parent-list-container').innerHTML = 
+                    `<div class="p-20 text-center text-red-500 font-bold uppercase text-xs">Access Denied: Connection to Master Database Failed</div>`;
             }
         },
 
@@ -103,11 +113,12 @@
                 const spanClass = f.width === 'full' || f.type === 'textarea' ? 'col-span-full' : 'col-span-1';
                 const readonly = f.readonly ? 'readonly' : '';
                 const bgClass = f.readonly ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-50';
+                
                 let inputHTML = (f.type === 'textarea') 
                     ? `<textarea id="${f.id}" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none transition-all"></textarea>`
                     : (f.type === 'bool' || f.type === 'checkbox')
                     ? `<div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg"><input type="checkbox" id="${f.id}" class="w-4 h-4 accent-teal-500"><span class="text-[10px] font-bold text-slate-500 uppercase">${f.label} Status</span></div>`
-                    : `<input type="${f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs outline-none transition-all">`;
+                    : `<input type="${f.type}" id="${f.id}" ${readonly} class="w-full p-3 ${bgClass} border border-slate-200 rounded-lg text-xs outline-none transition-all font-bold">`;
 
                 grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[9px] text-slate-400 block uppercase font-black mb-1.5 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
             });
@@ -116,17 +127,17 @@
         render() {
             const container = document.getElementById('parent-list-container');
             const search = (document.getElementById('parent-search')?.value || '').toLowerCase();
-            const isSuper = SecurityManager.isHeadOffice();
+            const isSuper = window.SecurityManager.isHeadOffice();
             
             let filtered = this.data.filter(p => 
                 `${p.first_name} ${p.last_name} ${p.email} ${p.phone}`.toLowerCase().includes(search)
             );
 
-            container.innerHTML = filtered.length ? '' : '<div class="p-20 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">No records found.</div>';
+            container.innerHTML = filtered.length ? '' : '<div class="p-20 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">No parent records found in master directory.</div>';
             
             filtered.forEach(p => {
                 const createdDate = p.created_at ? new Date(p.created_at).toLocaleDateString() : '---';
-                const branchBadge = isSuper ? `<span class="ml-2 px-2 py-0.5 rounded bg-slate-200 text-slate-600 text-[8px] font-black uppercase">FID: ${p.franchise_id}</span>` : '';
+                const branchBadge = isSuper ? `<span class="ml-2 px-2 py-0.5 rounded bg-slate-200 text-slate-600 text-[8px] font-black uppercase">Branch ID: ${p.franchise_id}</span>` : '';
 
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:border-teal-400 transition-all">
@@ -163,7 +174,7 @@
 
         async deleteRecord(id) {
             if (!confirm("Confirm permanent removal?")) return;
-            const authQuery = SecurityManager.getAuthQuery();
+            const authQuery = window.SecurityManager.getAuthQuery();
             try {
                 const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}/${id}${authQuery}`, { method: 'DELETE' });
                 if (res.ok) this.init();
@@ -194,9 +205,10 @@
             document.getElementById('parent-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('p-edit-id').value;
-                const authQuery = SecurityManager.getAuthQuery();
+                const authQuery = window.SecurityManager.getAuthQuery();
+                const isSuper = window.SecurityManager.isHeadOffice();
                 
-                const payload = { franchise_id: SecurityManager.isHeadOffice() ? 1 : parseInt(localStorage.getItem('locked_franchise_id')) };
+                const payload = { franchise_id: isSuper ? 1 : parseInt(localStorage.getItem('locked_franchise_id')) };
                 
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
