@@ -15,7 +15,7 @@
 </div>
 
 <div class="grid grid-cols-12 px-5 mb-2 text-[8px] font-black text-slate-400 uppercase tracking-widest hidden md:grid">
-    <div class="col-span-3">Guardian Info</div>
+    <div class="col-span-3">Guardian Info (Sorted A-Z)</div>
     <div class="col-span-2">Contact</div>
     <div class="col-span-4">Home Address</div>
     <div class="col-span-1 text-center">Status</div>
@@ -129,9 +129,14 @@
             const search = (document.getElementById('parent-search')?.value || '').toLowerCase();
             const isSuper = window.SecurityManager.isHeadOffice();
             
-            let filtered = this.data.filter(p => 
-                `${p.first_name} ${p.last_name} ${p.email} ${p.phone}`.toLowerCase().includes(search)
-            );
+            // Filter and then Sort by Last Name, then First Name
+            let filtered = this.data
+                .filter(p => `${p.first_name} ${p.last_name} ${p.email} ${p.phone}`.toLowerCase().includes(search))
+                .sort((a, b) => {
+                    const lnSort = (a.last_name || '').localeCompare(b.last_name || '');
+                    if (lnSort !== 0) return lnSort;
+                    return (a.first_name || '').localeCompare(b.first_name || '');
+                });
 
             if (filtered.length === 0) {
                 container.innerHTML = `<div class="p-10 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">No matching records.</div>`;
@@ -146,7 +151,7 @@
                     <div class="bg-white border border-slate-200 rounded-lg shadow-sm hover:border-teal-400 transition-all px-4 py-2">
                         <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
                             <div class="col-span-3">
-                                <div class="text-[11px] font-black text-slate-800 uppercase leading-none">${p.first_name} ${p.last_name} ${branchBadge}</div>
+                                <div class="text-[11px] font-black text-slate-800 uppercase leading-none">${p.last_name}, ${p.first_name} ${branchBadge}</div>
                                 <div class="text-[9px] text-slate-400 font-bold lowercase mt-0.5">${p.email || 'no email'}</div>
                             </div>
                             <div class="col-span-2">
