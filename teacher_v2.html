@@ -1,56 +1,79 @@
-<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+<link rel="stylesheet" href="../nest_style.css">
+
+<style>
+    .btn-nest-teal { background: var(--nest-teal); color: #fff; }
+    .btn-nest-teal:hover { opacity: 0.9; }
+    .text-nest-dark { color: var(--nest-dark); }
+    .text-nest-teal { color: var(--nest-teal); }
+</style>
+
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
     <div>
-        <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Teacher Management</h1>
-        <p id="branch-display" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Faculty Records • Syncing...</p>
+        <h1 class="text-xl font-black text-nest-dark uppercase tracking-tight">Teacher Management</h1>
+        <p id="branch-display" class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Faculty Records • Syncing...</p>
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
+        <select id="teacher-sort" class="pl-3 pr-8 py-2 bg-slate-100 border-none rounded-lg text-[10px] font-black uppercase outline-none focus:ring-2 focus:ring-[var(--nest-teal)] transition-all cursor-pointer">
+            <option value="name">Sort: Name (A-Z)</option>
+            <option value="franchise">Sort: Branch Location</option>
+            <option value="status">Sort: Employment Status</option>
+        </select>
+
         <input type="text" id="teacher-search" placeholder="Search faculty name or role..." 
-            class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all font-bold">
+            class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-[var(--nest-teal)] shadow-sm w-full md:w-64 transition-all font-bold">
         
-        <button id="add-teacher-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
-            + REGISTER TEACHER
+        <button id="add-teacher-btn" class="btn-nest-teal px-5 py-2 rounded-lg font-bold transition-all text-[10px] shadow-md">
+            + Add New Teacher
         </button>
     </div>
 </div>
 
+<div class="grid grid-cols-12 px-5 mb-2 text-[8px] font-black text-slate-400 uppercase tracking-widest hidden md:grid">
+    <div class="col-span-3">Faculty & Branch</div>
+    <div class="col-span-2">Contact Info</div>
+    <div class="col-span-2">Daily Pay</div>
+    <div class="col-span-2">Hiring Date</div>
+    <div class="col-span-1 text-center">Status</div>
+    <div class="col-span-2 text-right pr-4">Actions</div>
+</div>
+
 <div id="teacher-list-container" class="space-y-2">
-    <div class="p-10 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
+    <div class="p-10 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest animate-pulse">
         Syncing Faculty Records...
     </div>
 </div>
 
 <div id="teacher-modal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-200">
-        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-200">
+        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
             <div>
-                <h2 id="t-modal-title" class="text-sm font-black text-slate-800 uppercase">Faculty Profile</h2>
-                <p id="modal-branch-subtitle" class="text-[9px] text-teal-600 font-bold uppercase tracking-widest">Database Record Revision</p>
+                <h2 id="t-modal-title" class="text-xs font-black text-nest-dark uppercase">Faculty Profile</h2>
+                <p id="modal-branch-subtitle" class="text-[8px] text-nest-teal font-bold uppercase tracking-widest">Database Record Revision</p>
             </div>
-            <button id="close-modal-x" class="text-slate-400 hover:text-slate-900 text-3xl font-light outline-none">&times;</button>
+            <button id="close-modal-x" class="text-slate-400 hover:text-nest-dark text-2xl">&times;</button>
         </div>
         
         <form id="teacher-form" class="p-6">
             <input type="hidden" id="t-edit-id">
             
-            <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+            <div class="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
                 <div>
-                    <span class="text-[10px] font-black text-slate-800 uppercase block">Employment Status</span>
-                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wide">Toggle to activate or suspend access</p>
+                    <span class="text-[9px] font-black text-nest-dark uppercase block">Employment Status</span>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" id="is_active" class="sr-only peer" checked>
-                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
-                    <span id="status-label" class="ml-3 text-[10px] font-black text-teal-600 uppercase">Active</span>
+                    <div class="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--nest-teal)]"></div>
+                    <span id="status-label" class="ml-3 text-[9px] font-black text-nest-teal uppercase">Active</span>
                 </label>
             </div>
 
-            <div id="dynamic-fields-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 max-h-[50vh] overflow-y-auto pr-4 custom-scrollbar">
+            <div id="dynamic-fields-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
             </div>
 
             <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
-                <button type="button" id="cancel-modal-btn" class="px-8 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Discard</button>
-                <button type="submit" id="save-btn" class="flex-1 py-3 bg-teal-500 text-white rounded-xl font-bold text-[10px] uppercase shadow-lg hover:bg-teal-600 transition-all">Save Changes</button>
+                <button type="button" id="cancel-modal-btn" class="px-6 py-2.5 bg-slate-100 text-slate-500 rounded-lg font-bold text-[9px] uppercase hover:bg-slate-200 transition-all">Discard</button>
+                <button type="submit" id="save-btn" class="flex-1 py-2.5 btn-nest-teal rounded-lg font-bold text-[9px] uppercase shadow-lg">Save Record</button>
             </div>
         </form>
     </div>
@@ -67,9 +90,9 @@
         adminTypeMap: { 1: 'Head Office Admin', 2: 'Franchise Owner', 3: 'Branch Manager', 4: 'Teacher' },
 
         async init() {
-            if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
-            if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
-            if (!window.SecurityManager) await this.loadScript('/security.js');
+            if (!window.NEST_SCHEMA) await this.loadScript('../schema_config.js');
+            if (!window.NEST_ENDPOINTS) await this.loadScript('../api_config.js');
+            if (!window.SecurityManager) await this.loadScript('../security.js');
 
             this.schema = window.NEST_SCHEMA.teacher;
             this.isHO = SecurityManager.isHeadOffice();
@@ -77,25 +100,19 @@
             const currentFname = localStorage.getItem('locked_franchise_name') || 'Main';
             const accessKey = SecurityManager.getAccessKey();
 
-            // Constructing auth query based on role
             let authQuery = this.isHO 
                 ? `?access_key=${accessKey}` 
                 : `?franchise_id=${this.currentFid}&access_key=${accessKey}`;
             
             document.getElementById('branch-display').innerText = this.isHO 
-                ? "Global Network Records • All Faculty" 
+                ? "Global Network Records • Master View" 
                 : `Faculty Records • ${currentFname}`;
 
             try {
                 const response = await fetch(`${window.NEST_ENDPOINTS.teacher.list}${authQuery}`);
                 const rawData = await response.json();
-                
-                // CRITICAL FIX: Extract array from possible Xano pagination wrapper
                 this.data = Array.isArray(rawData) ? rawData : (rawData.items || rawData.data || []);
                 
-                // Final safety check to prevent .filter crash
-                if (!Array.isArray(this.data)) this.data = [];
-
                 if (this.isHO) {
                     const fRes = await fetch(`${window.NEST_ENDPOINTS.franchise.list}?access_key=${accessKey}`);
                     const fRaw = await fRes.json();
@@ -107,7 +124,6 @@
                 this.setupListeners();
             } catch (err) { 
                 console.error("Init Error:", err);
-                document.getElementById('teacher-list-container').innerHTML = `<div class="p-10 text-center text-red-500 font-bold uppercase text-[10px]">Data Load Failure: ${err.message}</div>`;
             }
         },
 
@@ -119,15 +135,15 @@
                 let fOptions = this.franchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
                 grid.insertAdjacentHTML('beforeend', `
                     <div class="col-span-full mb-2">
-                        <label class="text-[8px] text-teal-600 block uppercase font-black mb-1 ml-1 tracking-wider">Assign to Franchise</label>
-                        <select id="franchise_id" class="w-full p-2 bg-teal-50 border border-teal-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-teal-500">${fOptions}</select>
+                        <label class="text-[8px] text-nest-teal block uppercase font-black mb-1 ml-1 tracking-wider">Assign to Franchise</label>
+                        <select id="franchise_id" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold outline-none focus:ring-2 focus:ring-[var(--nest-teal)]">${fOptions}</select>
                     </div>`);
                 
                 let typeOptions = Object.entries(this.adminTypeMap).map(([id, name]) => `<option value="${id}">${name}</option>`).join('');
                 grid.insertAdjacentHTML('beforeend', `
                     <div class="col-span-1">
                         <label class="text-[8px] text-slate-400 block uppercase font-black mb-1 ml-1 tracking-wider">Access Role</label>
-                        <select id="admin_type_id" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-teal-500">${typeOptions}</select>
+                        <select id="admin_type_id" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold outline-none focus:ring-2 focus:ring-[var(--nest-teal)]">${typeOptions}</select>
                     </div>`);
             } else {
                 grid.insertAdjacentHTML('beforeend', `<input type="hidden" id="franchise_id" value="${this.currentFid}">`);
@@ -136,11 +152,10 @@
 
             this.schema.fields.forEach(f => {
                 if (['id', 'franchise_id', 'user_id', 'teacher_id', 'is_active', 'admin_type_id'].includes(f.id) || f.hidden) return;
-                
                 const spanClass = (f.width === 'full' || f.type === 'textarea') ? 'col-span-full' : 'col-span-1';
                 let inputHTML = (f.type === 'textarea') 
-                    ? `<textarea id="${f.id}" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500 font-bold uppercase"></textarea>`
-                    : `<input type="${f.type}" id="${f.id}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500 font-bold uppercase">`;
+                    ? `<textarea id="${f.id}" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] outline-none font-bold uppercase"></textarea>`
+                    : `<input type="${f.type}" id="${f.id}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] outline-none font-bold uppercase">`;
 
                 grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[8px] text-slate-400 block uppercase font-black mb-1 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
             });
@@ -149,74 +164,67 @@
         render() {
             const container = document.getElementById('teacher-list-container');
             const search = (document.getElementById('teacher-search')?.value || '').toLowerCase();
+            const sortType = document.getElementById('teacher-sort').value;
             const isSuper = SecurityManager.isHeadOffice();
             
             let filtered = this.data.filter(t => ( (t.first_name || '') + ' ' + (t.last_name || '') ).toLowerCase().includes(search));
-            container.innerHTML = '';
 
+            filtered.sort((a, b) => {
+                if (sortType === 'franchise') return (a.franchise_id || 0) - (b.franchise_id || 0) || (a.last_name || '').localeCompare(b.last_name || '');
+                if (sortType === 'status') return (b.is_active === a.is_active) ? (a.last_name || '').localeCompare(b.last_name || '') : (b.is_active ? -1 : 1);
+                return (a.last_name || '').localeCompare(b.last_name || '') || (a.first_name || '').localeCompare(b.first_name || '');
+            });
+
+            container.innerHTML = '';
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="p-10 text-center text-slate-300 text-[10px] font-black uppercase tracking-widest">No Faculty Records Found.</div>';
+                container.innerHTML = '<div class="p-10 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">No Faculty Records Found.</div>';
                 return;
             }
 
             filtered.forEach(t => {
                 const fName = isSuper ? (this.franchises.find(f => f.id == t.franchise_id)?.name || 'BID: ' + t.franchise_id) : localStorage.getItem('locked_franchise_name');
                 const roleTitle = this.adminTypeMap[t.admin_type_id] || 'Staff';
+                const branchBadge = isSuper ? `<span class="px-1.5 py-0.5 rounded bg-nest-dark text-white text-[7px] font-black uppercase ml-1" style="background: var(--nest-dark)">${fName}</span>` : '';
 
                 container.insertAdjacentHTML('beforeend', `
-                    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden hover:border-teal-400 transition-all">
-                        <div class="bg-slate-50/50 px-4 py-2.5 flex flex-wrap items-center justify-between border-b border-slate-100">
-                            <div>
-                                <span class="text-[8px] text-teal-600 font-black uppercase block tracking-tighter">${fName}</span>
-                                <span class="text-xs font-black text-slate-900 uppercase">${t.first_name || ''} ${t.last_name || ''}</span>
-                                <span class="text-[8px] text-slate-400 font-bold uppercase ml-2 px-1 bg-slate-100 rounded">${roleTitle}</span>
+                    <div class="bg-white border border-slate-200 rounded-lg shadow-sm hover:border-[var(--nest-teal)] transition-all px-4 py-2">
+                        <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
+                            <div class="col-span-3">
+                                <div class="text-[11px] font-black text-nest-dark uppercase leading-none">${t.last_name}, ${t.first_name} ${branchBadge}</div>
+                                <div class="text-[9px] text-slate-400 font-bold uppercase mt-0.5">${roleTitle}</div>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase border ${t.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">${t.is_active ? 'Active' : 'Inactive'}</span>
-                                <button data-id="${t.id}" class="t-edit-btn px-3 py-1 bg-white border border-slate-300 rounded text-[9px] font-black hover:text-teal-600 transition-all uppercase">Edit</button>
-                                <button data-id="${t.id}" class="t-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-red-500 text-[9px] font-black hover:bg-red-500 transition-all uppercase">Delete</button>
+                            <div class="col-span-2"><div class="text-[10px] font-mono text-nest-teal font-bold">${t.phone || '---'}</div></div>
+                            <div class="col-span-2"><div class="text-[10px] font-black text-nest-dark">₱${t.daily_pay || '0'}</div></div>
+                            <div class="col-span-2"><div class="text-[9px] text-slate-500 font-bold uppercase">${t.start_date || '---'}</div></div>
+                            <div class="col-span-1 text-center">
+                                <span class="px-2 py-0.5 rounded text-[7px] font-black uppercase border ${t.is_active ? 'bg-teal-50 text-nest-teal border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}" ${t.is_active ? 'style="color: var(--nest-teal); border-color: var(--nest-teal); opacity: 0.8;"' : ''}>${t.is_active ? 'Active' : 'Arch'}</span>
                             </div>
-                        </div>
-                        <div class="px-4 py-3 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-2 bg-white">
-                            <div class="space-y-1">
-                                <span class="text-[7px] font-black text-slate-300 uppercase block">Phone Contact</span>
-                                <span class="text-[10px] font-bold text-slate-700 font-mono">${t.phone || '---'}</span>
-                            </div>
-                            <div class="space-y-1">
-                                <span class="text-[7px] font-black text-slate-300 uppercase block">Daily Pay Scale</span>
-                                <span class="text-[10px] font-black text-teal-600">₱${t.daily_pay || '0'}</span>
-                            </div>
-                            <div class="space-y-1">
-                                <span class="text-[7px] font-black text-slate-300 uppercase block">Hiring Date</span>
-                                <span class="text-[10px] font-bold text-slate-700">${t.start_date || '---'}</span>
+                            <div class="col-span-2 text-right flex justify-end gap-2">
+                                <button data-id="${t.id}" class="t-edit-btn px-3 py-1 bg-slate-50 border border-slate-200 rounded text-[8px] font-black text-slate-600 hover:bg-nest-dark hover:text-white transition-all uppercase">Edit</button>
+                                <button data-id="${t.id}" class="t-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-[8px] font-black text-red-600 hover:bg-red-600 hover:text-white transition-all uppercase">Delete</button>
                             </div>
                         </div>
                     </div>
                 `);
             });
+
             container.querySelectorAll('.t-edit-btn').forEach(b => b.onclick = () => this.openModal(this.data.find(x => x.id == b.dataset.id)));
             container.querySelectorAll('.t-delete-btn').forEach(b => b.onclick = () => this.deleteRecord(b.dataset.id));
         },
 
         openModal(t = null) {
-            const modal = document.getElementById('teacher-modal');
-            const toggle = document.getElementById('is_active');
-            modal.classList.remove('hidden');
+            document.getElementById('teacher-modal').classList.remove('hidden');
             document.getElementById('teacher-form').reset();
             document.getElementById('t-edit-id').value = t ? t.id : '';
-            
+            const toggle = document.getElementById('is_active');
             toggle.checked = t ? !!t.is_active : true;
             this.updateToggleLabel(toggle.checked);
 
             if (t) {
-                if (this.isHO && document.getElementById('admin_type_id')) {
-                    document.getElementById('admin_type_id').value = t.admin_type_id;
-                }
+                if (this.isHO && document.getElementById('admin_type_id')) document.getElementById('admin_type_id').value = t.admin_type_id;
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
-                    if (el && !['id', 'franchise_id', 'is_active', 'admin_type_id'].includes(f.id)) {
-                        el.value = t[f.id] || '';
-                    }
+                    if (el && !['id', 'franchise_id', 'is_active', 'admin_type_id'].includes(f.id)) el.value = t[f.id] || '';
                 });
                 if (this.isHO) document.getElementById('franchise_id').value = t.franchise_id;
             }
@@ -225,40 +233,33 @@
         updateToggleLabel(isActive) {
             const label = document.getElementById('status-label');
             label.innerText = isActive ? 'Active' : 'Inactive';
-            label.className = isActive ? 'ml-3 text-[10px] font-black text-teal-600 uppercase' : 'ml-3 text-[10px] font-black text-red-500 uppercase';
+            label.className = isActive ? 'ml-3 text-[9px] font-black text-nest-teal uppercase' : 'ml-3 text-[9px] font-black text-red-500 uppercase';
         },
 
         setupListeners() {
-            const close = () => { document.getElementById('teacher-modal').classList.add('hidden'); };
-            const accessKey = SecurityManager.getAccessKey();
-            const authQuery = `?access_key=${accessKey}`;
-
+            const close = () => document.getElementById('teacher-modal').classList.add('hidden');
             document.getElementById('cancel-modal-btn').onclick = close;
             document.getElementById('close-modal-x').onclick = close;
             document.getElementById('is_active').onchange = (e) => this.updateToggleLabel(e.target.checked);
             document.getElementById('teacher-search').oninput = () => this.render();
+            document.getElementById('teacher-sort').onchange = () => this.render();
             document.getElementById('add-teacher-btn').onclick = () => this.openModal();
 
             document.getElementById('teacher-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('t-edit-id').value;
+                const accessKey = SecurityManager.getAccessKey();
                 const payload = { 
                     franchise_id: parseInt(document.getElementById('franchise_id').value),
                     is_active: document.getElementById('is_active').checked,
                     admin_type_id: parseInt(document.getElementById('admin_type_id').value)
                 };
-                
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
                     if (el && !['id', 'franchise_id', 'is_active', 'admin_type_id'].includes(f.id)) payload[f.id] = el.value;
                 });
-
-                const url = id ? `${window.NEST_ENDPOINTS.teacher.list}/${id}${authQuery}` : `${window.NEST_ENDPOINTS.teacher.list}${authQuery}`;
-                await fetch(url, {
-                    method: id ? 'PATCH' : 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                const url = id ? `${window.NEST_ENDPOINTS.teacher.list}/${id}?access_key=${accessKey}` : `${window.NEST_ENDPOINTS.teacher.list}?access_key=${accessKey}`;
+                await fetch(url, { method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 close();
                 this.init();
             };
@@ -276,8 +277,7 @@
             return new Promise(resolve => {
                 const s = document.createElement('script'); s.src = src; s.onload = resolve;
                 s.onerror = () => { 
-                    const fallback = src.replace('/','');
-                    const s2 = document.createElement('script'); s2.src = fallback; s2.onload = resolve;
+                    const s2 = document.createElement('script'); s2.src = src.replace('../', ''); s2.onload = resolve;
                     document.head.appendChild(s2);
                 };
                 document.head.appendChild(s);
