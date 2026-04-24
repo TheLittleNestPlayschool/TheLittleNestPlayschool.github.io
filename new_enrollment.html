@@ -4,9 +4,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NestMind Enrollment Master</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="nest_style.css">
-    <script src="api_config.js"></script>
-    <script src="security.js"></script>
+    
+    <link rel="stylesheet" href="../nest_style.css">
+    <script src="../api_config.js"></script>
+    <script src="../security.js"></script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --nest-teal: #00d1b2; --nest-dark: #1e293b; --nest-bg: #f1f5f9; --nest-border: #e2e8f0; }
@@ -25,12 +27,8 @@
         label { display: block; font-size: 0.6rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; margin-top: 10px; }
         input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; font-size: 0.8rem; background: #f8fafc; font-weight: 700; text-transform: uppercase; }
         .btn-teal { background: var(--nest-teal); color: #fff; padding: 14px 24px; border-radius: 6px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; width: 100%; margin-top: 15px; }
-        .btn-secondary { background: #64748b; margin-top: 10px; }
         .badge-step { background: var(--nest-dark); color: white; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; }
         .qa-row { display: grid; grid-template-columns: 40px 2fr 1.5fr; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; }
-        .qa-row.selected { background: #f0fdfa; }
-        .qa-row.selected .q-select-ans { visibility: visible; }
-        .q-select-ans { visibility: hidden; }
         .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
     </style>
 </head>
@@ -43,7 +41,7 @@
         <h2 class="nest-header"><span class="badge-step">0</span> Select Branch</h2>
         <div class="step-content">
             <label>Operating Location</label>
-            <select id="ho_franchise_selector"><option value="">Syncing Network...</option></select>
+            <select id="ho_franchise_selector" class="mt-1 border p-2 rounded-lg font-bold uppercase text-xs w-full bg-slate-50"></select>
             <button id="init-btn" onclick="lockLocation()" class="btn-teal">Initialize System</button>
         </div>
     </div>
@@ -64,10 +62,7 @@
             </div>
             <div id="student-create-mode" style="display:none;">
                 <label>Full Legal Name</label><input type="text" id="s_name_new">
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label>Date of Birth</label><input type="date" id="s_dob_new"></div>
-                    <div><label>Gender</label><input type="text" id="s_gender"></div>
-                </div>
+                <label>Date of Birth</label><input type="date" id="s_dob_new">
             </div>
             <button class="bg-slate-500 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase mt-4" onclick="toggleStudentMode()">Toggle New/Existing</button>
             <button onclick="processStudentStep()" class="btn-teal">Confirm Student Data</button>
@@ -147,8 +142,10 @@
         const sel = document.getElementById('ho_franchise_selector');
         if(!sel.value) return;
         window.state.currentFranchiseId = parseInt(sel.value);
+        
         const res = await fetch('new_enrollment_parent.html');
         document.getElementById('parent-step-container').innerHTML = await res.text();
+        
         moveToStep('step-location', 'step-parent', 1);
         if(window.initParentStep) window.initParentStep();
         fetchOtherBranchData();
@@ -252,16 +249,22 @@
     };
 
     window.moveToStep = (c, n, num) => {
-        document.getElementById(c).classList.replace('step-active', 'step-saved');
-        document.getElementById(n).classList.remove('step-locked');
-        document.getElementById(n).classList.add('step-active');
+        const cEl = document.getElementById(c);
+        const nEl = document.getElementById(n);
+        if(cEl) cEl.classList.replace('step-active', 'step-saved');
+        if(nEl) { nEl.classList.remove('step-locked'); nEl.classList.add('step-active'); }
         document.getElementById('enrollment-progress').innerText = `Step ${num} of 6`;
     };
 
-    window.toggleStudentMode = () => { 
-        const s = document.getElementById('student-select-mode'), c = document.getElementById('student-create-mode'); 
-        s.style.display = s.style.display === 'none' ? 'block' : 'none'; 
-        c.style.display = c.style.display === 'none' ? 'block' : 'none'; 
+    window.unlockStep = (sId, vId) => {
+        document.getElementById(sId).classList.replace('step-saved', 'step-active');
+        document.getElementById(vId).style.display = 'none';
+    };
+
+    window.toggleStudentMode = () => {
+        const s = document.getElementById('student-select-mode'), c = document.getElementById('student-create-mode');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        c.style.display = c.style.display === 'none' ? 'block' : 'none';
     };
 
     window.handleQS = (cb) => {
