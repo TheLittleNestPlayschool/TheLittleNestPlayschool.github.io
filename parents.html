@@ -24,7 +24,7 @@
 
 <div id="parent-list-container" class="space-y-6">
     <div class="p-20 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
-        Synchronizing Global Database...
+        Synchronizing Database...
     </div>
 </div>
 
@@ -37,12 +37,17 @@
             </div>
             <button id="close-modal-x" class="text-slate-400 hover:text-slate-900 text-3xl font-light">&times;</button>
         </div>
+        
         <form id="parent-form" class="p-6">
             <input type="hidden" id="p-edit-id">
-            <div id="dynamic-fields-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar"></div>
+            <div id="dynamic-fields-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
+            </div>
+
             <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
                 <button type="button" id="cancel-modal-btn" class="px-8 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Discard</button>
-                <button type="submit" class="flex-1 py-3 bg-teal-500 text-white rounded-xl font-bold text-[10px] uppercase shadow-lg hover:bg-teal-600 transition-all">Save Record</button>
+                <button type="submit" class="flex-1 py-3 bg-teal-500 text-white rounded-xl font-bold text-[10px] uppercase shadow-lg hover:bg-teal-600 transition-all">
+                    Save Record
+                </button>
             </div>
         </form>
     </div>
@@ -64,6 +69,7 @@
             
             const isSuper = window.SecurityManager.isHeadOffice();
             const branchName = localStorage.getItem('locked_franchise_name') || 'Main';
+            const accessKey = window.SecurityManager.getAccessKey();
             
             document.getElementById('module-subheader').innerText = isSuper 
                 ? "Full Network Records • Master View" 
@@ -73,27 +79,23 @@
                 ? "Global System Master" 
                 : `${branchName} Branch`;
 
-            // CONSTRUCT FETCH
-            const accessKey = window.SecurityManager.getAccessKey();
+            // Constructing URL to match Xano's new If/Else logic
             let fetchUrl = window.NEST_ENDPOINTS.parent.list;
-
             if (isSuper) {
-                // FORCE STRIP: No franchise_id in the URL at all
                 fetchUrl += `?access_key=${accessKey}`;
             } else {
-                fetchUrl += window.SecurityManager.getAuthQuery();
+                const fid = localStorage.getItem('locked_franchise_id');
+                fetchUrl += `?franchise_id=${fid}&access_key=${accessKey}`;
             }
 
-            // UPDATE DEBUG CONSOLE
             document.getElementById('debug-url').innerText = "GET >> " + fetchUrl;
 
             try {
                 const response = await fetch(fetchUrl);
                 const result = await response.json();
-                
-                // If Xano returns an object with items array or just an array
                 this.data = Array.isArray(result) ? result : (result.items || []);
                 
+                document.getElementById('debug-url').innerText += ` | RECEIVED: ${this.data.length}`;
                 this.render();
                 this.setupListeners();
             } catch (err) {
@@ -106,18 +108,24 @@
             const grid = document.getElementById('dynamic-fields-grid');
             grid.innerHTML = '';
             let currentSection = "";
+
             this.schema.fields.forEach(f => {
                 if (f.id === 'id') return;
                 if (f.section && f.section !== currentSection) {
                     currentSection = f.section;
-                    grid.insertAdjacentHTML('beforeend', `<div class="col-span-full mt-6 mb-2 border-b border-slate-100 pb-1"><span class="text-[10px] font-black text-teal-600 uppercase tracking-widest">${currentSection}</span></div>`);
+                    grid.insertAdjacentHTML('beforeend', `
+                        <div class="col-span-full mt-6 mb-2 border-b border-slate-100 pb-1">
+                            <span class="text-[10px] font-black text-teal-600 uppercase tracking-widest">${currentSection}</span>
+                        </div>
+                    `);
                 }
                 const spanClass = f.width === 'full' || f.type === 'textarea' ? 'col-span-full' : 'col-span-1';
                 let inputHTML = (f.type === 'textarea') 
                     ? `<textarea id="${f.id}" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none transition-all"></textarea>`
                     : (f.type === 'bool' || f.type === 'checkbox')
-                    ? `<div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg"><input type="checkbox" id="${f.id}" class="w-4 h-4 accent-teal-500"><span class="text-[10px] font-bold text-slate-500 uppercase">${f.label}</span></div>`
+                    ? `<div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg"><input type="checkbox" id="${f.id}" class="w-4 h-4 accent-teal-500"><span class="text-[10px] font-bold text-slate-500 uppercase">${f.label} Status</span></div>`
                     : `<input type="${f.type}" id="${f.id}" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none transition-all font-bold">`;
+
                 grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[9px] text-slate-400 block uppercase font-black mb-1.5 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
             });
         },
@@ -139,6 +147,7 @@
             container.innerHTML = '';
             filtered.forEach(p => {
                 const branchBadge = isSuper ? `<span class="ml-2 px-2 py-0.5 rounded bg-slate-200 text-slate-600 text-[8px] font-black uppercase">FID: ${p.franchise_id}</span>` : '';
+
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:border-teal-400 transition-all">
                         <div class="bg-slate-50/80 p-5 flex flex-wrap items-center justify-between gap-6 border-b border-slate-100">
@@ -148,8 +157,14 @@
                                 <div class="text-[11px] text-slate-500 font-medium">${p.email || 'No Email'}</div>
                                 <div class="text-[11px] font-mono text-teal-600 font-bold">${p.phone || ''}</div>
                             </div>
+                            <div class="flex-1 min-w-[250px]">
+                                <span class="text-[9px] text-slate-400 font-black uppercase block tracking-tighter">Home Address</span>
+                                <span class="text-xs text-slate-600 leading-snug font-medium">${p.address || '---'}</span>
+                            </div>
                             <div class="flex items-center gap-3">
-                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${p.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">${p.is_active ? 'Active' : 'Archived'}</span>
+                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${p.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">
+                                    ${p.is_active ? 'Active' : 'Archived'}
+                                </span>
                                 <button data-id="${p.id}" class="parent-edit-btn px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-[10px] font-black hover:text-teal-600 uppercase">Edit</button>
                             </div>
                         </div>
@@ -179,8 +194,33 @@
 
         setupListeners() {
             document.getElementById('parent-search').oninput = () => this.render();
+            document.getElementById('add-parent-btn').onclick = () => this.openModal();
             document.getElementById('close-modal-x').onclick = () => this.closeModal();
             document.getElementById('cancel-modal-btn').onclick = () => this.closeModal();
+
+            document.getElementById('parent-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('p-edit-id').value;
+                const accessKey = window.SecurityManager.getAccessKey();
+                const isSuper = window.SecurityManager.isHeadOffice();
+                const payload = { franchise_id: isSuper ? 1 : parseInt(localStorage.getItem('locked_franchise_id')) };
+                
+                this.schema.fields.forEach(f => {
+                    const el = document.getElementById(f.id);
+                    if (el && f.id !== 'id' && !f.readonly) {
+                        payload[f.id] = (f.type === 'bool' || f.type === 'checkbox') ? el.checked : el.value;
+                    }
+                });
+
+                const url = id ? `${window.NEST_ENDPOINTS.parent.list}/${id}?access_key=${accessKey}` : `${window.NEST_ENDPOINTS.parent.list}?access_key=${accessKey}`;
+                const res = await fetch(url, { 
+                    method: id ? 'PATCH' : 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
+                
+                if (res.ok) { this.closeModal(); this.init(); }
+            };
         },
 
         async loadScript(src) {
