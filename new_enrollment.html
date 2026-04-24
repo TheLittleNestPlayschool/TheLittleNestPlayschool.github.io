@@ -30,7 +30,7 @@
         .badge-step { background: var(--nest-dark); color: white; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; }
         .qa-row { display: grid; grid-template-columns: 40px 2fr 1.5fr; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; }
         .qa-row.selected { background: #f0fdfa; }
-        .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+        .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; z-index: 10; }
     </style>
 </head>
 <body>
@@ -101,6 +101,7 @@
     <div id="step-assessment" class="step-container step-locked">
         <h2 class="nest-header"><span class="badge-step">3</span> Nest Assessment</h2>
         <div id="assessment-summary-view" style="display:none;" class="profile-display mb-4">
+            <button class="edit-pill" onclick="unlockStep('step-assessment', 'assessment-summary-view')">Modify</button>
             <div class="profile-item"><div class="profile-label">Assessed By</div><div id="disp-a-teacher" class="profile-value"></div></div>
         </div>
         <div class="step-content">
@@ -115,6 +116,7 @@
     <div id="step-session" class="step-container step-locked">
         <h2 class="nest-header"><span class="badge-step">4</span> Academic Session</h2>
         <div id="session-profile-view" style="display:none;" class="profile-display mb-4">
+            <button class="edit-pill" onclick="unlockStep('step-session', 'session-profile-view')">Modify</button>
             <div class="profile-item"><div class="profile-label">Slot</div><div id="disp-sess-name" class="profile-value"></div></div>
         </div>
         <div class="step-content">
@@ -313,6 +315,10 @@
         window.state.pickupContacts.push(c);
         document.getElementById('pickup-entry-list').innerHTML += `<div class="p-2 bg-white border rounded text-[10px] font-bold uppercase">${c.name} — ${c.phone}</div>`;
         document.getElementById('pu_name').value = ''; document.getElementById('pu_phone').value = '';
+    };
+
+    window.finalizePickups = () => {
+        window.moveToStep('step-pickup', 'step-final', 6);
     };
 
     window.submitFinalEnrollment = async () => {
