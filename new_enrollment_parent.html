@@ -1,0 +1,110 @@
+<div id="step-parent" class="step-container step-active">
+    <h2 class="nest-header"><span class="badge-step">1</span> Parent Profile</h2>
+    
+    <div id="parent-profile-view" style="display:none;" class="profile-display grid grid-cols-2 gap-4 mb-4 p-4 bg-white border rounded-lg relative">
+        <button class="absolute top-2 right-2 text-[10px] font-black uppercase text-slate-400 bg-slate-100 px-2 py-1 rounded" 
+                onclick="document.getElementById('parent-profile-view').style.display='none'; document.getElementById('parent-form-content').style.display='block';">Modify</button>
+        <div><label class="text-[8px] font-black uppercase text-slate-400">Name</label><div id="disp-p-name" class="font-bold text-sm"></div></div>
+        <div><label class="text-[8px] font-black uppercase text-slate-400">Phone</label><div id="disp-p-phone" class="font-bold text-sm"></div></div>
+        <div class="col-span-2"><label class="text-[8px] font-black uppercase text-slate-400">Email</label><div id="disp-p-email" class="font-bold text-sm"></div></div>
+    </div>
+
+    <div id="parent-form-content" class="step-content">
+        <div id="parent-select-mode">
+            <label class="text-[10px] font-bold uppercase text-slate-400">Search Existing Records</label>
+            <input type="text" id="p_search" class="w-full border p-2 rounded-lg text-xs mt-1 mb-2" placeholder="Filter by name..." onkeyup="filterParents()">
+            <select id="p_select_id" size="5" class="w-full border rounded-lg p-2 text-xs font-bold uppercase outline-none"></select>
+        </div>
+
+        <div id="parent-create-mode" style="display:none;" class="mt-4">
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="p_fn" placeholder="First Name" class="border p-2 rounded text-xs">
+                <input type="text" id="p_ln" placeholder="Last Name" class="border p-2 rounded text-xs">
+            </div>
+            <input type="text" id="p_phone" placeholder="Phone" class="border p-2 rounded text-xs mt-2 w-full">
+            <input type="email" id="p_email" placeholder="Email" class="border p-2 rounded text-xs mt-2 w-full">
+            <input type="text" id="p_address" placeholder="Address" class="border p-2 rounded text-xs mt-2 w-full">
+        </div>
+
+        <button class="w-full py-2 bg-slate-200 text-slate-600 rounded text-[10px] font-black mt-4 uppercase" onclick="toggleParentMode()">Toggle New/Existing</button>
+        <button class="w-full py-3 bg-[#00d1b2] text-white rounded font-bold mt-2 uppercase text-xs" onclick="processParentStep()">Confirm Parent Data</button>
+    </div>
+</div>
+
+<script>
+(function() {
+    window.addEventListener('parentStepLoaded', async () => {
+        await fetchBranchParents();
+    });
+
+    async function fetchBranchParents() {
+        const state = window.EnrollmentState;
+        const auth = `?access_key=${SecurityManager.getAccessKey()}&franchise_id=${state.currentFranchiseId}`;
+        try {
+            const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}${auth}`);
+            const data = await res.json();
+            const raw = Array.isArray(data) ? data : (data.items || []);
+            state.allParents = raw.filter(p => p.franchise_id === state.currentFranchiseId);
+            renderParentList(state.allParents);
+        } catch(e) { console.error(e); }
+    }
+
+    window.filterParents = () => {
+        const state = window.EnrollmentState;
+        const t = document.getElementById('p_search').value.toLowerCase();
+        renderParentList(state.allParents.filter(p => `${p.first_name} ${p.last_name}`.toLowerCase().includes(t)));
+    };
+
+    function renderParentList(list) {
+        const sel = document.getElementById('p_select_id'); sel.innerHTML = '';
+        list.forEach(p => { 
+            sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name} — ${p.phone || 'N/A'}</option>`; 
+        });
+    }
+
+    window.processParentStep = async () => {
+        const isNew = document.getElementById('parent-create-mode').style.display === 'block';
+        const state = window.EnrollmentState;
+        
+        if (isNew) {
+            const payload = {
+                first_name: document.getElementById('p_fn').value,
+                last_name: document.getElementById('p_ln').value,
+                phone: document.getElementById('p_phone').value,
+                email: document.getElementById('p_email').value,
+                address: document.getElementById('p_address').value,
+                franchise_id: state.currentFranchiseId,
+                is_active: true
+            };
+            const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}?access_key=${SecurityManager.getAccessKey()}`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            state.currentParentId = data.id;
+            updateParentSummary(data);
+        } else {
+            state.currentParentId = parseInt(document.getElementById('p_select_id').value);
+            if(!state.currentParentId) return alert("Select a parent");
+            updateParentSummary(state.allParents.find(x => x.id === state.currentParentId));
+        }
+
+        // Collapse Step 1 UI and move to Step 2 in the Master
+        document.getElementById('parent-form-content').style.display = 'none';
+        document.getElementById('parent-profile-view').style.display = 'grid';
+        window.moveToStep('step-parent', 'step-student', 2);
+    };
+
+    function updateParentSummary(p) {
+        document.getElementById('disp-p-name').innerText = `${p.first_name} ${p.last_name}`;
+        document.getElementById('disp-p-phone').innerText = p.phone || 'N/A';
+        document.getElementById('disp-p-email').innerText = p.email || 'N/A';
+    }
+
+    window.toggleParentMode = () => {
+        const s = document.getElementById('parent-select-mode'), c = document.getElementById('parent-create-mode');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        c.style.display = c.style.display === 'none' ? 'block' : 'none';
+    };
+})();
+</script>
