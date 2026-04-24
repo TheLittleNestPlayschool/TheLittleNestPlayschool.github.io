@@ -1,22 +1,30 @@
 <link rel="stylesheet" href="../nest_style.css">
 
+<style>
+    /* Use the root variables from nest_style.css for any local tweaks */
+    .btn-nest-teal { background: var(--nest-teal); color: #fff; }
+    .btn-nest-teal:hover { opacity: 0.9; }
+    .text-nest-dark { color: var(--nest-dark); }
+    .text-nest-teal { color: var(--nest-teal); }
+</style>
+
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
     <div>
-        <h1 class="text-xl font-black text-slate-800 uppercase tracking-tight">Parent Directory</h1>
+        <h1 class="text-xl font-black text-nest-dark uppercase tracking-tight">Parent Directory</h1>
         <p id="module-subheader" class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Syncing Records...</p>
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <select id="parent-sort" class="pl-3 pr-8 py-2 bg-slate-100 border-none rounded-lg text-[10px] font-black uppercase outline-none focus:ring-2 focus:ring-teal-500 transition-all cursor-pointer">
+        <select id="parent-sort" class="pl-3 pr-8 py-2 bg-slate-100 border-none rounded-lg text-[10px] font-black uppercase outline-none focus:ring-2 focus:ring-[var(--nest-teal)] transition-all cursor-pointer">
             <option value="name">Sort: Name (A-Z)</option>
             <option value="franchise">Sort: Branch Location</option>
             <option value="status">Sort: Active Status</option>
         </select>
 
         <input type="text" id="parent-search" placeholder="Search parents..." 
-            class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all font-bold">
+            class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-[var(--nest-teal)] shadow-sm w-full md:w-64 transition-all font-bold">
         
-        <button id="add-parent-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-[10px] shadow-md">
+        <button id="add-parent-btn" class="btn-nest-teal px-5 py-2 rounded-lg font-bold transition-all text-[10px] shadow-md">
             + Add New Parent
         </button>
     </div>
@@ -27,7 +35,7 @@
     <div class="col-span-2">Contact</div>
     <div class="col-span-4">Home Address</div>
     <div class="col-span-1 text-center">Status</div>
-    <div class="col-span-2 text-right pr-4">Actions</div>
+    <div class="col-span-2 text-right">Actions</div>
 </div>
 
 <div id="parent-list-container" class="space-y-2">
@@ -40,10 +48,10 @@
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-200">
         <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
             <div>
-                <h2 id="p-modal-title" class="text-xs font-black text-slate-800 uppercase">Guardian Profile</h2>
-                <p id="modal-branch-label" class="text-[8px] text-teal-600 font-bold uppercase tracking-widest"></p>
+                <h2 id="p-modal-title" class="text-xs font-black text-nest-dark uppercase">Guardian Profile</h2>
+                <p id="modal-branch-label" class="text-[8px] text-nest-teal font-bold uppercase tracking-widest"></p>
             </div>
-            <button id="close-modal-x" class="text-slate-400 hover:text-slate-900 text-2xl">&times;</button>
+            <button id="close-modal-x" class="text-slate-400 hover:text-nest-dark text-2xl">&times;</button>
         </div>
         
         <form id="parent-form" class="p-6">
@@ -53,7 +61,7 @@
 
             <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
                 <button type="button" id="cancel-modal-btn" class="px-6 py-2.5 bg-slate-100 text-slate-500 rounded-lg font-bold text-[9px] uppercase hover:bg-slate-200 transition-all">Discard</button>
-                <button type="submit" class="flex-1 py-2.5 bg-teal-500 text-white rounded-lg font-bold text-[9px] uppercase shadow-lg hover:bg-teal-600 transition-all">
+                <button type="submit" class="flex-1 py-2.5 btn-nest-teal rounded-lg font-bold text-[9px] uppercase shadow-lg">
                     Save Record
                 </button>
             </div>
@@ -120,13 +128,13 @@
                 if (f.id === 'id') return;
                 if (f.section && f.section !== currentSection) {
                     currentSection = f.section;
-                    grid.insertAdjacentHTML('beforeend', `<div class="col-span-full mt-4 mb-1 border-b border-slate-100 pb-1"><span class="text-[8px] font-black text-teal-600 uppercase tracking-widest">${currentSection}</span></div>`);
+                    grid.insertAdjacentHTML('beforeend', `<div class="col-span-full mt-4 mb-1 border-b border-slate-100 pb-1"><span class="text-[8px] font-black text-nest-teal uppercase tracking-widest">${currentSection}</span></div>`);
                 }
                 const spanClass = f.width === 'full' || f.type === 'textarea' ? 'col-span-full' : 'col-span-1';
                 let inputHTML = (f.type === 'textarea') 
                     ? `<textarea id="${f.id}" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] outline-none font-bold"></textarea>`
                     : (f.type === 'bool' || f.type === 'checkbox')
-                    ? `<div class="flex items-center gap-3 p-2 bg-slate-50 border border-slate-200 rounded-lg"><input type="checkbox" id="${f.id}" class="w-3.5 h-3.5 accent-teal-500"><span class="text-[9px] font-bold text-slate-500 uppercase">${f.label}</span></div>`
+                    ? `<div class="flex items-center gap-3 p-2 bg-slate-50 border border-slate-200 rounded-lg"><input type="checkbox" id="${f.id}" class="w-3.5 h-3.5 accent-[var(--nest-teal)]"><span class="text-[9px] font-bold text-slate-500 uppercase">${f.label}</span></div>`
                     : `<input type="${f.type}" id="${f.id}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] outline-none font-bold">`;
                 grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[8px] text-slate-400 block uppercase font-black mb-1 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
             });
@@ -149,23 +157,23 @@
             container.innerHTML = '';
             filtered.forEach(p => {
                 const fName = this.franchises[p.franchise_id] || `ID: ${p.franchise_id}`;
-                const branchBadge = isSuper ? `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-white text-[7px] font-black uppercase ml-1">${fName}</span>` : '';
+                const branchBadge = isSuper ? `<span class="px-1.5 py-0.5 rounded bg-nest-dark text-white text-[7px] font-black uppercase ml-1" style="background: var(--nest-dark)">${fName}</span>` : '';
                 
                 container.insertAdjacentHTML('beforeend', `
-                    <div class="bg-white border border-slate-200 rounded-lg shadow-sm hover:border-teal-400 transition-all px-4 py-2">
+                    <div class="bg-white border border-slate-200 rounded-lg shadow-sm hover:border-[var(--nest-teal)] transition-all px-4 py-2">
                         <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
                             <div class="col-span-3">
-                                <div class="text-[11px] font-black text-slate-800 uppercase leading-none">${p.last_name}, ${p.first_name} ${branchBadge}</div>
+                                <div class="text-[11px] font-black text-nest-dark uppercase leading-none">${p.last_name}, ${p.first_name} ${branchBadge}</div>
                                 <div class="text-[9px] text-slate-400 font-bold lowercase mt-0.5">${p.email || 'no email'}</div>
                             </div>
-                            <div class="col-span-2"><div class="text-[10px] font-mono text-teal-600 font-bold">${p.phone || '---'}</div></div>
+                            <div class="col-span-2"><div class="text-[10px] font-mono text-nest-teal font-bold">${p.phone || '---'}</div></div>
                             <div class="col-span-4"><div class="text-[9px] text-slate-500 font-bold uppercase truncate pr-4">${p.address || '---'}</div></div>
                             <div class="col-span-1 text-center">
-                                <span class="px-2 py-0.5 rounded text-[7px] font-black uppercase border ${p.is_active ? 'bg-teal-50 text-teal-600 border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}">${p.is_active ? 'Active' : 'Arch'}</span>
+                                <span class="px-2 py-0.5 rounded text-[7px] font-black uppercase border ${p.is_active ? 'bg-teal-50 text-nest-teal border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}" ${p.is_active ? 'style="color: var(--nest-teal); border-color: var(--nest-teal); opacity: 0.8;"' : ''}>${p.is_active ? 'Active' : 'Arch'}</span>
                             </div>
                             <div class="col-span-2 text-right flex justify-end gap-2">
-                                <button data-id="${p.id}" class="parent-edit-btn px-3 py-1 bg-slate-50 border border-slate-200 rounded text-[8px] font-black text-slate-600 hover:bg-slate-800 hover:text-white transition-all uppercase">Edit</button>
-                                <button data-id="${p.id}" class="parent-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-[8px] font-black text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all uppercase">Delete</button>
+                                <button data-id="${p.id}" class="parent-edit-btn px-3 py-1 bg-slate-50 border border-slate-200 rounded text-[8px] font-black text-slate-600 hover:bg-nest-dark hover:text-white transition-all uppercase" onmouseover="this.style.background='var(--nest-dark)'" onmouseout="this.style.background=''">Edit</button>
+                                <button data-id="${p.id}" class="parent-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-[8px] font-black text-red-600 hover:bg-red-600 hover:text-white transition-all uppercase">Delete</button>
                             </div>
                         </div>
                     </div>
@@ -225,13 +233,9 @@
 
         async loadScript(src) {
             return new Promise(resolve => {
-                const s = document.createElement('script'); 
-                s.src = src; 
-                s.onload = resolve;
+                const s = document.createElement('script'); s.src = src; s.onload = resolve;
                 s.onerror = () => { 
-                    const s2 = document.createElement('script'); 
-                    s2.src = src.replace('../', ''); 
-                    s2.onload = resolve;
+                    const s2 = document.createElement('script'); s2.src = src.replace('../', ''); s2.onload = resolve;
                     document.head.appendChild(s2);
                 };
                 document.head.appendChild(s);
