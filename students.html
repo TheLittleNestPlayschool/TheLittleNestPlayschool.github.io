@@ -1,6 +1,7 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
         <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Student Roster</h1>
+        <p id="student-subheader" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Loading NestMind Database...</p>
     </div>
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
@@ -13,7 +14,7 @@
     <table class="w-full text-left border-collapse">
         <thead>
             <tr class="bg-slate-50 border-b border-slate-200">
-                <th colspan="4" class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Active Enrollment Directory</th>
+                <th colspan="4" id="table-header-title" class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Active Enrollment Directory</th>
             </tr>
         </thead>
         <tbody id="student-table-body">
@@ -27,16 +28,15 @@
         <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
             <div>
                 <h2 class="text-sm font-black text-slate-800 uppercase tracking-tight">Update Student Profile</h2>
-                <p class="text-[9px] text-teal-600 font-bold uppercase tracking-widest">Database Record Revision</p>
+                <p id="modal-branch-label" class="text-[9px] text-teal-600 font-bold uppercase tracking-widest">Database Record Revision</p>
             </div>
             <button id="close-s-modal-x" class="text-slate-400 hover:text-slate-900 text-3xl font-light">&times;</button>
         </div>
         
         <form id="student-form" class="p-6">
             <input type="hidden" id="s-edit-id">
-            
             <div id="student-fields-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
-                </div>
+            </div>
 
             <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
                 <button type="button" id="cancel-s-modal-btn" class="px-8 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Discard</button>
@@ -57,18 +57,31 @@
         schema: null,
 
         async init() {
-            if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
-            if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
+            // Standardizing relative paths to root config files
+            if (!window.NEST_SCHEMA) await this.loadScript('../schema_config.js');
+            if (!window.NEST_ENDPOINTS) await this.loadScript('../api_config.js');
+            if (!window.SecurityManager) await this.loadScript('../security.js');
             
             this.schema = window.NEST_SCHEMA.student;
-            const fid = localStorage.getItem('locked_franchise_id');
-            if (!fid) return;
+            const isSuper = SecurityManager.isHeadOffice();
+            const authQuery = SecurityManager.getAuthQuery();
+            const branchName = localStorage.getItem('locked_franchise_name') || 'Main';
+
+            // Update UI Labels
+            document.getElementById('student-subheader').innerText = isSuper 
+                ? "Global Network Records • All Branches" 
+                : `Full Enrollment Directory • ${branchName}`;
+            
+            document.getElementById('modal-branch-label').innerText = isSuper 
+                ? "Global Administration Mode" 
+                : `${branchName} Branch Records`;
 
             try {
+                // Parallel fetch using the dynamic auth query
                 const [sRes, pRes, sessRes] = await Promise.all([
-                    fetch(`${window.NEST_ENDPOINTS.student.list}?franchise_id=${fid}`),
-                    fetch(`${window.NEST_ENDPOINTS.parent.list}?franchise_id=${fid}`),
-                    fetch(`${window.NEST_ENDPOINTS.session.list}?franchise_id=${fid}`)
+                    fetch(`${window.NEST_ENDPOINTS.student.list}${authQuery}`),
+                    fetch(`${window.NEST_ENDPOINTS.parent.list}${authQuery}`),
+                    fetch(`${window.NEST_ENDPOINTS.session.list}${authQuery}`)
                 ]);
                 
                 this.data = await sRes.json();
@@ -143,6 +156,8 @@
         render() {
             const tbody = document.getElementById('student-table-body');
             const search = (document.getElementById('student-search')?.value || '').toLowerCase();
+            const isSuper = SecurityManager.isHeadOffice();
+            
             let filtered = this.data.filter(s => (s.name && s.name.toLowerCase().includes(search)));
 
             tbody.innerHTML = '';
@@ -158,6 +173,7 @@
                 const parentDisplay = parent ? `${parent.first_name} ${parent.last_name}` : `Guardian ID: ${s.parent_id}`;
                 const session = this.sessions.find(sess => sess.id === s.session_enrolled);
                 const sessionDisplay = session ? session.name : `${s.session_enrolled || 'Not Assigned'}`;
+                const branchBadge = isSuper ? `<span class="ml-2 px-2 py-0.5 rounded bg-slate-200 text-slate-600 text-[7px] font-black uppercase tracking-tighter">BID: ${s.franchise_id}</span>` : '';
 
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr class="${bg} border-b border-slate-100 group hover:bg-slate-50 transition-all">
@@ -166,6 +182,7 @@
                                 <div class="flex-1 min-w-[280px]">
                                     <div class="flex items-center gap-3 mb-3">
                                         <h3 class="font-black text-slate-900 text-base uppercase tracking-tight">${s.name}</h3>
+                                        ${branchBadge}
                                         <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${s.is_active ? 'bg-teal-50 text-teal-600 border border-teal-200' : 'bg-slate-100 text-slate-400 border border-slate-200'}">
                                             ${s.is_active ? 'Active' : 'Inactive'}
                                         </span>
@@ -220,8 +237,9 @@
 
         async deleteRecord(id) {
             if (!confirm("Permanently remove this student record?")) return;
+            const authQuery = SecurityManager.getAuthQuery();
             try {
-                const res = await fetch(`${window.NEST_ENDPOINTS.student.list}/${id}`, { method: 'DELETE' });
+                const res = await fetch(`${window.NEST_ENDPOINTS.student.list}/${id}${authQuery}`, { method: 'DELETE' });
                 if (res.ok) this.init();
             } catch (err) { console.error("Delete Error:", err); }
         },
@@ -251,6 +269,7 @@
             document.getElementById('student-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('s-edit-id').value;
+                const authQuery = SecurityManager.getAuthQuery();
                 const payload = {};
                 
                 this.schema.fields.forEach(f => {
@@ -261,7 +280,7 @@
                     }
                 });
 
-                const res = await fetch(`${window.NEST_ENDPOINTS.student.list}/${id}`, { 
+                const res = await fetch(`${window.NEST_ENDPOINTS.student.list}/${id}${authQuery}`, { 
                     method: 'PATCH', 
                     headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify(payload) 
@@ -274,7 +293,11 @@
         async loadScript(src) {
             return new Promise(resolve => {
                 const s = document.createElement('script'); s.src = src; s.onload = resolve;
-                s.onerror = () => { s.src = src.replace('/', ''); s.onload = resolve; };
+                s.onerror = () => { 
+                    const fallback = src.replace('../', '');
+                    const s2 = document.createElement('script'); s2.src = fallback; s2.onload = resolve;
+                    document.head.appendChild(s2);
+                };
                 document.head.appendChild(s);
             });
         }
