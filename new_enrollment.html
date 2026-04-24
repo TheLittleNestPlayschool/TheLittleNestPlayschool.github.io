@@ -32,12 +32,9 @@
         .qa-row.selected { background: #f0fdfa; }
         .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; z-index: 20; }
         
-        /* Modals */
         .nest-modal-overlay { position: fixed; inset: 0; background: rgba(30, 41, 59, 0.9); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 450px; border-radius: 16px; padding: 35px; text-align: center; }
         .summary-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin: 25px 0; text-align: left; }
-        
-        /* Processing Bar */
         .loader-track { width: 100%; height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden; margin: 20px 0; }
         .loader-fill { width: 0%; height: 100%; background: var(--nest-teal); transition: width 0.4s ease; }
     </style>
@@ -64,12 +61,7 @@
             <div class="profile-item"><div class="profile-label">Email</div><div id="disp-p-email" class="profile-value"></div></div>
         </div>
         <div id="parent-form-content" class="step-content">
-            <div id="parent-select-mode">
-                <label>Search Existing Records</label>
-                <input type="text" id="p_search" placeholder="Type name..." onkeyup="filterParents()" class="mb-2">
-                <select id="p_select_id" size="5" class="font-bold uppercase"></select>
-            </div>
-            <div id="parent-create-mode" style="display:none;">
+            <div id="parent-create-mode" style="display:block;">
                 <div class="grid grid-cols-2 gap-4">
                     <div><label>First Name</label><input type="text" id="p_fn"></div>
                     <div><label>Last Name</label><input type="text" id="p_ln"></div>
@@ -77,6 +69,11 @@
                 <label>Phone</label><input type="text" id="p_phone">
                 <label>Email</label><input type="email" id="p_email">
                 <label>Address</label><input type="text" id="p_address">
+            </div>
+            <div id="parent-select-mode" style="display:none;">
+                <label>Search Existing Records</label>
+                <input type="text" id="p_search" placeholder="Type name..." onkeyup="filterParents()" class="mb-2">
+                <select id="p_select_id" size="5" class="font-bold uppercase"></select>
             </div>
             <button class="bg-slate-500 text-white px-5 py-2 rounded-lg font-bold text-xs uppercase mt-4" onclick="toggleParentMode()">Toggle New/Existing</button>
             <button onclick="processParentStep()" class="btn-teal">Confirm Parent Data</button>
@@ -91,11 +88,11 @@
             <div class="profile-item"><div class="profile-label">DOB</div><div id="disp-s-dob" class="profile-value"></div></div>
         </div>
         <div class="step-content">
-            <div id="student-select-mode">
+            <div id="student-select-mode" style="display:none;">
                 <label>Linked Students</label>
                 <select id="s_select_id" class="font-bold uppercase"></select>
             </div>
-            <div id="student-create-mode" style="display:none;">
+            <div id="student-create-mode" style="display:block;">
                 <label>Full Legal Name</label><input type="text" id="s_name_new">
                 <div class="grid grid-cols-2 gap-4">
                     <div><label>Date of Birth</label><input type="date" id="s_dob_new"></div>
@@ -179,7 +176,7 @@
             <div class="mb-3"><div class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Student Profile</div><div id="modal-disp-child" class="text-xs font-bold text-slate-700 uppercase">---</div></div>
             <div><div class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Academic Slot</div><div id="modal-disp-session" class="text-xs font-bold text-slate-700 uppercase">---</div></div>
         </div>
-        <button onclick="exitToDashboard()" class="btn-teal w-full py-4 rounded-xl shadow-lg font-black">Registration Complete</button>
+        <button onclick="exitToDashboard()" class="btn-teal w-full py-4 rounded-xl shadow-lg font-black uppercase">Registration Complete</button>
     </div>
 </div>
 
@@ -276,7 +273,7 @@
             const qData = await qRes.json();
             const qGrid = document.getElementById('assessment-qa-grid');
             qGrid.innerHTML = '';
-            (Array.isArray(qData) ? qData : qData.items || []).forEach(q => {
+            (Array.isArray(qData) ? qData : (qData.items || [])).forEach(q => {
                 const opts = [q.answer_1, q.answer_2, q.answer_3, q.answer_4].filter(a => a);
                 let optHtml = opts.map(o => `<option value="${o}">${o}</option>`).join('');
                 qGrid.innerHTML += `<div class="qa-row" data-qid="${q.id}"> <input type="checkbox" data-qid="${q.id}" onchange="handleQS(this)"> <div class="text-[10px] font-bold uppercase">${q.the_question}</div> <div class="q-select-ans"><select class="text-[10px]">${optHtml}</select></div> </div>`;
@@ -356,19 +353,14 @@
         const sessId = parseInt(document.getElementById('enrollment_session_id').value);
         const eDate = document.getElementById('final_enroll_date').value;
         const sDate = document.getElementById('final_start_date').value;
-
         try {
             updateProgress(30, "Updating Student Record...");
             await fetch(`${window.NEST_ENDPOINTS.student.list}/${window.state.currentStudentId}${auth}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: sessId }) });
-            
             updateProgress(60, "Creating Enrollment Workspace...");
             await fetch(`${window.NEST_ENDPOINTS.session_enrollment.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: window.state.currentStudentId, session_id: sessId, franchise_id: window.state.currentFranchiseId, enrollment_date: eDate, start_date: sDate }) });
-            
             updateProgress(90, "Registering Pickup Security...");
             for (let c of window.state.pickupContacts) { await fetch(`${window.NEST_ENDPOINTS.uploader.register}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) }); }
-            
             updateProgress(100, "Complete.");
-            
             setTimeout(() => {
                 document.getElementById('processing-modal').style.display = 'none';
                 document.getElementById('modal-disp-parent').innerText = document.getElementById('disp-p-name').innerText;
@@ -376,7 +368,7 @@
                 document.getElementById('modal-disp-session').innerText = document.getElementById('disp-sess-name').innerText;
                 document.getElementById('success-modal').style.display = 'flex';
             }, 500);
-        } catch(e) { console.error(e); alert("Error in transmission."); }
+        } catch(e) { console.error(e); }
     };
 
     window.exitToDashboard = () => {
