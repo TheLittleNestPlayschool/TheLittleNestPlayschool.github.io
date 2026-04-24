@@ -27,8 +27,12 @@
         label { display: block; font-size: 0.6rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; margin-top: 10px; }
         input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; font-size: 0.8rem; background: #f8fafc; font-weight: 700; text-transform: uppercase; }
         .btn-teal { background: var(--nest-teal); color: #fff; padding: 14px 24px; border-radius: 6px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; width: 100%; margin-top: 15px; }
+        .btn-secondary { background: #64748b; margin-top: 10px; }
         .badge-step { background: var(--nest-dark); color: white; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; }
         .qa-row { display: grid; grid-template-columns: 40px 2fr 1.5fr; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; }
+        .qa-row.selected { background: #f0fdfa; }
+        .qa-row.selected .q-select-ans { visibility: visible; }
+        .q-select-ans { visibility: hidden; }
         .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
     </style>
 </head>
@@ -40,7 +44,6 @@
     <div id="step-location" class="step-container step-active">
         <h2 class="nest-header"><span class="badge-step">0</span> Select Branch</h2>
         <div class="step-content">
-            <label>Operating Location</label>
             <select id="ho_franchise_selector" class="mt-1 border p-2 rounded-lg font-bold uppercase text-xs w-full bg-slate-50"></select>
             <button id="init-btn" onclick="lockLocation()" class="btn-teal">Initialize System</button>
         </div>
@@ -62,9 +65,12 @@
             </div>
             <div id="student-create-mode" style="display:none;">
                 <label>Full Legal Name</label><input type="text" id="s_name_new">
-                <label>Date of Birth</label><input type="date" id="s_dob_new">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label>Date of Birth</label><input type="date" id="s_dob_new"></div>
+                    <div><label>Gender</label><input type="text" id="s_gender"></div>
+                </div>
             </div>
-            <button class="bg-slate-500 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase mt-4" onclick="toggleStudentMode()">Toggle New/Existing</button>
+            <button class="btn-teal btn-secondary" onclick="toggleStudentMode()">Toggle New/Existing</button>
             <button onclick="processStudentStep()" class="btn-teal">Confirm Student Data</button>
         </div>
     </div>
@@ -77,7 +83,7 @@
         <div class="step-content">
             <label>Assessing Teacher</label><select id="a_teacher_id"></select>
             <label>Assessment Date</label><input type="date" id="a_assessment_date">
-            <div id="selection-counter" class="text-[10px] font-black text-teal-600 my-4 uppercase tracking-widest">Items Selected: 0 / 10</div>
+            <div id="selection-counter" class="text-[10px] font-black text-teal-600 my-4 uppercase">Items Selected: 0 / 10</div>
             <div id="assessment-qa-grid" class="border border-slate-200 rounded-lg max-h-64 overflow-y-auto"></div>
             <button onclick="processAssessmentStep()" class="btn-teal">Save Evaluation</button>
         </div>
@@ -142,13 +148,21 @@
         const sel = document.getElementById('ho_franchise_selector');
         if(!sel.value) return;
         window.state.currentFranchiseId = parseInt(sel.value);
-        
-        const res = await fetch('new_enrollment_parent.html');
-        document.getElementById('parent-step-container').innerHTML = await res.text();
-        
-        moveToStep('step-location', 'step-parent', 1);
-        if(window.initParentStep) window.initParentStep();
-        fetchOtherBranchData();
+        try {
+            const res = await fetch('./new_enrollment_parent.html');
+            if(!res.ok) throw new Error();
+            document.getElementById('parent-step-container').innerHTML = await res.text();
+            moveToStep('step-location', 'step-parent', 1);
+            if(window.initParentStep) window.initParentStep();
+            fetchOtherBranchData();
+        } catch(e) { console.error(e); }
+    };
+
+    window.moveToStep = (c, n, num) => {
+        const cEl = document.getElementById(c); const nEl = document.getElementById(n);
+        if(cEl) cEl.classList.replace('step-active', 'step-saved');
+        if(nEl) { nEl.classList.remove('step-locked'); nEl.classList.add('step-active'); }
+        document.getElementById('enrollment-progress').innerText = `Step ${num} of 6`;
     };
 
     async function fetchOtherBranchData() {
@@ -161,34 +175,30 @@
             ]);
             const tData = await tRes.json();
             const tSel = document.getElementById('a_teacher_id');
-            if(tSel) {
-                tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
-                (Array.isArray(tData) ? tData : (tData.items || [])).forEach(t => { if(t.is_active) tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; });
-            }
+            tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
+            (Array.isArray(tData) ? tData : (tData.items || [])).forEach(t => { if(t.is_active) tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; });
+            
             const sData = await sRes.json();
             const sessSel = document.getElementById('enrollment_session_id');
-            if(sessSel) {
-                sessSel.innerHTML = '<option value="">-- Select Session --</option>';
-                (Array.isArray(sData) ? sData : (sData.items || [])).forEach(s => { sessSel.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
-            }
+            sessSel.innerHTML = '<option value="">-- Select Session --</option>';
+            (Array.isArray(sData) ? sData : (sData.items || [])).forEach(s => { sessSel.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
+            
             const qData = await qRes.json();
             const qGrid = document.getElementById('assessment-qa-grid');
-            if(qGrid) {
-                qGrid.innerHTML = '';
-                (Array.isArray(qData) ? qData : (qData.items || [])).forEach(q => {
-                    const opts = [q.answer_1, q.answer_2, q.answer_3, q.answer_4].filter(a => a);
-                    let optHtml = opts.map(o => `<option value="${o}">${o}</option>`).join('');
-                    qGrid.innerHTML += `<div class="qa-row" data-qid="${q.id}"> <input type="checkbox" data-qid="${q.id}" onchange="handleQS(this)"> <div class="text-[10px] font-bold uppercase">${q.the_question}</div> <div class="q-select-ans"><select class="text-[10px]">${optHtml}</select></div> </div>`;
-                });
-            }
+            qGrid.innerHTML = '';
+            (Array.isArray(qData) ? qData : (qData.items || [])).forEach(q => {
+                const opts = [q.answer_1, q.answer_2, q.answer_3, q.answer_4].filter(a => a);
+                let optHtml = opts.map(o => `<option value="${o}">${o}</option>`).join('');
+                qGrid.innerHTML += `<div class="qa-row" data-qid="${q.id}"> <input type="checkbox" data-qid="${q.id}" onchange="handleQS(this)"> <div class="text-[10px] font-bold uppercase">${q.the_question}</div> <div class="q-select-ans"><select class="text-[10px]">${optHtml}</select></div> </div>`;
+            });
         } catch(e) { console.error(e); }
     }
 
     window.processStudentStep = async () => {
         const isNew = document.getElementById('student-create-mode').style.display === 'block';
-        const accessKey = SecurityManager.getAccessKey();
+        const auth = `?access_key=${SecurityManager.getAccessKey()}`;
         if (isNew) {
-            const res = await fetch(`${window.NEST_ENDPOINTS.student.list}?access_key=${accessKey}`, {
+            const res = await fetch(`${window.NEST_ENDPOINTS.student.list}${auth}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ parent_id: window.state.currentParentId, name: document.getElementById('s_name_new').value, date_of_birth: document.getElementById('s_dob_new').value, franchise_id: window.state.currentFranchiseId, is_active: true })
             });
@@ -196,9 +206,9 @@
         } else {
             window.state.currentStudentId = parseInt(document.getElementById('s_select_id').value);
         }
-        const sRes = await fetch(`${window.NEST_ENDPOINTS.student.list}/${window.state.currentStudentId}?access_key=${accessKey}`);
+        const sRes = await fetch(`${window.NEST_ENDPOINTS.student.list}/${window.state.currentStudentId}${auth}`);
         updateStudentSummary(await sRes.json());
-        moveToStep('step-student', 'step-assessment', 3);
+        window.moveToStep('step-student', 'step-assessment', 3);
     };
 
     window.processAssessmentStep = async () => {
@@ -209,23 +219,17 @@
         for(let row of selected) {
             await fetch(`${window.NEST_ENDPOINTS.assessment_submit.list}${auth}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    student_id: window.state.currentStudentId, teacher_id: parseInt(tId),
-                    question_id: parseInt(row.querySelector('input').dataset.qid),
-                    answer_text: row.querySelector('select').value, assessment_date: date
-                })
+                body: JSON.stringify({ student_id: window.state.currentStudentId, teacher_id: parseInt(tId), question_id: parseInt(row.querySelector('input').dataset.qid), answer_text: row.querySelector('select').value, assessment_date: date })
             });
         }
         document.getElementById('disp-a-teacher').innerText = document.getElementById('a_teacher_id').options[document.getElementById('a_teacher_id').selectedIndex].text;
-        document.getElementById('assessment-summary-view').style.display = 'grid';
-        moveToStep('step-assessment', 'step-session', 4);
+        window.moveToStep('step-assessment', 'step-session', 4);
     };
 
     window.processSessionStep = () => {
         const s = document.getElementById('enrollment_session_id');
         document.getElementById('disp-sess-name').innerText = s.options[s.selectedIndex].text;
-        document.getElementById('session-profile-view').style.display = 'grid';
-        moveToStep('step-session', 'step-pickup', 5);
+        window.moveToStep('step-session', 'step-pickup', 5);
     };
 
     window.addPickupLocal = () => {
@@ -235,7 +239,7 @@
         document.getElementById('pu_name').value = ''; document.getElementById('pu_phone').value = '';
     };
 
-    window.finalizePickups = () => { moveToStep('step-pickup', 'step-final', 6); };
+    window.finalizePickups = () => { window.moveToStep('step-pickup', 'step-final', 6); };
 
     window.submitFinalEnrollment = async () => {
         const auth = `?access_key=${SecurityManager.getAccessKey()}`;
@@ -246,19 +250,6 @@
             for (let c of window.state.pickupContacts) { await fetch(`${window.NEST_ENDPOINTS.pickup.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) }); }
             alert("Enrollment Successful"); location.reload();
         } catch(e) { console.error(e); }
-    };
-
-    window.moveToStep = (c, n, num) => {
-        const cEl = document.getElementById(c);
-        const nEl = document.getElementById(n);
-        if(cEl) cEl.classList.replace('step-active', 'step-saved');
-        if(nEl) { nEl.classList.remove('step-locked'); nEl.classList.add('step-active'); }
-        document.getElementById('enrollment-progress').innerText = `Step ${num} of 6`;
-    };
-
-    window.unlockStep = (sId, vId) => {
-        document.getElementById(sId).classList.replace('step-saved', 'step-active');
-        document.getElementById(vId).style.display = 'none';
     };
 
     window.toggleStudentMode = () => {
@@ -278,6 +269,11 @@
         document.getElementById('disp-s-dob').innerText = s.date_of_birth;
         document.getElementById('student-profile-view').style.display = 'grid'; 
     }
+
+    window.unlockStep = (sId, vId) => {
+        document.getElementById(sId).classList.replace('step-saved', 'step-active');
+        document.getElementById(vId).style.display = 'none';
+    };
 
     init();
 })();
