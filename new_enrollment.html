@@ -4,7 +4,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NestMind Enrollment Master</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="../nest_style.css">
+    <script src="../api_config.js"></script>
+    <script src="../security.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
         :root { --nest-teal: #00d1b2; --nest-dark: #1e293b; --nest-bg: #f1f5f9; --nest-border: #e2e8f0; }
         body { background: var(--nest-bg); font-family: 'Inter', sans-serif; color: var(--nest-dark); margin: 0; }
@@ -25,7 +30,7 @@
         .badge-step { background: var(--nest-dark); color: white; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; }
         .qa-row { display: grid; grid-template-columns: 40px 2fr 1.5fr; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; }
         .qa-row.selected { background: #f0fdfa; }
-        .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+        .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -97,10 +102,10 @@
         <h2 class="nest-header"><span class="badge-step">5</span> Pickup Security</h2>
         <div class="step-content">
             <div id="pickup-entry-list" class="mb-4 space-y-2"></div>
-            <div class="p-4 bg-slate-50 border rounded-lg">
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg">
                 <label>Authorized Name</label><input type="text" id="pu_name">
                 <label>Phone Number</label><input type="text" id="pu_phone">
-                <button onclick="addPickupLocal()" class="bg-slate-600 text-white px-6 py-2 rounded font-bold uppercase text-xs mt-2">+ Add Authorized</button>
+                <button onclick="addPickupLocal()" class="bg-slate-600 text-white px-6 py-2 rounded font-bold uppercase text-xs mt-2">+ Add Person</button>
             </div>
             <button onclick="finalizePickups()" class="btn-teal">Finalize List</button>
         </div>
@@ -116,188 +121,85 @@
 
 <script>
 (function() {
-    const EnrollmentModule = {
-        state: { currentParentId: null, currentStudentId: null, currentFranchiseId: null, pickupContacts: [], allParents: [], selectedQuestionCount: 0 },
+    window.state = { currentParentId: null, currentStudentId: null, currentFranchiseId: null, pickupContacts: [], allParents: [], selectedQuestionCount: 0 };
 
-        async init() {
-            if (!window.NEST_ENDPOINTS) await this.loadScript('../api_config.js');
-            if (!window.SecurityManager) await this.loadScript('../security.js');
+    async function init() {
+        const accessKey = SecurityManager.getAccessKey();
+        const sel = document.getElementById('ho_franchise_selector');
+        
+        const isHeadOffice = localStorage.getItem('is_head_office') === 'true';
+        const lockedId = localStorage.getItem('locked_franchise_id');
 
-            const isSuper = window.SecurityManager.isHeadOffice();
-            const lockedId = localStorage.getItem('locked_franchise_id');
-
-            if (!isSuper && lockedId) {
-                this.state.currentFranchiseId = parseInt(lockedId);
-                document.getElementById('step-location').style.display = 'none';
-                this.lockLocation();
-            } else {
-                this.loadFranchiseMenu();
-            }
-        },
-
-        async loadFranchiseMenu() {
+        if (!isHeadOffice && lockedId) {
+            window.state.currentFranchiseId = parseInt(lockedId);
+            window.lockLocation(); 
+        } else {
             try {
-                const res = await fetch(`${window.NEST_ENDPOINTS.franchise.list}?access_key=${window.SecurityManager.getAccessKey()}`);
+                const res = await fetch(`${window.NEST_ENDPOINTS.franchise.list}?access_key=${accessKey}`);
                 const data = await res.json();
                 const list = Array.isArray(data) ? data : (data.items || []);
-                const sel = document.getElementById('ho_franchise_selector');
                 sel.innerHTML = '<option value="">-- Choose Branch --</option>';
                 list.sort((a,b) => a.name.localeCompare(b.name)).forEach(f => {
                     sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
                 });
             } catch(e) { console.error(e); }
-        },
-
-        async lockLocation() {
-            const sel = document.getElementById('ho_franchise_selector');
-            if(!this.state.currentFranchiseId && sel.value) this.state.currentFranchiseId = parseInt(sel.value);
-            if(!this.state.currentFranchiseId) return;
-
-            try {
-                let response = await fetch('new_enrollment_parent.html');
-                if(!response.ok) response = await fetch('../new_enrollment_parent.html');
-                document.getElementById('parent-step-container').innerHTML = await response.text();
-
-                this.moveToStep('step-location', 'step-parent', 1);
-                if(window.initParentStep) await window.initParentStep();
-                this.fetchOtherBranchData();
-            } catch(e) { console.error(e); }
-        },
-
-        async fetchOtherBranchData() {
-            const auth = `?access_key=${window.SecurityManager.getAccessKey()}&franchise_id=${this.state.currentFranchiseId}`;
-            try {
-                const [tRes, sRes, qRes] = await Promise.all([ 
-                    fetch(`${window.NEST_ENDPOINTS.teacher.list}${auth}`), 
-                    fetch(`${window.NEST_ENDPOINTS.session.list}${auth}`), 
-                    fetch(`${window.NEST_ENDPOINTS.questions.list}${auth}`) 
-                ]);
-                const tData = await tRes.json();
-                const tSel = document.getElementById('a_teacher_id');
-                tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
-                (Array.isArray(tData) ? tData : (tData.items || [])).forEach(t => { if(t.is_active) tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; });
-                
-                const sData = await sRes.json();
-                const sessSel = document.getElementById('enrollment_session_id');
-                sessSel.innerHTML = '<option value="">-- Select Session --</option>';
-                (Array.isArray(sData) ? sData : (sData.items || [])).forEach(s => { sessSel.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
-                
-                const qData = await qRes.json();
-                const qGrid = document.getElementById('assessment-qa-grid');
-                qGrid.innerHTML = '';
-                (Array.isArray(qData) ? qData : (qData.items || [])).forEach(q => {
-                    const opts = [q.answer_1, q.answer_2, q.answer_3, q.answer_4].filter(a => a);
-                    let optHtml = opts.map(o => `<option value="${o}">${o}</option>`).join('');
-                    qGrid.innerHTML += `<div class="qa-row" data-qid="${q.id}"> <input type="checkbox" data-qid="${q.id}" onchange="handleQS(this)"> <div class="text-[10px] font-bold uppercase">${q.the_question}</div> <div class="q-select-ans"><select class="text-[10px]">${optHtml}</select></div> </div>`;
-                });
-            } catch(e) { console.error(e); }
-        },
-
-        async processStudentStep() {
-            const isNew = document.getElementById('student-create-mode').style.display === 'block';
-            const auth = `?access_key=${window.SecurityManager.getAccessKey()}`;
-            if (isNew) {
-                const res = await fetch(`${window.NEST_ENDPOINTS.student.list}${auth}`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ parent_id: this.state.currentParentId, name: document.getElementById('s_name_new').value, date_of_birth: document.getElementById('s_dob_new').value, franchise_id: this.state.currentFranchiseId, is_active: true })
-                });
-                const data = await res.json(); this.state.currentStudentId = data.id;
-            } else {
-                this.state.currentStudentId = parseInt(document.getElementById('s_select_id').value);
-            }
-            const sRes = await fetch(`${window.NEST_ENDPOINTS.student.list}/${this.state.currentStudentId}${auth}`);
-            const student = await sRes.json();
-            document.getElementById('disp-s-name').innerText = student.name;
-            document.getElementById('disp-s-dob').innerText = student.date_of_birth;
-            document.getElementById('student-profile-view').style.display = 'grid';
-            this.moveToStep('step-student', 'step-assessment', 3);
-        },
-
-        async processAssessmentStep() {
-            const tId = document.getElementById('a_teacher_id').value;
-            const date = document.getElementById('a_assessment_date').value;
-            const auth = `?access_key=${window.SecurityManager.getAccessKey()}`;
-            const selected = document.querySelectorAll('.qa-row.selected');
-            for(let row of selected) {
-                await fetch(`${window.NEST_ENDPOINTS.assessment_submit.list}${auth}`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ student_id: this.state.currentStudentId, teacher_id: parseInt(tId), question_id: parseInt(row.querySelector('input').dataset.qid), answer_text: row.querySelector('select').value, assessment_date: date })
-                });
-            }
-            document.getElementById('disp-a-teacher').innerText = document.getElementById('a_teacher_id').options[document.getElementById('a_teacher_id').selectedIndex].text;
-            document.getElementById('assessment-summary-view').style.display = 'grid';
-            this.moveToStep('step-assessment', 'step-session', 4);
-        },
-
-        processSessionStep() {
-            const s = document.getElementById('enrollment_session_id');
-            document.getElementById('disp-sess-name').innerText = s.options[s.selectedIndex].text;
-            document.getElementById('session-profile-view').style.display = 'grid';
-            this.moveToStep('step-session', 'step-pickup', 5);
-        },
-
-        addPickupLocal() {
-            const c = { student_id: this.state.currentStudentId, name: document.getElementById('pu_name').value, phone: document.getElementById('pu_phone').value, is_active: true };
-            this.state.pickupContacts.push(c);
-            document.getElementById('pickup-entry-list').innerHTML += `<div class="p-2 bg-white border rounded text-[10px] font-bold uppercase">${c.name} — ${c.phone}</div>`;
-            document.getElementById('pu_name').value = ''; document.getElementById('pu_phone').value = '';
-        },
-
-        async submitFinalEnrollment() {
-            const auth = `?access_key=${window.SecurityManager.getAccessKey()}`;
-            const sessId = parseInt(document.getElementById('enrollment_session_id').value);
-            try {
-                await fetch(`${window.NEST_ENDPOINTS.student.list}/${this.state.currentStudentId}${auth}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: sessId }) });
-                await fetch(`${window.NEST_ENDPOINTS.enrollment.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: this.state.currentStudentId, session_id: sessId, franchise_id: this.state.currentFranchiseId }) });
-                for (let c of this.state.pickupContacts) { await fetch(`${window.NEST_ENDPOINTS.pickup.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) }); }
-                alert("Enrollment Successful"); location.reload();
-            } catch(e) { console.error(e); }
-        },
-
-        moveToStep(c, n, num) {
-            const cEl = document.getElementById(c); const nEl = document.getElementById(n);
-            if(cEl) cEl.classList.replace('step-active', 'step-saved');
-            if(nEl) { nEl.classList.remove('step-locked'); nEl.classList.add('step-active'); }
-            document.getElementById('enrollment-progress').innerText = `Step ${num} of 6`;
-        },
-
-        async loadScript(src) {
-            return new Promise(resolve => {
-                const s = document.createElement('script'); s.src = src; s.onload = resolve;
-                s.onerror = () => { 
-                    const s2 = document.createElement('script'); s2.src = src.replace('../', ''); s2.onload = resolve;
-                    document.head.appendChild(s2);
-                };
-                document.head.appendChild(s);
-            });
         }
+    }
+
+    window.lockLocation = async () => {
+        const sel = document.getElementById('ho_franchise_selector');
+        if(!window.state.currentFranchiseId && sel.value) window.state.currentFranchiseId = parseInt(sel.value);
+        if(!window.state.currentFranchiseId) return;
+
+        try {
+            const res = await fetch('new_enrollment_parent.html');
+            if(!res.ok) throw new Error("404");
+            document.getElementById('parent-step-container').innerHTML = await res.text();
+
+            window.moveToStep('step-location', 'step-parent', 1);
+            if(window.initParentStep) await window.initParentStep();
+            fetchOtherBranchData();
+        } catch(e) { console.error("Fragment sync failed", e); }
     };
 
-    // Mapping globals for fragment & UI
-    window.state = EnrollmentModule.state;
-    window.lockLocation = () => EnrollmentModule.lockLocation();
-    window.processStudentStep = () => EnrollmentModule.processStudentStep();
-    window.processAssessmentStep = () => EnrollmentModule.processAssessmentStep();
-    window.processSessionStep = () => EnrollmentModule.processSessionStep();
-    window.addPickupLocal = () => EnrollmentModule.addPickupLocal();
-    window.finalizePickups = () => EnrollmentModule.moveToStep('step-pickup', 'step-final', 6);
-    window.submitFinalEnrollment = () => EnrollmentModule.submitFinalEnrollment();
-    window.toggleStudentMode = () => {
-        const s = document.getElementById('student-select-mode'), c = document.getElementById('student-create-mode');
-        s.style.display = s.style.display === 'none' ? 'block' : 'none';
-        c.style.display = c.style.display === 'none' ? 'block' : 'none';
+    window.moveToStep = (c, n, num) => {
+        const cEl = document.getElementById(c); const nEl = document.getElementById(n);
+        if(cEl) cEl.classList.replace('step-active', 'step-saved');
+        if(nEl) { nEl.classList.remove('step-locked'); nEl.classList.add('step-active'); }
+        document.getElementById('enrollment-progress').innerText = `Step ${num} of 6`;
     };
-    window.handleQS = (cb) => {
-        const row = cb.closest('.qa-row');
-        cb.checked ? (window.state.selectedQuestionCount++, row.classList.add('selected')) : (window.state.selectedQuestionCount--, row.classList.remove('selected'));
-        document.getElementById('selection-counter').innerText = `Items Selected: ${window.state.selectedQuestionCount} / 10`;
-    };
-    window.unlockStep = (sId, vId) => {
-        document.getElementById(sId).classList.replace('step-saved', 'step-active');
-        document.getElementById(vId).style.display = 'none';
-    };
+
+    async function fetchOtherBranchData() {
+        const auth = `?access_key=${SecurityManager.getAccessKey()}&franchise_id=${window.state.currentFranchiseId}`;
+        try {
+            const [tRes, sRes, qRes] = await Promise.all([ 
+                fetch(`${window.NEST_ENDPOINTS.teacher.list}${auth}`), 
+                fetch(`${window.NEST_ENDPOINTS.session.list}${auth}`), 
+                fetch(`${window.NEST_ENDPOINTS.questions.list}${auth}`) 
+            ]);
+            const tData = await tRes.json();
+            const tSel = document.getElementById('a_teacher_id');
+            tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
+            (Array.isArray(tData) ? tData : (tData.items || [])).forEach(t => { if(t.is_active) tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; });
+            
+            const sData = await sRes.json();
+            const sessSel = document.getElementById('enrollment_session_id');
+            sessSel.innerHTML = '<option value="">-- Select Session --</option>';
+            (Array.isArray(sData) ? sData : (sData.items || [])).forEach(s => { sessSel.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
+            
+            const qData = await qRes.json();
+            const qGrid = document.getElementById('assessment-qa-grid');
+            qGrid.innerHTML = '';
+            (Array.isArray(qData) ? qData : (qData.items || [])).forEach(q => {
+                const opts = [q.answer_1, q.answer_2, q.answer_3, q.answer_4].filter(a => a);
+                let optHtml = opts.map(o => `<option value="${o}">${o}</option>`).join('');
+                qGrid.innerHTML += `<div class="qa-row" data-qid="${q.id}"> <input type="checkbox" data-qid="${q.id}" onchange="handleQS(this)"> <div class="text-[10px] font-bold uppercase">${q.the_question}</div> <div class="q-select-ans"><select class="text-[10px]">${optHtml}</select></div> </div>`;
+            });
+        } catch(e) { console.error(e); }
+    }
+
     window.prepStudentStep = async () => {
-        const auth = `?access_key=${window.SecurityManager.getAccessKey()}&parent_id=${window.state.currentParentId}`;
+        const auth = `?access_key=${SecurityManager.getAccessKey()}&parent_id=${window.state.currentParentId}`;
         const res = await fetch(`${window.NEST_ENDPOINTS.student.list}${auth}`);
         const kids = await res.json();
         const sSel = document.getElementById('s_select_id');
@@ -305,7 +207,85 @@
         (Array.isArray(kids) ? kids : (kids.items || [])).forEach(k => { sSel.innerHTML += `<option value="${k.id}">${k.name}</option>`; });
     };
 
-    EnrollmentModule.init();
+    window.processStudentStep = async () => {
+        const isNew = document.getElementById('student-create-mode').style.display === 'block';
+        const auth = `?access_key=${SecurityManager.getAccessKey()}`;
+        if (isNew) {
+            const res = await fetch(`${window.NEST_ENDPOINTS.student.list}${auth}`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ parent_id: window.state.currentParentId, name: document.getElementById('s_name_new').value, date_of_birth: document.getElementById('s_dob_new').value, franchise_id: window.state.currentFranchiseId, is_active: true })
+            });
+            const data = await res.json(); window.state.currentStudentId = data.id;
+        } else {
+            window.state.currentStudentId = parseInt(document.getElementById('s_select_id').value);
+        }
+        const sRes = await fetch(`${window.NEST_ENDPOINTS.student.list}/${window.state.currentStudentId}${auth}`);
+        const student = await sRes.json();
+        document.getElementById('disp-s-name').innerText = student.name;
+        document.getElementById('disp-s-dob').innerText = student.date_of_birth;
+        document.getElementById('student-profile-view').style.display = 'grid';
+        window.moveToStep('step-student', 'step-assessment', 3);
+    };
+
+    window.processAssessmentStep = async () => {
+        const tId = document.getElementById('a_teacher_id').value;
+        const date = document.getElementById('a_assessment_date').value;
+        const auth = `?access_key=${SecurityManager.getAccessKey()}`;
+        const selected = document.querySelectorAll('.qa-row.selected');
+        for(let row of selected) {
+            await fetch(`${window.NEST_ENDPOINTS.assessment_submit.list}${auth}`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ student_id: window.state.currentStudentId, teacher_id: parseInt(tId), question_id: parseInt(row.querySelector('input').dataset.qid), answer_text: row.querySelector('select').value, assessment_date: date })
+            });
+        }
+        document.getElementById('disp-a-teacher').innerText = document.getElementById('a_teacher_id').options[document.getElementById('a_teacher_id').selectedIndex].text;
+        document.getElementById('assessment-summary-view').style.display = 'grid';
+        window.moveToStep('step-assessment', 'step-session', 4);
+    };
+
+    window.processSessionStep = () => {
+        const s = document.getElementById('enrollment_session_id');
+        document.getElementById('disp-sess-name').innerText = s.options[s.selectedIndex].text;
+        document.getElementById('session-profile-view').style.display = 'grid';
+        window.moveToStep('step-session', 'step-pickup', 5);
+    };
+
+    window.addPickupLocal = () => {
+        const c = { student_id: window.state.currentStudentId, name: document.getElementById('pu_name').value, phone: document.getElementById('pu_phone').value, is_active: true };
+        window.state.pickupContacts.push(c);
+        document.getElementById('pickup-entry-list').innerHTML += `<div class="p-2 bg-white border rounded text-[10px] font-bold uppercase">${c.name} — ${c.phone}</div>`;
+        document.getElementById('pu_name').value = ''; document.getElementById('pu_phone').value = '';
+    };
+
+    window.submitFinalEnrollment = async () => {
+        const auth = `?access_key=${SecurityManager.getAccessKey()}`;
+        const sessId = parseInt(document.getElementById('enrollment_session_id').value);
+        try {
+            await fetch(`${window.NEST_ENDPOINTS.student.list}/${window.state.currentStudentId}${auth}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: sessId }) });
+            await fetch(`${window.NEST_ENDPOINTS.enrollment.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: window.state.currentStudentId, session_id: sessId, franchise_id: window.state.currentFranchiseId }) });
+            for (let c of window.state.pickupContacts) { await fetch(`${window.NEST_ENDPOINTS.pickup.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) }); }
+            alert("Enrollment Successful"); location.reload();
+        } catch(e) { console.error(e); }
+    };
+
+    window.handleQS = (cb) => {
+        const row = cb.closest('.qa-row');
+        cb.checked ? (window.state.selectedQuestionCount++, row.classList.add('selected')) : (window.state.selectedQuestionCount--, row.classList.remove('selected'));
+        document.getElementById('selection-counter').innerText = `Items Selected: ${window.state.selectedQuestionCount} / 10`;
+    };
+
+    window.toggleStudentMode = () => {
+        const s = document.getElementById('student-select-mode'), c = document.getElementById('student-create-mode');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        c.style.display = c.style.display === 'none' ? 'block' : 'none';
+    };
+
+    window.unlockStep = (sId, vId) => {
+        document.getElementById(sId).classList.replace('step-saved', 'step-active');
+        document.getElementById(vId).style.display = 'none';
+    };
+
+    init();
 })();
 </script>
 </body>
