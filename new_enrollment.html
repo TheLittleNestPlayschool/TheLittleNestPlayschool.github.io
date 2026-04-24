@@ -4,12 +4,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NestMind Enrollment Master</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="../nest_style.css">
     <script src="../api_config.js"></script>
     <script src="../security.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <style>
         :root { --nest-teal: #00d1b2; --nest-dark: #1e293b; --nest-bg: #f1f5f9; --nest-border: #e2e8f0; }
         body { background: var(--nest-bg); font-family: 'Inter', sans-serif; color: var(--nest-dark); margin: 0; }
@@ -102,10 +100,10 @@
         <h2 class="nest-header"><span class="badge-step">5</span> Pickup Security</h2>
         <div class="step-content">
             <div id="pickup-entry-list" class="mb-4 space-y-2"></div>
-            <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+            <div class="p-4 bg-slate-50 border rounded-lg">
                 <label>Authorized Name</label><input type="text" id="pu_name">
                 <label>Phone Number</label><input type="text" id="pu_phone">
-                <button onclick="addPickupLocal()" class="bg-slate-600 text-white px-6 py-2 rounded font-bold uppercase text-xs mt-2">+ Add Person</button>
+                <button onclick="addPickupLocal()" class="bg-slate-600 text-white px-6 py-2 rounded font-bold uppercase text-xs mt-2">+ Add Authorized</button>
             </div>
             <button onclick="finalizePickups()" class="btn-teal">Finalize List</button>
         </div>
@@ -127,13 +125,16 @@
         const accessKey = SecurityManager.getAccessKey();
         const sel = document.getElementById('ho_franchise_selector');
         
+        // Identity Lock Check: If not head office, use local franchise ID immediately
         const isHeadOffice = localStorage.getItem('is_head_office') === 'true';
         const lockedId = localStorage.getItem('locked_franchise_id');
 
         if (!isHeadOffice && lockedId) {
             window.state.currentFranchiseId = parseInt(lockedId);
+            // Bypass menu and lock location automatically
             window.lockLocation(); 
         } else {
+            // Head office mode: Show branch list
             try {
                 const res = await fetch(`${window.NEST_ENDPOINTS.franchise.list}?access_key=${accessKey}`);
                 const data = await res.json();
@@ -148,13 +149,17 @@
 
     window.lockLocation = async () => {
         const sel = document.getElementById('ho_franchise_selector');
-        if(!window.state.currentFranchiseId && sel.value) window.state.currentFranchiseId = parseInt(sel.value);
+        if(!window.state.currentFranchiseId && sel.value) {
+            window.state.currentFranchiseId = parseInt(sel.value);
+        }
+
         if(!window.state.currentFranchiseId) return;
 
         try {
             const res = await fetch('new_enrollment_parent.html');
-            if(!res.ok) throw new Error("404");
-            document.getElementById('parent-step-container').innerHTML = await res.text();
+            if(!res.ok) throw new Error("Fragment 404");
+            const html = await res.text();
+            document.getElementById('parent-step-container').innerHTML = html;
 
             window.moveToStep('step-location', 'step-parent', 1);
             if(window.initParentStep) await window.initParentStep();
@@ -181,12 +186,10 @@
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
             (Array.isArray(tData) ? tData : (tData.items || [])).forEach(t => { if(t.is_active) tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; });
-            
             const sData = await sRes.json();
             const sessSel = document.getElementById('enrollment_session_id');
             sessSel.innerHTML = '<option value="">-- Select Session --</option>';
             (Array.isArray(sData) ? sData : (sData.items || [])).forEach(s => { sessSel.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
-            
             const qData = await qRes.json();
             const qGrid = document.getElementById('assessment-qa-grid');
             qGrid.innerHTML = '';
@@ -256,6 +259,8 @@
         document.getElementById('pickup-entry-list').innerHTML += `<div class="p-2 bg-white border rounded text-[10px] font-bold uppercase">${c.name} — ${c.phone}</div>`;
         document.getElementById('pu_name').value = ''; document.getElementById('pu_phone').value = '';
     };
+
+    window.finalizePickups = () => { window.moveToStep('step-pickup', 'step-final', 6); };
 
     window.submitFinalEnrollment = async () => {
         const auth = `?access_key=${SecurityManager.getAccessKey()}`;
