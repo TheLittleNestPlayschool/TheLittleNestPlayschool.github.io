@@ -4,11 +4,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NestMind Enrollment Master</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="../nest_style.css">
-    <script src="../api_config.js"></script>
-    <script src="../security.js"></script>
-    
+    <link rel="stylesheet" href="nest_style.css">
+    <script src="api_config.js"></script>
+    <script src="security.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --nest-teal: #00d1b2; --nest-dark: #1e293b; --nest-bg: #f1f5f9; --nest-border: #e2e8f0; }
@@ -27,8 +25,12 @@
         label { display: block; font-size: 0.6rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; margin-top: 10px; }
         input, select, textarea { width: 100%; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; font-size: 0.8rem; background: #f8fafc; font-weight: 700; text-transform: uppercase; }
         .btn-teal { background: var(--nest-teal); color: #fff; padding: 14px 24px; border-radius: 6px; font-weight: 700; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; width: 100%; margin-top: 15px; }
+        .btn-secondary { background: #64748b; margin-top: 10px; }
         .badge-step { background: var(--nest-dark); color: white; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.8rem; margin-right: 12px; }
         .qa-row { display: grid; grid-template-columns: 40px 2fr 1.5fr; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; }
+        .qa-row.selected { background: #f0fdfa; }
+        .qa-row.selected .q-select-ans { visibility: visible; }
+        .q-select-ans { visibility: hidden; }
         .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
     </style>
 </head>
@@ -67,7 +69,7 @@
                     <div><label>Gender</label><input type="text" id="s_gender"></div>
                 </div>
             </div>
-            <button id="student-toggle-btn" class="bg-slate-500 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md mt-4" onclick="toggleStudentMode()">Toggle New/Existing</button>
+            <button class="bg-slate-500 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase mt-4" onclick="toggleStudentMode()">Toggle New/Existing</button>
             <button onclick="processStudentStep()" class="btn-teal">Confirm Student Data</button>
         </div>
     </div>
@@ -102,6 +104,11 @@
         <h2 class="nest-header"><span class="badge-step">5</span> Pickup Security</h2>
         <div class="step-content">
             <div id="pickup-entry-list" class="mb-4 space-y-2"></div>
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                <label>Authorized Name</label><input type="text" id="pu_name">
+                <label>Phone Number</label><input type="text" id="pu_phone">
+                <button onclick="addPickupLocal()" class="btn-teal btn-secondary w-auto px-6">+ Add</button>
+            </div>
             <button onclick="finalizePickups()" class="btn-teal">Finalize List</button>
         </div>
     </div>
@@ -140,10 +147,8 @@
         const sel = document.getElementById('ho_franchise_selector');
         if(!sel.value) return;
         window.state.currentFranchiseId = parseInt(sel.value);
-        
         const res = await fetch('new_enrollment_parent.html');
         document.getElementById('parent-step-container').innerHTML = await res.text();
-        
         moveToStep('step-location', 'step-parent', 1);
         if(window.initParentStep) window.initParentStep();
         fetchOtherBranchData();
@@ -169,14 +174,24 @@
                 sessSel.innerHTML = '<option value="">-- Select Session --</option>';
                 (Array.isArray(sData) ? sData : (sData.items || [])).forEach(s => { sessSel.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
             }
+            const qData = await qRes.json();
+            const qGrid = document.getElementById('assessment-qa-grid');
+            if(qGrid) {
+                qGrid.innerHTML = '';
+                (Array.isArray(qData) ? qData : (qData.items || [])).forEach(q => {
+                    const opts = [q.answer_1, q.answer_2, q.answer_3, q.answer_4].filter(a => a);
+                    let optHtml = opts.map(o => `<option value="${o}">${o}</option>`).join('');
+                    qGrid.innerHTML += `<div class="qa-row" data-qid="${q.id}"> <input type="checkbox" data-qid="${q.id}" onchange="handleQS(this)"> <div class="text-[10px] font-bold uppercase">${q.the_question}</div> <div class="q-select-ans"><select class="text-[10px]">${optHtml}</select></div> </div>`;
+                });
+            }
         } catch(e) { console.error(e); }
     }
 
     window.processStudentStep = async () => {
         const isNew = document.getElementById('student-create-mode').style.display === 'block';
-        const auth = `?access_key=${SecurityManager.getAccessKey()}`;
+        const accessKey = SecurityManager.getAccessKey();
         if (isNew) {
-            const res = await fetch(`${window.NEST_ENDPOINTS.student.list}${auth}`, {
+            const res = await fetch(`${window.NEST_ENDPOINTS.student.list}?access_key=${accessKey}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ parent_id: window.state.currentParentId, name: document.getElementById('s_name_new').value, date_of_birth: document.getElementById('s_dob_new').value, franchise_id: window.state.currentFranchiseId, is_active: true })
             });
@@ -184,16 +199,83 @@
         } else {
             window.state.currentStudentId = parseInt(document.getElementById('s_select_id').value);
         }
+        const sRes = await fetch(`${window.NEST_ENDPOINTS.student.list}/${window.state.currentStudentId}?access_key=${accessKey}`);
+        updateStudentSummary(await sRes.json());
         moveToStep('step-student', 'step-assessment', 3);
     };
 
-    window.processAssessmentStep = async () => { moveToStep('step-assessment', 'step-session', 4); };
-    window.processSessionStep = () => { moveToStep('step-session', 'step-pickup', 5); };
+    window.processAssessmentStep = async () => {
+        const tId = document.getElementById('a_teacher_id').value;
+        const date = document.getElementById('a_assessment_date').value;
+        const auth = `?access_key=${SecurityManager.getAccessKey()}`;
+        const selected = document.querySelectorAll('.qa-row.selected');
+        for(let row of selected) {
+            await fetch(`${window.NEST_ENDPOINTS.assessment_submit.list}${auth}`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    student_id: window.state.currentStudentId, teacher_id: parseInt(tId),
+                    question_id: parseInt(row.querySelector('input').dataset.qid),
+                    answer_text: row.querySelector('select').value, assessment_date: date
+                })
+            });
+        }
+        document.getElementById('disp-a-teacher').innerText = document.getElementById('a_teacher_id').options[document.getElementById('a_teacher_id').selectedIndex].text;
+        document.getElementById('assessment-summary-view').style.display = 'grid';
+        moveToStep('step-assessment', 'step-session', 4);
+    };
+
+    window.processSessionStep = () => {
+        const s = document.getElementById('enrollment_session_id');
+        document.getElementById('disp-sess-name').innerText = s.options[s.selectedIndex].text;
+        document.getElementById('session-profile-view').style.display = 'grid';
+        moveToStep('step-session', 'step-pickup', 5);
+    };
+
+    window.addPickupLocal = () => {
+        const c = { student_id: window.state.currentStudentId, name: document.getElementById('pu_name').value, phone: document.getElementById('pu_phone').value, is_active: true };
+        window.state.pickupContacts.push(c);
+        document.getElementById('pickup-entry-list').innerHTML += `<div class="p-2 bg-slate-50 border rounded text-[10px] font-bold uppercase">${c.name} — ${c.phone}</div>`;
+        document.getElementById('pu_name').value = ''; document.getElementById('pu_phone').value = '';
+    };
+
     window.finalizePickups = () => { moveToStep('step-pickup', 'step-final', 6); };
-    window.submitFinalEnrollment = async () => { /* Logic */ };
-    window.moveToStep = (c, n, num) => { document.getElementById(c).classList.replace('step-active', 'step-saved'); document.getElementById(n).classList.remove('step-locked'); document.getElementById(n).classList.add('step-active'); document.getElementById('enrollment-progress').innerText = `Step ${num} of 6`; };
-    window.toggleStudentMode = () => { const s = document.getElementById('student-select-mode'), c = document.getElementById('student-create-mode'); s.style.display = s.style.display === 'none' ? 'block' : 'none'; c.style.display = c.style.display === 'none' ? 'block' : 'none'; };
-    window.unlockStep = (sId, vId) => { document.getElementById(sId).classList.replace('step-saved', 'step-active'); document.getElementById(vId).style.display = 'none'; };
+
+    window.submitFinalEnrollment = async () => {
+        const auth = `?access_key=${SecurityManager.getAccessKey()}`;
+        const sessId = parseInt(document.getElementById('enrollment_session_id').value);
+        try {
+            await fetch(`${window.NEST_ENDPOINTS.student.list}/${window.state.currentStudentId}${auth}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ session_enrolled: sessId }) });
+            await fetch(`${window.NEST_ENDPOINTS.enrollment.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ student_id: window.state.currentStudentId, session_id: sessId, franchise_id: window.state.currentFranchiseId }) });
+            for (let c of window.state.pickupContacts) { await fetch(`${window.NEST_ENDPOINTS.pickup.list}${auth}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) }); }
+            alert("Enrollment Successful"); location.reload();
+        } catch(e) { console.error(e); }
+    };
+
+    window.moveToStep = (c, n, num) => {
+        document.getElementById(c).classList.replace('step-active', 'step-saved');
+        document.getElementById(n).classList.remove('step-locked');
+        document.getElementById(n).classList.add('step-active');
+        document.getElementById('enrollment-progress').innerText = `Step ${num} of 6`;
+    };
+
+    window.toggleStudentMode = () => { 
+        const s = document.getElementById('student-select-mode'), c = document.getElementById('student-create-mode'); 
+        s.style.display = s.style.display === 'none' ? 'block' : 'none'; 
+        c.style.display = c.style.display === 'none' ? 'block' : 'none'; 
+    };
+
+    window.handleQS = (cb) => {
+        const row = cb.closest('.qa-row');
+        cb.checked ? (window.state.selectedQuestionCount++, row.classList.add('selected')) : (window.state.selectedQuestionCount--, row.classList.remove('selected'));
+        document.getElementById('selection-counter').innerText = `Items Selected: ${window.state.selectedQuestionCount} / 10`;
+    };
+
+    function updateStudentSummary(s) { 
+        document.getElementById('disp-s-name').innerText = s.name;
+        document.getElementById('disp-s-dob').innerText = s.date_of_birth;
+        document.getElementById('student-profile-view').style.display = 'grid'; 
+    }
+
     init();
 })();
 </script>
