@@ -124,17 +124,11 @@
     window.state = { currentParentId: null, currentStudentId: null, currentFranchiseId: null, pickupContacts: [], allParents: [], selectedQuestionCount: 0 };
 
     async function init() {
-        if (typeof SecurityManager === 'undefined') {
-            console.error("SecurityManager not loaded. Path is wrong.");
-            return;
-        }
-
         const isHeadOffice = localStorage.getItem('is_head_office') === 'true';
         const lockedId = localStorage.getItem('locked_franchise_id');
 
         if (!isHeadOffice && lockedId) {
             window.state.currentFranchiseId = parseInt(lockedId);
-            document.getElementById('step-location').style.display = 'none';
             window.lockLocation(); 
         } else {
             try {
