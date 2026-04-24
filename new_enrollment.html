@@ -32,7 +32,6 @@
         .qa-row.selected { background: #f0fdfa; }
         .edit-pill { position: absolute; top: 10px; right: 10px; background: #f1f5f9; color: #64748b; border: 1px solid var(--nest-border); padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; text-transform: uppercase; z-index: 20; }
         
-        /* Custom Success Modal */
         #success-modal { position: fixed; inset: 0; background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 450px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); padding: 35px; text-align: center; }
         .summary-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin: 25px 0; text-align: left; }
@@ -151,7 +150,7 @@
                 <div><label>Enrollment Date</label><input type="date" id="final_enroll_date"></div>
                 <div><label>School Start Date</label><input type="date" id="final_start_date"></div>
             </div>
-            <button id="final-submit-btn" onclick="submitFinalEnrollment()" class="btn-teal bg-slate-800 font-black">Generate & Enroll Student</button>
+            <button onclick="submitFinalEnrollment()" class="btn-teal bg-slate-800 font-black">Generate & Enroll Student</button>
         </div>
     </div>
 </div>
@@ -178,7 +177,6 @@
     async function init() {
         const isHeadOffice = localStorage.getItem('is_head_office') === 'true';
         const lockedId = localStorage.getItem('locked_franchise_id');
-
         if (!isHeadOffice && lockedId) {
             window.state.currentFranchiseId = parseInt(lockedId);
             document.getElementById('step-location').style.display = 'none';
@@ -201,9 +199,7 @@
         const sel = document.getElementById('ho_franchise_selector');
         if(!window.state.currentFranchiseId && sel.value) window.state.currentFranchiseId = parseInt(sel.value);
         if(!window.state.currentFranchiseId) return;
-
         window.moveToStep('step-location', 'step-parent', 1);
-        
         const auth = `?access_key=${SecurityManager.getAccessKey()}&franchise_id=${window.state.currentFranchiseId}`;
         try {
             const pRes = await fetch(`${window.NEST_ENDPOINTS.parent.list}${auth}`);
@@ -216,8 +212,7 @@
 
     function renderParentList(list) {
         const sel = document.getElementById('p_select_id');
-        if(!sel) return;
-        sel.innerHTML = '';
+        if(!sel) return; sel.innerHTML = '';
         list.forEach(p => { sel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name} — ${p.phone || 'N/A'}</option>`; });
     }
 
@@ -238,14 +233,11 @@
         } else {
             window.state.currentParentId = parseInt(document.getElementById('p_select_id').value);
         }
-        
         if(!window.state.currentParentId) return alert("Select Parent");
         const p = isNew ? { first_name: document.getElementById('p_fn').value, last_name: document.getElementById('p_ln').value } : window.state.allParents.find(x => x.id === window.state.currentParentId);
-        
         document.getElementById('disp-p-name').innerText = `${p.first_name} ${p.last_name}`;
         document.getElementById('parent-profile-view').style.display = 'grid';
         document.getElementById('parent-form-content').style.display = 'none';
-
         window.prepStudentStep();
         window.moveToStep('step-parent', 'step-student', 2);
     };
@@ -261,17 +253,17 @@
             const tData = await tRes.json();
             const tSel = document.getElementById('a_teacher_id');
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
-            (Array.isArray(tData) ? tData : (tData.items || [])).forEach(t => { if(t.is_active) tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; });
+            (Array.isArray(tData) ? tData : tData.items || []).forEach(t => { if(t.is_active) tSel.innerHTML += `<option value="${t.id}">${t.first_name} ${t.last_name}</option>`; });
             
             const sData = await sRes.json();
             const sessSel = document.getElementById('enrollment_session_id');
             sessSel.innerHTML = '<option value="">-- Select Session --</option>';
-            (Array.isArray(sData) ? sData : (sData.items || [])).forEach(s => { sessSel.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
+            (Array.isArray(sData) ? sData : sData.items || []).forEach(s => { sessSel.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
             
             const qData = await qRes.json();
             const qGrid = document.getElementById('assessment-qa-grid');
             qGrid.innerHTML = '';
-            (Array.isArray(qData) ? qData : (qData.items || [])).forEach(q => {
+            (Array.isArray(qData) ? qData : qData.items || []).forEach(q => {
                 const opts = [q.answer_1, q.answer_2, q.answer_3, q.answer_4].filter(a => a);
                 let optHtml = opts.map(o => `<option value="${o}">${o}</option>`).join('');
                 qGrid.innerHTML += `<div class="qa-row" data-qid="${q.id}"> <input type="checkbox" data-qid="${q.id}" onchange="handleQS(this)"> <div class="text-[10px] font-bold uppercase">${q.the_question}</div> <div class="q-select-ans"><select class="text-[10px]">${optHtml}</select></div> </div>`;
@@ -285,7 +277,7 @@
         const kids = await res.json();
         const sSel = document.getElementById('s_select_id');
         sSel.innerHTML = '<option value="">-- Select Child --</option>';
-        (Array.isArray(kids) ? kids : (kids.items || [])).forEach(k => { sSel.innerHTML += `<option value="${k.id}">${k.name}</option>`; });
+        (Array.isArray(kids) ? kids : kids.items || []).forEach(k => { sSel.innerHTML += `<option value="${k.id}">${k.name}</option>`; });
     };
 
     window.processStudentStep = async () => {
@@ -358,8 +350,8 @@
     };
 
     window.exitToDashboard = () => {
-        const accessKeyVal = localStorage.getItem('nestmind_access_key');
-        window.location.href = `office/franchise_dashboard.html?tlnp=${accessKeyVal}`;
+        const key = localStorage.getItem('nestmind_access_key');
+        window.location.href = 'franchise_dashboard.html?tlnp=' + key;
     };
 
     window.handleQS = (cb) => {
