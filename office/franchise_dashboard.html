@@ -55,15 +55,7 @@
             position: absolute;
             z-index: 5;
             pointer-events: none;
-        }
-
-        .char-elephant {
-            width: 22vw;
-            bottom: 5%;
-            left: 3%;
-            animation: elephantFloat 8s ease-in-out infinite;
-            /* Removes solid white background from elephant_pixar1.png */
-            mix-blend-mode: multiply;
+            transition: opacity 0.5s ease;
         }
 
         .char-giraffe {
@@ -71,13 +63,7 @@
             bottom: 2%;
             right: 5%;
             animation: giraffeFloat 10s ease-in-out infinite;
-            /* Removes solid white background from giraffe_pixar.png */
             mix-blend-mode: multiply;
-        }
-
-        @keyframes elephantFloat {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(2deg); }
         }
 
         @keyframes giraffeFloat {
@@ -90,7 +76,7 @@
             50% { transform: scale(1.45); opacity: 1; }
         }
 
-        /* Enforce No Pill at Bottom Right */
+        /* Clean up system UI */
         #status-text, .system-status-pill { display: none !important; visibility: hidden !important; }
     </style>
 </head>
@@ -141,15 +127,13 @@
     </aside>
 
     <main id="main-workspace" class="flex-grow overflow-y-auto relative bg-[#f8fafc]">
+        
+        <img src="giraffe_pixar.png" id="global-giraffe" class="character char-giraffe" alt="Giraffe">
+
         <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full relative">
-            
             <div class="system-pulse-container">
                 <div class="pulse-core"></div>
             </div>
-
-            <img src="elephant_pixar1.png" class="character char-elephant" alt="Elephant">
-            <img src="giraffe_pixar.png" class="character char-giraffe" alt="Giraffe">
-
             <h1 class="nestmind-hero select-none">NestMind</h1>
         </div>
     </main>
@@ -226,15 +210,31 @@
     async function loadModule(file, title) {
         const workspace = document.getElementById('main-workspace');
         const breadcrumbText = document.getElementById('breadcrumb-text');
-        workspace.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic text-sm animate-pulse">Syncing ${title}...</div>`;
+        
+        // Hide giraffe when module loads
+        const giraffe = document.getElementById('global-giraffe');
+        if(giraffe) giraffe.style.opacity = '0';
+
+        workspace.innerHTML += `<div id="module-loader" class="flex items-center justify-center h-full text-slate-400 font-bold italic text-sm animate-pulse">Syncing ${title}...</div>`;
         if(breadcrumbText) breadcrumbText.innerText = title;
+        
         const authParams = SecurityManager.getAuthQuery();
         const secureUrl = GITHUB_ROOT + file + authParams;
         try {
             const res = await fetch(secureUrl + (secureUrl.includes('?') ? '&' : '?') + 'v=' + Date.now());
             const html = await res.text();
-            workspace.innerHTML = `<div class="p-8">${html}</div>`;
-            const scripts = workspace.querySelectorAll('script');
+            
+            const loader = document.getElementById('module-loader');
+            const homeView = document.getElementById('dashboard-home-view');
+            if(loader) loader.remove();
+            if(homeView) homeView.remove();
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'p-8 relative z-20';
+            contentDiv.innerHTML = html;
+            workspace.appendChild(contentDiv);
+
+            const scripts = contentDiv.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
                 if (oldScript.src) newScript.src = oldScript.src;
