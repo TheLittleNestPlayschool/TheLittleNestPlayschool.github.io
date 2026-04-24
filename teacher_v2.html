@@ -6,7 +6,7 @@
     
     <div class="flex flex-wrap gap-2 w-full md:w-auto">
         <input type="text" id="teacher-search" placeholder="Search faculty name or role..." 
-            class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all">
+            class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-teal-500 shadow-sm w-full md:w-64 transition-all font-bold">
         
         <button id="add-teacher-btn" class="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md">
             + REGISTER TEACHER
@@ -25,7 +25,7 @@
         <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
             <div>
                 <h2 id="t-modal-title" class="text-sm font-black text-slate-800 uppercase">Faculty Profile</h2>
-                <p id="modal-branch-subtitle" class="text-[9px] text-teal-600 font-bold uppercase tracking-widest"></p>
+                <p id="modal-branch-subtitle" class="text-[9px] text-teal-600 font-bold uppercase tracking-widest">Database Record Revision</p>
             </div>
             <button id="close-modal-x" class="text-slate-400 hover:text-slate-900 text-3xl font-light outline-none">&times;</button>
         </div>
@@ -46,7 +46,7 @@
             </div>
 
             <div id="dynamic-fields-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 max-h-[50vh] overflow-y-auto pr-4 custom-scrollbar">
-                </div>
+            </div>
 
             <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
                 <button type="button" id="cancel-modal-btn" class="px-8 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-[10px] uppercase hover:bg-slate-200 transition-all">Discard</button>
@@ -64,44 +64,57 @@
         schema: null,
         isHO: false,
         currentFid: null,
-        // Role mapping from "My Type Table" [cite: 2026-02-05]
         adminTypeMap: { 1: 'Head Office Admin', 2: 'Franchise Owner', 3: 'Branch Manager', 4: 'Teacher' },
 
         async init() {
             if (!window.NEST_SCHEMA) await this.loadScript('/schema_config.js');
             if (!window.NEST_ENDPOINTS) await this.loadScript('/api_config.js');
+            if (!window.SecurityManager) await this.loadScript('/security.js');
+
             this.schema = window.NEST_SCHEMA.teacher;
-            
+            this.isHO = SecurityManager.isHeadOffice();
             this.currentFid = parseInt(localStorage.getItem('locked_franchise_id'));
-            const currentFname = localStorage.getItem('locked_franchise_name') || '';
-            this.isHO = (this.currentFid === 1 || currentFname.toLowerCase().includes('head office'));
+            const currentFname = localStorage.getItem('locked_franchise_name') || 'Main';
+            const accessKey = SecurityManager.getAccessKey();
+
+            // Constructing auth query based on role
+            let authQuery = this.isHO 
+                ? `?access_key=${accessKey}` 
+                : `?franchise_id=${this.currentFid}&access_key=${accessKey}`;
             
-            document.getElementById('branch-display').innerText = `Faculty Records • ${currentFname}`;
+            document.getElementById('branch-display').innerText = this.isHO 
+                ? "Global Network Records • All Faculty" 
+                : `Faculty Records • ${currentFname}`;
 
             try {
-                // Fetch logic [cite: 2025-12-29]
-                const url = this.isHO ? window.NEST_ENDPOINTS.teacher.list : `${window.NEST_ENDPOINTS.teacher.list}?franchise_id=${this.currentFid}`;
-                const response = await fetch(url);
+                const response = await fetch(`${window.NEST_ENDPOINTS.teacher.list}${authQuery}`);
                 const rawData = await response.json();
                 
-                this.data = this.isHO ? rawData : rawData.filter(t => parseInt(t.franchise_id) === this.currentFid);
+                // CRITICAL FIX: Extract array from possible Xano pagination wrapper
+                this.data = Array.isArray(rawData) ? rawData : (rawData.items || rawData.data || []);
                 
+                // Final safety check to prevent .filter crash
+                if (!Array.isArray(this.data)) this.data = [];
+
                 if (this.isHO) {
-                    const fRes = await fetch(window.NEST_ENDPOINTS.franchise.list);
-                    if (fRes.ok) this.franchises = await fRes.json();
+                    const fRes = await fetch(`${window.NEST_ENDPOINTS.franchise.list}?access_key=${accessKey}`);
+                    const fRaw = await fRes.json();
+                    this.franchises = Array.isArray(fRaw) ? fRaw : (fRaw.items || fRaw.data || []);
                 }
 
                 this.buildFormUI(); 
                 this.render(); 
                 this.setupListeners();
-            } catch (err) { console.error("Init Error:", err); }
+            } catch (err) { 
+                console.error("Init Error:", err);
+                document.getElementById('teacher-list-container').innerHTML = `<div class="p-10 text-center text-red-500 font-bold uppercase text-[10px]">Data Load Failure: ${err.message}</div>`;
+            }
         },
 
         buildFormUI() {
             const grid = document.getElementById('dynamic-fields-grid');
             grid.innerHTML = '';
 
-            // 1. Franchise Assignment & Admin Type (HO ONLY)
             if (this.isHO) {
                 let fOptions = this.franchises.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
                 grid.insertAdjacentHTML('beforeend', `
@@ -113,7 +126,7 @@
                 let typeOptions = Object.entries(this.adminTypeMap).map(([id, name]) => `<option value="${id}">${name}</option>`).join('');
                 grid.insertAdjacentHTML('beforeend', `
                     <div class="col-span-1">
-                        <label class="text-[8px] text-slate-400 block uppercase font-black mb-1 ml-1 tracking-wider">Access Role (Admin Type)</label>
+                        <label class="text-[8px] text-slate-400 block uppercase font-black mb-1 ml-1 tracking-wider">Access Role</label>
                         <select id="admin_type_id" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-teal-500">${typeOptions}</select>
                     </div>`);
             } else {
@@ -121,14 +134,13 @@
                 grid.insertAdjacentHTML('beforeend', `<input type="hidden" id="admin_type_id" value="4">`);
             }
 
-            // 2. Map Schema Fields (excluding hidden/ID fields)
             this.schema.fields.forEach(f => {
                 if (['id', 'franchise_id', 'user_id', 'teacher_id', 'is_active', 'admin_type_id'].includes(f.id) || f.hidden) return;
                 
                 const spanClass = (f.width === 'full' || f.type === 'textarea') ? 'col-span-full' : 'col-span-1';
                 let inputHTML = (f.type === 'textarea') 
-                    ? `<textarea id="${f.id}" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500"></textarea>`
-                    : `<input type="${f.type}" id="${f.id}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500">`;
+                    ? `<textarea id="${f.id}" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500 font-bold uppercase"></textarea>`
+                    : `<input type="${f.type}" id="${f.id}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-teal-500 font-bold uppercase">`;
 
                 grid.insertAdjacentHTML('beforeend', `<div class="${spanClass}"><label class="text-[8px] text-slate-400 block uppercase font-black mb-1 ml-1 tracking-wider">${f.label}</label>${inputHTML}</div>`);
             });
@@ -137,16 +149,23 @@
         render() {
             const container = document.getElementById('teacher-list-container');
             const search = (document.getElementById('teacher-search')?.value || '').toLowerCase();
-            let filtered = this.data.filter(t => Object.values(t).some(v => String(v).toLowerCase().includes(search)));
+            const isSuper = SecurityManager.isHeadOffice();
+            
+            let filtered = this.data.filter(t => ( (t.first_name || '') + ' ' + (t.last_name || '') ).toLowerCase().includes(search));
             container.innerHTML = '';
 
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="p-10 text-center text-slate-300 text-[10px] font-black uppercase tracking-widest">No Faculty Records Found.</div>';
+                return;
+            }
+
             filtered.forEach(t => {
-                const fName = this.isHO ? (this.franchises.find(f => f.id == t.franchise_id)?.name || 'Head Office') : localStorage.getItem('locked_franchise_name');
+                const fName = isSuper ? (this.franchises.find(f => f.id == t.franchise_id)?.name || 'BID: ' + t.franchise_id) : localStorage.getItem('locked_franchise_name');
                 const roleTitle = this.adminTypeMap[t.admin_type_id] || 'Staff';
 
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden hover:border-teal-400 transition-all">
-                        <div class="bg-slate-50/50 px-4 py-1.5 flex flex-wrap items-center justify-between border-b border-slate-100">
+                        <div class="bg-slate-50/50 px-4 py-2.5 flex flex-wrap items-center justify-between border-b border-slate-100">
                             <div>
                                 <span class="text-[8px] text-teal-600 font-black uppercase block tracking-tighter">${fName}</span>
                                 <span class="text-xs font-black text-slate-900 uppercase">${t.first_name || ''} ${t.last_name || ''}</span>
@@ -158,18 +177,18 @@
                                 <button data-id="${t.id}" class="t-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-red-500 text-[9px] font-black hover:bg-red-500 transition-all uppercase">Delete</button>
                             </div>
                         </div>
-                        <div class="px-4 py-2 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-1 bg-white">
-                            <div class="space-y-1 border-r border-slate-50 pr-4">
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Phone</span><span class="text-[10px] font-bold text-slate-700">${t.phone || '---'}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Registered</span><span class="text-[10px] font-bold text-slate-700">${new Date(t.created_at).toLocaleDateString()}</span></div>
-                            </div>
-                            <div class="space-y-1 border-r border-slate-50 pr-4">
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Daily Pay</span><span class="text-[10px] font-black text-teal-600">₱${t.daily_pay || '0'}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">TIN</span><span class="text-[10px] font-bold text-slate-700">${t.tin_number || '---'}</span></div>
+                        <div class="px-4 py-3 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-2 bg-white">
+                            <div class="space-y-1">
+                                <span class="text-[7px] font-black text-slate-300 uppercase block">Phone Contact</span>
+                                <span class="text-[10px] font-bold text-slate-700 font-mono">${t.phone || '---'}</span>
                             </div>
                             <div class="space-y-1">
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">Start Date</span><span class="text-[10px] font-bold text-slate-700">${t.start_date || '---'}</span></div>
-                                <div><span class="text-[7px] font-black text-slate-300 uppercase block">History Notes</span><span class="text-[10px] italic text-slate-500 truncate block">${t.inactivation_notes || '---'}</span></div>
+                                <span class="text-[7px] font-black text-slate-300 uppercase block">Daily Pay Scale</span>
+                                <span class="text-[10px] font-black text-teal-600">₱${t.daily_pay || '0'}</span>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="text-[7px] font-black text-slate-300 uppercase block">Hiring Date</span>
+                                <span class="text-[10px] font-bold text-slate-700">${t.start_date || '---'}</span>
                             </div>
                         </div>
                     </div>
@@ -190,15 +209,12 @@
             this.updateToggleLabel(toggle.checked);
 
             if (t) {
-                if (t.created_at && document.getElementById('created_at')) {
-                    document.getElementById('created_at').value = new Date(t.created_at).toISOString().split('T')[0];
-                }
                 if (this.isHO && document.getElementById('admin_type_id')) {
                     document.getElementById('admin_type_id').value = t.admin_type_id;
                 }
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
-                    if (el && !['id', 'franchise_id', 'created_at', 'is_active', 'admin_type_id'].includes(f.id)) {
+                    if (el && !['id', 'franchise_id', 'is_active', 'admin_type_id'].includes(f.id)) {
                         el.value = t[f.id] || '';
                     }
                 });
@@ -213,10 +229,10 @@
         },
 
         setupListeners() {
-            const close = () => {
-                document.getElementById('teacher-modal').classList.add('hidden');
-                document.getElementById('teacher-form').reset();
-            };
+            const close = () => { document.getElementById('teacher-modal').classList.add('hidden'); };
+            const accessKey = SecurityManager.getAccessKey();
+            const authQuery = `?access_key=${accessKey}`;
+
             document.getElementById('cancel-modal-btn').onclick = close;
             document.getElementById('close-modal-x').onclick = close;
             document.getElementById('is_active').onchange = (e) => this.updateToggleLabel(e.target.checked);
@@ -237,7 +253,8 @@
                     if (el && !['id', 'franchise_id', 'is_active', 'admin_type_id'].includes(f.id)) payload[f.id] = el.value;
                 });
 
-                await fetch(id ? `${window.NEST_ENDPOINTS.teacher.list}/${id}` : window.NEST_ENDPOINTS.teacher.list, {
+                const url = id ? `${window.NEST_ENDPOINTS.teacher.list}/${id}${authQuery}` : `${window.NEST_ENDPOINTS.teacher.list}${authQuery}`;
+                await fetch(url, {
                     method: id ? 'PATCH' : 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -249,7 +266,8 @@
 
         async deleteRecord(id) {
             if (confirm("Permanently delete this faculty record?")) {
-                await fetch(`${window.NEST_ENDPOINTS.teacher.list}/${id}`, { method: 'DELETE' });
+                const authQuery = `?access_key=${SecurityManager.getAccessKey()}`;
+                await fetch(`${window.NEST_ENDPOINTS.teacher.list}/${id}${authQuery}`, { method: 'DELETE' });
                 this.init();
             }
         },
@@ -257,7 +275,11 @@
         async loadScript(src) {
             return new Promise(resolve => {
                 const s = document.createElement('script'); s.src = src; s.onload = resolve;
-                s.onerror = () => { const s2 = document.createElement('script'); s2.src = src.replace('/',''); s2.onload = resolve; document.head.appendChild(s2); };
+                s.onerror = () => { 
+                    const fallback = src.replace('/','');
+                    const s2 = document.createElement('script'); s2.src = fallback; s2.onload = resolve;
+                    document.head.appendChild(s2);
+                };
                 document.head.appendChild(s);
             });
         }
