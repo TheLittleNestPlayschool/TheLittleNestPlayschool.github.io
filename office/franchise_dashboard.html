@@ -5,7 +5,7 @@
     <title>NestMind | Franchise Dashboard</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="../nest_style.css">
     <script src="../api_config.js"></script>
@@ -16,38 +16,44 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
 
+        /* Hero Animation for the Main View */
         .nestmind-hero {
-            font-size: 15vw; 
+            font-size: 12vw; /* Massive fluid typography */
             line-height: 1;
-            font-weight: 900;
-            color: #1e293b; 
-            letter-spacing: -0.06em;
+            background: linear-gradient(180deg, var(--nest-dark) 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             position: relative;
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        .system-pulse-container {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             z-index: 1;
         }
 
-        .pulse-core {
+        .hero-glow {
             position: absolute;
-            width: 50vw;
-            height: 50vw;
-            background: radial-gradient(circle, rgba(0, 209, 178, 0.25) 0%, transparent 70%);
+            width: 40vw;
+            height: 40vw;
+            background: radial-gradient(circle, rgba(0, 209, 178, 0.12) 0%, transparent 70%);
             border-radius: 50%;
-            animation: systemPulse 4s ease-in-out infinite;
+            z-index: 0;
+            animation: breathe 8s ease-in-out infinite;
         }
 
-        @keyframes systemPulse {
-            0%, 100% { transform: scale(0.8); opacity: 0.3; }
-            50% { transform: scale(1.2); opacity: 0.7; }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.15); opacity: 0.8; }
+        }
+
+        .system-status-pill {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 99px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
     </style>
 </head>
@@ -62,27 +68,78 @@
         <div class="px-3 mb-4">
             <div class="bg-[#1e293b] p-3 rounded-xl border border-slate-700/50 text-center shadow-lg">
                 <p class="text-[9px] font-black text-[#2dd4bf] uppercase mb-2 tracking-widest opacity-80">Identity Lock</p>
-                <div id="active-branch-name" class="text-white font-bold text-sm tracking-tight uppercase">---</div>
+                
+                <select id="branch-select" onchange="unlockDashboard()" class="hidden w-full bg-[#0f172a] text-white py-1.5 px-2 rounded-md border border-slate-600 text-[11px] focus:ring-1 focus:ring-[#00d1b2] outline-none cursor-pointer">
+                    <option value="">-- Select Branch --</option>
+                </select>
+
+                <div id="active-branch-name" class="hidden text-white font-bold text-sm tracking-tight uppercase"></div>
+                
+                <div id="breadcrumb-container" class="hidden mt-2 pt-2 border-t border-slate-700/30">
+                    <div class="flex items-center justify-center gap-1.5">
+                        <div id="status-dot" class="w-1.5 h-1.5 rounded-full bg-[#00d1b2] animate-pulse"></div>
+                        <span id="breadcrumb-text" class="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">Portal Root</span>
+                    </div>
+                </div>
             </div>
         </div>
 
         <nav id="nav-menu" class="hidden px-2 overflow-y-auto space-y-0.5 custom-scrollbar pb-10">
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('franchise_performance.html', 'Performance')">📈 Performance</button>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('parents.html', 'Parents')">👨‍👩‍👧 Parents</button>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('students.html', 'Students')">🏫 Students</button>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('teacher_v2.html', 'Teachers')">🧑‍🏫 Teachers</button>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('new_enrollment.html', 'Enrollment')">✨ Enrollment</button>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('student_assessment.html', 'Assessments')">📝 Assessments</button>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('session_display.html', 'Sessions')">🗓️ Sessions</button>
-            <button class="w-full text-left p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all" onclick="loadModule('forms_vault.html', 'Forms Vault')">📂 Forms Vault</button>
+            <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Management</div>
+            
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('franchise_performance.html', 'Performance')">
+                <span class="text-sm">📈</span> Performance
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('parents.html', 'Parents')">
+                <span class="text-sm">👨‍👩‍👧</span> Parents
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('students.html', 'Students')">
+                <span class="text-sm">🏫</span> Students
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('teacher_v2.html', 'Teachers')">
+                <span class="text-sm">🧑‍🏫</span> Teachers
+            </button>
+            
+            <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Academic DNA</div>
+            
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('new_enrollment.html', 'Enrollment')">
+                <span class="text-sm">✨</span> Enrollment
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('student_assessment.html', 'Assessments')">
+                <span class="text-sm">📝</span> Assessments
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('session_display.html', 'Sessions')">
+                <span class="text-sm">🗓️</span> Sessions
+            </button>
+
+            <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">AI Intelligence</div>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('pixify.html', 'Pixify!')">
+                <span class="text-sm">🪄</span> Pixify!
+            </button>
+
+            <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Logistics</div>
+
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('session_vault.html', 'Session Vault')">
+                <span class="text-sm">📁</span> Session Vault
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('forms_vault.html', 'Forms Vault')">
+                <span class="text-sm">📂</span> Forms Vault
+            </button>
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('order_merch.html', 'Order Merch')">
+                <span class="text-sm">👕</span> Order Merch
+            </button>
         </nav>
     </aside>
 
     <main id="main-workspace" class="flex-grow overflow-y-auto relative bg-[#f8fafc]">
-        <div id="view-container" class="h-full">
-            <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full relative">
-                <div class="system-pulse-container"><div class="pulse-core"></div></div>
-                <h1 class="nestmind-hero select-none">NestMind</h1>
+        <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full relative">
+            <div class="hero-glow"></div>
+            
+            <h1 class="nestmind-hero font-black tracking-tighter select-none">NestMind</h1>
+            
+            <div id="system-status-container" class="system-status-pill">
+                <div class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></div>
+                <p id="status-text" class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Awaiting Identity...</p>
             </div>
         </div>
     </main>
@@ -90,62 +147,103 @@
 
 <script>
     const GITHUB_ROOT = "https://thelittlenestplayschool.github.io/";
-    let currentController = null;
 
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
         const tlnpKey = urlParams.get('tlnp');
+        const select = document.getElementById('branch-select');
+        const statusText = document.getElementById('status-text');
 
-        if (!tlnpKey) return;
-
-        // Set access key immediately before any fetch attempts
-        localStorage.setItem('nestmind_access_key', tlnpKey);
+        if (tlnpKey === 'TLNP624163') {
+            localStorage.clear();
+            localStorage.setItem('nestmind_access_key', tlnpKey);
+            localStorage.setItem('is_head_office', 'true');
+            localStorage.setItem('locked_franchise_id', 'all');
+            localStorage.setItem('locked_franchise_name', 'HEAD OFFICE');
+            
+            finalizeUnlock("HEAD OFFICE");
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return; 
+        }
 
         try {
             const res = await fetch(window.NEST_ENDPOINTS.franchise.list);
             const data = await res.json();
             const franchises = Array.isArray(data) ? data : (data.items || []);
 
-            if (tlnpKey === 'TLNP624163') {
-                localStorage.setItem('is_head_office', 'true');
-                localStorage.setItem('locked_franchise_id', 'all');
-                localStorage.setItem('locked_franchise_name', 'HEAD OFFICE');
-                finalizeUnlock("HEAD OFFICE");
-            } else {
+            if (tlnpKey) {
                 const matched = franchises.find(f => f.access_key === tlnpKey);
                 if (matched) {
+                    localStorage.setItem('nestmind_access_key', tlnpKey);
                     localStorage.setItem('is_head_office', 'false');
                     localStorage.setItem('locked_franchise_id', matched.id);
                     localStorage.setItem('locked_franchise_name', matched.name);
+                    
                     finalizeUnlock(matched.name);
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } else {
+                    statusText.innerText = "Access Denied: Invalid Security Key.";
+                    statusText.classList.replace('text-slate-500', 'text-red-500');
                 }
+            } else {
+                select.classList.remove('hidden');
+                select.innerHTML = '<option value="">-- Select Branch --</option>';
+                franchises.forEach(f => {
+                    let opt = document.createElement('option');
+                    opt.value = f.id; opt.innerText = f.name;
+                    select.appendChild(opt);
+                });
+                statusText.innerText = "Select branch to initialize portal.";
             }
-            window.history.replaceState({}, document.title, window.location.pathname);
-        } catch (e) { console.error("Critical Init Error:", e); }
+        } catch (e) { 
+            console.error("Auth failed", e);
+            statusText.innerText = "Connection Error.";
+        }
     }
 
     function finalizeUnlock(fname) {
-        document.getElementById('active-branch-name').innerText = fname;
-        document.getElementById('nav-menu').classList.remove('hidden');
+        const branchDisplay = document.getElementById('active-branch-name');
+        const navMenu = document.getElementById('nav-menu');
+        document.getElementById('branch-select').classList.add('hidden');
+        
+        branchDisplay.innerText = SecurityManager.getSystemLabel(fname);
+        branchDisplay.classList.remove('hidden');
+        document.getElementById('breadcrumb-container').classList.remove('hidden'); 
+        navMenu.classList.remove('hidden');
+        
+        if(document.getElementById('status-text')) {
+            document.getElementById('status-text').innerText = "Identity Verified: " + fname;
+        }
+    }
+
+    function unlockDashboard() {
+        const select = document.getElementById('branch-select');
+        const fid = select.value;
+        if(!fid) return;
+        const fname = select.options[select.selectedIndex].text;
+        localStorage.setItem('nestmind_access_key', 'MANUAL_SELECTION'); 
+        localStorage.setItem('is_head_office', 'false');
+        localStorage.setItem('locked_franchise_id', fid);
+        localStorage.setItem('locked_franchise_name', fname);
+        finalizeUnlock(fname);
     }
 
     async function loadModule(file, title) {
-        if (currentController) currentController.abort();
-        currentController = new AbortController();
-
-        const container = document.getElementById('view-container');
-        container.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic animate-pulse">Syncing ${title}...</div>`;
-
-        // SecurityManager uses 'nestmind_access_key' from localStorage
-        const authParams = SecurityManager.getAuthQuery();
-        const secureUrl = `${GITHUB_ROOT}${file}${authParams}&v=${Date.now()}`;
+        const workspace = document.getElementById('main-workspace');
+        const breadcrumbText = document.getElementById('breadcrumb-text');
         
-        try {
-            const res = await fetch(secureUrl, { signal: currentController.signal });
-            const html = await res.text();
-            container.innerHTML = `<div class="p-8">${html}</div>`;
+        workspace.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic text-sm animate-pulse">Syncing ${title}...</div>`;
+        if(breadcrumbText) breadcrumbText.innerText = title;
 
-            const scripts = container.querySelectorAll('script');
+        const authParams = SecurityManager.getAuthQuery();
+        const secureUrl = GITHUB_ROOT + file + authParams;
+
+        try {
+            const res = await fetch(secureUrl + (secureUrl.includes('?') ? '&' : '?') + 'v=' + Date.now());
+            const html = await res.text();
+            workspace.innerHTML = `<div class="p-8">${html}</div>`;
+            
+            const scripts = workspace.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
                 if (oldScript.src) newScript.src = oldScript.src;
@@ -153,9 +251,7 @@
                 document.head.appendChild(newScript).parentNode.removeChild(newScript);
             });
         } catch (e) { 
-            if (e.name !== 'AbortError') {
-                container.innerHTML = `<div class="p-10 text-red-500 font-bold">Failed to load ${title}. Verify endpoint permissions.</div>`;
-            }
+            workspace.innerHTML = `<div class="p-10 text-red-500">Error: ${e.message}</div>`; 
         }
     }
 
