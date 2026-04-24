@@ -26,12 +26,12 @@
 
         <div id="parent-create-mode" style="display:none;">
             <div class="grid grid-cols-2 gap-4">
-                <div><label>First Name</label><input type="text" id="p_fn" class="w-full border p-2 rounded bg-white"></div>
-                <div><label>Last Name</label><input type="text" id="p_ln" class="w-full border p-2 rounded bg-white"></div>
+                <div><label>First Name</label><input type="text" id="p_fn" class="w-full border p-2 rounded"></div>
+                <div><label>Last Name</label><input type="text" id="p_ln" class="w-full border p-2 rounded"></div>
             </div>
-            <label>Phone Number</label><input type="text" id="p_phone" class="w-full border p-2 rounded bg-white">
-            <label>Email Address</label><input type="email" id="p_email" class="w-full border p-2 rounded bg-white">
-            <label>Home Address</label><input type="text" id="p_address" class="w-full border p-2 rounded bg-white">
+            <label>Phone Number</label><input type="text" id="p_phone" class="w-full border p-2 rounded">
+            <label>Email Address</label><input type="email" id="p_email" class="w-full border p-2 rounded">
+            <label>Home Address</label><input type="text" id="p_address" class="w-full border p-2 rounded">
         </div>
 
         <button class="bg-slate-500 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase mt-4 shadow-md" onclick="toggleParentMode()">Toggle New/Existing</button>
@@ -40,23 +40,15 @@
 </div>
 
 <script>
-/** * This script runs once the fragment is injected. 
- * It relies on window.state and NEST_ENDPOINTS from the Master.
- */
-
+// Called automatically by Master when franchise is locked
 window.initParentStep = async () => {
     const auth = `?access_key=${SecurityManager.getAccessKey()}&franchise_id=${window.state.currentFranchiseId}`;
     try {
         const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}${auth}`);
         const data = await res.json();
-        const raw = Array.isArray(data) ? data : (data.items || []);
-        
-        // Save to global state so Master can use it later
-        window.state.allParents = raw.filter(p => p.franchise_id === window.state.currentFranchiseId);
+        window.state.allParents = (Array.isArray(data) ? data : (data.items || [])).filter(p => p.franchise_id === window.state.currentFranchiseId);
         renderParentList(window.state.allParents);
-    } catch(e) { 
-        console.error("Parent sync failed", e); 
-    }
+    } catch(e) { console.error("Parent sync failed", e); }
 };
 
 window.filterParents = () => {
@@ -98,15 +90,16 @@ window.processParentStep = async () => {
         updateParentSummary(data);
     } else {
         window.state.currentParentId = parseInt(document.getElementById('p_select_id').value);
-        if(!window.state.currentParentId) return alert("Please select a parent record.");
+        if(!window.state.currentParentId) return alert("Select a parent record.");
         const selected = window.state.allParents.find(x => x.id === window.state.currentParentId);
         updateParentSummary(selected);
     }
     
+    // Switch UI to Step 2
     document.getElementById('parent-form-content').style.display = 'none';
     document.getElementById('parent-profile-view').style.display = 'grid';
 
-    // Proceed to Step 2 in Master
+    // IMPORTANT: Trigger the Master's logic to fetch students for THIS parent
     if(window.prepStudentStep) window.prepStudentStep();
     window.moveToStep('step-parent', 'step-student', 2);
 };
