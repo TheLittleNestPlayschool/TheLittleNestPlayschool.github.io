@@ -49,8 +49,6 @@
             0%, 100% { transform: scale(0.8); opacity: 0.3; }
             50% { transform: scale(1.2); opacity: 0.7; }
         }
-
-        #status-text, .system-status-pill { display: none !important; }
     </style>
 </head>
 <body class="bg-[#f8fafc] font-['Inter',_sans-serif]">
@@ -82,7 +80,7 @@
 
     <main id="main-workspace" class="flex-grow overflow-y-auto relative bg-[#f8fafc]">
         <div id="view-container" class="h-full">
-            <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full">
+            <div id="dashboard-home-view" class="flex flex-col items-center justify-center h-full relative">
                 <div class="system-pulse-container"><div class="pulse-core"></div></div>
                 <h1 class="nestmind-hero select-none">NestMind</h1>
             </div>
@@ -98,17 +96,20 @@
         const urlParams = new URLSearchParams(window.location.search);
         const tlnpKey = urlParams.get('tlnp');
 
-        if (!tlnpKey) return;
+        if (!tlnpKey) {
+            console.error("Missing Security Key");
+            return;
+        }
 
-        // One-time setup based on the key
         try {
             const res = await fetch(window.NEST_ENDPOINTS.franchise.list);
             const data = await res.json();
             const franchises = Array.isArray(data) ? data : (data.items || []);
 
-            localStorage.clear(); // Ensure fresh start
+            localStorage.clear();
 
             if (tlnpKey === 'TLNP624163') {
+                localStorage.setItem('nestmind_access_key', tlnpKey);
                 localStorage.setItem('is_head_office', 'true');
                 localStorage.setItem('locked_franchise_id', 'all');
                 localStorage.setItem('locked_franchise_name', 'HEAD OFFICE');
@@ -116,15 +117,17 @@
             } else {
                 const matched = franchises.find(f => f.access_key === tlnpKey);
                 if (matched) {
+                    localStorage.setItem('nestmind_access_key', tlnpKey);
                     localStorage.setItem('is_head_office', 'false');
                     localStorage.setItem('locked_franchise_id', matched.id);
                     localStorage.setItem('locked_franchise_name', matched.name);
                     finalizeUnlock(matched.name);
+                } else {
+                    console.error("Invalid Security Key");
                 }
             }
-            // Clean the URL
             window.history.replaceState({}, document.title, window.location.pathname);
-        } catch (e) { console.error("Init failed", e); }
+        } catch (e) { console.error("Identity Sync Failed", e); }
     }
 
     function finalizeUnlock(fname) {
@@ -148,7 +151,7 @@
             });
             const html = await res.text();
             
-            // Hard replacement of current view
+            // CLEAN REPLACEMENT: No stacking, no leftovers.
             container.innerHTML = `<div class="p-8">${html}</div>`;
 
             const scripts = container.querySelectorAll('script');
@@ -159,7 +162,9 @@
                 document.head.appendChild(newScript).parentNode.removeChild(newScript);
             });
         } catch (e) { 
-            if (e.name !== 'AbortError') container.innerHTML = `<div class="p-10 text-red-500">Sync Error: ${e.message}</div>`; 
+            if (e.name !== 'AbortError') {
+                container.innerHTML = `<div class="p-10 text-red-500">Sync Error: ${e.message}</div>`; 
+            }
         }
     }
 
