@@ -134,9 +134,7 @@
             const data = await res.json();
             const list = Array.isArray(data) ? data : (data.items || []);
             sel.innerHTML = '<option value="">-- Choose Branch --</option>';
-            list.sort((a,b) => a.name.localeCompare(b.name)).forEach(f => {
-                sel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
-            });
+            list.forEach(f => sel.innerHTML += `<option value="${f.id}">${f.name}</option>`);
             if (!SecurityManager.isHeadOffice()) {
                 const savedId = localStorage.getItem('locked_franchise_id');
                 if (savedId) { sel.value = savedId; window.lockLocation(); }
@@ -146,13 +144,14 @@
 
     window.lockLocation = async () => {
         const sel = document.getElementById('ho_franchise_selector');
-        if(!sel.value) return;
-        window.state.currentFranchiseId = parseInt(sel.value);
+        const fId = sel.value || localStorage.getItem('locked_franchise_id');
+        if(!fId) return;
+        window.state.currentFranchiseId = parseInt(fId);
         try {
             const res = await fetch('./new_enrollment_parent.html');
             if(!res.ok) throw new Error();
             document.getElementById('parent-step-container').innerHTML = await res.text();
-            moveToStep('step-location', 'step-parent', 1);
+            window.moveToStep('step-location', 'step-parent', 1);
             if(window.initParentStep) window.initParentStep();
             fetchOtherBranchData();
         } catch(e) { console.error(e); }
@@ -193,6 +192,16 @@
             });
         } catch(e) { console.error(e); }
     }
+
+    window.prepStudentStep = async () => {
+        const auth = `?access_key=${SecurityManager.getAccessKey()}&parent_id=${window.state.currentParentId}`;
+        const res = await fetch(`${window.NEST_ENDPOINTS.student.list}${auth}`);
+        const data = await res.json();
+        const kids = Array.isArray(data) ? data : (data.items || []);
+        const sSel = document.getElementById('s_select_id');
+        sSel.innerHTML = '<option value="">-- Select Child --</option>';
+        kids.forEach(k => sSel.innerHTML += `<option value="${k.id}">${k.name}</option>`);
+    };
 
     window.processStudentStep = async () => {
         const isNew = document.getElementById('student-create-mode').style.display === 'block';
