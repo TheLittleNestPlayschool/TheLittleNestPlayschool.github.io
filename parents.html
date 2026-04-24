@@ -14,14 +14,6 @@
     </div>
 </div>
 
-<div class="mb-6 p-4 bg-slate-900 rounded-xl border border-slate-700 shadow-inner font-mono">
-    <div class="flex items-center gap-2 mb-2">
-        <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Xano Outbound Debug</span>
-    </div>
-    <div id="debug-url" class="text-[10px] text-[#00d1b2] break-all opacity-90">Waiting for request...</div>
-</div>
-
 <div id="parent-list-container" class="space-y-6">
     <div class="p-20 text-center text-slate-400 text-xs italic font-bold uppercase tracking-widest animate-pulse">
         Synchronizing Database...
@@ -79,7 +71,6 @@
                 ? "Global System Master" 
                 : `${branchName} Branch`;
 
-            // Constructing URL to match Xano's new If/Else logic
             let fetchUrl = window.NEST_ENDPOINTS.parent.list;
             if (isSuper) {
                 fetchUrl += `?access_key=${accessKey}`;
@@ -88,19 +79,16 @@
                 fetchUrl += `?franchise_id=${fid}&access_key=${accessKey}`;
             }
 
-            document.getElementById('debug-url').innerText = "GET >> " + fetchUrl;
-
             try {
                 const response = await fetch(fetchUrl);
                 const result = await response.json();
                 this.data = Array.isArray(result) ? result : (result.items || []);
                 
-                document.getElementById('debug-url').innerText += ` | RECEIVED: ${this.data.length}`;
                 this.render();
                 this.setupListeners();
             } catch (err) {
                 console.error("Fetch Error:", err);
-                document.getElementById('debug-url').innerText = "ERROR >> " + err.message;
+                document.getElementById('parent-list-container').innerHTML = `<div class="p-20 text-center text-red-400 text-xs font-bold uppercase">Sync Error: ${err.message}</div>`;
             }
         },
 
