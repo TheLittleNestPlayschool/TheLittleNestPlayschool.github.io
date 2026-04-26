@@ -7,6 +7,39 @@
     .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
     #vault-progress-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 9999; align-items: center; justify-content: center; padding: 20px; }
+
+    /* Path Tooltip Logic */
+    .path-container { position: relative; cursor: help; }
+    .path-text { 
+        display: block; 
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+        max-width: 100%;
+    }
+    .path-tooltip {
+        visibility: hidden;
+        position: absolute;
+        bottom: 125%;
+        left: 0;
+        background-color: #1e293b;
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-family: monospace;
+        z-index: 100;
+        width: max-content;
+        max-width: 300px;
+        word-break: break-all;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .path-container:hover .path-tooltip {
+        visibility: visible;
+        opacity: 1;
+    }
 </style>
 
 <div id="vault-progress-overlay">
@@ -172,16 +205,18 @@
                 const isForm = type === 'forms';
                 const label = isForm ? '' : (item.session_num.toString().startsWith('S') ? 'SUMMER: ' : 'SESSION: ');
                 
-                // MAPPING UPDATE:
                 const badgeText = isForm ? item.form_description : item.session_num;
-                const bodyText = isForm ? item.file_path : item.session_description;
+                const pathValue = isForm ? (item.file_path || 'No path defined') : item.session_description;
 
                 return `
                 <div class="session-vault-item flex items-start gap-3 p-4 border-b border-r border-slate-100 transition-all bg-white">
                     <input type="checkbox" class="session-row-check w-4 h-4 mt-0.5 accent-teal-500 cursor-pointer" value="${item.id}">
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-grow">
                         <span class="text-[10px] font-black text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 uppercase">${label}${badgeText}</span>
-                        <p class="text-[11px] text-slate-600 font-medium line-clamp-2 mt-1">${bodyText || 'No path available'}</p>
+                        <div class="path-container mt-1">
+                            <p class="path-text text-[11px] text-slate-600 font-medium">${pathValue}</p>
+                            <span class="path-tooltip">${pathValue}</span>
+                        </div>
                     </div>
                 </div>`;
             }).join('');
