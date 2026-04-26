@@ -86,11 +86,11 @@
         if(!fId) return;
         const sel = document.getElementById('teacher-select');
         try {
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?franchise_id=${fId}`);
+            // UPDATED: Using field_name and field_value pattern
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?field_name=franchise_id&field_value=${fId}`);
             const data = await resp.json();
             sel.innerHTML = '<option value="">-- Select Teacher --</option>';
             data.forEach(t => {
-                // FIXED: Using first_name and last_name from your table schema
                 const fullName = `${t.first_name} ${t.last_name}`;
                 sel.innerHTML += `<option value="${fullName}">${fullName}</option>`;
             });
@@ -131,7 +131,8 @@
     async function fetchParents() {
         const pSel = document.getElementById('parent-select');
         try {
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${fId}`);
+            // UPDATED: Using field_name and field_value pattern
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?field_name=franchise_id&field_value=${fId}`);
             const parents = await resp.json();
             pSel.innerHTML = '<option value="">-- Select Parent --</option>';
             parents.forEach(p => {
@@ -145,7 +146,8 @@
         if (!pId) return;
         sSel.innerHTML = '<option>Filtering...</option>';
         try {
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}&franchise_id=${fId}`);
+            // UPDATED: Using field_name and field_value pattern for parent_id
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?field_name=parent_id&field_value=${pId}`);
             const data = await resp.json();
             sSel.innerHTML = '';
             data.forEach(s => {
