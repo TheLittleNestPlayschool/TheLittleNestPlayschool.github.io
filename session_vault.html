@@ -57,9 +57,9 @@
         currentListType: null,
         endpoints: {
             sessions: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details',
-            forms: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/forms_vault', // Corrected to forms_vault
+            forms: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/forms_vault',
             bulk_sessions: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/get_bulk_sessions',
-            bulk_forms: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/get_bulk_forms'
+            bulk_forms: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/get_bulk_form' // Fixed singular name
         },
 
         async init() {
@@ -230,13 +230,18 @@
                 const isFormView = this.currentListType === 'forms';
                 const endpoint = isFormView ? this.endpoints.bulk_forms : this.endpoints.bulk_sessions;
                 
+                // Match the Xano input name: 'form_ids' for forms, 'session_id' for sessions
+                const payload = {};
+                if (isFormView) {
+                    payload.form_ids = selectedIds;
+                } else {
+                    payload.session_id = selectedIds;
+                }
+
                 const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        session_id: selectedIds,
-                        vault_type: isFormView ? 'forms-vault' : 'tlnp-sessions' 
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
                 const finalLinks = await res.json();
@@ -267,7 +272,7 @@
                     this.updateDownloadUI();
                 }, 1500);
             } catch (e) { 
-                statusText.innerText = "Error!";
+                statusText.innerText = "Sync Failed";
                 console.error(e);
             }
         },
