@@ -43,13 +43,15 @@
     <div id="entry-section" class="entry-form">
         <div class="form-group">
             <label>1. Select Parent</label>
-            <select id="parent-select" onchange="fetchFilteredStudents(this.value)">
+            <select id="parent-select" onchange="handleParentSelection(this.value)">
                 <option value="">-- Select Parent --</option>
             </select>
         </div>
         <div class="form-group">
             <label>2. Select Student</label>
-            <select id="student-select"><option value="">-- Select Parent First --</option></select>
+            <select id="student-select" onchange="loadTeachers()" disabled>
+                <option value="">-- Select Parent First --</option>
+            </select>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div class="form-group">
@@ -58,8 +60,8 @@
             </div>
             <div class="form-group">
                 <label>Received By</label>
-                <select id="teacher-select">
-                    <option value="">-- Select Teacher --</option>
+                <select id="teacher-select" disabled>
+                    <option value="">-- Select Student First --</option>
                 </select>
             </div>
         </div>
@@ -79,8 +81,7 @@
     let mediaUrl = "";
     let basket = [];
     
-    // HARD RESET & ENFORCE ATIMONAN (ID 24)
-    // Wipe the conflicting session memory immediately
+    // ENFORCING ATIMONAN IDENTITY (ID 24)
     localStorage.setItem('locked_franchise_id', '24');
     localStorage.setItem('locked_franchise_name', 'Atimonan');
     localStorage.setItem('nestmind_f_id', '24');
@@ -88,23 +89,31 @@
     localStorage.setItem('nestmind_f_slug', 'atimonan');
 
     const fId = 24; 
-    const fName = "Atimonan";
     const slug = "atimonan";
 
+    // FETCH TEACHERS: Now triggered only after student selection
     async function loadTeachers() {
-        const sel = document.getElementById('teacher-select');
+        const tSel = document.getElementById('teacher-select');
+        const sSel = document.getElementById('student-select');
+        
+        if (!sSel.value) return;
+        
+        tSel.innerHTML = '<option value="">Loading Teachers...</option>';
+        tSel.disabled = false;
+
         try {
-            // Using ID 24 for Atimonan
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?field_name=franchise_id&field_value=${fId}`);
             const data = await resp.json();
-            sel.innerHTML = '<option value="">-- Select Teacher --</option>';
+            tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
             data.forEach(t => {
                 const fullName = `${t.first_name} ${t.last_name}`;
-                sel.innerHTML += `<option value="${fullName}">${fullName}</option>`;
+                tSel.innerHTML += `<option value="${fullName}">${fullName}</option>`;
             });
-        } catch (e) { console.error("Teacher fetch issue"); }
+        } catch (e) { 
+            console.error("Teacher fetch issue");
+            tSel.innerHTML = '<option value="">Error Loading</option>';
+        }
     }
-    loadTeachers();
 
     function handleImageSelect(input) {
         if (input.files && input.files[0]) {
@@ -132,7 +141,7 @@
             await fetchParents();
             document.getElementById('upload-btn').style.display = 'none';
             document.getElementById('entry-section').style.display = 'block';
-            status.innerText = "PHOTO SAVED. ADD RECORDS.";
+            status.innerText = "PHOTO SAVED. SELECT PARENT.";
         } catch (e) { status.innerText = "UPLOAD FAILED."; }
     }
 
@@ -148,14 +157,25 @@
         } catch (e) { console.error("Parent lookup failed"); }
     }
 
-    async function fetchFilteredStudents(pId) {
+    async function handleParentSelection(pId) {
         const sSel = document.getElementById('student-select');
-        if (!pId) return;
-        sSel.innerHTML = '<option>Filtering...</option>';
+        const tSel = document.getElementById('teacher-select');
+        
+        if (!pId) {
+            sSel.disabled = true;
+            sSel.innerHTML = '<option value="">-- Select Parent First --</option>';
+            tSel.disabled = true;
+            tSel.innerHTML = '<option value="">-- Select Student First --</option>';
+            return;
+        }
+
+        sSel.disabled = false;
+        sSel.innerHTML = '<option>Filtering Students...</option>';
+        
         try {
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?field_name=parent_id&field_value=${pId}`);
             const data = await resp.json();
-            sSel.innerHTML = '';
+            sSel.innerHTML = '<option value="">-- Select Student --</option>';
             data.forEach(s => {
                 sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
             });
@@ -167,7 +187,10 @@
         const sSel = document.getElementById('student-select');
         const tSel = document.getElementById('teacher-select');
         const amtInput = document.getElementById('amount-input');
-        if (!sSel.value || !amtInput.value || !tSel.value) return alert("Select student, teacher, and amount");
+        
+        if (!pSel.value || !sSel.value || !amtInput.value || !tSel.value) {
+            return alert("Please select parent, student, teacher, and enter amount.");
+        }
 
         basket.push({
             parent_id: parseInt(pSel.value),
@@ -178,7 +201,12 @@
             paid_by: pSel.options[pSel.selectedIndex].text,
             processed: false
         });
+        
         renderBasket();
+        // Reset only values that change per row entry
+        sSel.value = "";
+        tSel.value = "";
+        tSel.disabled = true;
         amtInput.value = '';
     }
 
