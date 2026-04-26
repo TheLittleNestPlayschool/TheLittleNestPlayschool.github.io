@@ -82,7 +82,7 @@
     let mediaUrl = "";
     let basket = [];
     
-    // ATIMONAN IDENTITY ENFORCEMENT
+    // ATIMONAN IDENTITY ENFORCEMENT (ID 24)
     localStorage.setItem('locked_franchise_id', '24');
     localStorage.setItem('locked_franchise_name', 'Atimonan');
     localStorage.setItem('nestmind_f_id', '24');
@@ -115,7 +115,7 @@
             const result = await upResp.json();
             mediaUrl = result.access_url || result.url || result.x1?.access_url;
 
-            // WATERFALL START: Load Parents ONLY after photo is confirmed.
+            // WATERFALL: Load Parents ONLY after photo is uploaded.
             await fetchParents();
             
             document.getElementById('upload-section').style.display = 'none';
@@ -126,8 +126,14 @@
 
     async function fetchParents() {
         const pSel = document.getElementById('parent-select');
+        // Explicit URL construction to satisfy Xano parameter requirements
+        const params = new URLSearchParams({
+            field_name: 'franchise_id',
+            field_value: fId
+        });
+
         try {
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?field_name=franchise_id&field_value=${fId}`);
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?${params.toString()}`);
             const parents = await resp.json();
             pSel.innerHTML = '<option value="">-- Select Parent --</option>';
             parents.forEach(p => {
@@ -147,10 +153,15 @@
 
         if (!pId) return;
 
-        // WATERFALL STEP 2: Load students for the chosen parent.
+        // WATERFALL: Load students only for the chosen parent.
+        const params = new URLSearchParams({
+            field_name: 'parent_id',
+            field_value: pId
+        });
+
         try {
             sSel.innerHTML = '<option>Loading Students...</option>';
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?field_name=parent_id&field_value=${pId}`);
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?${params.toString()}`);
             const data = await resp.json();
             
             sSel.innerHTML = '<option value="">-- Select Student --</option>';
@@ -170,10 +181,15 @@
             return;
         }
 
-        // WATERFALL STEP 3: Load teachers only when Student is picked.
+        // WATERFALL: Load teachers only when Student is picked.
+        const params = new URLSearchParams({
+            field_name: 'franchise_id',
+            field_value: fId
+        });
+
         try {
             tSel.innerHTML = '<option>Loading Teachers...</option>';
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?field_name=franchise_id&field_value=${fId}`);
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?${params.toString()}`);
             const data = await resp.json();
             
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
@@ -205,7 +221,7 @@
         
         renderBasket();
         
-        // Reset Student/Teacher/Amount for next entry in same batch.
+        // Reset per-entry fields
         sSel.value = '';
         tSel.value = '';
         tSel.disabled = true;
