@@ -124,7 +124,7 @@
         },
 
         toProperCase(str) {
-            if (!str) return "";
+            if (!str || typeof str !== 'string') return "";
             return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
         },
 
@@ -133,7 +133,6 @@
             grid.innerHTML = '';
             let currentSection = "";
             this.schema.fields.forEach(f => {
-                // Skip system fields and dates in the edit form
                 if (f.id === 'id' || f.id === 'franchise_id' || f.id === 'created_at' || f.label.toLowerCase().includes('date')) return;
                 
                 if (f.section && f.section !== currentSection) {
@@ -200,7 +199,7 @@
         },
 
         async deleteRecord(id) {
-            if (!confirm("Are you sure you want to permanently delete this parent record?")) return;
+            if (!confirm("Permanently delete parent record?")) return;
             const accessKey = window.SecurityManager.getAccessKey();
             try {
                 const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}/${id}?access_key=${accessKey}`, { method: 'DELETE' });
@@ -242,12 +241,11 @@
                     if (el && f.id !== 'id' && !f.readonly) {
                         let val = (f.type === 'bool' || f.type === 'checkbox') ? el.checked : el.value;
                         
-                        // Handle Proper Case formatting and clearing fields with spaces
+                        // LOGIC: If text field, check if it's empty/spaces.
+                        // Send null to database if empty, otherwise Proper Case.
                         if (typeof val === 'string' && f.type !== 'email') {
                             const trimmedVal = val.trim();
-                            // If trimmed value is empty, send empty string to clear the field.
-                            // Otherwise, apply Proper Case.
-                            val = (trimmedVal === "") ? "" : this.toProperCase(trimmedVal);
+                            val = (trimmedVal === "") ? null : this.toProperCase(trimmedVal);
                         }
                         payload[f.id] = val;
                     }
