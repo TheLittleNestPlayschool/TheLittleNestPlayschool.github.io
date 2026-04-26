@@ -59,14 +59,15 @@
             sessions: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details',
             forms: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/forms_vault',
             bulk_sessions: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/get_bulk_sessions',
-            bulk_forms: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/get_bulk_form' // Fixed singular name
+            bulk_forms: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/get_bulk_form'
         },
 
         async init() {
-            const correctName = localStorage.getItem('locked_franchise_name');
-            if (correctName) {
-                localStorage.setItem('nestmind_f_name', correctName);
-                localStorage.setItem('nestmind_f_slug', correctName.toLowerCase().replace(/\s+/g, '-'));
+            // IDENTITY SYNC
+            const lockedName = localStorage.getItem('locked_franchise_name');
+            if (lockedName) {
+                localStorage.setItem('nestmind_f_name', lockedName);
+                localStorage.setItem('nestmind_f_slug', lockedName.toLowerCase().replace(/\s+/g, '-'));
             }
 
             try {
@@ -85,7 +86,7 @@
                 this.setupListeners();
             } catch (err) {
                 console.error("Vault Init Error:", err);
-                document.getElementById('session-grid').innerHTML = '<div class="col-span-full p-10 text-center text-red-400 font-bold uppercase text-[10px]">Sync Error: API Path Invalid</div>';
+                document.getElementById('session-grid').innerHTML = '<div class="col-span-full p-10 text-center text-red-400 font-bold uppercase text-[10px]">Sync Error: Check Xano API</div>';
             }
         },
 
@@ -169,16 +170,19 @@
             }
 
             container.innerHTML = list.map(item => {
-                const label = type === 'forms' ? 'FORM' : (item.session_num.toString().startsWith('S') ? 'SUMMER' : 'SESSION');
-                const numDisplay = type === 'forms' ? item.id : item.session_num;
-                const desc = type === 'forms' ? item.form_description : item.session_description;
+                const isForm = type === 'forms';
+                const label = isForm ? 'FORM' : (item.session_num.toString().startsWith('S') ? 'SUMMER' : 'SESSION');
+                
+                // MAPPING UPDATE:
+                const badgeText = isForm ? item.form_description : item.session_num;
+                const bodyText = isForm ? item.form_name : item.session_description;
 
                 return `
                 <div class="session-vault-item flex items-start gap-3 p-4 border-b border-r border-slate-100 transition-all bg-white">
                     <input type="checkbox" class="session-row-check w-4 h-4 mt-0.5 accent-teal-500 cursor-pointer" value="${item.id}">
                     <div class="min-w-0">
-                        <span class="text-[10px] font-black text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 uppercase">${label} ${numDisplay}</span>
-                        <p class="text-[11px] text-slate-600 font-medium line-clamp-2 mt-1">${desc || 'No description'}</p>
+                        <span class="text-[10px] font-black text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 uppercase">${label}: ${badgeText}</span>
+                        <p class="text-[11px] text-slate-600 font-medium line-clamp-2 mt-1">${bodyText || 'No description available'}</p>
                     </div>
                 </div>`;
             }).join('');
@@ -230,13 +234,9 @@
                 const isFormView = this.currentListType === 'forms';
                 const endpoint = isFormView ? this.endpoints.bulk_forms : this.endpoints.bulk_sessions;
                 
-                // Match the Xano input name: 'form_ids' for forms, 'session_id' for sessions
                 const payload = {};
-                if (isFormView) {
-                    payload.form_ids = selectedIds;
-                } else {
-                    payload.session_id = selectedIds;
-                }
+                if (isFormView) payload.form_ids = selectedIds;
+                else payload.session_id = selectedIds;
 
                 const res = await fetch(endpoint, {
                     method: 'POST',
@@ -245,7 +245,7 @@
                 });
                 
                 const finalLinks = await res.json();
-                if(!Array.isArray(finalLinks)) throw new Error("API failed to return links");
+                if(!Array.isArray(finalLinks)) throw new Error("Invalid server response");
 
                 for (let i = 0; i < finalLinks.length; i++) {
                     const url = typeof finalLinks[i] === 'object' ? finalLinks[i].url : finalLinks[i];
@@ -284,7 +284,7 @@
             
             document.getElementById('vault-selected-count').innerText = checked.length;
             btn.disabled = checked.length === 0;
-            btn.className = checked.length > 0 ? "bg-teal-500 text-white px-5 py-2 rounded-lg font-bold cursor-pointer text-[10px] uppercase" : "bg-slate-300 text-white px-5 py-2 rounded-lg font-bold cursor-not-allowed text-[10px] uppercase";
+            btn.className = checked.length > 0 ? "bg-teal-500 text-white px-5 py-2 rounded-lg font-bold cursor-pointer text-[10px] uppercase shadow-md" : "bg-slate-300 text-white px-5 py-2 rounded-lg font-bold cursor-not-allowed text-[10px] uppercase shadow-md";
             
             if (allChecks.length > 0) {
                 document.getElementById('vault-select-all').checked = (checked.length === allChecks.length);
