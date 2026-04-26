@@ -1,7 +1,6 @@
 <style>
     .vault-card { transition: all 0.2s ease; border: 1px solid #e2e8f0; }
     .vault-card:hover { transform: translateY(-2px); border-color: #00d1b2; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-    /* Zebra striping for the list view */
     #session-grid > div:nth-child(6n+4), #session-grid > div:nth-child(6n+5), #session-grid > div:nth-child(6n+6) { background-color: #f8fafc !important; }
     .session-vault-item:hover { background-color: #f1f5f9 !important; }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -46,8 +45,7 @@
 </div>
 
 <div id="vault-main-container" class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[400px]">
-    <div id="session-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 max-h-[70vh] overflow-y-auto custom-scrollbar">
-        </div>
+    <div id="session-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 max-h-[70vh] overflow-y-auto custom-scrollbar"></div>
 </div>
 
 <script>
@@ -59,16 +57,16 @@
         currentListType: null,
         endpoints: {
             sessions: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details',
-            forms: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/forms_details',
+            forms: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/forms_vault', // Corrected to forms_vault
             bulk_sessions: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/get_bulk_sessions',
             bulk_forms: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/get_bulk_forms'
         },
 
         async init() {
-            // Fix variable mismatch for Calbayog/Atimonan
             const correctName = localStorage.getItem('locked_franchise_name');
             if (correctName) {
                 localStorage.setItem('nestmind_f_name', correctName);
+                localStorage.setItem('nestmind_f_slug', correctName.toLowerCase().replace(/\s+/g, '-'));
             }
 
             try {
@@ -80,15 +78,14 @@
                 const sData = await sRes.json();
                 const fData = await fRes.json();
 
-                // Safety: Convert to array if Xano returns error objects
                 this.sessionData = Array.isArray(sData) ? sData : (sData.items || []);
                 this.formData = Array.isArray(fData) ? fData : (fData.items || []);
 
                 this.renderRoot();
                 this.setupListeners();
             } catch (err) {
-                console.error("Vault Sync Error:", err);
-                document.getElementById('session-grid').innerHTML = '<div class="col-span-full p-10 text-center text-red-400 font-bold uppercase text-[10px]">Sync Error: Check API Endpoints</div>';
+                console.error("Vault Init Error:", err);
+                document.getElementById('session-grid').innerHTML = '<div class="col-span-full p-10 text-center text-red-400 font-bold uppercase text-[10px]">Sync Error: API Path Invalid</div>';
             }
         },
 
@@ -156,7 +153,6 @@
                 list = this.formData;
             }
 
-            // Fixed: Safety check for non-array responses
             if (!Array.isArray(list)) list = [];
 
             list = list.filter(item => {
@@ -168,7 +164,7 @@
             document.getElementById('vault-title').innerText = title;
 
             if (list.length === 0) {
-                container.innerHTML = `<div class="col-span-full p-12 text-center text-slate-400 font-bold uppercase text-[10px]">No matches found</div>`;
+                container.innerHTML = `<div class="col-span-full p-12 text-center text-slate-400 font-bold uppercase text-[10px]">No items found</div>`;
                 return;
             }
 
@@ -244,7 +240,7 @@
                 });
                 
                 const finalLinks = await res.json();
-                if(!Array.isArray(finalLinks)) throw new Error("API returned no download links");
+                if(!Array.isArray(finalLinks)) throw new Error("API failed to return links");
 
                 for (let i = 0; i < finalLinks.length; i++) {
                     const url = typeof finalLinks[i] === 'object' ? finalLinks[i].url : finalLinks[i];
@@ -271,19 +267,19 @@
                     this.updateDownloadUI();
                 }, 1500);
             } catch (e) { 
-                statusText.innerText = "Download Failed";
+                statusText.innerText = "Error!";
                 console.error(e);
             }
         },
 
         updateDownloadUI() {
             const checked = document.querySelectorAll('.session-row-check:checked');
-            const allChecks = document.querySelectorAll('.session-row-check');
             const btn = document.getElementById('vault-download-btn');
+            const allChecks = document.querySelectorAll('.session-row-check');
             
             document.getElementById('vault-selected-count').innerText = checked.length;
             btn.disabled = checked.length === 0;
-            btn.className = checked.length > 0 ? "bg-teal-500 text-white px-5 py-2 rounded-lg font-bold cursor-pointer text-xs uppercase" : "bg-slate-300 text-white px-5 py-2 rounded-lg font-bold cursor-not-allowed text-xs uppercase";
+            btn.className = checked.length > 0 ? "bg-teal-500 text-white px-5 py-2 rounded-lg font-bold cursor-pointer text-[10px] uppercase" : "bg-slate-300 text-white px-5 py-2 rounded-lg font-bold cursor-not-allowed text-[10px] uppercase";
             
             if (allChecks.length > 0) {
                 document.getElementById('vault-select-all').checked = (checked.length === allChecks.length);
@@ -292,8 +288,6 @@
     };
 
     window.SessionModule = SessionModule;
-    window.onload = () => SessionModule.init();
-    // Safety for dynamic module loading
     SessionModule.init();
 })();
 </script>
