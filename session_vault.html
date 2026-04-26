@@ -63,7 +63,6 @@
         },
 
         async init() {
-            // IDENTITY SYNC
             const lockedName = localStorage.getItem('locked_franchise_name');
             if (lockedName) {
                 localStorage.setItem('nestmind_f_name', lockedName);
@@ -171,18 +170,18 @@
 
             container.innerHTML = list.map(item => {
                 const isForm = type === 'forms';
-                const label = isForm ? 'FORM' : (item.session_num.toString().startsWith('S') ? 'SUMMER' : 'SESSION');
+                const label = isForm ? '' : (item.session_num.toString().startsWith('S') ? 'SUMMER: ' : 'SESSION: ');
                 
                 // MAPPING UPDATE:
                 const badgeText = isForm ? item.form_description : item.session_num;
-                const bodyText = isForm ? item.form_name : item.session_description;
+                const bodyText = isForm ? item.file_path : item.session_description;
 
                 return `
                 <div class="session-vault-item flex items-start gap-3 p-4 border-b border-r border-slate-100 transition-all bg-white">
                     <input type="checkbox" class="session-row-check w-4 h-4 mt-0.5 accent-teal-500 cursor-pointer" value="${item.id}">
                     <div class="min-w-0">
-                        <span class="text-[10px] font-black text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 uppercase">${label}: ${badgeText}</span>
-                        <p class="text-[11px] text-slate-600 font-medium line-clamp-2 mt-1">${bodyText || 'No description available'}</p>
+                        <span class="text-[10px] font-black text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 uppercase">${label}${badgeText}</span>
+                        <p class="text-[11px] text-slate-600 font-medium line-clamp-2 mt-1">${bodyText || 'No path available'}</p>
                     </div>
                 </div>`;
             }).join('');
