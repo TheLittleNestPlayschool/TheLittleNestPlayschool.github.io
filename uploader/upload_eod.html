@@ -83,9 +83,17 @@
     let mediaUrl = "";
     let basket = [];
     
-    // IDENTITY LOCK: Atimonan (ID 24)
-    const fId = 24; 
-    const slug = "atimonan";
+    // DYNAMIC IDENTITY: No more hardcoding. 
+    // Pull from the session variables set at login.
+    const fId = localStorage.getItem('nestmind_f_id');
+    const fName = localStorage.getItem('nestmind_f_name');
+    const slug = fName ? fName.toLowerCase().replace(/\s+/g, '-') : 'general';
+
+    // Synchronize locked variables to ensure the whole dashboard stays on the same page
+    if (fId) {
+        localStorage.setItem('locked_franchise_id', fId);
+        localStorage.setItem('locked_franchise_name', fName);
+    }
 
     function handleImageSelect(input) {
         if (input.files && input.files[0]) {
@@ -98,6 +106,7 @@
     }
 
     async function uploadAndInitialize() {
+        if (!fId) return alert("Session expired. Please re-login.");
         const status = document.getElementById('status-msg');
         status.innerText = "☁️ SAVING PHOTO...";
         const formData = new FormData();
@@ -163,7 +172,6 @@
 
         try {
             tSel.innerHTML = '<option>Loading Teachers...</option>';
-            // CLEAN URL construction to prevent trailing characters/colon
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/uploader_teacher?franchise_id=${fId}`);
             const data = await resp.json();
             
@@ -183,7 +191,7 @@
         const amtInput = document.getElementById('amount-input');
         
         if (!pSel.value || !sSel.value || !amtInput.value || !tSel.value) {
-            return alert("Complete all fields before adding to list.");
+            return alert("Complete all fields.");
         }
 
         basket.push({
@@ -234,7 +242,7 @@
                 status.innerText = "❌ SYNC FAILED.";
             }
         } catch (err) {
-            status.innerText = "❌ ERROR COMMUNICATING WITH SERVER.";
+            status.innerText = "❌ SERVER ERROR.";
         }
     }
 </script>
