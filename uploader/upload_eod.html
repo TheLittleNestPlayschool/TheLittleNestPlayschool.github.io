@@ -82,7 +82,7 @@
     let mediaUrl = "";
     let basket = [];
     
-    // ATIMONAN IDENTITY ENFORCEMENT
+    // ATIMONAN IDENTITY (ID 24)
     localStorage.setItem('locked_franchise_id', '24');
     localStorage.setItem('locked_franchise_name', 'Atimonan');
     localStorage.setItem('nestmind_f_id', '24');
@@ -127,14 +127,16 @@
     async function fetchParents() {
         const pSel = document.getElementById('parent-select');
         try {
-            // Updated to point to your new/simplified parent uploader API
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?franchise_id=${fId}`);
-            const parents = await resp.json();
+            // NEW API ENDPOINT: uploader_parent
+            // EXPECTED PARAM: franchise_id
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/uploader_parent?franchise_id=${fId}`);
+            const data = await resp.json();
+            
             pSel.innerHTML = '<option value="">-- Select Parent --</option>';
-            parents.forEach(p => {
+            data.forEach(p => {
                 pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
             });
-        } catch (e) { console.error("Parent lookup failed"); }
+        } catch (e) { console.error("Parent lookup failed", e); }
     }
 
     async function handleParentChange(pId) {
@@ -148,7 +150,6 @@
 
         if (!pId) return;
 
-        // Waterfall: Fetch students only for chosen parent
         try {
             sSel.innerHTML = '<option>Loading Students...</option>';
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?parent_id=${pId}&franchise_id=${fId}`);
@@ -171,7 +172,6 @@
             return;
         }
 
-        // Waterfall: Load teachers only when Student is picked
         try {
             tSel.innerHTML = '<option>Loading Teachers...</option>';
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?franchise_id=${fId}`);
