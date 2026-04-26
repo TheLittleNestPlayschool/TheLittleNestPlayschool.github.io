@@ -82,7 +82,7 @@
     let mediaUrl = "";
     let basket = [];
     
-    // ENFORCING ATIMONAN IDENTITY (ID 24)
+    // ATIMONAN IDENTITY ENFORCEMENT (ID 24)
     localStorage.setItem('locked_franchise_id', '24');
     localStorage.setItem('locked_franchise_name', 'Atimonan');
     localStorage.setItem('nestmind_f_id', '24');
@@ -115,7 +115,7 @@
             const result = await upResp.json();
             mediaUrl = result.access_url || result.url || result.x1?.access_url;
 
-            // WATERFALL: Only start loading Parents once photo is saved
+            // WATERFALL START: Load Parents using the expected field_name/field_value params
             await fetchParents();
             
             document.getElementById('upload-section').style.display = 'none';
@@ -126,25 +126,17 @@
 
     async function fetchParents() {
         const pSel = document.getElementById('parent-select');
-        
-        // Use standard URLSearchParams to ensure field_value is correctly recognized by Xano
-        const params = new URLSearchParams({
-            field_name: 'franchise_id',
-            field_value: String(fId) // Force to string for URL encoding
-        });
+        // FIX: Match Xano debugger's expected parameter names
+        const query = new URLSearchParams({ 
+            field_name: 'franchise_id', 
+            field_value: fId 
+        }).toString();
 
         try {
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?${params.toString()}`);
-            const data = await resp.json();
-            
-            // Safety check for Xano error output
-            if (data.code === 'ERROR_CODE_INPUT_ERROR') {
-                console.error("Xano Input Error:", data.message);
-                return;
-            }
-
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?${query}`);
+            const parents = await resp.json();
             pSel.innerHTML = '<option value="">-- Select Parent --</option>';
-            data.forEach(p => {
+            parents.forEach(p => {
                 pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
             });
         } catch (e) { console.error("Parent lookup failed"); }
@@ -161,14 +153,15 @@
 
         if (!pId) return;
 
-        const params = new URLSearchParams({
-            field_name: 'parent_id',
-            field_value: String(pId)
-        });
+        // WATERFALL STEP 2: Load students using field_name/field_value
+        const query = new URLSearchParams({ 
+            field_name: 'parent_id', 
+            field_value: pId 
+        }).toString();
 
         try {
             sSel.innerHTML = '<option>Loading Students...</option>';
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?${params.toString()}`);
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?${query}`);
             const data = await resp.json();
             
             sSel.innerHTML = '<option value="">-- Select Student --</option>';
@@ -188,14 +181,15 @@
             return;
         }
 
-        const params = new URLSearchParams({
-            field_name: 'franchise_id',
-            field_value: String(fId)
-        });
+        // WATERFALL STEP 3: Load teachers using field_name/field_value
+        const query = new URLSearchParams({ 
+            field_name: 'franchise_id', 
+            field_value: fId 
+        }).toString();
 
         try {
             tSel.innerHTML = '<option>Loading Teachers...</option>';
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?${params.toString()}`);
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?${query}`);
             const data = await resp.json();
             
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
@@ -213,7 +207,7 @@
         const tSel = document.getElementById('teacher-select');
         const amtInput = document.getElementById('amount-input');
         
-        if (!sSel.value || !amtInput.value || !tSel.value) return alert("Complete all fields.");
+        if (!pSel.value || !sSel.value || !amtInput.value || !tSel.value) return alert("Complete all fields.");
 
         basket.push({
             parent_id: parseInt(pSel.value),
