@@ -1,6 +1,7 @@
 <style>
     .vault-card { transition: all 0.2s ease; border: 1px solid #e2e8f0; }
     .vault-card:hover { transform: translateY(-2px); border-color: #00d1b2; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    /* Zebra striping for the list view */
     #session-grid > div:nth-child(6n+4), #session-grid > div:nth-child(6n+5), #session-grid > div:nth-child(6n+6) { background-color: #f8fafc !important; }
     .session-vault-item:hover { background-color: #f1f5f9 !important; }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -45,7 +46,8 @@
 </div>
 
 <div id="vault-main-container" class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[400px]">
-    <div id="session-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 max-h-[70vh] overflow-y-auto custom-scrollbar"></div>
+    <div id="session-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 max-h-[70vh] overflow-y-auto custom-scrollbar">
+        </div>
 </div>
 
 <script>
@@ -63,17 +65,30 @@
         },
 
         async init() {
+            // Fix variable mismatch for Calbayog/Atimonan
+            const correctName = localStorage.getItem('locked_franchise_name');
+            if (correctName) {
+                localStorage.setItem('nestmind_f_name', correctName);
+            }
+
             try {
                 const [sRes, fRes] = await Promise.all([
                     fetch(this.endpoints.sessions),
                     fetch(this.endpoints.forms)
                 ]);
-                this.sessionData = await sRes.json();
-                this.formData = await fRes.json();
+
+                const sData = await sRes.json();
+                const fData = await fRes.json();
+
+                // Safety: Convert to array if Xano returns error objects
+                this.sessionData = Array.isArray(sData) ? sData : (sData.items || []);
+                this.formData = Array.isArray(fData) ? fData : (fData.items || []);
+
                 this.renderRoot();
                 this.setupListeners();
             } catch (err) {
-                document.getElementById('session-grid').innerHTML = '<div class="col-span-full p-10 text-center text-red-400 font-bold uppercase text-[10px]">Sync Error</div>';
+                console.error("Vault Sync Error:", err);
+                document.getElementById('session-grid').innerHTML = '<div class="col-span-full p-10 text-center text-red-400 font-bold uppercase text-[10px]">Sync Error: Check API Endpoints</div>';
             }
         },
 
@@ -141,13 +156,21 @@
                 list = this.formData;
             }
 
+            // Fixed: Safety check for non-array responses
+            if (!Array.isArray(list)) list = [];
+
             list = list.filter(item => {
                 const text = type === 'forms' ? (item.form_description || '') : (item.session_description || '');
-                const num = type === 'forms' ? '' : item.session_num.toString();
+                const num = type === 'forms' ? '' : (item.session_num ? item.session_num.toString() : '');
                 return text.toLowerCase().includes(search) || num.includes(search);
             });
 
             document.getElementById('vault-title').innerText = title;
+
+            if (list.length === 0) {
+                container.innerHTML = `<div class="col-span-full p-12 text-center text-slate-400 font-bold uppercase text-[10px]">No matches found</div>`;
+                return;
+            }
 
             container.innerHTML = list.map(item => {
                 const label = type === 'forms' ? 'FORM' : (item.session_num.toString().startsWith('S') ? 'SUMMER' : 'SESSION');
@@ -189,9 +212,11 @@
                 document.querySelectorAll('.session-row-check').forEach(cb => cb.checked = e.target.checked);
                 this.updateDownloadUI();
             };
+
             document.getElementById('session-grid').onchange = (e) => {
                 if(e.target.classList.contains('session-row-check')) this.updateDownloadUI();
             };
+
             document.getElementById('vault-download-btn').onclick = () => this.handleDownload();
         },
 
@@ -217,7 +242,9 @@
                         vault_type: isFormView ? 'forms-vault' : 'tlnp-sessions' 
                     })
                 });
+                
                 const finalLinks = await res.json();
+                if(!Array.isArray(finalLinks)) throw new Error("API returned no download links");
 
                 for (let i = 0; i < finalLinks.length; i++) {
                     const url = typeof finalLinks[i] === 'object' ? finalLinks[i].url : finalLinks[i];
@@ -243,17 +270,20 @@
                     document.querySelectorAll('.session-row-check').forEach(cb => cb.checked = false);
                     this.updateDownloadUI();
                 }, 1500);
-            } catch (e) { statusText.innerText = "Error!"; }
+            } catch (e) { 
+                statusText.innerText = "Download Failed";
+                console.error(e);
+            }
         },
 
         updateDownloadUI() {
             const checked = document.querySelectorAll('.session-row-check:checked');
-            const btn = document.getElementById('vault-download-btn');
             const allChecks = document.querySelectorAll('.session-row-check');
+            const btn = document.getElementById('vault-download-btn');
             
             document.getElementById('vault-selected-count').innerText = checked.length;
             btn.disabled = checked.length === 0;
-            btn.className = checked.length > 0 ? "bg-teal-500 text-white px-5 py-2 rounded-lg font-bold cursor-pointer" : "bg-slate-300 text-white px-5 py-2 rounded-lg font-bold cursor-not-allowed";
+            btn.className = checked.length > 0 ? "bg-teal-500 text-white px-5 py-2 rounded-lg font-bold cursor-pointer text-xs uppercase" : "bg-slate-300 text-white px-5 py-2 rounded-lg font-bold cursor-not-allowed text-xs uppercase";
             
             if (allChecks.length > 0) {
                 document.getElementById('vault-select-all').checked = (checked.length === allChecks.length);
@@ -262,6 +292,8 @@
     };
 
     window.SessionModule = SessionModule;
+    window.onload = () => SessionModule.init();
+    // Safety for dynamic module loading
     SessionModule.init();
 })();
 </script>
