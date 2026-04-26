@@ -15,6 +15,7 @@
         .form-group { margin-bottom: 15px; }
         label { display: block; font-size: 11px; font-weight: 800; color: #4a5568; text-transform: uppercase; margin-bottom: 5px; }
         input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; background: white; }
+        select:disabled { background: #f1f5f9; cursor: not-allowed; color: #94a3b8; }
         .basket-wrap { margin-top: 20px; background: var(--bg-soft); border-radius: 8px; padding: 10px; border: 1px solid var(--border); }
         .basket-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .basket-table th { text-align: left; color: #718096; padding: 8px; border-bottom: 2px solid var(--border); font-size: 10px; }
@@ -43,13 +44,13 @@
     <div id="entry-section" class="entry-form">
         <div class="form-group">
             <label>1. Select Parent</label>
-            <select id="parent-select" onchange="handleParentSelection(this.value)">
+            <select id="parent-select" onchange="handleParentChange(this.value)">
                 <option value="">-- Select Parent --</option>
             </select>
         </div>
         <div class="form-group">
             <label>2. Select Student</label>
-            <select id="student-select" onchange="loadTeachers()" disabled>
+            <select id="student-select" disabled onchange="handleStudentChange(this.value)">
                 <option value="">-- Select Parent First --</option>
             </select>
         </div>
@@ -81,7 +82,7 @@
     let mediaUrl = "";
     let basket = [];
     
-    // ENFORCING ATIMONAN IDENTITY (ID 24)
+    // HARD RESET & ENFORCE ATIMONAN (ID 24)
     localStorage.setItem('locked_franchise_id', '24');
     localStorage.setItem('locked_franchise_name', 'Atimonan');
     localStorage.setItem('nestmind_f_id', '24');
@@ -90,30 +91,6 @@
 
     const fId = 24; 
     const slug = "atimonan";
-
-    // FETCH TEACHERS: Now triggered only after student selection
-    async function loadTeachers() {
-        const tSel = document.getElementById('teacher-select');
-        const sSel = document.getElementById('student-select');
-        
-        if (!sSel.value) return;
-        
-        tSel.innerHTML = '<option value="">Loading Teachers...</option>';
-        tSel.disabled = false;
-
-        try {
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?field_name=franchise_id&field_value=${fId}`);
-            const data = await resp.json();
-            tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
-            data.forEach(t => {
-                const fullName = `${t.first_name} ${t.last_name}`;
-                tSel.innerHTML += `<option value="${fullName}">${fullName}</option>`;
-            });
-        } catch (e) { 
-            console.error("Teacher fetch issue");
-            tSel.innerHTML = '<option value="">Error Loading</option>';
-        }
-    }
 
     function handleImageSelect(input) {
         if (input.files && input.files[0]) {
@@ -138,10 +115,12 @@
             const result = await upResp.json();
             mediaUrl = result.access_url || result.url || result.x1?.access_url;
 
+            // STEP 1: ONLY fetch parents
             await fetchParents();
+            
             document.getElementById('upload-btn').style.display = 'none';
             document.getElementById('entry-section').style.display = 'block';
-            status.innerText = "PHOTO SAVED. SELECT PARENT.";
+            status.innerText = "PHOTO SAVED. START WITH PARENT.";
         } catch (e) { status.innerText = "UPLOAD FAILED."; }
     }
 
@@ -157,29 +136,54 @@
         } catch (e) { console.error("Parent lookup failed"); }
     }
 
-    async function handleParentSelection(pId) {
+    async function handleParentChange(pId) {
         const sSel = document.getElementById('student-select');
         const tSel = document.getElementById('teacher-select');
         
-        if (!pId) {
-            sSel.disabled = true;
-            sSel.innerHTML = '<option value="">-- Select Parent First --</option>';
-            tSel.disabled = true;
-            tSel.innerHTML = '<option value="">-- Select Student First --</option>';
-            return;
-        }
+        // Reset and Disable downstream
+        sSel.innerHTML = '<option value="">-- Select Parent First --</option>';
+        sSel.disabled = true;
+        tSel.innerHTML = '<option value="">-- Select Student First --</option>';
+        tSel.disabled = true;
 
-        sSel.disabled = false;
-        sSel.innerHTML = '<option>Filtering Students...</option>';
-        
+        if (!pId) return;
+
+        // STEP 2: Fetch Students for this parent
         try {
+            sSel.innerHTML = '<option>Loading Students...</option>';
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?field_name=parent_id&field_value=${pId}`);
             const data = await resp.json();
+            
             sSel.innerHTML = '<option value="">-- Select Student --</option>';
             data.forEach(s => {
                 sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
             });
+            sSel.disabled = false;
         } catch (e) { console.error("Student fetch error"); }
+    }
+
+    async function handleStudentChange(sId) {
+        const tSel = document.getElementById('teacher-select');
+        
+        if (!sId) {
+            tSel.innerHTML = '<option value="">-- Select Student First --</option>';
+            tSel.disabled = true;
+            return;
+        }
+
+        // STEP 3: Fetch Teachers now that record is being built
+        try {
+            tSel.innerHTML = '<option>Loading Teachers...</option>';
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?field_name=franchise_id&field_value=${fId}`);
+            const data = await resp.json();
+            
+            tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
+            data.forEach(t => {
+                const fullName = `${t.first_name} ${t.last_name}`;
+                tSel.innerHTML += `<option value="${fullName}">${fullName}</option>`;
+            });
+            tSel.disabled = false;
+        } catch (e) { console.error("Teacher fetch issue"); }
     }
 
     function addEntryToBasket() {
@@ -188,9 +192,7 @@
         const tSel = document.getElementById('teacher-select');
         const amtInput = document.getElementById('amount-input');
         
-        if (!pSel.value || !sSel.value || !amtInput.value || !tSel.value) {
-            return alert("Please select parent, student, teacher, and enter amount.");
-        }
+        if (!sSel.value || !amtInput.value || !tSel.value) return alert("Complete all fields before adding.");
 
         basket.push({
             parent_id: parseInt(pSel.value),
@@ -203,9 +205,10 @@
         });
         
         renderBasket();
-        // Reset only values that change per row entry
-        sSel.value = "";
-        tSel.value = "";
+        
+        // Reset student and teacher for next entry (parent usually stays same for batch)
+        sSel.value = '';
+        tSel.value = '';
         tSel.disabled = true;
         amtInput.value = '';
     }
