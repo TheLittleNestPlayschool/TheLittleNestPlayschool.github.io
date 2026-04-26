@@ -124,6 +124,7 @@
         },
 
         toProperCase(str) {
+            if (!str) return "";
             return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
         },
 
@@ -132,7 +133,7 @@
             grid.innerHTML = '';
             let currentSection = "";
             this.schema.fields.forEach(f => {
-                // Skip system/read-only fields and dates in the edit form
+                // Skip system fields and dates in the edit form
                 if (f.id === 'id' || f.id === 'franchise_id' || f.id === 'created_at' || f.label.toLowerCase().includes('date')) return;
                 
                 if (f.section && f.section !== currentSection) {
@@ -141,7 +142,6 @@
                 }
                 const spanClass = f.width === 'full' || f.type === 'textarea' ? 'col-span-full' : 'col-span-1';
                 
-                // Fields that should be Proper Case get the 'standardize' class
                 const isProperField = f.type === 'text' || f.type === 'textarea';
                 const inputClass = isProperField ? "standardize" : "";
 
@@ -241,16 +241,25 @@
                     const el = document.getElementById(f.id);
                     if (el && f.id !== 'id' && !f.readonly) {
                         let val = (f.type === 'bool' || f.type === 'checkbox') ? el.checked : el.value;
-                        // Proper case logic for text fields (excluding emails)
+                        
+                        // Handle Proper Case formatting and clearing fields with spaces
                         if (typeof val === 'string' && f.type !== 'email') {
-                            val = this.toProperCase(val.trim());
+                            const trimmedVal = val.trim();
+                            // If trimmed value is empty, send empty string to clear the field.
+                            // Otherwise, apply Proper Case.
+                            val = (trimmedVal === "") ? "" : this.toProperCase(trimmedVal);
                         }
                         payload[f.id] = val;
                     }
                 });
                 
                 const url = id ? `${window.NEST_ENDPOINTS.parent.list}/${id}?access_key=${accessKey}` : `${window.NEST_ENDPOINTS.parent.list}?access_key=${accessKey}`;
-                const res = await fetch(url, { method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const res = await fetch(url, { 
+                    method: id ? 'PATCH' : 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
+                
                 if (res.ok) { this.closeModal(); this.init(); }
             };
         },
