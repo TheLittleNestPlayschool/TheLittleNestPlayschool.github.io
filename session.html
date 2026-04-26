@@ -1,235 +1,222 @@
-<style>
-    .vault-card { transition: all 0.2s ease; border: 1px solid #e2e8f0; }
-    .vault-card:hover { transform: translateY(-2px); border-color: #00d1b2; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-    #session-grid > div:nth-child(6n+4), #session-grid > div:nth-child(6n+5), #session-grid > div:nth-child(6n+6) { background-color: #f8fafc !important; }
-    .session-vault-item:hover { background-color: #f1f5f9 !important; }
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-    #vault-progress-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 9999; align-items: center; justify-content: center; padding: 20px; }
-</style>
+<link rel="stylesheet" href="../nest_style.css">
+<script src="../api_config.js"></script>
+<script src="../security.js"></script>
 
-<div id="vault-progress-overlay">
-    <div class="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl text-center">
-        <h2 class="text-sm font-black uppercase tracking-widest text-slate-400 mb-2">NestMind Download Manager</h2>
-        <p id="progress-status" class="text-xs font-bold text-slate-600 uppercase mb-6">Preparing files...</p>
-        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4">
-            <div id="progress-bar" class="bg-teal-500 h-full w-0 transition-all duration-300"></div>
-        </div>
-        <div id="file-list-debug" class="text-[10px] font-mono text-slate-400 bg-slate-50 p-3 rounded border border-slate-100 text-left max-h-32 overflow-y-auto custom-scrollbar mb-2"></div>
-        <p class="text-[9px] text-amber-600 font-bold uppercase italic">Please do not close this window until complete.</p>
-    </div>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-family: 'Inter', sans-serif;">
+    <h1 style="margin:0; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; color: #1e293b;">Session Master List</h1>
+    <button id="btn-add-session" onclick="openNewSessionModal()" style="display:none; background:#00d1b2; color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">+ ADD NEW SESSION</button>
 </div>
 
-<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-    <div>
-        <div class="flex items-center gap-2 mb-1">
-            <button id="vault-back-btn" onclick="SessionModule.goBack()" class="hidden hover:bg-slate-200 p-1 rounded-md transition-colors">⬅️</button>
-            <h1 id="vault-title" class="text-2xl font-black text-slate-800 uppercase tracking-tight">Resource Vault</h1>
-        </div>
-        <p id="vault-subtitle" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Select a category to begin</p>
-    </div>
-    
-    <div id="vault-controls" class="hidden flex flex-wrap gap-2 w-full md:w-auto">
-        <div class="flex items-center gap-2 bg-white border border-slate-300 rounded-lg p-1 shadow-sm w-full md:w-auto">
-            <label class="flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-md cursor-pointer hover:bg-slate-100 transition-all border border-slate-200">
-                <input type="checkbox" id="vault-select-all" class="w-3.5 h-3.5 accent-teal-500">
-                <span class="text-[10px] font-black text-slate-700 uppercase">All</span>
-            </label>
-            <input type="text" id="vault-search" placeholder="Search files..." class="pl-2 pr-2 py-1.5 text-xs outline-none w-32 md:w-48 bg-transparent">
-        </div>
-        <button id="vault-download-btn" disabled class="bg-slate-300 text-white px-5 py-2 rounded-lg font-bold transition-all text-xs uppercase tracking-wider shadow-md cursor-not-allowed">
-            Download (<span id="vault-selected-count">0</span>)
-        </button>
-    </div>
+<div id="ho-filter-container" style="display: none; background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; align-items: center; gap: 15px; border: 1px solid #e2e8f0; font-family: 'Inter', sans-serif;">
+    <span style="font-size: 0.7rem; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Identity Filter:</span>
+    <select id="franchise-filter" onchange="loadSessions()" style="padding: 8px 15px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; min-width: 250px; font-weight: 800; color: #1e293b;">
+        <option value="all">MASTER NETWORK VIEW</option>
+    </select>
 </div>
 
-<div id="vault-main-container" class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[400px]">
-    <div id="session-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 max-h-[70vh] overflow-y-auto custom-scrollbar"></div>
+<div id="session-container" style="display: flex; flex-direction: column; gap: 10px;">
+    <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff; font-family: sans-serif; color: #94a3b8; font-style: italic;">Synchronizing Global Logic...</div>
+</div>
+
+<div id="modal-session" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.9); z-index:99999; justify-content:center; align-items:center; font-family: 'Inter', sans-serif;">
+    <div style="background:white; width:500px; border-radius:12px; display:flex; flex-direction:column; max-height:90vh; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+        <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#f8fafc; display:flex; justify-content:space-between; align-items:center; border-radius: 12px 12px 0 0;">
+            <h2 id="modal-title" style="margin:0; font-size:1rem; font-weight: 800; text-transform: uppercase; color: #1e293b;">Session Editor</h2>
+            <button onclick="document.getElementById('modal-session').style.display='none'" style="cursor:pointer; border:none; background:#e2e8f0; color: #475569; padding:5px 12px; border-radius:6px; font-size: 10px; font-weight: 900;">CLOSE</button>
+        </div>
+        <div style="padding:20px; overflow-y:auto; flex-grow:1;">
+            <input type="hidden" id="sess-id">
+            
+            <label class="nest-label">Session Name</label>
+            <input type="text" id="sess-name" class="nest-input" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:6px;">
+
+            <label class="nest-label">Assigned Franchise</label>
+            <select id="sess-franchise-select" class="nest-input" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:6px; background:white;">
+                <option value="">Loading...</option>
+            </select>
+
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <div style="flex:1;">
+                    <label class="nest-label">Start Time</label>
+                    <input type="text" id="sess-start" placeholder="09:00 AM" class="nest-input" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px;">
+                </div>
+                <div style="flex:1;">
+                    <label class="nest-label">End Time</label>
+                    <input type="text" id="sess-end" placeholder="11:30 AM" class="nest-input" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px;">
+                </div>
+            </div>
+
+            <label class="nest-label">Max Students</label>
+            <input type="number" id="sess-max" class="nest-input" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:6px;">
+
+            <label class="nest-label">Scheduled Days</label>
+            <input type="text" id="sess-days" placeholder="Mon, Wed, Fri" class="nest-input" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:6px;">
+
+            <label class="nest-label">Description</label>
+            <textarea id="sess-desc" class="nest-input" style="width:100%; padding:10px; height:60px; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:15px;"></textarea>
+
+            <div style="display: flex; gap: 20px; background: #f1f5f9; padding: 15px; border-radius: 8px;">
+                <label style="display:flex; align-items:center; gap:10px; font-weight:900; font-size:0.7rem; cursor:pointer; color: #334155;">
+                    <input type="checkbox" id="sess-active"> SESSION ACTIVE
+                </label>
+                <label style="display:flex; align-items:center; gap:10px; font-weight:900; font-size:0.7rem; cursor:pointer; color: #00d1b2;">
+                    <input type="checkbox" id="sess-display"> SHOW IN CATALOG
+                </label>
+            </div>
+        </div>
+        <div style="padding:15px 20px; border-top:1px solid #eee; background:#f8fafc; border-radius: 0 0 12px 12px;">
+            <button onclick="submitSession()" style="background:#1e293b; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:6px; width:100%; text-transform: uppercase;">Save Session</button>
+        </div>
+    </div>
 </div>
 
 <script>
 (function() {
-    const SessionModule = {
-        sessionData: [],
-        formData: [],
-        currentView: 'root', 
-        currentListType: null,
-        endpoints: {
-            sessions: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details',
-            forms: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/forms_details',
-            bulk: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/get_bulk_sessions'
-        },
+    const isHO = localStorage.getItem('is_head_office') === 'true';
+    const lockedFid = localStorage.getItem('locked_franchise_id');
+    let franchiseList = [];
 
-        async init() {
-            try {
-                const [sRes, fRes] = await Promise.all([
-                    fetch(this.endpoints.sessions),
-                    fetch(this.endpoints.forms)
-                ]);
-                this.sessionData = await sRes.json();
-                this.formData = await fRes.json();
-                this.renderRoot();
-                this.setupListeners();
-            } catch (err) {
-                document.getElementById('session-grid').innerHTML = '<div class="col-span-full p-10 text-center text-red-400 font-bold uppercase text-[10px]">Sync Error</div>';
-            }
-        },
-
-        renderRoot() {
-            this.currentView = 'root';
-            this.currentListType = null;
-            document.getElementById('vault-back-btn').classList.add('hidden');
-            document.getElementById('vault-controls').classList.add('hidden');
-            document.getElementById('vault-title').innerText = "Resource Vault";
-            const container = document.getElementById('session-grid');
-            container.className = "grid grid-cols-1 md:grid-cols-3 gap-6 p-8";
-            container.innerHTML = `
-                <div onclick="SessionModule.showCurriculumBlocks()" class="vault-card cursor-pointer bg-slate-50 p-8 rounded-2xl text-center">
-                    <div class="text-4xl mb-4">📚</div>
-                    <h3 class="font-black text-slate-800 uppercase">Curriculum</h3>
-                    <p class="text-[10px] text-slate-400 font-bold">Sessions 1 - 300</p>
-                </div>
-                <div onclick="SessionModule.showList('summer')" class="vault-card cursor-pointer bg-slate-50 p-8 rounded-2xl text-center">
-                    <div class="text-4xl mb-4">☀️</div>
-                    <h3 class="font-black text-slate-800 uppercase">Summer Program</h3>
-                    <p class="text-[10px] text-slate-400 font-bold">Sessions S1 - S20</p>
-                </div>
-                <div onclick="SessionModule.showList('forms')" class="vault-card cursor-pointer bg-slate-50 p-8 rounded-2xl text-center">
-                    <div class="text-4xl mb-4">📂</div>
-                    <h3 class="font-black text-slate-800 uppercase">Admin Forms</h3>
-                    <p class="text-[10px] text-slate-400 font-bold">Operations & HR</p>
-                </div>`;
-        },
-
-        showCurriculumBlocks() {
-            this.currentView = 'curriculum_blocks';
-            document.getElementById('vault-back-btn').classList.remove('hidden');
-            document.getElementById('vault-title').innerText = "Curriculum Blocks";
-            const container = document.getElementById('session-grid');
-            container.className = "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 p-8";
-            let html = '';
-            for(let i=0; i < 300; i += 20) {
-                const start = i+1, end = i+20;
-                html += `<div onclick="SessionModule.showList('block', ${start}, ${end})" class="vault-card cursor-pointer bg-white p-4 rounded-xl text-center border border-slate-200">
-                    <div class="text-xl mb-2">📦</div><h4 class="text-[11px] font-black uppercase">Block</h4><p class="text-[10px] text-teal-600 font-bold">${start}-${end}</p></div>`;
-            }
-            container.innerHTML = html;
-        },
-
-        showList(type, start, end) {
-            this.currentView = 'list';
-            this.currentListType = type;
-            document.getElementById('vault-back-btn').classList.remove('hidden');
-            document.getElementById('vault-controls').classList.remove('hidden');
+    const fetchFranchises = async () => {
+        try {
+            const authParams = SecurityManager.getAuthQuery();
+            const res = await fetch(window.NEST_ENDPOINTS.franchise.list + authParams);
+            const data = await res.json();
+            franchiseList = Array.isArray(data) ? data : (data.items || []);
             
-            const container = document.getElementById('session-grid');
-            container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 max-h-[70vh] overflow-y-auto custom-scrollbar";
+            const filterSelect = document.getElementById('franchise-filter');
+            const editorSelect = document.getElementById('sess-franchise-select');
+            const optionsHtml = franchiseList.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
             
-            let list = [], title = "";
-            if (type === 'block') {
-                title = `Sessions ${start}-${end}`;
-                list = this.sessionData.filter(s => s.session_num >= start && s.session_num <= end && !s.session_num.toString().startsWith('S'));
-            } else if (type === 'summer') {
-                title = "Summer Program";
-                list = this.sessionData.filter(s => s.session_num.toString().startsWith('S'));
-            } else if (type === 'forms') {
-                title = "Admin Forms";
-                list = this.formData;
+            if (isHO) {
+                document.getElementById('ho-filter-container').style.display = 'flex';
+                document.getElementById('btn-add-session').style.display = 'block';
+                filterSelect.innerHTML = '<option value="all">MASTER NETWORK VIEW</option>' + optionsHtml;
             }
-            document.getElementById('vault-title').innerText = title;
+            editorSelect.innerHTML = optionsHtml;
+        } catch (e) { console.error("Franchise sync failed", e); }
+    };
 
-            container.innerHTML = list.map(item => {
-                const label = type === 'forms' ? 'FORM' : (item.session_num.toString().startsWith('S') ? 'SUMMER' : 'SESSION');
-                const num = type === 'forms' ? item.id : item.session_num;
-                const desc = type === 'forms' ? item.form_description : item.session_description;
-                const name = type === 'forms' ? item.form_name : item.session_description;
+    window.loadSessions = async () => {
+        const container = document.getElementById('session-container');
+        const hoFilterVal = document.getElementById('franchise-filter').value;
+        const authParams = SecurityManager.getAuthQuery();
+        
+        try {
+            const res = await fetch(window.NEST_ENDPOINTS.session.list + authParams + '&t=' + Date.now());
+            const data = await res.json();
+            let list = Array.isArray(data) ? data : (data.items || []);
 
+            list.sort((a, b) => a.franchise_id - b.franchise_id);
+
+            if (!isHO) {
+                list = list.filter(s => s.franchise_id.toString() === lockedFid && s.display === true);
+            } else if (hoFilterVal !== 'all') {
+                list = list.filter(s => s.franchise_id.toString() === hoFilterVal);
+            }
+
+            if (list.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff; font-family: 'Inter', sans-serif; color: #94a3b8; font-weight: bold; border-radius: 8px;">No matching sessions available.</div>`;
+                return;
+            }
+
+            container.innerHTML = list.map(s => {
+                const franchise = franchiseList.find(f => f.id === s.franchise_id);
+                const franchiseDisplay = franchise ? (franchise.location_name || franchise.name) : `ID: ${s.franchise_id}`;
+                
                 return `
-                <div class="session-vault-item flex items-start gap-3 p-4 border-b border-r border-slate-100 transition-all bg-white">
-                    <input type="checkbox" class="session-row-check w-4 h-4 mt-0.5 accent-teal-500 cursor-pointer" value="${item.id}">
-                    <div class="min-w-0">
-                        <span class="text-[10px] font-black text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 uppercase">${label} ${num}</span>
-                        <p class="text-[11px] text-slate-600 font-medium line-clamp-2 mt-1">${desc || 'No description'}</p>
+                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px 18px; display:flex; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.05); font-family: 'Inter', sans-serif; white-space: nowrap; opacity: ${s.display ? '1' : '0.6'}; transition: border-color 0.2s ease;">
+                    <div style="width:110px; flex-shrink:0;">
+                        <span style="font-size:0.6rem; background:#f1f5f9; color:#475569; padding:4px 10px; border-radius:99px; font-weight: 900; text-transform:uppercase;">${franchiseDisplay}</span>
+                    </div>
+                    <div style="flex-shrink:0; margin-right: 25px; min-width: 250px; display: flex; align-items: center; gap: 8px;">
+                        <h3 style="margin:0; font-size:0.95rem; font-weight: 800; color:#1e293b;">${s.name}</h3>
+                        ${!s.display ? '<span style="font-size:0.55rem; background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; font-weight:900;">HIDDEN</span>' : ''}
+                    </div>
+                    <div style="flex-grow:1; overflow:hidden; margin-right: 20px;">
+                        <span style="font-size:0.75rem; color:#94a3b8; font-weight: 500; overflow:hidden; text-overflow:ellipsis; display:block;">${s.description || ''}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:20px; flex-shrink:0;">
+                        <div style="font-size:0.65rem; font-weight:900; color:${s.is_active ? '#00d1b2' : '#ef4444'}; text-transform:uppercase; width:60px; text-align:right;">
+                            ${s.is_active ? '● ACTIVE' : '○ INACTIVE'}
+                        </div>
+                        <div style="display:${isHO ? 'flex' : 'none'}; gap:8px;">
+                            <button onclick="editSession(${s.id})" style="border:1px solid #cbd5e1; color:#1e293b; background:#fff; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:900; font-size:0.65rem;">EDIT</button>
+                            <button onclick="deleteSession(${s.id})" style="border:none; color:#ef4444; background:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:900; font-size:0.65rem;">DELETE</button>
+                        </div>
                     </div>
                 </div>`;
             }).join('');
-            this.updateDownloadUI();
-        },
+        } catch(e) { console.error("Session load failed", e); }
+    };
 
-        goBack() {
-            if (this.currentView === 'list' && this.currentListType === 'block') this.showCurriculumBlocks();
-            else this.renderRoot();
-        },
+    window.openNewSessionModal = () => {
+        document.getElementById('modal-title').innerText = "Add New Session";
+        document.getElementById('sess-id').value = "";
+        document.getElementById('sess-name').value = "";
+        document.getElementById('sess-franchise-select').value = franchiseList[0]?.id || "";
+        document.getElementById('sess-start').value = "";
+        document.getElementById('sess-end').value = "";
+        document.getElementById('sess-max').value = "";
+        document.getElementById('sess-days').value = "";
+        document.getElementById('sess-desc').value = "";
+        document.getElementById('sess-active').checked = true;
+        document.getElementById('sess-display').checked = true;
+        document.getElementById('modal-session').style.display = 'flex';
+    };
 
-        setupListeners() {
-            document.getElementById('vault-select-all').onchange = (e) => {
-                document.querySelectorAll('.session-row-check').forEach(cb => cb.checked = e.target.checked);
-                this.updateDownloadUI();
-            };
-            document.getElementById('session-grid').onchange = (e) => {
-                if(e.target.classList.contains('session-row-check')) this.updateDownloadUI();
-            };
-            document.getElementById('vault-download-btn').onclick = () => this.handleDownload();
-        },
+    window.editSession = async (id) => {
+        const authParams = SecurityManager.getAuthQuery();
+        const res = await fetch(`${window.NEST_ENDPOINTS.session.list}/${id}${authParams}`);
+        const s = await res.json();
+        document.getElementById('modal-title').innerText = "Edit Session";
+        document.getElementById('sess-id').value = s.id;
+        document.getElementById('sess-name').value = s.name;
+        document.getElementById('sess-franchise-select').value = s.franchise_id;
+        document.getElementById('sess-start').value = s.start_time_text;
+        document.getElementById('sess-end').value = s.end_time_text;
+        document.getElementById('sess-max').value = s.max_students;
+        document.getElementById('sess-days').value = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : s.scheduled_days;
+        document.getElementById('sess-desc').value = s.description;
+        document.getElementById('sess-active').checked = s.is_active;
+        document.getElementById('sess-display').checked = s.display;
+        document.getElementById('modal-session').style.display = 'flex';
+    };
 
-        async handleDownload() {
-            const selectedIds = Array.from(document.querySelectorAll('.session-row-check:checked')).map(cb => parseInt(cb.value));
-            const overlay = document.getElementById('vault-progress-overlay');
-            const statusText = document.getElementById('progress-status');
-            const fileList = document.getElementById('file-list-debug');
-            const progressBar = document.getElementById('progress-bar');
-
-            overlay.style.display = 'flex';
-            fileList.innerHTML = "";
-            
-            try {
-                // Determine if we are downloading from forms-vault or tlnp-sessions
-                const isFormView = this.currentListType === 'forms';
-                const bucket = isFormView ? 'forms-vault' : 'tlnp-sessions';
-                
-                const res = await fetch(this.endpoints.bulk, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        session_id: selectedIds,
-                        vault_type: bucket // Logic for Xano to switch buckets
-                    })
-                });
-                const finalLinks = await res.json();
-
-                for (let i = 0; i < finalLinks.length; i++) {
-                    const url = typeof finalLinks[i] === 'object' ? finalLinks[i].url : finalLinks[i];
-                    const fileName = decodeURIComponent(url.split('/').pop().split('?')[0]);
-                    
-                    statusText.innerText = `Downloading ${i + 1} of ${finalLinks.length}`;
-                    progressBar.style.width = `${((i + 1) / finalLinks.length) * 100}%`;
-                    fileList.innerHTML += `<div class="mb-1">✓ ${fileName}</div>`;
-                    fileList.scrollTop = fileList.scrollHeight;
-
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.setAttribute('download', fileName);
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    await new Promise(r => setTimeout(r, 800));
-                }
-                statusText.innerText = "Complete!";
-                setTimeout(() => { overlay.style.display = 'none'; this.renderRoot(); }, 1500);
-            } catch (e) { statusText.innerText = "Error!"; }
-        },
-
-        updateDownloadUI() {
-            const checked = document.querySelectorAll('.session-row-check:checked');
-            const btn = document.getElementById('vault-download-btn');
-            document.getElementById('vault-selected-count').innerText = checked.length;
-            btn.disabled = checked.length === 0;
-            btn.className = checked.length > 0 ? "bg-teal-500 text-white px-5 py-2 rounded-lg font-bold cursor-pointer" : "bg-slate-300 text-white px-5 py-2 rounded-lg font-bold cursor-not-allowed";
+    window.submitSession = async () => {
+        const id = document.getElementById('sess-id').value;
+        const authParams = SecurityManager.getAuthQuery();
+        const payload = {
+            name: document.getElementById('sess-name').value,
+            franchise_id: parseInt(document.getElementById('sess-franchise-select').value),
+            start_time_text: document.getElementById('sess-start').value,
+            end_time_text: document.getElementById('sess-end').value,
+            max_students: parseInt(document.getElementById('sess-max').value),
+            scheduled_days: document.getElementById('sess-days').value.split(',').map(d => d.trim()).filter(d => d !== ""),
+            description: document.getElementById('sess-desc').value,
+            is_active: document.getElementById('sess-active').checked,
+            display: document.getElementById('sess-display').checked
+        };
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `${window.NEST_ENDPOINTS.session.list}/${id}${authParams}` : `${window.NEST_ENDPOINTS.session.list}${authParams}`;
+        const res = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            document.getElementById('modal-session').style.display = 'none';
+            loadSessions();
         }
     };
 
-    window.SessionModule = SessionModule;
-    SessionModule.init();
+    window.deleteSession = async (id) => {
+        if(confirm("Confirm deletion?")) {
+            const authParams = SecurityManager.getAuthQuery();
+            await fetch(`${window.NEST_ENDPOINTS.session.list}/${id}${authParams}`, { method: 'DELETE' });
+            loadSessions();
+        }
+    };
+
+    (async () => { await fetchFranchises(); loadSessions(); })();
 })();
 </script>
