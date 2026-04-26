@@ -1,6 +1,7 @@
 <style>
     .vault-card { transition: all 0.2s ease; border: 1px solid #e2e8f0; }
     .vault-card:hover { transform: translateY(-2px); border-color: #00d1b2; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    /* Original zebra striping logic maintained */
     #session-grid > div:nth-child(6n+4), #session-grid > div:nth-child(6n+5), #session-grid > div:nth-child(6n+6) { background-color: #f8fafc !important; }
     .session-vault-item:hover { background-color: #f1f5f9 !important; }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -127,6 +128,8 @@
             container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 max-h-[70vh] overflow-y-auto custom-scrollbar";
             
             let list = [], title = "";
+            const search = (document.getElementById('vault-search')?.value || '').toLowerCase();
+
             if (type === 'block') {
                 title = `Sessions ${start}-${end}`;
                 list = this.sessionData.filter(s => s.session_num >= start && s.session_num <= end && !s.session_num.toString().startsWith('S'));
@@ -137,19 +140,26 @@
                 title = "Admin Forms";
                 list = this.formData;
             }
+
+            // Apply Search Logic (maintained)
+            list = list.filter(item => {
+                const text = type === 'forms' ? (item.form_description || '') : (item.session_description || '');
+                const num = type === 'forms' ? '' : item.session_num.toString();
+                return text.toLowerCase().includes(search) || num.includes(search);
+            });
+
             document.getElementById('vault-title').innerText = title;
 
             container.innerHTML = list.map(item => {
                 const label = type === 'forms' ? 'FORM' : (item.session_num.toString().startsWith('S') ? 'SUMMER' : 'SESSION');
-                const num = type === 'forms' ? item.id : item.session_num;
+                const numDisplay = type === 'forms' ? item.id : item.session_num;
                 const desc = type === 'forms' ? item.form_description : item.session_description;
-                const name = type === 'forms' ? item.form_name : item.session_description;
 
                 return `
                 <div class="session-vault-item flex items-start gap-3 p-4 border-b border-r border-slate-100 transition-all bg-white">
                     <input type="checkbox" class="session-row-check w-4 h-4 mt-0.5 accent-teal-500 cursor-pointer" value="${item.id}">
                     <div class="min-w-0">
-                        <span class="text-[10px] font-black text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 uppercase">${label} ${num}</span>
+                        <span class="text-[10px] font-black text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 uppercase">${label} ${numDisplay}</span>
                         <p class="text-[11px] text-slate-600 font-medium line-clamp-2 mt-1">${desc || 'No description'}</p>
                     </div>
                 </div>`;
@@ -163,6 +173,20 @@
         },
 
         setupListeners() {
+            document.getElementById('vault-search').oninput = () => {
+                // To maintain original logic, we detect current params and refresh list
+                const title = document.getElementById('vault-title').innerText;
+                const range = title.match(/\d+-\d+/);
+                if (range) {
+                    const parts = range[0].split('-');
+                    this.showList('block', parseInt(parts[0]), parseInt(parts[1]));
+                } else if (title.includes('Summer')) {
+                    this.showList('summer');
+                } else if (title.includes('Admin')) {
+                    this.showList('forms');
+                }
+            };
+
             document.getElementById('vault-select-all').onchange = (e) => {
                 document.querySelectorAll('.session-row-check').forEach(cb => cb.checked = e.target.checked);
                 this.updateDownloadUI();
@@ -184,7 +208,6 @@
             fileList.innerHTML = "";
             
             try {
-                // Determine if we are downloading from forms-vault or tlnp-sessions
                 const isFormView = this.currentListType === 'forms';
                 const bucket = isFormView ? 'forms-vault' : 'tlnp-sessions';
                 
@@ -193,7 +216,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         session_id: selectedIds,
-                        vault_type: bucket // Logic for Xano to switch buckets
+                        vault_type: bucket 
                     })
                 });
                 const finalLinks = await res.json();
@@ -216,16 +239,27 @@
                     await new Promise(r => setTimeout(r, 800));
                 }
                 statusText.innerText = "Complete!";
-                setTimeout(() => { overlay.style.display = 'none'; this.renderRoot(); }, 1500);
+                setTimeout(() => { 
+                    overlay.style.display = 'none'; 
+                    document.getElementById('vault-select-all').checked = false;
+                    document.querySelectorAll('.session-row-check').forEach(cb => cb.checked = false);
+                    this.updateDownloadUI();
+                }, 1500);
             } catch (e) { statusText.innerText = "Error!"; }
         },
 
         updateDownloadUI() {
             const checked = document.querySelectorAll('.session-row-check:checked');
             const btn = document.getElementById('vault-download-btn');
+            const allChecks = document.querySelectorAll('.session-row-check');
+            
             document.getElementById('vault-selected-count').innerText = checked.length;
             btn.disabled = checked.length === 0;
             btn.className = checked.length > 0 ? "bg-teal-500 text-white px-5 py-2 rounded-lg font-bold cursor-pointer" : "bg-slate-300 text-white px-5 py-2 rounded-lg font-bold cursor-not-allowed";
+            
+            if (allChecks.length > 0) {
+                document.getElementById('vault-select-all').checked = (checked.length === allChecks.length);
+            }
         }
     };
 
