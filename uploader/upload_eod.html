@@ -82,7 +82,7 @@
     let mediaUrl = "";
     let basket = [];
     
-    // HARD RESET & ENFORCE ATIMONAN (ID 24)
+    // ATIMONAN IDENTITY ENFORCEMENT
     localStorage.setItem('locked_franchise_id', '24');
     localStorage.setItem('locked_franchise_name', 'Atimonan');
     localStorage.setItem('nestmind_f_id', '24');
@@ -115,12 +115,12 @@
             const result = await upResp.json();
             mediaUrl = result.access_url || result.url || result.x1?.access_url;
 
-            // STEP 1: ONLY fetch parents
+            // WATERFALL START: ONLY load parents. No students, No teachers yet.
             await fetchParents();
             
             document.getElementById('upload-btn').style.display = 'none';
             document.getElementById('entry-section').style.display = 'block';
-            status.innerText = "PHOTO SAVED. START WITH PARENT.";
+            status.innerText = "PHOTO SAVED. SELECT PARENT.";
         } catch (e) { status.innerText = "UPLOAD FAILED."; }
     }
 
@@ -140,7 +140,7 @@
         const sSel = document.getElementById('student-select');
         const tSel = document.getElementById('teacher-select');
         
-        // Reset and Disable downstream
+        // Reset and lock downstream fields
         sSel.innerHTML = '<option value="">-- Select Parent First --</option>';
         sSel.disabled = true;
         tSel.innerHTML = '<option value="">-- Select Student First --</option>';
@@ -148,7 +148,7 @@
 
         if (!pId) return;
 
-        // STEP 2: Fetch Students for this parent
+        // WATERFALL STEP 2: Load students for the chosen parent
         try {
             sSel.innerHTML = '<option>Loading Students...</option>';
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?field_name=parent_id&field_value=${pId}`);
@@ -171,7 +171,7 @@
             return;
         }
 
-        // STEP 3: Fetch Teachers now that record is being built
+        // WATERFALL STEP 3: Load teachers now that identity is established
         try {
             tSel.innerHTML = '<option>Loading Teachers...</option>';
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?field_name=franchise_id&field_value=${fId}`);
@@ -192,7 +192,7 @@
         const tSel = document.getElementById('teacher-select');
         const amtInput = document.getElementById('amount-input');
         
-        if (!sSel.value || !amtInput.value || !tSel.value) return alert("Complete all fields before adding.");
+        if (!pSel.value || !sSel.value || !amtInput.value || !tSel.value) return alert("Complete all fields.");
 
         basket.push({
             parent_id: parseInt(pSel.value),
@@ -206,7 +206,7 @@
         
         renderBasket();
         
-        // Reset student and teacher for next entry (parent usually stays same for batch)
+        // Reset for next entry
         sSel.value = '';
         tSel.value = '';
         tSel.disabled = true;
