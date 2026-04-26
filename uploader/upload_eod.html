@@ -83,7 +83,7 @@
     let mediaUrl = "";
     let basket = [];
     
-    // ENFORCED ATIMONAN IDENTITY
+    // IDENTITY LOCK: Atimonan (ID 24)
     localStorage.setItem('locked_franchise_id', '24');
     localStorage.setItem('locked_franchise_name', 'Atimonan');
     localStorage.setItem('nestmind_f_id', '24');
@@ -129,7 +129,6 @@
         try {
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/uploader_parent?franchise_id=${fId}`);
             const data = await resp.json();
-            
             pSel.innerHTML = '<option value="">-- Select Parent --</option>';
             data.forEach(p => {
                 pSel.innerHTML += `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`;
@@ -150,10 +149,8 @@
 
         try {
             sSel.innerHTML = '<option>Loading Students...</option>';
-            // UPDATED: Now pointing to uploader_student API matching the parent logic
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/uploader_student?parent_id=${pId}&franchise_id=${fId}`);
             const data = await resp.json();
-            
             sSel.innerHTML = '<option value="">-- Select Student --</option>';
             data.forEach(s => {
                 sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
@@ -172,7 +169,8 @@
 
         try {
             tSel.innerHTML = '<option>Loading Teachers...</option>';
-            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?franchise_id=${fId}`);
+            // UPDATED: Now pointing to uploader_teacher API
+            const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/uploader_teacher?franchise_id=${fId}`);
             const data = await resp.json();
             
             tSel.innerHTML = '<option value="">-- Select Teacher --</option>';
@@ -205,7 +203,6 @@
         });
         
         renderBasket();
-        
         sSel.value = '';
         tSel.value = '';
         tSel.disabled = true;
