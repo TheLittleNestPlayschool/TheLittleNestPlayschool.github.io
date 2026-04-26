@@ -79,21 +79,22 @@
     let mediaUrl = "";
     let basket = [];
     
-    // ATIMONAN IDENTITY (Hardcoded to match image_9b7acc.png)
+    // HARD RESET & ENFORCE ATIMONAN (ID 24)
+    // Wipe the conflicting session memory immediately
+    localStorage.setItem('locked_franchise_id', '24');
+    localStorage.setItem('locked_franchise_name', 'Atimonan');
+    localStorage.setItem('nestmind_f_id', '24');
+    localStorage.setItem('nestmind_f_name', 'Atimonan');
+    localStorage.setItem('nestmind_f_slug', 'atimonan');
+
     const fId = 24; 
     const fName = "Atimonan";
     const slug = "atimonan";
 
-    // CLEANUP: Immediately enforce correct identity and wipe legacy vars
-    localStorage.setItem('locked_franchise_id', '24');
-    localStorage.setItem('locked_franchise_name', 'Atimonan');
-    localStorage.removeItem('nestmind_f_id');
-    localStorage.removeItem('nestmind_f_name');
-    localStorage.removeItem('nestmind_f_slug');
-
     async function loadTeachers() {
         const sel = document.getElementById('teacher-select');
         try {
+            // Using ID 24 for Atimonan
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?field_name=franchise_id&field_value=${fId}`);
             const data = await resp.json();
             sel.innerHTML = '<option value="">-- Select Teacher --</option>';
