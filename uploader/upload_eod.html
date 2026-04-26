@@ -115,10 +115,10 @@
             const result = await upResp.json();
             mediaUrl = result.access_url || result.url || result.x1?.access_url;
 
-            // WATERFALL START: ONLY load parents. No students, No teachers yet.
+            // WATERFALL START: Load Parents ONLY after photo is confirmed.
             await fetchParents();
             
-            document.getElementById('upload-btn').style.display = 'none';
+            document.getElementById('upload-section').style.display = 'none';
             document.getElementById('entry-section').style.display = 'block';
             status.innerText = "PHOTO SAVED. SELECT PARENT.";
         } catch (e) { status.innerText = "UPLOAD FAILED."; }
@@ -140,7 +140,6 @@
         const sSel = document.getElementById('student-select');
         const tSel = document.getElementById('teacher-select');
         
-        // Reset and lock downstream fields
         sSel.innerHTML = '<option value="">-- Select Parent First --</option>';
         sSel.disabled = true;
         tSel.innerHTML = '<option value="">-- Select Student First --</option>';
@@ -148,7 +147,7 @@
 
         if (!pId) return;
 
-        // WATERFALL STEP 2: Load students for the chosen parent
+        // WATERFALL STEP 2: Load students for the chosen parent.
         try {
             sSel.innerHTML = '<option>Loading Students...</option>';
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?field_name=parent_id&field_value=${pId}`);
@@ -171,7 +170,7 @@
             return;
         }
 
-        // WATERFALL STEP 3: Load teachers now that identity is established
+        // WATERFALL STEP 3: Load teachers only when Student is picked.
         try {
             tSel.innerHTML = '<option>Loading Teachers...</option>';
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?field_name=franchise_id&field_value=${fId}`);
@@ -192,7 +191,7 @@
         const tSel = document.getElementById('teacher-select');
         const amtInput = document.getElementById('amount-input');
         
-        if (!pSel.value || !sSel.value || !amtInput.value || !tSel.value) return alert("Complete all fields.");
+        if (!sSel.value || !amtInput.value || !tSel.value) return alert("Complete all fields.");
 
         basket.push({
             parent_id: parseInt(pSel.value),
@@ -206,7 +205,7 @@
         
         renderBasket();
         
-        // Reset for next entry
+        // Reset Student/Teacher/Amount for next entry in same batch.
         sSel.value = '';
         tSel.value = '';
         tSel.disabled = true;
