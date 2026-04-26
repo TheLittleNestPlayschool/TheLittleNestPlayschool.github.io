@@ -179,13 +179,15 @@
         document.getElementById('breadcrumb-container').classList.remove('hidden'); 
         navMenu.classList.remove('hidden');
         
-        // Hide specific items for Franchises
-        if (!isHO) {
-            const assessmentBtn = document.getElementById('menu-assessments');
-            const formsVaultBtn = document.getElementById('menu-forms-vault');
-            if (assessmentBtn) assessmentBtn.style.display = 'none';
-            if (formsVaultBtn) formsVaultBtn.style.display = 'none';
-        }
+        // Use a small timeout to ensure the DOM has finished unhiding before we manipulate specific elements
+        setTimeout(() => {
+            if (!isHO) {
+                const assessmentBtn = document.getElementById('menu-assessments');
+                const formsVaultBtn = document.getElementById('menu-forms-vault');
+                if (assessmentBtn) assessmentBtn.style.setProperty('display', 'none', 'important');
+                if (formsVaultBtn) formsVaultBtn.style.setProperty('display', 'none', 'important');
+            }
+        }, 50);
 
         if(document.getElementById('status-text')) {
             document.getElementById('status-text').innerText = "Verified: " + fname;
