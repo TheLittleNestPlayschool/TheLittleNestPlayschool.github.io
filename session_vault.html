@@ -1,7 +1,6 @@
 <style>
     .vault-card { transition: all 0.2s ease; border: 1px solid #e2e8f0; }
     .vault-card:hover { transform: translateY(-2px); border-color: #00d1b2; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-    /* Original zebra striping logic maintained */
     #session-grid > div:nth-child(6n+4), #session-grid > div:nth-child(6n+5), #session-grid > div:nth-child(6n+6) { background-color: #f8fafc !important; }
     .session-vault-item:hover { background-color: #f1f5f9 !important; }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -58,8 +57,9 @@
         currentListType: null,
         endpoints: {
             sessions: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details',
-            forms: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/forms_details',
-            bulk: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/get_bulk_sessions'
+            forms: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/forms_details',
+            bulk_sessions: 'https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/get_bulk_sessions',
+            bulk_forms: 'https://x8ki-letl-twmt.n7.xano.io/api:didN9vp2/get_bulk_forms'
         },
 
         async init() {
@@ -141,7 +141,6 @@
                 list = this.formData;
             }
 
-            // Apply Search Logic (maintained)
             list = list.filter(item => {
                 const text = type === 'forms' ? (item.form_description || '') : (item.session_description || '');
                 const num = type === 'forms' ? '' : item.session_num.toString();
@@ -174,7 +173,6 @@
 
         setupListeners() {
             document.getElementById('vault-search').oninput = () => {
-                // To maintain original logic, we detect current params and refresh list
                 const title = document.getElementById('vault-title').innerText;
                 const range = title.match(/\d+-\d+/);
                 if (range) {
@@ -209,14 +207,14 @@
             
             try {
                 const isFormView = this.currentListType === 'forms';
-                const bucket = isFormView ? 'forms-vault' : 'tlnp-sessions';
+                const endpoint = isFormView ? this.endpoints.bulk_forms : this.endpoints.bulk_sessions;
                 
-                const res = await fetch(this.endpoints.bulk, {
+                const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         session_id: selectedIds,
-                        vault_type: bucket 
+                        vault_type: isFormView ? 'forms-vault' : 'tlnp-sessions' 
                     })
                 });
                 const finalLinks = await res.json();
