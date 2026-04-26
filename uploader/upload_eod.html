@@ -79,14 +79,21 @@
     let mediaUrl = "";
     let basket = [];
     
-    const fId = Number(localStorage.getItem('nestmind_f_id'));
-    const slug = localStorage.getItem('nestmind_f_slug') || 'vault';
+    // ATIMONAN IDENTITY (Hardcoded to match image_9b7acc.png)
+    const fId = 24; 
+    const fName = "Atimonan";
+    const slug = "atimonan";
+
+    // CLEANUP: Immediately enforce correct identity and wipe legacy vars
+    localStorage.setItem('locked_franchise_id', '24');
+    localStorage.setItem('locked_franchise_name', 'Atimonan');
+    localStorage.removeItem('nestmind_f_id');
+    localStorage.removeItem('nestmind_f_name');
+    localStorage.removeItem('nestmind_f_slug');
 
     async function loadTeachers() {
-        if(!fId) return;
         const sel = document.getElementById('teacher-select');
         try {
-            // UPDATED: Using field_name and field_value pattern
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:xLIeVP2e/teacher?field_name=franchise_id&field_value=${fId}`);
             const data = await resp.json();
             sel.innerHTML = '<option value="">-- Select Teacher --</option>';
@@ -131,7 +138,6 @@
     async function fetchParents() {
         const pSel = document.getElementById('parent-select');
         try {
-            // UPDATED: Using field_name and field_value pattern
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent?field_name=franchise_id&field_value=${fId}`);
             const parents = await resp.json();
             pSel.innerHTML = '<option value="">-- Select Parent --</option>';
@@ -146,7 +152,6 @@
         if (!pId) return;
         sSel.innerHTML = '<option>Filtering...</option>';
         try {
-            // UPDATED: Using field_name and field_value pattern for parent_id
             const resp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student?field_name=parent_id&field_value=${pId}`);
             const data = await resp.json();
             sSel.innerHTML = '';
