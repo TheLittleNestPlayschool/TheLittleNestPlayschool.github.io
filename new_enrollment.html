@@ -106,7 +106,7 @@
                 <div class="profile-item"><div class="profile-label">Name:</div><div id="disp-s-name" class="profile-value"></div></div>
                 <div class="profile-item"><div class="profile-label">DOB:</div><div id="disp-s-dob" class="profile-value"></div></div>
             </div>
-            <div class="step-content">
+            <div id="student-form-content" class="step-content">
                 <div id="student-create-mode" style="display:block;">
                     <label>Full Legal Name</label><input type="text" id="s_name_new">
                     <div class="grid grid-cols-2 gap-2">
@@ -321,31 +321,48 @@
 
     window.processStudentStep = async () => {
         const isNew = document.getElementById('student-create-mode').style.display !== 'none';
-        const auth = `?access_key=${SecurityManager.getAccessKey()}`;
+        const accessKey = SecurityManager.getAccessKey();
+        const auth = `?access_key=${accessKey}`;
+        const sForm = document.getElementById('student-form-content');
         
-        if (isNew) {
-            const name = document.getElementById('s_name_new').value;
-            const dob = document.getElementById('s_dob_new').value;
-            if(!name || !dob) return alert("Enter Student Info");
+        try {
+            if (isNew) {
+                const name = document.getElementById('s_name_new').value;
+                const dob = document.getElementById('s_dob_new').value;
+                const gender = document.getElementById('s_gender').value;
+                if(!name || !dob) return alert("Enter Student Info");
+                
+                const res = await fetch(`${window.NEST_ENDPOINTS.student.list}${auth}`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ parent_id: window.state.currentParentId, name: name, date_of_birth: dob, gender: gender, franchise_id: window.state.currentFranchiseId, is_active: true })
+                });
+                if (!res.ok) throw new Error("Creation failed");
+                const data = await res.json(); 
+                window.state.currentStudentId = data.id;
+
+                // Sync display directly from inputs to avoid fetch latency loop
+                document.getElementById('disp-s-name').innerText = name;
+                document.getElementById('disp-s-dob').innerText = dob;
+            } else {
+                const sid = document.getElementById('s_select_id').value;
+                if(!sid) return alert("Select Student");
+                window.state.currentStudentId = parseInt(sid);
+                
+                const sRes = await fetch(`${window.NEST_ENDPOINTS.student.list}/${window.state.currentStudentId}${auth}`);
+                const student = await sRes.json();
+                document.getElementById('disp-s-name').innerText = student.name;
+                document.getElementById('disp-s-dob').innerText = student.date_of_birth;
+            }
             
-            const res = await fetch(`${window.NEST_ENDPOINTS.student.list}${auth}`, {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ parent_id: window.state.currentParentId, name: name, date_of_birth: dob, franchise_id: window.state.currentFranchiseId, is_active: true })
-            });
-            const data = await res.json(); 
-            window.state.currentStudentId = data.id;
-        } else {
-            window.state.currentStudentId = parseInt(document.getElementById('s_select_id').value);
+            if(!window.state.currentStudentId) return alert("Student selection failed. ID not found.");
+            
+            document.getElementById('student-profile-view').style.display = 'flex';
+            if(sForm) sForm.style.display = 'none';
+            window.moveToStep('step-student', 'step-assessment', 3);
+        } catch (err) {
+            console.error(err);
+            alert("Error verifying student profile.");
         }
-        
-        if(!window.state.currentStudentId) return alert("Select Student");
-        
-        const sRes = await fetch(`${window.NEST_ENDPOINTS.student.list}/${window.state.currentStudentId}${auth}`);
-        const student = await sRes.json();
-        document.getElementById('disp-s-name').innerText = student.name;
-        document.getElementById('disp-s-dob').innerText = student.date_of_birth;
-        document.getElementById('student-profile-view').style.display = 'flex';
-        window.moveToStep('step-student', 'step-assessment', 3);
     };
 
     window.processAssessmentStep = async () => {
@@ -435,6 +452,9 @@
     window.unlockStep = (sId, vId) => {
         document.getElementById(sId).classList.replace('step-saved', 'step-active');
         document.getElementById(vId).style.display = 'none';
+        // Ensure form content is visible again when unlocking
+        const formContent = document.getElementById(sId).querySelector('.step-content');
+        if(formContent) formContent.style.display = 'block';
     };
 
     window.moveToStep = (c, n, num) => {
