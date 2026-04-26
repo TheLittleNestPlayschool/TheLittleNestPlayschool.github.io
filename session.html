@@ -120,7 +120,6 @@
             }
 
             container.innerHTML = list.map(s => {
-                const days = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : (s.scheduled_days || '');
                 const franchise = franchiseList.find(f => f.id === s.franchise_id);
                 const franchiseDisplay = franchise ? (franchise.location_name || franchise.name) : `ID: ${s.franchise_id}`;
                 
@@ -129,13 +128,9 @@
                     <div style="width:110px; flex-shrink:0;">
                         <span style="font-size:0.6rem; background:#f1f5f9; color:#475569; padding:4px 10px; border-radius:99px; font-weight: 900; text-transform:uppercase;">${franchiseDisplay}</span>
                     </div>
-                    <div style="flex-shrink:0; margin-right: 25px; min-width: 180px; display: flex; align-items: center; gap: 8px;">
+                    <div style="flex-shrink:0; margin-right: 25px; min-width: 250px; display: flex; align-items: center; gap: 8px;">
                         <h3 style="margin:0; font-size:0.95rem; font-weight: 800; color:#1e293b;">${s.name}</h3>
                         ${!s.display ? '<span style="font-size:0.55rem; background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; font-weight:900;">HIDDEN</span>' : ''}
-                    </div>
-                    <div style="display:flex; align-items:center; font-size:0.75rem; font-weight:800; color:#64748b; margin-right:25px;">
-                        <div style="width: 170px; flex-shrink:0;">🗓 ${days}</div>
-                        <div style="width: 140px; flex-shrink:0;">⏰ ${s.start_time_text} - ${s.end_time_text}</div>
                     </div>
                     <div style="flex-grow:1; overflow:hidden; margin-right: 20px;">
                         <span style="font-size:0.75rem; color:#94a3b8; font-weight: 500; overflow:hidden; text-overflow:ellipsis; display:block;">${s.description || ''}</span>
@@ -215,7 +210,7 @@
     };
 
     window.deleteSession = async (id) => {
-        if(confirm("Confirm deletion of this session?")) {
+        if(confirm("Confirm deletion?")) {
             const authParams = SecurityManager.getAuthQuery();
             await fetch(`${window.NEST_ENDPOINTS.session.list}/${id}${authParams}`, { method: 'DELETE' });
             loadSessions();
