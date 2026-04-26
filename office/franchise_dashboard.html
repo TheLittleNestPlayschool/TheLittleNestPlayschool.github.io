@@ -105,7 +105,7 @@
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('student_assessment.html', 'Assessments')">
                 <span class="text-sm">📝</span> Assessments
             </button>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('session_display.html', 'Sessions')">
+            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('session.html', 'Sessions')">
                 <span class="text-sm">🗓️</span> Sessions
             </button>
 
@@ -142,7 +142,6 @@
 
         if (!tlnpKey) return;
 
-        // Save key immediately for subsequent API calls
         localStorage.setItem('nestmind_access_key', tlnpKey);
 
         try {
@@ -151,13 +150,11 @@
             const franchises = Array.isArray(data) ? data : (data.items || []);
 
             if (tlnpKey === 'TLNP624163') {
-                // HEAD OFFICE LOGIC - NO CHANGES
                 localStorage.setItem('is_head_office', 'true');
                 localStorage.setItem('locked_franchise_id', 'all');
                 localStorage.setItem('locked_franchise_name', 'HEAD OFFICE');
                 finalizeUnlock("HEAD OFFICE");
             } else {
-                // FRANCHISE LOGIC FIX
                 const matched = franchises.find(f => f.access_key === tlnpKey);
                 if (matched) {
                     localStorage.setItem('is_head_office', 'false');
@@ -185,7 +182,6 @@
         }
     }
 
-    // This is only triggered if no key was in URL (Manual Mode)
     function unlockDashboard() {
         const select = document.getElementById('branch-select');
         const fid = select.value;
