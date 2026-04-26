@@ -1,140 +1,157 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-    <h1 style="margin:0;">Session Master List</h1>
-    <button onclick="openNewSessionModal()" style="background:#00d1b2; color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold;">+ ADD NEW SESSION</button>
+<link rel="stylesheet" href="../nest_style.css">
+<script src="../api_config.js"></script>
+<script src="../security.js"></script>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-family: 'Inter', sans-serif;">
+    <h1 style="margin:0; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; color: #1e293b;">Session Master List</h1>
+    <button id="btn-add-session" onclick="openNewSessionModal()" style="display:none; background:#00d1b2; color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">+ ADD NEW SESSION</button>
 </div>
 
-<div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #eee;">
-    <span style="font-size: 0.75rem; font-weight: 800; color: #666; text-transform: uppercase;">Filter by Franchise:</span>
-    <select id="franchise-filter" onchange="loadSessions()" style="padding: 8px 15px; border-radius: 4px; border: 1px solid #ddd; background: white; min-width: 250px; font-weight: bold;">
-        <option value="all">Show All Franchises</option>
+<div id="ho-filter-container" style="display: none; background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; align-items: center; gap: 15px; border: 1px solid #e2e8f0; font-family: 'Inter', sans-serif;">
+    <span style="font-size: 0.7rem; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Identity Filter:</span>
+    <select id="franchise-filter" onchange="loadSessions()" style="padding: 8px 15px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; min-width: 250px; font-weight: 800; color: #1e293b;">
+        <option value="all">MASTER NETWORK VIEW</option>
     </select>
 </div>
 
 <div id="session-container" style="display: flex; flex-direction: column; gap: 10px;">
-    <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff;">Syncing Blueprint...</div>
+    <div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff; font-family: sans-serif; color: #94a3b8; font-style: italic;">Synchronizing Global Logic...</div>
 </div>
 
-<div id="modal-session" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
-    <div style="background:white; width:500px; border-radius:8px; display:flex; flex-direction:column; max-height:90vh;">
-        <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center;">
-            <h2 id="modal-title" style="margin:0; font-size:1.1rem;">Edit Session</h2>
-            <button onclick="document.getElementById('modal-session').style.display='none'" style="cursor:pointer; border:none; background:#eee; padding:5px 10px; border-radius:4px;">CLOSE</button>
+<div id="modal-session" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.9); z-index:99999; justify-content:center; align-items:center; font-family: 'Inter', sans-serif;">
+    <div style="background:white; width:500px; border-radius:12px; display:flex; flex-direction:column; max-height:90vh; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+        <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#f8fafc; display:flex; justify-content:space-between; align-items:center; border-radius: 12px 12px 0 0;">
+            <h2 id="modal-title" style="margin:0; font-size:1rem; font-weight: 800; text-transform: uppercase; color: #1e293b;">Session Editor</h2>
+            <button onclick="document.getElementById('modal-session').style.display='none'" style="cursor:pointer; border:none; background:#e2e8f0; color: #475569; padding:5px 12px; border-radius:6px; font-size: 10px; font-weight: 900;">CLOSE</button>
         </div>
-        <div id="modal-body-session" style="padding:20px; overflow-y:auto; flex-grow:1;">
+        <div style="padding:20px; overflow-y:auto; flex-grow:1;">
             <input type="hidden" id="sess-id">
             
-            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">SESSION NAME</label>
-            <input type="text" id="sess-name" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:4px; box-sizing: border-box;">
+            <label class="nest-label">Session Name</label>
+            <input type="text" id="sess-name" class="nest-input" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:6px;">
 
-            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">ASSIGNED FRANCHISE</label>
-            <select id="sess-franchise-select" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:4px; background:white; box-sizing: border-box;">
+            <label class="nest-label">Assigned Franchise</label>
+            <select id="sess-franchise-select" class="nest-input" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:6px; background:white;">
                 <option value="">Loading...</option>
             </select>
 
             <div style="display:flex; gap:10px; margin-bottom:15px;">
                 <div style="flex:1;">
-                    <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">START TIME</label>
-                    <input type="text" id="sess-start" placeholder="09:00 AM" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; box-sizing: border-box;">
+                    <label class="nest-label">Start Time</label>
+                    <input type="text" id="sess-start" placeholder="09:00 AM" class="nest-input" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px;">
                 </div>
                 <div style="flex:1;">
-                    <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">END TIME</label>
-                    <input type="text" id="sess-end" placeholder="11:30 AM" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; box-sizing: border-box;">
+                    <label class="nest-label">End Time</label>
+                    <input type="text" id="sess-end" placeholder="11:30 AM" class="nest-input" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px;">
                 </div>
             </div>
 
-            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">MAX STUDENTS</label>
-            <input type="number" id="sess-max" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:4px; box-sizing: border-box;">
+            <label class="nest-label">Max Students</label>
+            <input type="number" id="sess-max" class="nest-input" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:6px;">
 
-            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">SCHEDULED DAYS (Comma Separated)</label>
-            <input type="text" id="sess-days" placeholder="Monday, Wednesday" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:4px; box-sizing: border-box;">
+            <label class="nest-label">Scheduled Days</label>
+            <input type="text" id="sess-days" placeholder="Mon, Wed, Fri" class="nest-input" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:6px;">
 
-            <label style="display:block; font-size:0.7rem; font-weight:bold; color:#666; margin-bottom:5px;">DESCRIPTION</label>
-            <textarea id="sess-desc" style="width:100%; padding:10px; height:60px; border:1px solid #ddd; border-radius:4px; margin-bottom:15px; box-sizing: border-box;"></textarea>
+            <label class="nest-label">Description</label>
+            <textarea id="sess-desc" class="nest-input" style="width:100%; padding:10px; height:60px; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:15px;"></textarea>
 
-            <div style="display: flex; gap: 20px;">
-                <label style="display:flex; align-items:center; gap:10px; font-weight:bold; font-size:0.8rem; cursor:pointer;">
-                    <input type="checkbox" id="sess-active"> SESSION IS ACTIVE
+            <div style="display: flex; gap: 20px; background: #f1f5f9; padding: 15px; border-radius: 8px;">
+                <label style="display:flex; align-items:center; gap:10px; font-weight:900; font-size:0.7rem; cursor:pointer; color: #334155;">
+                    <input type="checkbox" id="sess-active"> SESSION ACTIVE
                 </label>
-                <label style="display:flex; align-items:center; gap:10px; font-weight:bold; font-size:0.8rem; cursor:pointer; color: #ff9f43;">
+                <label style="display:flex; align-items:center; gap:10px; font-weight:900; font-size:0.7rem; cursor:pointer; color: #00d1b2;">
                     <input type="checkbox" id="sess-display"> SHOW IN CATALOG
                 </label>
             </div>
         </div>
-        <div style="padding:15px 20px; border-top:1px solid #eee; background:#f9f9f9;">
-            <button onclick="submitSession()" style="background:#00d1b2; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:4px; width:100%;">SAVE SESSION</button>
+        <div style="padding:15px 20px; border-top:1px solid #eee; background:#f8fafc; border-radius: 0 0 12px 12px;">
+            <button onclick="submitSession()" style="background:#1e293b; color:white; border:none; padding:12px; cursor:pointer; font-weight:bold; border-radius:6px; width:100%; text-transform: uppercase;">Save Session</button>
         </div>
     </div>
 </div>
 
 <script>
 (function() {
-    const S_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session';
-    const F_API = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise';
+    const isHO = localStorage.getItem('is_head_office') === 'true';
+    const lockedFid = localStorage.getItem('locked_franchise_id');
     let franchiseList = [];
 
     const fetchFranchises = async () => {
         try {
-            const res = await fetch(F_API);
+            const authParams = SecurityManager.getAuthQuery();
+            const res = await fetch(window.NEST_ENDPOINTS.franchise.list + authParams);
             const data = await res.json();
             franchiseList = Array.isArray(data) ? data : (data.items || []);
+            
             const filterSelect = document.getElementById('franchise-filter');
             const editorSelect = document.getElementById('sess-franchise-select');
-            const optionsHtml = franchiseList.map(f => `<option value="${f.id}">${f.location_name || f.name || 'Franchise ' + f.id}</option>`).join('');
-            filterSelect.innerHTML = '<option value="all">Show All Franchises</option>' + optionsHtml;
+            const optionsHtml = franchiseList.map(f => `<option value="${f.id}">${f.location_name || f.name}</option>`).join('');
+            
+            if (isHO) {
+                document.getElementById('ho-filter-container').style.display = 'flex';
+                document.getElementById('btn-add-session').style.display = 'block';
+                filterSelect.innerHTML = '<option value="all">MASTER NETWORK VIEW</option>' + optionsHtml;
+            }
             editorSelect.innerHTML = optionsHtml;
-        } catch (e) { console.error("Error fetching franchises", e); }
+        } catch (e) { console.error("Franchise sync failed", e); }
     };
 
     window.loadSessions = async () => {
         const container = document.getElementById('session-container');
-        const filterVal = document.getElementById('franchise-filter').value;
+        const hoFilterVal = document.getElementById('franchise-filter').value;
+        const authParams = SecurityManager.getAuthQuery();
+        
         try {
-            const res = await fetch(S_API + '?t=' + Date.now());
+            const res = await fetch(window.NEST_ENDPOINTS.session.list + authParams + '&t=' + Date.now());
             const data = await res.json();
             let list = Array.isArray(data) ? data : (data.items || []);
 
-            // NO FILTER - Show everything for management
             list.sort((a, b) => a.franchise_id - b.franchise_id);
-            if (filterVal !== 'all') list = list.filter(s => s.franchise_id.toString() === filterVal);
+
+            if (!isHO) {
+                list = list.filter(s => s.franchise_id.toString() === lockedFid && s.display === true);
+            } else if (hoFilterVal !== 'all') {
+                list = list.filter(s => s.franchise_id.toString() === hoFilterVal);
+            }
+
+            if (list.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:50px; border:1px solid #eee; background:#fff; font-family: 'Inter', sans-serif; color: #94a3b8; font-weight: bold; border-radius: 8px;">No matching sessions available.</div>`;
+                return;
+            }
 
             container.innerHTML = list.map(s => {
                 const days = Array.isArray(s.scheduled_days) ? s.scheduled_days.join(', ') : (s.scheduled_days || '');
-                const statusColor = s.is_active ? '#00d1b2' : '#ff4757';
                 const franchise = franchiseList.find(f => f.id === s.franchise_id);
                 const franchiseDisplay = franchise ? (franchise.location_name || franchise.name) : `ID: ${s.franchise_id}`;
-                const descText = s.description && s.description.trim() !== "" ? s.description : "";
                 
-                // Dim the row slightly if it's hidden from the catalog
-                const opacity = s.display ? '1' : '0.6';
-
                 return `
-                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px 18px; display:flex; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.05); font-family: sans-serif; white-space: nowrap; opacity: ${opacity};">
-                    <div style="width:100px; flex-shrink:0;">
-                        <span style="font-size:0.65rem; background:#f0f0f0; color:#666; padding:3px 8px; border-radius:10px; font-weight: bold; text-transform:uppercase;">${franchiseDisplay}</span>
+                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px 18px; display:flex; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.05); font-family: 'Inter', sans-serif; white-space: nowrap; opacity: ${s.display ? '1' : '0.6'}; transition: border-color 0.2s ease;">
+                    <div style="width:110px; flex-shrink:0;">
+                        <span style="font-size:0.6rem; background:#f1f5f9; color:#475569; padding:4px 10px; border-radius:99px; font-weight: 900; text-transform:uppercase;">${franchiseDisplay}</span>
                     </div>
-                    <div style="flex-shrink:0; margin-right: 25px; min-width: 150px; display: flex; align-items: center; gap: 8px;">
-                        <h3 style="margin:0; font-size:1.05rem; color:#333;">${s.name}</h3>
-                        ${!s.display ? '<span style="font-size:0.6rem; background:#fff3cd; color:#856404; padding:2px 5px; border-radius:3px; font-weight:bold;">HIDDEN</span>' : ''}
+                    <div style="flex-shrink:0; margin-right: 25px; min-width: 180px; display: flex; align-items: center; gap: 8px;">
+                        <h3 style="margin:0; font-size:0.95rem; font-weight: 800; color:#1e293b;">${s.name}</h3>
+                        ${!s.display ? '<span style="font-size:0.55rem; background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; font-weight:900;">HIDDEN</span>' : ''}
                     </div>
-                    <div style="display:flex; align-items:center; font-size:0.75rem; font-weight:bold; color:#444; margin-right:25px;">
+                    <div style="display:flex; align-items:center; font-size:0.75rem; font-weight:800; color:#64748b; margin-right:25px;">
                         <div style="width: 170px; flex-shrink:0;">🗓 ${days}</div>
-                        <div style="width: 120px; flex-shrink:0;">⏰ ${s.start_time_text} - ${s.end_time_text}</div>
+                        <div style="width: 140px; flex-shrink:0;">⏰ ${s.start_time_text} - ${s.end_time_text}</div>
                     </div>
                     <div style="flex-grow:1; overflow:hidden; margin-right: 20px;">
-                        <span style="font-size:0.8rem; color:#888; overflow:hidden; text-overflow:ellipsis; display:block;">${descText}</span>
+                        <span style="font-size:0.75rem; color:#94a3b8; font-weight: 500; overflow:hidden; text-overflow:ellipsis; display:block;">${s.description || ''}</span>
                     </div>
-                    <div style="display:flex; align-items:center; gap:15px; flex-shrink:0;">
-                        <div style="font-size:0.7rem; font-weight:900; color:${statusColor}; text-transform:uppercase; width:60px; text-align:right;">
-                            ${s.is_active ? 'ACTIVE' : 'INACTIVE'}
+                    <div style="display:flex; align-items:center; gap:20px; flex-shrink:0;">
+                        <div style="font-size:0.65rem; font-weight:900; color:${s.is_active ? '#00d1b2' : '#ef4444'}; text-transform:uppercase; width:60px; text-align:right;">
+                            ${s.is_active ? '● ACTIVE' : '○ INACTIVE'}
                         </div>
-                        <div style="display:flex; gap:10px;">
-                            <button onclick="editSession(${s.id})" style="border:1.5px solid blue; color:blue; background:#fff; padding:6px 15px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.75rem; text-transform:uppercase;">EDIT</button>
-                            <button onclick="deleteSession(${s.id})" style="border:1.5px solid red; color:red; background:none; padding:6px 15px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.75rem; text-transform:uppercase;">DELETE</button>
+                        <div style="display:${isHO ? 'flex' : 'none'}; gap:8px;">
+                            <button onclick="editSession(${s.id})" style="border:1px solid #cbd5e1; color:#1e293b; background:#fff; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:900; font-size:0.65rem;">EDIT</button>
+                            <button onclick="deleteSession(${s.id})" style="border:none; color:#ef4444; background:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:900; font-size:0.65rem;">DELETE</button>
                         </div>
                     </div>
                 </div>`;
             }).join('');
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error("Session load failed", e); }
     };
 
     window.openNewSessionModal = () => {
@@ -153,7 +170,8 @@
     };
 
     window.editSession = async (id) => {
-        const res = await fetch(`${S_API}/${id}`);
+        const authParams = SecurityManager.getAuthQuery();
+        const res = await fetch(`${window.NEST_ENDPOINTS.session.list}/${id}${authParams}`);
         const s = await res.json();
         document.getElementById('modal-title').innerText = "Edit Session";
         document.getElementById('sess-id').value = s.id;
@@ -171,20 +189,20 @@
 
     window.submitSession = async () => {
         const id = document.getElementById('sess-id').value;
-        const daysInput = document.getElementById('sess-days').value;
+        const authParams = SecurityManager.getAuthQuery();
         const payload = {
             name: document.getElementById('sess-name').value,
             franchise_id: parseInt(document.getElementById('sess-franchise-select').value),
             start_time_text: document.getElementById('sess-start').value,
             end_time_text: document.getElementById('sess-end').value,
             max_students: parseInt(document.getElementById('sess-max').value),
-            scheduled_days: daysInput.split(',').map(d => d.trim()).filter(d => d !== ""),
+            scheduled_days: document.getElementById('sess-days').value.split(',').map(d => d.trim()).filter(d => d !== ""),
             description: document.getElementById('sess-desc').value,
             is_active: document.getElementById('sess-active').checked,
             display: document.getElementById('sess-display').checked
         };
         const method = id ? 'PUT' : 'POST';
-        const url = id ? `${S_API}/${id}` : S_API;
+        const url = id ? `${window.NEST_ENDPOINTS.session.list}/${id}${authParams}` : `${window.NEST_ENDPOINTS.session.list}${authParams}`;
         const res = await fetch(url, {
             method: method,
             headers: {'Content-Type': 'application/json'},
@@ -197,8 +215,9 @@
     };
 
     window.deleteSession = async (id) => {
-        if(confirm("Confirm deletion?")) {
-            await fetch(`${S_API}/${id}`, { method: 'DELETE' });
+        if(confirm("Confirm deletion of this session?")) {
+            const authParams = SecurityManager.getAuthQuery();
+            await fetch(`${window.NEST_ENDPOINTS.session.list}/${id}${authParams}`, { method: 'DELETE' });
             loadSessions();
         }
     };
