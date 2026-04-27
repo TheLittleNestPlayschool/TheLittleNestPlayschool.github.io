@@ -1,1 +1,176 @@
-cxxx
+<link rel="stylesheet" href="../nest_style.css">
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="max-w-xl mx-auto my-8 bg-white rounded-xl border border-slate-200 shadow-2xl overflow-hidden">
+    <div class="bg-slate-50 p-6 border-b border-slate-100">
+        <h1 class="text-lg font-black uppercase text-nest-dark tracking-tight">Record Tuition Payment</h1>
+        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-4">Atimonan Branch Ledger</p>
+        
+        <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Select Student</label>
+        <select id="student-selector" onchange="ReceiptModule.selectStudent(this.value)" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-[var(--nest-teal)]">
+            <option value="">-- Choose Student --</option>
+        </select>
+
+        <div id="student-financial-card" class="hidden mt-4 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <h2 id="disp-name" class="text-[10px] font-black uppercase text-nest-dark">---</h2>
+                    <p id="disp-due-date" class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Next Due: ---</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[7px] font-black text-slate-400 uppercase leading-none">Balance Owed</p>
+                    <p id="disp-balance" class="text-xs font-black text-red-600">₱0.00</p>
+                </div>
+            </div>
+            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-1">
+                <div id="debt-bar" class="h-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <p id="disp-status" class="text-[7px] font-black uppercase mt-2 text-slate-400">Status: Initializing...</p>
+        </div>
+    </div>
+
+    <form id="payment-form" class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Amount Paid (₱)</label>
+                <input type="number" id="p_amount" placeholder="0.00" step="0.01" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold">
+            </div>
+            <div>
+                <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Method</label>
+                <select id="p_method" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold uppercase">
+                    <option value="Cash">Cash</option>
+                    <option value="GCash">GCash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                </select>
+            </div>
+        </div>
+
+        <div>
+            <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Reference Number</label>
+            <input type="text" id="p_ref" placeholder="Transaction ID" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold">
+        </div>
+
+        <div>
+            <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Internal Notes</label>
+            <textarea id="p_notes" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold"></textarea>
+        </div>
+
+        <button type="submit" id="submit-btn" class="w-full py-3 bg-[var(--nest-teal)] text-white rounded-lg font-black text-[10px] uppercase shadow-lg disabled:opacity-50" disabled>
+            Post Payment to Ledger
+        </button>
+    </form>
+</div>
+
+<script>
+(function() {
+    const ReceiptModule = {
+        students: [],
+        selectedStudent: null,
+        syncChannel: new BroadcastChannel('nestmind_sync'),
+
+        async init() {
+            if (!window.NEST_ENDPOINTS) await this.loadScript('../api_config.js');
+            if (!window.SecurityManager) await this.loadScript('../security.js');
+            
+            const accessKey = SecurityManager.getAccessKey();
+            const fId = localStorage.getItem('locked_franchise_id');
+            
+            try {
+                const res = await fetch(`${window.NEST_ENDPOINTS.student.list}?franchise_id=${fId}&access_key=${accessKey}`);
+                const raw = await res.json();
+                this.students = Array.isArray(raw) ? raw : (raw.items || []);
+                this.renderDropdown();
+            } catch (err) { console.error("Sync Error:", err); }
+        },
+
+        renderDropdown() {
+            const sel = document.getElementById('student-selector');
+            this.students.sort((a,b) => a.name.localeCompare(b.name)).forEach(s => {
+                sel.innerHTML += `<option value="${s.id}">${s.name.toUpperCase()}</option>`;
+            });
+        },
+
+        selectStudent(id) {
+            const card = document.getElementById('student-financial-card');
+            const btn = document.getElementById('submit-btn');
+            if (!id) { card.classList.add('hidden'); btn.disabled = true; return; }
+
+            this.selectedStudent = this.students.find(s => s.id == id);
+            card.classList.remove('hidden');
+            btn.disabled = false;
+            
+            // Populate Balance Card
+            const bal = parseFloat(this.selectedStudent.student_balance || 0);
+            const rate = parseFloat(this.selectedStudent.monthly_tuition_fee || 1);
+            const percent = Math.min((bal / rate) * 100, 100);
+            
+            document.getElementById('disp-name').innerText = this.selectedStudent.name;
+            document.getElementById('disp-balance').innerText = `₱${bal.toLocaleString()}`;
+            document.getElementById('disp-due-date').innerText = `Next Due: ${this.selectedStudent.next_bill_date || '---'}`;
+            document.getElementById('p_amount').value = bal;
+
+            const bar = document.getElementById('debt-bar');
+            bar.style.width = percent + '%';
+            bar.className = `h-full transition-all duration-500 ${percent > 75 ? 'bg-red-500' : percent > 25 ? 'bg-orange-400' : 'bg-teal-400'}`;
+            document.getElementById('disp-status').innerText = `Aging: ${percent.toFixed(0)}% of Cycle Owed`;
+        },
+
+        async process(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerText = "POSTING...";
+
+            const amount = parseFloat(document.getElementById('p_amount').value);
+            const accessKey = SecurityManager.getAccessKey();
+            const auth = `?access_key=${accessKey}`;
+
+            try {
+                // 1. Create Receipt
+                await fetch(`${window.NEST_ENDPOINTS.receipt.list}${auth}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        franchise_id: this.selectedStudent.franchise_id,
+                        student_id: this.selectedStudent.id,
+                        parent_id: this.selectedStudent.parent_id,
+                        amount_paid: amount,
+                        payment_method: document.getElementById('p_method').value,
+                        reference_number: document.getElementById('p_ref').value,
+                        notes: document.getElementById('p_notes').value
+                    })
+                });
+
+                // 2. Update Student Balance
+                const newBalance = Math.max(0, this.selectedStudent.student_balance - amount);
+                await fetch(`${window.NEST_ENDPOINTS.student.list}/${this.selectedStudent.id}${auth}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student_balance: newBalance })
+                });
+
+                // 3. Fire Sync Signal
+                this.syncChannel.postMessage('update_performance');
+                
+                alert("Payment Synchronized.");
+                location.reload(); 
+            } catch (err) {
+                console.error(err);
+                btn.disabled = false;
+                btn.innerText = "RETRY POSTING";
+            }
+        },
+
+        async loadScript(src) {
+            return new Promise(resolve => {
+                const s = document.createElement('script'); s.src = src; s.onload = resolve;
+                document.head.appendChild(s);
+            });
+        }
+    };
+
+    window.ReceiptModule = ReceiptModule;
+    document.getElementById('payment-form').onsubmit = (e) => ReceiptModule.process(e);
+    ReceiptModule.init();
+})();
+</script>
