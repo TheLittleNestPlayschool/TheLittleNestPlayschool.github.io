@@ -1,13 +1,12 @@
 <link rel="stylesheet" href="../nest_style.css">
 
 <style>
-    /* Use the root variables from nest_style.css for any local tweaks */
     .btn-nest-teal { background: var(--nest-teal); color: #fff; }
     .btn-nest-teal:hover { opacity: 0.9; }
     .text-nest-dark { color: var(--nest-dark); }
     .text-nest-teal { color: var(--nest-teal); }
     
-    /* Visual guidance for Proper Case */
+    /* Proper Case Visuals */
     input.standardize, textarea.standardize { text-transform: capitalize; }
 </style>
 
@@ -84,12 +83,15 @@
             if (!window.NEST_ENDPOINTS) await this.loadScript('../api_config.js');
             if (!window.SecurityManager) await this.loadScript('../security.js');
             
-            this.schema = window.NEST_SCHEMA.parent;
-            this.buildFormUI(); 
-            
+            // READ ONLY: Get identity from Dashboard sync
+            const fId = localStorage.getItem('nestmind_f_id');
+            const fName = localStorage.getItem('nestmind_f_name');
             const isSuper = window.SecurityManager.isHeadOffice();
             const accessKey = window.SecurityManager.getAccessKey();
 
+            this.schema = window.NEST_SCHEMA.parent;
+            this.buildFormUI(); 
+            
             if (isSuper) {
                 try {
                     const fRes = await fetch(`${window.NEST_ENDPOINTS.franchise.list}?access_key=${accessKey}`);
@@ -99,7 +101,7 @@
                 } catch(e) { console.error("Franchise load error", e); }
             }
             
-            const branchName = localStorage.getItem('locked_franchise_name') || 'Main';
+            const branchName = fName || 'Main';
             document.getElementById('module-subheader').innerText = isSuper 
                 ? "Full Network Records • Master View" 
                 : `Active Guardian Records • ${branchName}`;
@@ -109,9 +111,8 @@
                 : `${branchName} Branch`;
 
             let fetchUrl = window.NEST_ENDPOINTS.parent.list + `?access_key=${accessKey}`;
-            if (!isSuper) {
-                const fid = localStorage.getItem('locked_franchise_id');
-                fetchUrl += `&franchise_id=${fid}`;
+            if (!isSuper && fId) {
+                fetchUrl += `&franchise_id=${fId}`;
             }
 
             try {
@@ -123,9 +124,8 @@
             } catch (err) { console.error(err); }
         },
 
-        // PROPER CASE LOGIC
         toProperCase(str) {
-            if (!str || typeof str !== 'string') return "";
+            if (!str) return "";
             return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
         },
 
@@ -134,7 +134,6 @@
             grid.innerHTML = '';
             let currentSection = "";
             this.schema.fields.forEach(f => {
-                // SKIP LOCKED FIELDS
                 if (f.id === 'id' || f.id === 'franchise_id' || f.id === 'created_at' || f.label.toLowerCase().includes('date')) return;
                 
                 if (f.section && f.section !== currentSection) {
@@ -142,9 +141,7 @@
                     grid.insertAdjacentHTML('beforeend', `<div class="col-span-full mt-4 mb-1 border-b border-slate-100 pb-1"><span class="text-[8px] font-black text-nest-teal uppercase tracking-widest">${currentSection}</span></div>`);
                 }
                 const spanClass = f.width === 'full' || f.type === 'textarea' ? 'col-span-full' : 'col-span-1';
-                
-                const isProperField = f.type === 'text' || f.type === 'textarea';
-                const inputClass = isProperField ? "standardize" : "";
+                const inputClass = (f.type === 'text' || f.type === 'textarea') ? "standardize" : "";
 
                 let inputHTML = (f.type === 'textarea') 
                     ? `<textarea id="${f.id}" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] outline-none font-bold ${inputClass}"></textarea>`
@@ -188,7 +185,7 @@
                                 <span class="px-2 py-0.5 rounded text-[7px] font-black uppercase border ${p.is_active ? 'bg-teal-50 text-nest-teal border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}" ${p.is_active ? 'style="color: var(--nest-teal); border-color: var(--nest-teal); opacity: 0.8;"' : ''}>${p.is_active ? 'Active' : 'Arch'}</span>
                             </div>
                             <div class="col-span-2 text-right flex justify-end gap-2">
-                                <button data-id="${p.id}" class="parent-edit-btn px-3 py-1 bg-slate-50 border border-slate-200 rounded text-[8px] font-black text-slate-600 hover:bg-nest-dark hover:text-white transition-all uppercase" onmouseover="this.style.background='var(--nest-dark)'" onmouseout="this.style.background=''">Edit</button>
+                                <button data-id="${p.id}" class="parent-edit-btn px-3 py-1 bg-slate-50 border border-slate-200 rounded text-[8px] font-black text-slate-600 hover:bg-nest-dark hover:text-white transition-all uppercase">Edit</button>
                                 <button data-id="${p.id}" class="parent-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-[8px] font-black text-red-600 hover:bg-red-600 hover:text-white transition-all uppercase">Delete</button>
                             </div>
                         </div>
@@ -235,51 +232,25 @@
                 e.preventDefault();
                 const id = document.getElementById('p-edit-id').value;
                 const accessKey = window.SecurityManager.getAccessKey();
-                const fid = localStorage.getItem('locked_franchise_id');
-                
-                // Initialize payload with locked franchise_id
-                const payload = { franchise_id: parseInt(fid) };
+                const fId = localStorage.getItem('nestmind_f_id');
+                const payload = { franchise_id: parseInt(fId) };
                 
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
                     if (el && f.id !== 'id' && !f.readonly) {
                         let val = (f.type === 'bool' || f.type === 'checkbox') ? el.checked : el.value;
-                        
-                        // CLEARING LOGIC: If the field is text/textarea
                         if (typeof val === 'string' && f.type !== 'email') {
-                            const trimmedVal = val.trim();
-                            
-                            // If user cleared the box or it's just spaces, send null to DB
-                            if (trimmedVal === "") {
-                                val = null;
-                            } else {
-                                // Otherwise apply proper case
-                                val = this.toProperCase(trimmedVal);
-                            }
+                            const trimmed = val.trim();
+                            // Send NULL to clear the field in Xano
+                            val = (trimmed === "") ? null : this.toProperCase(trimmed);
                         }
                         payload[f.id] = val;
                     }
                 });
                 
                 const url = id ? `${window.NEST_ENDPOINTS.parent.list}/${id}?access_key=${accessKey}` : `${window.NEST_ENDPOINTS.parent.list}?access_key=${accessKey}`;
-                
-                try {
-                    const res = await fetch(url, { 
-                        method: id ? 'PATCH' : 'POST', 
-                        headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify(payload) 
-                    });
-                    
-                    if (res.ok) { 
-                        this.closeModal(); 
-                        this.init(); 
-                    } else {
-                        const errData = await res.json();
-                        alert("Error saving record: " + (errData.message || "Unknown error"));
-                    }
-                } catch (err) {
-                    console.error("Fetch error:", err);
-                }
+                const res = await fetch(url, { method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (res.ok) { this.closeModal(); this.init(); }
             };
         },
 
