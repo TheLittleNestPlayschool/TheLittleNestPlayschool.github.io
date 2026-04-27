@@ -1,18 +1,17 @@
 <link rel="stylesheet" href="../nest_style.css">
 
 <style>
-    .btn-nest-teal { background: var(--nest-teal); color: #fff; }
-    .btn-nest-teal:hover { opacity: 0.9; }
-    .text-nest-dark { color: var(--nest-dark); }
-    .text-nest-teal { color: var(--nest-teal); }
+    /* We only keep logic that isn't in your global CSS */
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--nest-dark); border-radius: 10px; }
     
-    /* Proper Case Visuals */
+    /* Visual guidance for Proper Case */
     input.standardize, textarea.standardize { text-transform: capitalize; }
 </style>
 
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
     <div>
-        <h1 class="text-xl font-black text-nest-dark uppercase tracking-tight">Parent Directory</h1>
+        <h1 class="text-xl font-black text-[var(--nest-dark)] uppercase tracking-tight">Parent Directory</h1>
         <p id="module-subheader" class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Syncing Records...</p>
     </div>
     
@@ -26,7 +25,7 @@
         <input type="text" id="parent-search" placeholder="Search parents..." 
             class="pl-4 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-[var(--nest-teal)] shadow-sm w-full md:w-64 transition-all font-bold">
         
-        <button id="add-parent-btn" class="btn-nest-teal px-5 py-2 rounded-lg font-bold transition-all text-[10px] shadow-md">
+        <button id="add-parent-btn" class="bg-[var(--nest-teal)] text-white px-5 py-2 rounded-lg font-bold transition-all text-[10px] shadow-md hover:opacity-90">
             + Add New Parent
         </button>
     </div>
@@ -50,10 +49,10 @@
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-200">
         <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
             <div>
-                <h2 id="p-modal-title" class="text-xs font-black text-nest-dark uppercase">Guardian Profile</h2>
-                <p id="modal-branch-label" class="text-[8px] text-nest-teal font-bold uppercase tracking-widest"></p>
+                <h2 id="p-modal-title" class="text-xs font-black text-[var(--nest-dark)] uppercase">Guardian Profile</h2>
+                <p id="modal-branch-label" class="text-[8px] text-[var(--nest-teal)] font-bold uppercase tracking-widest"></p>
             </div>
-            <button id="close-modal-x" class="text-slate-400 hover:text-nest-dark text-2xl">&times;</button>
+            <button id="close-modal-x" class="text-slate-400 hover:text-[var(--nest-dark)] text-2xl">&times;</button>
         </div>
         
         <form id="parent-form" class="p-6">
@@ -63,7 +62,7 @@
 
             <div class="flex gap-3 pt-6 border-t border-slate-100 mt-6">
                 <button type="button" id="cancel-modal-btn" class="px-6 py-2.5 bg-slate-100 text-slate-500 rounded-lg font-bold text-[9px] uppercase hover:bg-slate-200 transition-all">Discard</button>
-                <button type="submit" class="flex-1 py-2.5 btn-nest-teal rounded-lg font-bold text-[9px] uppercase shadow-lg">
+                <button type="submit" class="flex-1 py-2.5 bg-[var(--nest-teal)] text-white rounded-lg font-bold text-[9px] uppercase shadow-lg hover:opacity-90">
                     Save Record
                 </button>
             </div>
@@ -83,6 +82,7 @@
             if (!window.NEST_ENDPOINTS) await this.loadScript('../api_config.js');
             if (!window.SecurityManager) await this.loadScript('../security.js');
             
+            // Strictly Read variables from Dashboard sync
             const fId = localStorage.getItem('nestmind_f_id');
             const fName = localStorage.getItem('nestmind_f_name');
             const isSuper = window.SecurityManager.isHeadOffice();
@@ -95,7 +95,7 @@
                 try {
                     const fRes = await fetch(`${window.NEST_ENDPOINTS.franchise.list}?access_key=${accessKey}`);
                     const fData = await fRes.json();
-                    const fList = Array.isArray(data) ? data : (data.items || []);
+                    const fList = Array.isArray(fData) ? fData : (fData.items || []);
                     fList.forEach(f => { this.franchises[f.id] = f.name; });
                 } catch(e) { console.error("Franchise load error", e); }
             }
@@ -137,7 +137,7 @@
                 
                 if (f.section && f.section !== currentSection) {
                     currentSection = f.section;
-                    grid.insertAdjacentHTML('beforeend', `<div class="col-span-full mt-4 mb-1 border-b border-slate-100 pb-1"><span class="text-[8px] font-black text-nest-teal uppercase tracking-widest">${currentSection}</span></div>`);
+                    grid.insertAdjacentHTML('beforeend', `<div class="col-span-full mt-4 mb-1 border-b border-slate-100 pb-1"><span class="text-[8px] font-black text-[var(--nest-teal)] uppercase tracking-widest">${currentSection}</span></div>`);
                 }
                 const spanClass = f.width === 'full' || f.type === 'textarea' ? 'col-span-full' : 'col-span-1';
                 const inputClass = (f.type === 'text' || f.type === 'textarea') ? "standardize" : "";
@@ -169,22 +169,22 @@
             container.innerHTML = '';
             filtered.forEach(p => {
                 const fName = this.franchises[p.franchise_id] || `ID: ${p.franchise_id}`;
-                const branchBadge = isSuper ? `<span class="px-1.5 py-0.5 rounded bg-nest-dark text-white text-[7px] font-black uppercase ml-1" style="background: var(--nest-dark)">${fName}</span>` : '';
+                const branchBadge = isSuper ? `<span class="px-1.5 py-0.5 rounded bg-[var(--nest-dark)] text-white text-[7px] font-black uppercase ml-1">${fName}</span>` : '';
                 
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white border border-slate-200 rounded-lg shadow-sm hover:border-[var(--nest-teal)] transition-all px-4 py-2">
                         <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
                             <div class="col-span-3">
-                                <div class="text-[11px] font-black text-nest-dark uppercase leading-none">${p.last_name}, ${p.first_name} ${branchBadge}</div>
+                                <div class="text-[11px] font-black text-[var(--nest-dark)] uppercase leading-none">${p.last_name}, ${p.first_name} ${branchBadge}</div>
                                 <div class="text-[9px] text-slate-400 font-bold lowercase mt-0.5">${p.email || 'no email'}</div>
                             </div>
-                            <div class="col-span-2"><div class="text-[10px] font-mono text-nest-teal font-bold">${p.phone || '---'}</div></div>
+                            <div class="col-span-2"><div class="text-[10px] font-mono text-[var(--nest-teal)] font-bold">${p.phone || '---'}</div></div>
                             <div class="col-span-4"><div class="text-[9px] text-slate-500 font-bold uppercase truncate pr-4">${p.address || '---'}</div></div>
                             <div class="col-span-1 text-center">
-                                <span class="px-2 py-0.5 rounded text-[7px] font-black uppercase border ${p.is_active ? 'bg-teal-50 text-nest-teal border-teal-100' : 'bg-red-50 text-red-600 border-red-100'}" ${p.is_active ? 'style="color: var(--nest-teal); border-color: var(--nest-teal); opacity: 0.8;"' : ''}>${p.is_active ? 'Active' : 'Arch'}</span>
+                                <span class="px-2 py-0.5 rounded text-[7px] font-black uppercase border ${p.is_active ? 'bg-teal-50 text-[var(--nest-teal)] border-[var(--nest-teal)]' : 'bg-red-50 text-red-600 border-red-100'}">${p.is_active ? 'Active' : 'Arch'}</span>
                             </div>
                             <div class="col-span-2 text-right flex justify-end gap-2">
-                                <button data-id="${p.id}" class="parent-edit-btn px-3 py-1 bg-slate-50 border border-slate-200 rounded text-[8px] font-black text-slate-600 hover:bg-nest-dark hover:text-white transition-all uppercase">Edit</button>
+                                <button data-id="${p.id}" class="parent-edit-btn px-3 py-1 bg-slate-50 border border-slate-200 rounded text-[8px] font-black text-slate-600 hover:bg-[var(--nest-dark)] hover:text-white transition-all uppercase">Edit</button>
                                 <button data-id="${p.id}" class="parent-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-[8px] font-black text-red-600 hover:bg-red-600 hover:text-white transition-all uppercase">Delete</button>
                             </div>
                         </div>
@@ -242,8 +242,7 @@
                             val = el.checked;
                         } else {
                             const rawValue = el.value.trim();
-                            // If user cleared the field, send an empty string instead of null.
-                            // This forces Xano to overwrite the record with "nothing".
+                            // Standardize empty strings to overwrite data in Xano
                             if (rawValue === "") {
                                 val = ""; 
                             } else if (f.type === 'email') {
@@ -256,17 +255,9 @@
                     }
                 });
                 
-                console.log("Saving Payload:", payload);
                 const url = id ? `${window.NEST_ENDPOINTS.parent.list}/${id}?access_key=${accessKey}` : `${window.NEST_ENDPOINTS.parent.list}?access_key=${accessKey}`;
-                
-                try {
-                    const res = await fetch(url, { 
-                        method: id ? 'PATCH' : 'POST', 
-                        headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify(payload) 
-                    });
-                    if (res.ok) { this.closeModal(); this.init(); }
-                } catch (err) { console.error("Save error:", err); }
+                const res = await fetch(url, { method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (res.ok) { this.closeModal(); this.init(); }
             };
         },
 
