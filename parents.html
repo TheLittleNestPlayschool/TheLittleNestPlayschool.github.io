@@ -1,11 +1,11 @@
 <link rel="stylesheet" href="../nest_style.css">
 
 <style>
-    /* We only keep logic that isn't in your global CSS */
+    /* Keeps only custom layout logic, colors are pulled from root */
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--nest-dark); border-radius: 10px; }
     
-    /* Visual guidance for Proper Case */
+    /* Visual guidance for Proper Case while typing */
     input.standardize, textarea.standardize { text-transform: capitalize; }
 </style>
 
@@ -82,7 +82,6 @@
             if (!window.NEST_ENDPOINTS) await this.loadScript('../api_config.js');
             if (!window.SecurityManager) await this.loadScript('../security.js');
             
-            // Strictly Read variables from Dashboard sync
             const fId = localStorage.getItem('nestmind_f_id');
             const fName = localStorage.getItem('nestmind_f_name');
             const isSuper = window.SecurityManager.isHeadOffice();
@@ -175,11 +174,13 @@
                     <div class="bg-white border border-slate-200 rounded-lg shadow-sm hover:border-[var(--nest-teal)] transition-all px-4 py-2">
                         <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
                             <div class="col-span-3">
-                                <div class="text-[11px] font-black text-[var(--nest-dark)] uppercase leading-none">${p.last_name}, ${p.first_name} ${branchBadge}</div>
+                                <div class="text-[11px] font-black text-[var(--nest-dark)] leading-none">${p.last_name}, ${p.first_name} ${branchBadge}</div>
                                 <div class="text-[9px] text-slate-400 font-bold lowercase mt-0.5">${p.email || 'no email'}</div>
                             </div>
                             <div class="col-span-2"><div class="text-[10px] font-mono text-[var(--nest-teal)] font-bold">${p.phone || '---'}</div></div>
-                            <div class="col-span-4"><div class="text-[9px] text-slate-500 font-bold uppercase truncate pr-4">${p.address || '---'}</div></div>
+                            <div class="col-span-4">
+                                <div class="text-[9px] text-slate-500 font-bold truncate pr-4">${p.address || '---'}</div>
+                            </div>
                             <div class="col-span-1 text-center">
                                 <span class="px-2 py-0.5 rounded text-[7px] font-black uppercase border ${p.is_active ? 'bg-teal-50 text-[var(--nest-teal)] border-[var(--nest-teal)]' : 'bg-red-50 text-red-600 border-red-100'}">${p.is_active ? 'Active' : 'Arch'}</span>
                             </div>
@@ -242,7 +243,6 @@
                             val = el.checked;
                         } else {
                             const rawValue = el.value.trim();
-                            // Standardize empty strings to overwrite data in Xano
                             if (rawValue === "") {
                                 val = ""; 
                             } else if (f.type === 'email') {
