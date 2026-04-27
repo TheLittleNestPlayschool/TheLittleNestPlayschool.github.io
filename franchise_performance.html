@@ -1,5 +1,24 @@
 <link rel="stylesheet" href="/nest_style.css">
 
+<div id="debug-bridge" class="w-full max-w-[98%] mx-auto mb-4 p-4 bg-slate-900 rounded-2xl border border-slate-700 shadow-xl">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="space-y-1">
+            <h3 class="text-[10px] font-black text-[#00d1b2] uppercase tracking-[0.2em]">Atimonan Handshake Debugger</h3>
+            <div class="flex flex-wrap gap-4 text-[11px] font-mono text-slate-300">
+                <span>FRANCHISE_ID: <b id="debug-fid" class="text-white">--</b></span>
+                <span>ACCESS_KEY: <b id="debug-key" class="text-white">--</b></span>
+                <span>TARGET_URL: <b id="debug-url" class="text-white text-[9px] break-all">--</b></span>
+            </div>
+        </div>
+        <button onclick="initPerformance()" class="bg-[#00d1b2] text-slate-900 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-lg">
+            Force Refresh API
+        </button>
+    </div>
+    <div id="debug-status" class="mt-3 text-[9px] font-bold uppercase tracking-tighter text-slate-500 italic">
+        Standing by for Atimonan handshake...
+    </div>
+</div>
+
 <div class="flex flex-col items-center justify-start w-full max-w-[98%] mx-auto space-y-4 animate-in fade-in duration-500 pb-20 text-left">
     
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
@@ -178,34 +197,42 @@
 </div>
 
 <script>
-    // SELF-CONTAINED ENDPOINTS TO BYPASS CONFIG ISSUES
-    const LOCAL_ENDPOINTS = {
-        performance: "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/get_franchise_performance",
-        session: "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session",
-        student: "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student",
-        lead_profile: "https://x8ki-letl-twmt.n7.xano.io/api:dzfsI_eq/lead_profile",
+    // HARDCODED ENDPOINTS FOR ATIMONAN HANDSHAKE
+    const ENDPOINTS = {
+        perf: "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/get_franchise_performance",
+        sess: "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session",
+        stud: "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student",
+        lead: "https://x8ki-letl-twmt.n7.xano.io/api:dzfsI_eq/lead_profile",
         parent: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent",
-        enrollment: "https://x8ki-letl-twmt.n7.xano.io/api:IwtDgUwD/session_enrollment"
+        enrol: "https://x8ki-letl-twmt.n7.xano.io/api:IwtDgUwD/session_enrollment"
     };
 
     const syncChannel = new BroadcastChannel('nestmind_sync');
-    syncChannel.onmessage = (msg) => {
-        if (msg.data === 'update_performance') initPerformance();
-    };
+    syncChannel.onmessage = (msg) => { if (msg.data === 'update_performance') initPerformance(); };
 
     async function initPerformance() {
         const fid = localStorage.getItem('locked_franchise_id') || "24";
-        const accessKey = localStorage.getItem('nestmind_access_key') || "";
+        const key = localStorage.getItem('nestmind_access_key') || "NOT_FOUND";
+        const perfUrl = `${ENDPOINTS.perf}?franchise_id=${fid}&access_key=${key}`;
+
+        // Update Debug UI
+        document.getElementById('debug-fid').innerText = fid;
+        document.getElementById('debug-key').innerText = key;
+        document.getElementById('debug-url').innerText = perfUrl;
+        document.getElementById('debug-status').innerText = "Initiating handshake...";
+        document.getElementById('debug-status').className = "mt-3 text-[9px] font-bold uppercase tracking-tighter text-yellow-500 italic";
 
         try {
             const [perfRes, sessionRes, studentRes, profileRes, parentRes, enrollmentRes] = await Promise.all([
-                fetch(`${LOCAL_ENDPOINTS.performance}?franchise_id=${fid}&access_key=${accessKey}`),
-                fetch(`${LOCAL_ENDPOINTS.session}?franchise_id=${fid}`),
-                fetch(`${LOCAL_ENDPOINTS.student}?franchise_id=${fid}`),
-                fetch(`${LOCAL_ENDPOINTS.lead_profile}?franchise_id=${fid}`),
-                fetch(`${LOCAL_ENDPOINTS.parent}?franchise_id=${fid}`),
-                fetch(`${LOCAL_ENDPOINTS.enrollment}?franchise_id=${fid}`)
+                fetch(perfUrl),
+                fetch(`${ENDPOINTS.sess}?franchise_id=${fid}`),
+                fetch(`${ENDPOINTS.stud}?franchise_id=${fid}`),
+                fetch(`${ENDPOINTS.lead}?franchise_id=${fid}`),
+                fetch(`${ENDPOINTS.parent}?franchise_id=${fid}`),
+                fetch(`${ENDPOINTS.enrol}?franchise_id=${fid}`)
             ]);
+
+            if (!perfRes.ok) throw new Error(`HTTP ${perfRes.status}`);
 
             const perfData = await perfRes.json();
             const sessionsRaw = await sessionRes.json();
@@ -226,7 +253,7 @@
             document.getElementById('rev-potential').innerText = (perfData.monthly_potential || 0).toLocaleString();
             document.getElementById('perf-total-active').innerText = perfData.active_students || 0;
 
-            // Pulse Logic (RETAINED)
+            // Pulse Logic
             const now = new Date();
             const oneDay = 24 * 60 * 60 * 1000;
             const oneWeek = 7 * oneDay;
@@ -251,7 +278,7 @@
             document.getElementById('perf-prev-month-active').innerText = getCount(activeStudents, oneMonth, oneMonth * 2);
             document.getElementById('perf-prev-month-wth').innerText = getCount(withdrawnStudents, oneMonth, oneMonth * 2);
 
-            // Messenger Logic (RETAINED)
+            // Messenger Logic
             const getMsgCount = (list, type, minAge) => list.filter(m => (m.status === type && (now - m.created_at) < minAge)).length;
             document.getElementById('msg-today-inquiry').innerText = getMsgCount(profiles, 'inquiry', oneDay);
             document.getElementById('msg-today-ready').innerText = getMsgCount(profiles, 'ready', oneDay);
@@ -264,19 +291,19 @@
             const rate = totalInq > 0 ? Math.round((totalReady / totalInq) * 100) : 0;
             document.getElementById('msg-conversion-rate').innerText = rate + "%";
 
-            // Billing Logic (RETAINED)
+            // Billing Logic
             const billingContainer = document.getElementById('billing-list');
             billingContainer.innerHTML = '';
             parents.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || '')).forEach(p => {
                 billingContainer.insertAdjacentHTML('beforeend', `
                     <div class="flex justify-between items-center border-b border-slate-50 pb-1 last:border-0 text-left">
-                        <span class="text-[9px] font-bold text-slate-600 truncate w-24">${p.first_name} ${p.last_name}</span>
-                        <span class="text-[8px] font-black text-[#00d1b2] tracking-tighter uppercase">Due Soon</span>
+                        <span class="text-[9px] font-bold text-slate-600 truncate w-24 text-left">${p.first_name} ${p.last_name}</span>
+                        <span class="text-[8px] font-black text-[#00d1b2] tracking-tighter">DUE NEXT</span>
                     </div>
                 `);
             });
 
-            // Session Logic (RETAINED)
+            // Session Logic
             const grid = document.getElementById('perf-sessions-body');
             grid.innerHTML = ''; 
             const sessionCounts = {};
@@ -303,8 +330,15 @@
                     </div>`);
             });
 
+            document.getElementById('debug-status').innerText = "Handshake Successful.";
+            document.getElementById('debug-status').className = "mt-3 text-[9px] font-bold uppercase tracking-tighter text-[#00d1b2] italic";
+
             if (window.calculateROI) window.calculateROI();
-        } catch (e) { console.error("Performance Load Fail:", e); }
+        } catch (e) { 
+            console.error("Handshake Fail:", e); 
+            document.getElementById('debug-status').innerText = "Handshake Failed: " + e.message;
+            document.getElementById('debug-status').className = "mt-3 text-[9px] font-bold uppercase tracking-tighter text-red-500 italic";
+        }
     }
 
     window.calculateROI = () => {
@@ -321,6 +355,5 @@
 
 <style>
     .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 </style>
