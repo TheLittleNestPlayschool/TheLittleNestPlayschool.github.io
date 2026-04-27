@@ -123,6 +123,7 @@
             } catch (err) { console.error(err); }
         },
 
+        // PROPER CASE LOGIC
         toProperCase(str) {
             if (!str || typeof str !== 'string') return "";
             return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
@@ -133,6 +134,7 @@
             grid.innerHTML = '';
             let currentSection = "";
             this.schema.fields.forEach(f => {
+                // SKIP LOCKED FIELDS
                 if (f.id === 'id' || f.id === 'franchise_id' || f.id === 'created_at' || f.label.toLowerCase().includes('date')) return;
                 
                 if (f.section && f.section !== currentSection) {
@@ -234,6 +236,8 @@
                 const id = document.getElementById('p-edit-id').value;
                 const accessKey = window.SecurityManager.getAccessKey();
                 const fid = localStorage.getItem('locked_franchise_id');
+                
+                // Initialize payload with locked franchise_id
                 const payload = { franchise_id: parseInt(fid) };
                 
                 this.schema.fields.forEach(f => {
@@ -241,24 +245,41 @@
                     if (el && f.id !== 'id' && !f.readonly) {
                         let val = (f.type === 'bool' || f.type === 'checkbox') ? el.checked : el.value;
                         
-                        // LOGIC: If text field, check if it's empty/spaces.
-                        // Send null to database if empty, otherwise Proper Case.
+                        // CLEARING LOGIC: If the field is text/textarea
                         if (typeof val === 'string' && f.type !== 'email') {
                             const trimmedVal = val.trim();
-                            val = (trimmedVal === "") ? null : this.toProperCase(trimmedVal);
+                            
+                            // If user cleared the box or it's just spaces, send null to DB
+                            if (trimmedVal === "") {
+                                val = null;
+                            } else {
+                                // Otherwise apply proper case
+                                val = this.toProperCase(trimmedVal);
+                            }
                         }
                         payload[f.id] = val;
                     }
                 });
                 
                 const url = id ? `${window.NEST_ENDPOINTS.parent.list}/${id}?access_key=${accessKey}` : `${window.NEST_ENDPOINTS.parent.list}?access_key=${accessKey}`;
-                const res = await fetch(url, { 
-                    method: id ? 'PATCH' : 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(payload) 
-                });
                 
-                if (res.ok) { this.closeModal(); this.init(); }
+                try {
+                    const res = await fetch(url, { 
+                        method: id ? 'PATCH' : 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(payload) 
+                    });
+                    
+                    if (res.ok) { 
+                        this.closeModal(); 
+                        this.init(); 
+                    } else {
+                        const errData = await res.json();
+                        alert("Error saving record: " + (errData.message || "Unknown error"));
+                    }
+                } catch (err) {
+                    console.error("Fetch error:", err);
+                }
             };
         },
 
