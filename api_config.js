@@ -1,5 +1,10 @@
 const NEST_ENDPOINTS = {
 
+    //   ----  RECEIPT (API GROUP WORKSPACE) -----
+    receipt: {
+        list: "https://your-xano-api-url/receipt"
+    },
+
     // --- PARENT (API Group #341495 | Workspace: 8Je8Zszx) ---
     parent: {
         list:   "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent",
