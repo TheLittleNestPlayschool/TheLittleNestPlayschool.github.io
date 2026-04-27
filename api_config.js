@@ -30,6 +30,16 @@ const NEST_ENDPOINTS = {
         meta:   "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student/{student_id}"
     },
 
+    // --- RECEIPTS (API Group #3859104 | Workspace: y2hDqcNq) ---
+    receipt: {
+        list:   "https://x8ki-letl-twmt.n7.xano.io/api:y2hDqcNq/receipt",
+        post:   "https://x8ki-letl-twmt.n7.xano.io/api:y2hDqcNq/receipt",
+        get:    "https://x8ki-letl-twmt.n7.xano.io/api:y2hDqcNq/receipt/{receipt_id}",
+        patch:  "https://x8ki-letl-twmt.n7.xano.io/api:y2hDqcNq/receipt/{receipt_id}",
+        delete: "https://x8ki-letl-twmt.n7.xano.io/api:y2hDqcNq/receipt/{receipt_id}",
+        meta:   "https://x8ki-letl-twmt.n7.xano.io/api:y2hDqcNq/receipt/{receipt_id}"
+    },
+
     // --- SESSION (API Group #330272 | Workspace: mUsV7Zqx) ---
     session: {
         list:   "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session",
