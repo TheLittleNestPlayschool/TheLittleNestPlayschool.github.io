@@ -83,7 +83,7 @@
             if (!window.NEST_ENDPOINTS) await this.loadScript('../api_config.js');
             if (!window.SecurityManager) await this.loadScript('../security.js');
             
-            // READ ONLY: Get identity from Dashboard sync
+            // Read only from session
             const fId = localStorage.getItem('nestmind_f_id');
             const fName = localStorage.getItem('nestmind_f_name');
             const isSuper = window.SecurityManager.isHeadOffice();
@@ -125,7 +125,7 @@
         },
 
         toProperCase(str) {
-            if (!str) return "";
+            if (!str || typeof str !== 'string') return "";
             return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
         },
 
@@ -238,19 +238,35 @@
                 this.schema.fields.forEach(f => {
                     const el = document.getElementById(f.id);
                     if (el && f.id !== 'id' && !f.readonly) {
-                        let val = (f.type === 'bool' || f.type === 'checkbox') ? el.checked : el.value;
-                        if (typeof val === 'string' && f.type !== 'email') {
-                            const trimmed = val.trim();
-                            // Send NULL to clear the field in Xano
-                            val = (trimmed === "") ? null : this.toProperCase(trimmed);
+                        let val;
+                        if (f.type === 'bool' || f.type === 'checkbox') {
+                            val = el.checked;
+                        } else {
+                            const rawValue = el.value.trim();
+                            // STRICT NULL CHECK: If field is empty, send literal null to overwrite data in Xano
+                            if (rawValue === "") {
+                                val = null;
+                            } else if (f.type === 'email') {
+                                val = rawValue.toLowerCase();
+                            } else {
+                                val = this.toProperCase(rawValue);
+                            }
                         }
                         payload[f.id] = val;
                     }
                 });
                 
+                console.log("Sending Payload:", payload);
                 const url = id ? `${window.NEST_ENDPOINTS.parent.list}/${id}?access_key=${accessKey}` : `${window.NEST_ENDPOINTS.parent.list}?access_key=${accessKey}`;
-                const res = await fetch(url, { method: id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                if (res.ok) { this.closeModal(); this.init(); }
+                
+                try {
+                    const res = await fetch(url, { 
+                        method: id ? 'PATCH' : 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(payload) 
+                    });
+                    if (res.ok) { this.closeModal(); this.init(); }
+                } catch (err) { console.error("Save error:", err); }
             };
         },
 
