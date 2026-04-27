@@ -1,15 +1,17 @@
 <link rel="stylesheet" href="../nest_style.css">
 <script src="https://cdn.tailwindcss.com"></script>
 
-<div class="max-w-xl mx-auto my-8 bg-white rounded-xl border border-slate-200 shadow-2xl overflow-hidden">
-    <div class="bg-slate-50 p-6 border-b border-slate-100">
+<div id="receipt-module-container" class="max-w-xl mx-auto my-8 bg-white rounded-xl border border-slate-200 shadow-2xl overflow-hidden">
+    <div id="receipt-header" class="bg-slate-50 p-6 border-b border-slate-100">
         <h1 class="text-lg font-black uppercase text-nest-dark tracking-tight">Record Tuition Payment</h1>
         <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-4">Atimonan Branch Ledger</p>
         
-        <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Select Student</label>
-        <select id="student-selector" onchange="ReceiptModule.selectStudent(this.value)" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-[var(--nest-teal)]">
-            <option value="">-- Choose Student --</option>
-        </select>
+        <div id="selection-zone">
+            <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Select Student</label>
+            <select id="student-selector" onchange="ReceiptModule.selectStudent(this.value)" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-[var(--nest-teal)]">
+                <option value="">-- Choose Student --</option>
+            </select>
+        </div>
 
         <div id="student-financial-card" class="hidden mt-4 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
             <div class="flex justify-between items-start mb-2">
@@ -29,36 +31,38 @@
         </div>
     </div>
 
-    <form id="payment-form" class="p-6 space-y-4">
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Amount Paid (₱)</label>
-                <input type="number" id="p_amount" placeholder="0.00" step="0.01" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold">
+    <div id="form-container">
+        <form id="payment-form" class="p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Amount Paid (₱)</label>
+                    <input type="number" id="p_amount" placeholder="0.00" step="0.01" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold">
+                </div>
+                <div>
+                    <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Method</label>
+                    <select id="p_method" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold uppercase">
+                        <option value="Cash">Cash</option>
+                        <option value="GCash">GCash</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                    </select>
+                </div>
             </div>
+
             <div>
-                <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Method</label>
-                <select id="p_method" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold uppercase">
-                    <option value="Cash">Cash</option>
-                    <option value="GCash">GCash</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                </select>
+                <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Reference Number</label>
+                <input type="text" id="p_ref" placeholder="Transaction ID" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold">
             </div>
-        </div>
 
-        <div>
-            <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Reference Number</label>
-            <input type="text" id="p_ref" placeholder="Transaction ID" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold">
-        </div>
+            <div>
+                <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Internal Notes</label>
+                <textarea id="p_notes" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold"></textarea>
+            </div>
 
-        <div>
-            <label class="text-[8px] font-black text-slate-500 uppercase block mb-1">Internal Notes</label>
-            <textarea id="p_notes" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold"></textarea>
-        </div>
-
-        <button type="submit" id="submit-btn" class="w-full py-3 bg-[var(--nest-teal)] text-white rounded-lg font-black text-[10px] uppercase shadow-lg disabled:opacity-50" disabled>
-            Post Payment to Ledger
-        </button>
-    </form>
+            <button type="submit" id="submit-btn" class="w-full py-3 bg-[var(--nest-teal)] text-white rounded-lg font-black text-[10px] uppercase shadow-lg disabled:opacity-50" disabled>
+                Post Payment to Ledger
+            </button>
+        </form>
+    </div>
 </div>
 
 <script>
@@ -99,7 +103,6 @@
             card.classList.remove('hidden');
             btn.disabled = false;
             
-            // Populate Balance Card
             const bal = parseFloat(this.selectedStudent.student_balance || 0);
             const rate = parseFloat(this.selectedStudent.monthly_tuition_fee || 1);
             const percent = Math.min((bal / rate) * 100, 100);
@@ -119,7 +122,7 @@
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
-            btn.innerText = "POSTING...";
+            btn.innerText = "SYNCHRONIZING...";
 
             const amount = parseFloat(document.getElementById('p_amount').value);
             const accessKey = SecurityManager.getAccessKey();
@@ -127,7 +130,7 @@
 
             try {
                 // 1. Create Receipt
-                await fetch(`${window.NEST_ENDPOINTS.receipt.list}${auth}`, {
+                await fetch(`${window.NEST_ENDPOINTS.receipt.post}${auth}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -141,7 +144,7 @@
                     })
                 });
 
-                // 2. Update Student Balance
+                // 2. Update Student Balance (Calculated in API, but patched here for testing)
                 const newBalance = Math.max(0, this.selectedStudent.student_balance - amount);
                 await fetch(`${window.NEST_ENDPOINTS.student.list}/${this.selectedStudent.id}${auth}`, {
                     method: 'PATCH',
@@ -149,16 +152,39 @@
                     body: JSON.stringify({ student_balance: newBalance })
                 });
 
-                // 3. Fire Sync Signal
+                // 3. Fire Sync Signal to Dashboard
                 this.syncChannel.postMessage('update_performance');
                 
-                alert("Payment Synchronized.");
-                location.reload(); 
+                this.showSuccessState();
             } catch (err) {
                 console.error(err);
                 btn.disabled = false;
                 btn.innerText = "RETRY POSTING";
             }
+        },
+
+        showSuccessState() {
+            const header = document.getElementById('receipt-header');
+            const form = document.getElementById('form-container');
+
+            header.innerHTML = `
+                <div class="text-center py-6">
+                    <div class="text-4xl mb-3">✅</div>
+                    <h1 class="text-lg font-black uppercase text-nest-dark tracking-tight">Payment Recorded</h1>
+                    <p class="text-[9px] text-nest-teal font-bold uppercase tracking-widest">Transaction Synchronized Successfully</p>
+                </div>
+            `;
+
+            form.innerHTML = `
+                <div class="p-10 text-center">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-8 leading-relaxed">
+                        The student's debt bar and branch performance<br>have been updated in real-time.
+                    </p>
+                    <button onclick="location.reload()" class="px-8 py-3 bg-slate-100 text-slate-500 rounded-lg font-bold text-[9px] uppercase hover:bg-slate-200 transition-all tracking-widest">
+                        Record Another Payment
+                    </button>
+                </div>
+            `;
         },
 
         async loadScript(src) {
