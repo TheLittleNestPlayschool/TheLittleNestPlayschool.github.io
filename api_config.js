@@ -1,17 +1,5 @@
 const NEST_ENDPOINTS = {
 
-   // --- DASHBOARD SNAPSHOTS (API Group #384665 | Workspace: J5YZbOPl) ---
-    dashboard_snapshots: {
-        list:   "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots",
-        post:   "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots",
-        get:    "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots/{dashboard_snapshots_id}",
-        patch:  "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots/{dashboard_snapshots_id}",
-        delete: "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots/{dashboard_snapshots_id}",
-        meta:   "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots/{dashboard_snapshots_id}",
-        // Add this line specifically:
-        performance: "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/get_franchise_performance"
-    },
-         
     // --- PARENT (API Group #341495 | Workspace: 8Je8Zszx) ---
     parent: {
         list:   "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent",
@@ -79,7 +67,9 @@ const NEST_ENDPOINTS = {
         get:    "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots/{dashboard_snapshots_id}",
         patch:  "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots/{dashboard_snapshots_id}",
         delete: "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots/{dashboard_snapshots_id}",
-        meta:   "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots/{dashboard_snapshots_id}"
+        meta:   "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/dashboard_snapshots/{dashboard_snapshots_id}",
+        // The endpoint we just built:
+        performance: "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/get_franchise_performance"
     },
 
     // --- LEAD PROFILE (API Group #340687 | Workspace: dzfsI_eq) ---
