@@ -83,7 +83,6 @@
             if (!window.NEST_ENDPOINTS) await this.loadScript('../api_config.js');
             if (!window.SecurityManager) await this.loadScript('../security.js');
             
-            // Read only from session
             const fId = localStorage.getItem('nestmind_f_id');
             const fName = localStorage.getItem('nestmind_f_name');
             const isSuper = window.SecurityManager.isHeadOffice();
@@ -96,7 +95,7 @@
                 try {
                     const fRes = await fetch(`${window.NEST_ENDPOINTS.franchise.list}?access_key=${accessKey}`);
                     const fData = await fRes.json();
-                    const fList = Array.isArray(fData) ? fData : (fData.items || []);
+                    const fList = Array.isArray(data) ? data : (data.items || []);
                     fList.forEach(f => { this.franchises[f.id] = f.name; });
                 } catch(e) { console.error("Franchise load error", e); }
             }
@@ -198,7 +197,7 @@
         },
 
         async deleteRecord(id) {
-            if (!confirm("Permanently delete parent record?")) return;
+            if (!confirm("Are you sure?")) return;
             const accessKey = window.SecurityManager.getAccessKey();
             try {
                 const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}/${id}?access_key=${accessKey}`, { method: 'DELETE' });
@@ -243,9 +242,10 @@
                             val = el.checked;
                         } else {
                             const rawValue = el.value.trim();
-                            // STRICT NULL CHECK: If field is empty, send literal null to overwrite data in Xano
+                            // If user cleared the field, send an empty string instead of null.
+                            // This forces Xano to overwrite the record with "nothing".
                             if (rawValue === "") {
-                                val = null;
+                                val = ""; 
                             } else if (f.type === 'email') {
                                 val = rawValue.toLowerCase();
                             } else {
@@ -256,7 +256,7 @@
                     }
                 });
                 
-                console.log("Sending Payload:", payload);
+                console.log("Saving Payload:", payload);
                 const url = id ? `${window.NEST_ENDPOINTS.parent.list}/${id}?access_key=${accessKey}` : `${window.NEST_ENDPOINTS.parent.list}?access_key=${accessKey}`;
                 
                 try {
