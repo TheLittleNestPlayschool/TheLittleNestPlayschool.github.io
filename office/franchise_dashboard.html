@@ -136,11 +136,11 @@
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
         const tlnpKey = urlParams.get('tlnp');
-        const select = document.getElementById('branch-select');
         const statusText = document.getElementById('status-text');
 
         if (!tlnpKey) return;
 
+        // Ensure current access key is synced
         localStorage.setItem('nestmind_access_key', tlnpKey);
 
         try {
@@ -152,13 +152,20 @@
                 localStorage.setItem('is_head_office', 'true');
                 localStorage.setItem('locked_franchise_id', 'all');
                 localStorage.setItem('locked_franchise_name', 'HEAD OFFICE');
+                localStorage.setItem('nestmind_f_id', 'all');
+                localStorage.setItem('nestmind_f_name', 'HEAD OFFICE');
                 finalizeUnlock("HEAD OFFICE");
             } else {
                 const matched = franchises.find(f => f.access_key === tlnpKey);
                 if (matched) {
                     localStorage.setItem('is_head_office', 'false');
+                    
+                    // DUAL-KEY SYNC: Force both storage conventions to match the URL identity
                     localStorage.setItem('locked_franchise_id', matched.id);
                     localStorage.setItem('locked_franchise_name', matched.name);
+                    localStorage.setItem('nestmind_f_id', matched.id);
+                    localStorage.setItem('nestmind_f_name', matched.name);
+                    
                     finalizeUnlock(matched.name);
                 } else {
                     statusText.innerText = "Access Denied.";
@@ -198,9 +205,15 @@
         const fid = select.value;
         if(!fid) return;
         const fname = select.options[select.selectedIndex].text;
+        
         localStorage.setItem('is_head_office', 'false');
+        
+        // DUAL-KEY SYNC for manual dropdown selection
         localStorage.setItem('locked_franchise_id', fid);
         localStorage.setItem('locked_franchise_name', fname);
+        localStorage.setItem('nestmind_f_id', fid);
+        localStorage.setItem('nestmind_f_name', fname);
+        
         finalizeUnlock(fname);
     }
 
