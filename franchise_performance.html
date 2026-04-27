@@ -208,7 +208,7 @@
         const { fid, endpoints } = identity;
 
         try {
-            // Using the new specific performance endpoint
+            // Updated to use the correct config path for get_franchise_performance
             const perfUrl = `${endpoints.dashboard_snapshots.performance}?franchise_id=${fid}&access_key=${SecurityManager.getAccessKey()}`;
 
             const [perfRes, sessionRes, studentRes, profileRes, parentRes, enrollmentRes] = await Promise.all([
@@ -233,7 +233,7 @@
             const parents = (Array.isArray(parentsRaw) ? parentsRaw : (parentsRaw.items || [])).filter(i => i.franchise_id == fid);
             const enrollments = (Array.isArray(enrollmentsRaw) ? enrollmentsRaw : (enrollmentsRaw.items || [])).filter(i => i.franchise_id == fid);
 
-            // Wire up the live performance numbers
+            // Populate Financial Snapshots from your new Xano function
             document.getElementById('rev-daily').innerText = (perfData.revenue_today || 0).toLocaleString();
             document.getElementById('rev-total-owed').innerText = (perfData.total_owed || 0).toLocaleString();
             document.getElementById('rev-potential').innerText = (perfData.monthly_potential || 0).toLocaleString();
