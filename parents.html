@@ -1,12 +1,19 @@
 <link rel="stylesheet" href="../nest_style.css">
 
 <style>
-    /* Keeps only custom layout logic, colors are pulled from root */
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--nest-dark); border-radius: 10px; }
-    
-    /* Visual guidance for Proper Case while typing */
     input.standardize, textarea.standardize { text-transform: capitalize; }
+    
+    /* Subtle separation for the data groups */
+    .data-group-label {
+        font-size: 7px;
+        letter-spacing: 0.1em;
+        color: #94a3b8;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
 </style>
 
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -31,19 +38,8 @@
     </div>
 </div>
 
-<div class="grid grid-cols-12 px-5 mb-2 text-[8px] font-black text-slate-400 uppercase tracking-widest hidden md:grid">
-    <div class="col-span-3">Guardian Info</div>
-    <div class="col-span-2">Contact</div>
-    <div class="col-span-4">Home Address</div>
-    <div class="col-span-1 text-center">Status</div>
-    <div class="col-span-2 text-right">Actions</div>
-</div>
-
-<div id="parent-list-container" class="space-y-2">
-    <div class="p-10 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest animate-pulse">
-        Synchronizing Database...
+<div id="parent-list-container" class="space-y-3">
     </div>
-</div>
 
 <div id="parent-modal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-200">
@@ -157,7 +153,7 @@
             const sortType = document.getElementById('parent-sort').value;
             const isSuper = window.SecurityManager.isHeadOffice();
             
-            let filtered = this.data.filter(p => `${p.first_name} ${p.last_name} ${p.email} ${p.phone}`.toLowerCase().includes(search));
+            let filtered = this.data.filter(p => `${p.first_name} ${p.last_name} ${p.email} ${p.phone} ${p.second_parent_full_name}`.toLowerCase().includes(search));
 
             filtered.sort((a, b) => {
                 if (sortType === 'franchise') return (a.franchise_id || 0) - (b.franchise_id || 0) || (a.last_name || '').localeCompare(b.last_name || '');
@@ -171,22 +167,47 @@
                 const branchBadge = isSuper ? `<span class="px-1.5 py-0.5 rounded bg-[var(--nest-dark)] text-white text-[7px] font-black uppercase ml-1">${fName}</span>` : '';
                 
                 container.insertAdjacentHTML('beforeend', `
-                    <div class="bg-white border border-slate-200 rounded-lg shadow-sm hover:border-[var(--nest-teal)] transition-all px-4 py-2">
-                        <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
-                            <div class="col-span-3">
-                                <div class="text-[11px] font-black text-[var(--nest-dark)] leading-none">${p.last_name}, ${p.first_name} ${branchBadge}</div>
-                                <div class="text-[9px] text-slate-400 font-bold lowercase mt-0.5">${p.email || 'no email'}</div>
-                            </div>
-                            <div class="col-span-2"><div class="text-[10px] font-mono text-[var(--nest-teal)] font-bold">${p.phone || '---'}</div></div>
+                    <div class="bg-white border border-slate-200 rounded-xl shadow-sm hover:border-[var(--nest-teal)] transition-all overflow-hidden">
+                        <div class="p-4 bg-slate-50/50 border-b border-slate-100 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                             <div class="col-span-4">
-                                <div class="text-[9px] text-slate-500 font-bold truncate pr-4">${p.address || '---'}</div>
+                                <div class="text-[11px] font-black text-[var(--nest-dark)] leading-tight">${p.last_name}, ${p.first_name} ${branchBadge}</div>
+                                <div class="text-[9px] text-slate-400 font-bold lowercase">${p.email || 'no email'}</div>
+                                <div class="text-[9px] text-slate-500 font-bold mt-1">${p.address || '---'}</div>
                             </div>
-                            <div class="col-span-1 text-center">
+                            <div class="col-span-2">
+                                <div class="data-group-label">Primary Phone</div>
+                                <div class="text-[10px] font-mono text-[var(--nest-teal)] font-bold">${p.phone || '---'}</div>
+                            </div>
+                            <div class="col-span-2 text-center">
+                                <div class="data-group-label">Account Status</div>
                                 <span class="px-2 py-0.5 rounded text-[7px] font-black uppercase border ${p.is_active ? 'bg-teal-50 text-[var(--nest-teal)] border-[var(--nest-teal)]' : 'bg-red-50 text-red-600 border-red-100'}">${p.is_active ? 'Active' : 'Arch'}</span>
                             </div>
-                            <div class="col-span-2 text-right flex justify-end gap-2">
-                                <button data-id="${p.id}" class="parent-edit-btn px-3 py-1 bg-slate-50 border border-slate-200 rounded text-[8px] font-black text-slate-600 hover:bg-[var(--nest-dark)] hover:text-white transition-all uppercase">Edit</button>
-                                <button data-id="${p.id}" class="parent-delete-btn px-3 py-1 bg-red-50 border border-red-100 rounded text-[8px] font-black text-red-600 hover:bg-red-600 hover:text-white transition-all uppercase">Delete</button>
+                            <div class="col-span-4 text-right flex justify-end gap-2">
+                                <button data-id="${p.id}" class="parent-edit-btn px-4 py-1.5 bg-white border border-slate-200 rounded-lg text-[8px] font-black text-slate-600 hover:bg-[var(--nest-dark)] hover:text-white transition-all uppercase shadow-sm">Edit Profile</button>
+                                <button data-id="${p.id}" class="parent-delete-btn px-4 py-1.5 bg-red-50 border border-red-100 rounded-lg text-[8px] font-black text-red-600 hover:bg-red-600 hover:text-white transition-all uppercase shadow-sm">Delete</button>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-6 bg-white">
+                            <div>
+                                <div class="data-group-label">Secondary Guardian</div>
+                                <div class="text-[10px] font-black text-slate-700">${p.second_parent_full_name || '---'}</div>
+                                <div class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">${p.second_parent_relationship || 'No Relation Set'}</div>
+                                <div class="text-[9px] font-mono text-[var(--nest-teal)] font-bold mt-1">${p.second_parent_phone_number || ''}</div>
+                            </div>
+
+                            <div class="border-l border-slate-100 pl-6">
+                                <div class="data-group-label">Emergency Contact 1</div>
+                                <div class="text-[10px] font-black text-slate-700">${p.emergency_contact_1_name || '---'}</div>
+                                <div class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">${p.emergency_contact_1_relationship || '---'}</div>
+                                <div class="text-[9px] font-mono text-slate-600 font-bold mt-1">${p.emergency_contact_1_phone_number || ''}</div>
+                            </div>
+
+                            <div class="border-l border-slate-100 pl-6">
+                                <div class="data-group-label">Emergency Contact 2</div>
+                                <div class="text-[10px] font-black text-slate-700">${p.emergency_contact_2_name || '---'}</div>
+                                <div class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">${p.emergency_contact_2_relationship || '---'}</div>
+                                <div class="text-[9px] font-mono text-slate-600 font-bold mt-1">${p.emergency_contact_2_phone_number || ''}</div>
                             </div>
                         </div>
                     </div>
@@ -198,7 +219,7 @@
         },
 
         async deleteRecord(id) {
-            if (!confirm("Are you sure?")) return;
+            if (!confirm("Permanently delete parent record?")) return;
             const accessKey = window.SecurityManager.getAccessKey();
             try {
                 const res = await fetch(`${window.NEST_ENDPOINTS.parent.list}/${id}?access_key=${accessKey}`, { method: 'DELETE' });
