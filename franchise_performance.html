@@ -1,13 +1,13 @@
 <link rel="stylesheet" href="/nest_style.css">
 <script src="/api_config.js"></script>
 
-<div class="flex flex-col items-center justify-start w-full max-w-[98%] mx-auto space-y-4 animate-in fade-in duration-500 pb-20">
+<div class="flex flex-col items-center justify-start w-full max-w-[98%] mx-auto space-y-4 animate-in fade-in duration-500 pb-20 text-left">
     
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
         
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition-all">
             <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-2">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Enrollment Pulse</p>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest text-left">Enrollment Pulse</p>
                 <div class="flex gap-2 text-[8px] font-black uppercase text-slate-300">
                     <span class="w-8 text-right">Curr</span>
                     <span class="w-8 text-right text-red-400/50">Wth</span>
@@ -179,11 +179,9 @@
 </div>
 
 <script>
-    // BROADCAST LISTENER: Sync from Receipt Tab
     const syncChannel = new BroadcastChannel('nestmind_sync');
     syncChannel.onmessage = (msg) => {
         if (msg.data === 'update_performance') {
-            console.log("Sync Signal Received: Updating Performance Metrics...");
             initPerformance();
         }
     };
@@ -210,9 +208,11 @@
         const { fid, endpoints } = identity;
 
         try {
-            // Added fresh performance endpoint call
+            // Using the new specific performance endpoint
+            const perfUrl = `${endpoints.dashboard_snapshots.performance}?franchise_id=${fid}&access_key=${SecurityManager.getAccessKey()}`;
+
             const [perfRes, sessionRes, studentRes, profileRes, parentRes, enrollmentRes] = await Promise.all([
-                fetch(`${endpoints.dashboard_snapshots.list}/get_franchise_performance?franchise_id=${fid}&access_key=${SecurityManager.getAccessKey()}`),
+                fetch(perfUrl),
                 fetch(`${endpoints.session.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.student.list}?franchise_id=${fid}`),
                 fetch(`${endpoints.lead_profile.list}?franchise_id=${fid}`),
@@ -233,7 +233,7 @@
             const parents = (Array.isArray(parentsRaw) ? parentsRaw : (parentsRaw.items || [])).filter(i => i.franchise_id == fid);
             const enrollments = (Array.isArray(enrollmentsRaw) ? enrollmentsRaw : (enrollmentsRaw.items || [])).filter(i => i.franchise_id == fid);
 
-            // LIVE ANALYTICS WIRE-UP
+            // Wire up the live performance numbers
             document.getElementById('rev-daily').innerText = (perfData.revenue_today || 0).toLocaleString();
             document.getElementById('rev-total-owed').innerText = (perfData.total_owed || 0).toLocaleString();
             document.getElementById('rev-potential').innerText = (perfData.monthly_potential || 0).toLocaleString();
@@ -291,7 +291,6 @@
 
             const grid = document.getElementById('perf-sessions-body');
             grid.innerHTML = ''; 
-            
             const sessionCounts = {};
             enrollments.forEach(enr => { 
                 if (enr.status === true && enr.session_id) {
@@ -304,9 +303,8 @@
                 const count = sessionCounts[session.id] || 0;
                 const max = session.max_students || 15;
                 const percent = Math.min((count / max) * 100, 100);
-                
                 grid.insertAdjacentHTML('beforeend', `
-                    <div class="bg-white border border-slate-100 p-2 rounded-lg shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                    <div class="bg-white border border-slate-100 p-2 rounded-lg shadow-sm hover:shadow-md transition-all flex flex-col justify-between text-left">
                         <div class="flex justify-between items-start">
                             <div class="flex flex-col overflow-hidden">
                                 <span class="text-[8px] font-black text-slate-700 uppercase leading-none truncate w-full">${session.name}</span>
