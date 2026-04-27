@@ -178,34 +178,33 @@
 </div>
 
 <script>
-    // HARDCODED BASE ENDPOINTS FOR ATIMONAN DASHBOARD
-    const BASE_PERFORMANCE_URL = "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/get_franchise_performance";
-    const SESSION_LIST_URL = "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session";
-    const STUDENT_LIST_URL = "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student";
-    const LEAD_PROFILE_URL = "https://x8ki-letl-twmt.n7.xano.io/api:dzfsI_eq/lead_profile";
-    const PARENT_LIST_URL = "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent";
-    const ENROLLMENT_LIST_URL = "https://x8ki-letl-twmt.n7.xano.io/api:IwtDgUwD/session_enrollment";
+    // SELF-CONTAINED ENDPOINTS TO BYPASS CONFIG ISSUES
+    const LOCAL_ENDPOINTS = {
+        performance: "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/get_franchise_performance",
+        session: "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session",
+        student: "https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/student",
+        lead_profile: "https://x8ki-letl-twmt.n7.xano.io/api:dzfsI_eq/lead_profile",
+        parent: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent",
+        enrollment: "https://x8ki-letl-twmt.n7.xano.io/api:IwtDgUwD/session_enrollment"
+    };
 
     const syncChannel = new BroadcastChannel('nestmind_sync');
     syncChannel.onmessage = (msg) => {
-        if (msg.data === 'update_performance') {
-            initPerformance();
-        }
+        if (msg.data === 'update_performance') initPerformance();
     };
 
     async function initPerformance() {
-        const fid = localStorage.getItem('locked_franchise_id') || "24"; // Atimonan Default
-        const accessKey = localStorage.getItem('nestmind_access_key') || "TLNP328416";
+        const fid = localStorage.getItem('locked_franchise_id') || "24";
+        const accessKey = localStorage.getItem('nestmind_access_key') || "";
 
         try {
-            // DIRECT CALLS WITHOUT EXTERNAL CONFIG
             const [perfRes, sessionRes, studentRes, profileRes, parentRes, enrollmentRes] = await Promise.all([
-                fetch(`${BASE_PERFORMANCE_URL}?franchise_id=${fid}&access_key=${accessKey}`),
-                fetch(`${SESSION_LIST_URL}?franchise_id=${fid}`),
-                fetch(`${STUDENT_LIST_URL}?franchise_id=${fid}`),
-                fetch(`${LEAD_PROFILE_URL}?franchise_id=${fid}`),
-                fetch(`${PARENT_LIST_URL}?franchise_id=${fid}`),
-                fetch(`${ENROLLMENT_LIST_URL}?franchise_id=${fid}`)
+                fetch(`${LOCAL_ENDPOINTS.performance}?franchise_id=${fid}&access_key=${accessKey}`),
+                fetch(`${LOCAL_ENDPOINTS.session}?franchise_id=${fid}`),
+                fetch(`${LOCAL_ENDPOINTS.student}?franchise_id=${fid}`),
+                fetch(`${LOCAL_ENDPOINTS.lead_profile}?franchise_id=${fid}`),
+                fetch(`${LOCAL_ENDPOINTS.parent}?franchise_id=${fid}`),
+                fetch(`${LOCAL_ENDPOINTS.enrollment}?franchise_id=${fid}`)
             ]);
 
             const perfData = await perfRes.json();
@@ -227,7 +226,7 @@
             document.getElementById('rev-potential').innerText = (perfData.monthly_potential || 0).toLocaleString();
             document.getElementById('perf-total-active').innerText = perfData.active_students || 0;
 
-            // Pulse Logic
+            // Pulse Logic (RETAINED)
             const now = new Date();
             const oneDay = 24 * 60 * 60 * 1000;
             const oneWeek = 7 * oneDay;
@@ -252,7 +251,7 @@
             document.getElementById('perf-prev-month-active').innerText = getCount(activeStudents, oneMonth, oneMonth * 2);
             document.getElementById('perf-prev-month-wth').innerText = getCount(withdrawnStudents, oneMonth, oneMonth * 2);
 
-            // Messenger Logic
+            // Messenger Logic (RETAINED)
             const getMsgCount = (list, type, minAge) => list.filter(m => (m.status === type && (now - m.created_at) < minAge)).length;
             document.getElementById('msg-today-inquiry').innerText = getMsgCount(profiles, 'inquiry', oneDay);
             document.getElementById('msg-today-ready').innerText = getMsgCount(profiles, 'ready', oneDay);
@@ -265,33 +264,29 @@
             const rate = totalInq > 0 ? Math.round((totalReady / totalInq) * 100) : 0;
             document.getElementById('msg-conversion-rate').innerText = rate + "%";
 
-            // Billing Logic
+            // Billing Logic (RETAINED)
             const billingContainer = document.getElementById('billing-list');
             billingContainer.innerHTML = '';
             parents.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || '')).forEach(p => {
                 billingContainer.insertAdjacentHTML('beforeend', `
                     <div class="flex justify-between items-center border-b border-slate-50 pb-1 last:border-0 text-left">
-                        <span class="text-[9px] font-bold text-slate-600 truncate w-24 text-left">${p.first_name} ${p.last_name}</span>
-                        <span class="text-[8px] font-black text-[#00d1b2] tracking-tighter">DUE NEXT</span>
+                        <span class="text-[9px] font-bold text-slate-600 truncate w-24">${p.first_name} ${p.last_name}</span>
+                        <span class="text-[8px] font-black text-[#00d1b2] tracking-tighter uppercase">Due Soon</span>
                     </div>
                 `);
             });
 
-            // Session Logic
+            // Session Logic (RETAINED)
             const grid = document.getElementById('perf-sessions-body');
             grid.innerHTML = ''; 
             const sessionCounts = {};
-            enrollments.forEach(enr => { 
-                if (enr.status === true && enr.session_id) {
-                    sessionCounts[enr.session_id] = (sessionCounts[enr.session_id] || 0) + 1; 
-                }
-            });
+            enrollments.forEach(enr => { if (enr.status === true && enr.session_id) sessionCounts[enr.session_id] = (sessionCounts[enr.session_id] || 0) + 1; });
             sessions.filter(s => s.display === true).forEach(session => {
                 const count = sessionCounts[session.id] || 0;
                 const max = session.max_students || 15;
                 const percent = Math.min((count / max) * 100, 100);
                 grid.insertAdjacentHTML('beforeend', `
-                    <div class="bg-white border border-slate-100 p-2 rounded-lg shadow-sm hover:shadow-md transition-all flex flex-col justify-between text-left">
+                    <div class="bg-white border border-slate-100 p-2 rounded-lg shadow-sm flex flex-col justify-between text-left">
                         <div class="flex justify-between items-start">
                             <div class="flex flex-col overflow-hidden text-left">
                                 <span class="text-[8px] font-black text-slate-700 uppercase leading-none truncate w-full">${session.name}</span>
@@ -301,7 +296,7 @@
                         </div>
                         <div class="mt-2 flex items-center gap-1.5">
                             <div class="flex-grow h-1 bg-slate-50 rounded-full overflow-hidden">
-                                <div class="h-full bg-[#00d1b2] transition-all duration-700" style="width: ${percent}%"></div>
+                                <div class="h-full bg-[#00d1b2]" style="width: ${percent}%"></div>
                             </div>
                             <span class="text-[6px] font-black text-slate-400 w-4 text-right">${Math.round(percent)}%</span>
                         </div>
