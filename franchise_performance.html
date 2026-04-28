@@ -20,9 +20,7 @@
 </div>
 
 <div class="flex flex-col items-center justify-start w-full max-w-[98%] mx-auto space-y-4 animate-in fade-in duration-500 pb-20 text-left">
-    
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
-        
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition-all">
             <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-2">
                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest text-left">Enrollment Pulse</p>
@@ -197,7 +195,6 @@
 </div>
 
 <script>
-    // HARDCODED ENDPOINTS FOR ATIMONAN HANDSHAKE
     const ENDPOINTS = {
         perf: "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/get_franchise_performance",
         sess: "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session",
@@ -215,7 +212,6 @@
         const key = localStorage.getItem('nestmind_access_key') || "NOT_FOUND";
         const perfUrl = `${ENDPOINTS.perf}?franchise_id=${fid}&access_key=${key}`;
 
-        // Update Debug UI
         document.getElementById('debug-fid').innerText = fid;
         document.getElementById('debug-key').innerText = key;
         document.getElementById('debug-url').innerText = perfUrl;
@@ -223,37 +219,33 @@
         document.getElementById('debug-status').className = "mt-3 text-[9px] font-bold uppercase tracking-tighter text-yellow-500 italic";
 
         try {
-            const [perfRes, sessionRes, studentRes, profileRes, parentRes, enrollmentRes] = await Promise.all([
+            const [perfRes, studentRes, profileRes, parentRes /*, sessionRes, enrollmentRes */] = await Promise.all([
                 fetch(perfUrl),
-                fetch(`${ENDPOINTS.sess}?franchise_id=${fid}`),
                 fetch(`${ENDPOINTS.stud}?franchise_id=${fid}`),
                 fetch(`${ENDPOINTS.lead}?franchise_id=${fid}`),
-                fetch(`${ENDPOINTS.parent}?franchise_id=${fid}`),
-                fetch(`${ENDPOINTS.enrol}?franchise_id=${fid}`)
+                fetch(`${ENDPOINTS.parent}?franchise_id=${fid}`)
+                /*, fetch(`${ENDPOINTS.sess}?franchise_id=${fid}`),
+                fetch(`${ENDPOINTS.enrol}?franchise_id=${fid}`) */
             ]);
 
             if (!perfRes.ok) throw new Error(`HTTP ${perfRes.status}`);
 
             const perfData = await perfRes.json();
-            const sessionsRaw = await sessionRes.json();
             const studentsRaw = await studentRes.json();
             const profilesRaw = await profileRes.json();
             const parentsRaw = await parentRes.json();
-            const enrollmentsRaw = await enrollmentRes.json();
+            /* const sessionsRaw = await sessionRes.json();
+               const enrollmentsRaw = await enrollmentRes.json(); */
             
-            const sessions = (Array.isArray(sessionsRaw) ? sessionsRaw : (sessionsRaw.items || [])).filter(i => i.franchise_id == fid);
             const students = (Array.isArray(studentsRaw) ? studentsRaw : (studentsRaw.items || [])).filter(i => i.franchise_id == fid);
             const profiles = (Array.isArray(profilesRaw) ? profilesRaw : (profilesRaw.items || [])).filter(i => i.franchise_id == fid);
             const parents = (Array.isArray(parentsRaw) ? parentsRaw : (parentsRaw.items || [])).filter(i => i.franchise_id == fid);
-            const enrollments = (Array.isArray(enrollmentsRaw) ? enrollmentsRaw : (enrollmentsRaw.items || [])).filter(i => i.franchise_id == fid);
 
-            // Populate Financial Snapshots
             document.getElementById('rev-daily').innerText = (perfData.revenue_today || 0).toLocaleString();
             document.getElementById('rev-total-owed').innerText = (perfData.total_owed || 0).toLocaleString();
             document.getElementById('rev-potential').innerText = (perfData.monthly_potential || 0).toLocaleString();
             document.getElementById('perf-total-active').innerText = perfData.active_students || 0;
 
-            // Pulse Logic
             const now = new Date();
             const oneDay = 24 * 60 * 60 * 1000;
             const oneWeek = 7 * oneDay;
@@ -278,7 +270,6 @@
             document.getElementById('perf-prev-month-active').innerText = getCount(activeStudents, oneMonth, oneMonth * 2);
             document.getElementById('perf-prev-month-wth').innerText = getCount(withdrawnStudents, oneMonth, oneMonth * 2);
 
-            // Messenger Logic
             const getMsgCount = (list, type, minAge) => list.filter(m => (m.status === type && (now - m.created_at) < minAge)).length;
             document.getElementById('msg-today-inquiry').innerText = getMsgCount(profiles, 'inquiry', oneDay);
             document.getElementById('msg-today-ready').innerText = getMsgCount(profiles, 'ready', oneDay);
@@ -291,7 +282,6 @@
             const rate = totalInq > 0 ? Math.round((totalReady / totalInq) * 100) : 0;
             document.getElementById('msg-conversion-rate').innerText = rate + "%";
 
-            // Billing Logic
             const billingContainer = document.getElementById('billing-list');
             billingContainer.innerHTML = '';
             parents.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || '')).forEach(p => {
@@ -303,7 +293,7 @@
                 `);
             });
 
-            // Session Logic
+            /* // Session Monitor Logic Paused
             const grid = document.getElementById('perf-sessions-body');
             grid.innerHTML = ''; 
             const sessionCounts = {};
@@ -312,23 +302,9 @@
                 const count = sessionCounts[session.id] || 0;
                 const max = session.max_students || 15;
                 const percent = Math.min((count / max) * 100, 100);
-                grid.insertAdjacentHTML('beforeend', `
-                    <div class="bg-white border border-slate-100 p-2 rounded-lg shadow-sm flex flex-col justify-between text-left">
-                        <div class="flex justify-between items-start">
-                            <div class="flex flex-col overflow-hidden text-left">
-                                <span class="text-[8px] font-black text-slate-700 uppercase leading-none truncate w-full">${session.name}</span>
-                                <span class="text-[7px] font-bold text-slate-300 italic leading-none mt-1">${session.start_time_text || '--'}</span>
-                            </div>
-                            <span class="text-[8px] font-black text-slate-800 ml-1">${count}/${max}</span>
-                        </div>
-                        <div class="mt-2 flex items-center gap-1.5">
-                            <div class="flex-grow h-1 bg-slate-50 rounded-full overflow-hidden">
-                                <div class="h-full bg-[#00d1b2]" style="width: ${percent}%"></div>
-                            </div>
-                            <span class="text-[6px] font-black text-slate-400 w-4 text-right">${Math.round(percent)}%</span>
-                        </div>
-                    </div>`);
+                grid.insertAdjacentHTML('beforeend', `...`);
             });
+            */
 
             document.getElementById('debug-status').innerText = "Handshake Successful.";
             document.getElementById('debug-status').className = "mt-3 text-[9px] font-bold uppercase tracking-tighter text-[#00d1b2] italic";
