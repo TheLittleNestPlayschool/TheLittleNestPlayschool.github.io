@@ -20,7 +20,9 @@
 </div>
 
 <div class="flex flex-col items-center justify-start w-full max-w-[98%] mx-auto space-y-4 animate-in fade-in duration-500 pb-20 text-left">
+    
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
+        
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition-all">
             <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-2">
                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest text-left">Enrollment Pulse</p>
@@ -164,7 +166,7 @@
     </div>
 
     <div class="w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 text-left">
             <div class="text-left">
                 <h2 class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                     <span>💎</span> Payback Intelligence
@@ -208,128 +210,98 @@
     syncChannel.onmessage = (msg) => { if (msg.data === 'update_performance') initPerformance(); };
 
     async function initPerformance() {
-        const fid = localStorage.getItem('locked_franchise_id') || "24";
+        const fid = parseInt(localStorage.getItem('locked_franchise_id')) || 24;
         const key = localStorage.getItem('nestmind_access_key') || "NOT_FOUND";
         const perfUrl = `${ENDPOINTS.perf}?franchise_id=${fid}&access_key=${key}`;
 
         document.getElementById('debug-fid').innerText = fid;
         document.getElementById('debug-key').innerText = key;
         document.getElementById('debug-url').innerText = perfUrl;
-        document.getElementById('debug-status').innerText = "Initiating handshake...";
+        document.getElementById('debug-status').innerText = "Initiating Handshake...";
         document.getElementById('debug-status').className = "mt-3 text-[9px] font-bold uppercase tracking-tighter text-yellow-500 italic";
 
         try {
-            const [perfRes, studentRes, profileRes, parentRes /*, sessionRes, enrollmentRes */] = await Promise.all([
+            // SESSION MONITOR FETCHES DISENGAGED PER INSTRUCTION
+            const [perfRes, studRes, profileRes, parentRes] = await Promise.all([
                 fetch(perfUrl),
-                fetch(`${ENDPOINTS.stud}?franchise_id=${fid}`),
-                fetch(`${ENDPOINTS.lead}?franchise_id=${fid}`),
-                fetch(`${ENDPOINTS.parent}?franchise_id=${fid}`)
-                /*, fetch(`${ENDPOINTS.sess}?franchise_id=${fid}`),
-                fetch(`${ENDPOINTS.enrol}?franchise_id=${fid}`) */
+                fetch(`${ENDPOINTS.stud}?franchise_id=${fid}&access_key=${key}`),
+                fetch(`${ENDPOINTS.lead}?franchise_id=${fid}&access_key=${key}`),
+                fetch(`${ENDPOINTS.parent}?franchise_id=${fid}&access_key=${key}`)
             ]);
-
-            if (!perfRes.ok) throw new Error(`HTTP ${perfRes.status}`);
 
             const perfData = await perfRes.json();
             const studentsRaw = await studentRes.json();
             const profilesRaw = await profileRes.json();
             const parentsRaw = await parentRes.json();
-            /* const sessionsRaw = await sessionRes.json();
-               const enrollmentsRaw = await enrollmentRes.json(); */
-            
-            const students = (Array.isArray(studentsRaw) ? studentsRaw : (studentsRaw.items || [])).filter(i => i.franchise_id == fid);
-            const profiles = (Array.isArray(profilesRaw) ? profilesRaw : (profilesRaw.items || [])).filter(i => i.franchise_id == fid);
-            const parents = (Array.isArray(parentsRaw) ? parentsRaw : (parentsRaw.items || [])).filter(i => i.franchise_id == fid);
 
+            // Financial Snapshots
             document.getElementById('rev-daily').innerText = (perfData.revenue_today || 0).toLocaleString();
             document.getElementById('rev-total-owed').innerText = (perfData.total_owed || 0).toLocaleString();
             document.getElementById('rev-potential').innerText = (perfData.monthly_potential || 0).toLocaleString();
             document.getElementById('perf-total-active').innerText = perfData.active_students || 0;
 
+            // Pulse Logic
             const now = new Date();
-            const oneDay = 24 * 60 * 60 * 1000;
-            const oneWeek = 7 * oneDay;
-            const oneMonth = 30 * oneDay;
-            const activeStudents = students.filter(s => s.is_active === true);
-            const withdrawnStudents = students.filter(s => s.is_active === false);
-            const getCount = (list, minAge, maxAge) => list.filter(s => {
-                const age = now - s.created_at;
-                return age >= minAge && age < maxAge;
-            }).length;
+            const oneDay = 86400000; const oneWeek = 604800000; const oneMonth = 2592000000;
+            const students = (Array.isArray(studentsRaw) ? studentsRaw : (studentsRaw.items || [])).filter(s => s.franchise_id == fid);
+            const getC = (list, min, max) => list.filter(s => { const age = now - s.created_at; return age >= min && age < max; }).length;
 
-            document.getElementById('perf-today-active').innerText = getCount(activeStudents, 0, oneDay);
-            document.getElementById('perf-today-wth').innerText = getCount(withdrawnStudents, 0, oneDay);
-            document.getElementById('perf-prev-day-active').innerText = getCount(activeStudents, oneDay, oneDay * 2);
-            document.getElementById('perf-prev-day-wth').innerText = getCount(withdrawnStudents, oneDay, oneDay * 2);
-            document.getElementById('perf-week-active').innerText = getCount(activeStudents, 0, oneWeek);
-            document.getElementById('perf-week-wth').innerText = getCount(withdrawnStudents, 0, oneWeek);
-            document.getElementById('perf-prev-week-active').innerText = getCount(activeStudents, oneWeek, oneWeek * 2);
-            document.getElementById('perf-prev-week-wth').innerText = getCount(withdrawnStudents, oneWeek, oneWeek * 2);
-            document.getElementById('perf-month-active').innerText = getCount(activeStudents, 0, oneMonth);
-            document.getElementById('perf-month-wth').innerText = getCount(withdrawnStudents, 0, oneMonth);
-            document.getElementById('perf-prev-month-active').innerText = getCount(activeStudents, oneMonth, oneMonth * 2);
-            document.getElementById('perf-prev-month-wth').innerText = getCount(withdrawnStudents, oneMonth, oneMonth * 2);
+            document.getElementById('perf-today-active').innerText = getC(students.filter(s => s.is_active), 0, oneDay);
+            document.getElementById('perf-today-wth').innerText = getC(students.filter(s => !s.is_active), 0, oneDay);
+            document.getElementById('perf-prev-day-active').innerText = getC(students.filter(s => s.is_active), oneDay, oneDay*2);
+            document.getElementById('perf-prev-day-wth').innerText = getC(students.filter(s => !s.is_active), oneDay, oneDay*2);
+            document.getElementById('perf-week-active').innerText = getC(students.filter(s => s.is_active), 0, oneWeek);
+            document.getElementById('perf-week-wth').innerText = getC(students.filter(s => !s.is_active), 0, oneWeek);
+            document.getElementById('perf-prev-week-active').innerText = getC(students.filter(s => s.is_active), oneWeek, oneWeek*2);
+            document.getElementById('perf-prev-week-wth').innerText = getC(students.filter(s => !s.is_active), oneWeek, oneWeek*2);
+            document.getElementById('perf-month-active').innerText = getC(students.filter(s => s.is_active), 0, oneMonth);
+            document.getElementById('perf-month-wth').innerText = getC(students.filter(s => !s.is_active), 0, oneMonth);
+            document.getElementById('perf-prev-month-active').innerText = getC(students.filter(s => s.is_active), oneMonth, oneMonth*2);
+            document.getElementById('perf-prev-month-wth').innerText = getC(students.filter(s => !s.is_active), oneMonth, oneMonth*2);
 
-            const getMsgCount = (list, type, minAge) => list.filter(m => (m.status === type && (now - m.created_at) < minAge)).length;
-            document.getElementById('msg-today-inquiry').innerText = getMsgCount(profiles, 'inquiry', oneDay);
-            document.getElementById('msg-today-ready').innerText = getMsgCount(profiles, 'ready', oneDay);
-            document.getElementById('msg-week-inquiry').innerText = getMsgCount(profiles, 'inquiry', oneWeek);
-            document.getElementById('msg-week-ready').innerText = getMsgCount(profiles, 'ready', oneWeek);
-            document.getElementById('msg-month-inquiry').innerText = getMsgCount(profiles, 'inquiry', oneMonth);
-            document.getElementById('msg-month-ready').innerText = getMsgCount(profiles, 'ready', oneMonth);
+            // Messenger Logic
+            const profiles = (Array.isArray(profilesRaw) ? profilesRaw : (profilesRaw.items || [])).filter(i => i.franchise_id == fid);
             const totalInq = profiles.filter(p => p.status === 'inquiry').length;
             const totalReady = profiles.filter(p => p.status === 'ready').length;
-            const rate = totalInq > 0 ? Math.round((totalReady / totalInq) * 100) : 0;
-            document.getElementById('msg-conversion-rate').innerText = rate + "%";
+            document.getElementById('msg-conversion-rate').innerText = (totalInq > 0 ? Math.round((totalReady/totalInq)*100) : 0) + "%";
+            document.getElementById('msg-today-inquiry').innerText = profiles.filter(m => m.status === 'inquiry' && (now - m.created_at) < oneDay).length;
+            document.getElementById('msg-today-ready').innerText = profiles.filter(m => m.status === 'ready' && (now - m.created_at) < oneDay).length;
 
-            const billingContainer = document.getElementById('billing-list');
-            billingContainer.innerHTML = '';
-            parents.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || '')).forEach(p => {
-                billingContainer.insertAdjacentHTML('beforeend', `
-                    <div class="flex justify-between items-center border-b border-slate-50 pb-1 last:border-0 text-left">
-                        <span class="text-[9px] font-bold text-slate-600 truncate w-24 text-left">${p.first_name} ${p.last_name}</span>
-                        <span class="text-[8px] font-black text-[#00d1b2] tracking-tighter">DUE NEXT</span>
-                    </div>
-                `);
-            });
+            // Billing Logic
+            const refreshBilling = () => {
+                const bList = document.getElementById('billing-list');
+                bList.innerHTML = '';
+                const parents = (Array.isArray(parentsRaw) ? parentsRaw : (parentsRaw.items || [])).filter(i => i.franchise_id == fid);
+                parents.sort((a,b) => (a.first_name || '').localeCompare(b.first_name || '')).forEach(p => {
+                    bList.insertAdjacentHTML('beforeend', `<div class="flex justify-between items-center border-b border-slate-50 pb-1 text-left last:border-0"><span class="text-[9px] font-bold text-slate-600 truncate w-24 text-left">${p.first_name} ${p.last_name}</span><span class="text-[8px] font-black text-[#00d1b2] uppercase text-right">DUE NEXT</span></div>`);
+                });
+            };
+            refreshBilling();
+            document.getElementById('billing-lookahead').onchange = refreshBilling;
 
-            /* // Session Monitor Logic Paused
-            const grid = document.getElementById('perf-sessions-body');
-            grid.innerHTML = ''; 
-            const sessionCounts = {};
-            enrollments.forEach(enr => { if (enr.status === true && enr.session_id) sessionCounts[enr.session_id] = (sessionCounts[enr.session_id] || 0) + 1; });
-            sessions.filter(s => s.display === true).forEach(session => {
-                const count = sessionCounts[session.id] || 0;
-                const max = session.max_students || 15;
-                const percent = Math.min((count / max) * 100, 100);
-                grid.insertAdjacentHTML('beforeend', `...`);
-            });
-            */
+            // ROI Engine
+            window.calculateROI = () => {
+                const totalActive = parseInt(document.getElementById('perf-total-active').innerText) || 0;
+                const monthlyRev = totalActive * 3500;
+                const wages = parseFloat(document.getElementById('exp-wages')?.value) || 0;
+                const extraWages = wages * 0.10;
+                const royalties = monthlyRev * 0.08;
+                const totalOpex = (parseFloat(document.getElementById('exp-rent')?.value) || 0) + wages + extraWages + royalties + (parseFloat(document.getElementById('exp-power')?.value) || 0) + (parseFloat(document.getElementById('exp-water')?.value) || 0) + (parseFloat(document.getElementById('exp-ads')?.value) || 0);
+                const dailyNet = (monthlyRev - totalOpex) / 30;
+                const fee = 350000;
+                document.getElementById('label-current-val').innerText = `₱${Math.round(dailyNet).toLocaleString()}`;
+                document.getElementById('label-total-val').innerText = `₱${fee.toLocaleString()}`;
+                document.getElementById('recovery-bar').style.width = Math.max((dailyNet/fee)*100, 0.5) + "%";
+            };
+            window.calculateROI();
 
-            document.getElementById('debug-status').innerText = "Handshake Successful.";
+            document.getElementById('debug-status').innerText = "SUCCESS";
             document.getElementById('debug-status').className = "mt-3 text-[9px] font-bold uppercase tracking-tighter text-[#00d1b2] italic";
 
-            if (window.calculateROI) window.calculateROI();
-        } catch (e) { 
-            console.error("Handshake Fail:", e); 
-            document.getElementById('debug-status').innerText = "Handshake Failed: " + e.message;
+        } catch (e) {
+            document.getElementById('debug-status').innerText = "FAIL: " + e.message;
             document.getElementById('debug-status').className = "mt-3 text-[9px] font-bold uppercase tracking-tighter text-red-500 italic";
         }
     }
-
-    window.calculateROI = () => {
-        const totalActiveCount = parseInt(document.getElementById('perf-total-active').innerText) || 0;
-        const totalMonthlyRev = totalActiveCount * 3500;
-        const fee = 350000;
-        document.getElementById('label-current-val').innerText = `₱${Math.round(totalMonthlyRev / 30).toLocaleString()}`;
-        document.getElementById('label-total-val').innerText = `₱${fee.toLocaleString()}`;
-        document.getElementById('recovery-bar').style.width = "2%"; 
-    };
-
     initPerformance();
 </script>
-
-<style>
-    .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-</style>
