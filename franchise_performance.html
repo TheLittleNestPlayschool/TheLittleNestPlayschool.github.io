@@ -1,21 +1,5 @@
 <link rel="stylesheet" href="/nest_style.css">
 
-<div id="debug-bridge" class="w-full max-w-[98%] mx-auto mb-4 p-4 bg-slate-900 rounded-2xl border border-slate-700 shadow-xl">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-left">
-        <div class="space-y-1">
-            <h3 class="text-[10px] font-black text-[#00d1b2] uppercase tracking-[0.2em]">Atimonan Handshake Debugger</h3>
-            <div class="flex flex-wrap gap-4 text-[11px] font-mono text-slate-300">
-                <span>FID: <b id="debug-fid" class="text-white">--</b></span>
-                <span>KEY: <b id="debug-key" class="text-white">--</b></span>
-                <span>STATUS: <b id="debug-status-text" class="text-white uppercase tracking-widest">Waiting</b></span>
-            </div>
-        </div>
-        <button onclick="initPerformance()" class="bg-[#00d1b2] text-slate-900 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-lg">
-            Force Refresh API
-        </button>
-    </div>
-</div>
-
 <div class="flex flex-col items-center justify-start w-full max-w-[98%] mx-auto space-y-4 animate-in fade-in duration-500 pb-20 text-left">
     
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
@@ -194,7 +178,6 @@
 </div>
 
 <script>
-    // 1. HARDCODED ENDPOINTS (Bypassing config blockers)
     const ATIMONAN_API = {
         snapshot: "https://x8ki-letl-twmt.n7.xano.io/api:J5YZbOPl/get_franchise_performance",
         sessions: "https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session",
@@ -204,18 +187,12 @@
         parents: "https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx/parent"
     };
 
-    // 2. BROADCAST CHANNEL (Auto-refresh on update)
     const syncChannel = new BroadcastChannel('nestmind_sync');
     syncChannel.onmessage = (msg) => { if (msg.data === 'update_performance') initPerformance(); };
 
-    // 3. MAIN DATA INITIALIZATION
     async function initPerformance() {
         const fid = localStorage.getItem('locked_franchise_id') || "24";
         const key = localStorage.getItem('nestmind_access_key') || "NOT_FOUND";
-        
-        document.getElementById('debug-fid').innerText = fid;
-        document.getElementById('debug-key').innerText = key;
-        document.getElementById('debug-status-text').innerText = "CONNECTING...";
 
         try {
             const [perfRes, sessRes, enrRes, studRes, leadRes, parentRes] = await Promise.all([
@@ -234,13 +211,13 @@
             const sessionsRaw = await sessRes.json();
             const enrRaw = await enrRes.json();
 
-            // A. Financial Snapshot
+            // Financial Snapshot
             document.getElementById('rev-daily').innerText = (perf.revenue_today || 0).toLocaleString();
             document.getElementById('rev-total-owed').innerText = (perf.total_owed || 0).toLocaleString();
             document.getElementById('rev-potential').innerText = (perf.monthly_potential || 0).toLocaleString();
             document.getElementById('perf-total-active').innerText = perf.active_students || 0;
 
-            // B. Enrollment Pulse Math
+            // Enrollment Pulse
             const now = new Date();
             const oneDay = 86400000; const oneWeek = 604800000; const oneMonth = 2592000000;
             const students = (Array.isArray(studentsRaw) ? studentsRaw : (studentsRaw.items || [])).filter(s => s.franchise_id == fid);
@@ -259,13 +236,13 @@
             document.getElementById('perf-prev-month-active').innerText = getC(students.filter(s => s.is_active), oneMonth, oneMonth*2);
             document.getElementById('perf-prev-month-wth').innerText = getC(students.filter(s => !s.is_active), oneMonth, oneMonth*2);
 
-            // C. Messenger Intelligence
+            // Messenger
             const leads = (Array.isArray(leadsRaw) ? leadsRaw : (leadsRaw.items || [])).filter(i => i.franchise_id == fid);
             const totalInq = leads.filter(p => p.status === 'inquiry').length;
             const totalReady = leads.filter(p => p.status === 'ready').length;
             document.getElementById('msg-conversion-rate').innerText = (totalInq > 0 ? Math.round((totalReady/totalInq)*100) : 0) + "%";
 
-            // D. Session Monitor Logic
+            // Session Monitor
             const grid = document.getElementById('perf-sessions-body');
             grid.innerHTML = '';
             const sCounts = {};
@@ -289,7 +266,7 @@
                     </div>`);
             });
 
-            // E. Billing Due Logic (Dynamic sorting/refresh)
+            // Billing
             const refreshBilling = () => {
                 const bList = document.getElementById('billing-list');
                 bList.innerHTML = '';
@@ -301,7 +278,7 @@
             refreshBilling();
             document.getElementById('billing-lookahead').onchange = refreshBilling;
 
-            // F. ROI Engine (Full calculation logic)
+            // ROI Engine
             window.calculateROI = () => {
                 const totalActive = parseInt(document.getElementById('perf-total-active').innerText) || 0;
                 const monthlyRev = totalActive * 3500;
@@ -311,17 +288,14 @@
                 const totalOpex = (parseFloat(document.getElementById('exp-rent')?.value) || 0) + wages + extraWages + royalties + (parseFloat(document.getElementById('exp-power')?.value) || 0) + (parseFloat(document.getElementById('exp-water')?.value) || 0) + (parseFloat(document.getElementById('exp-ads')?.value) || 0);
                 const dailyNet = (monthlyRev - totalOpex) / 30;
                 const fee = parseFloat(document.getElementById('inv-fee')?.value) || 350000;
-                
                 document.getElementById('label-current-val').innerText = `₱${Math.round(dailyNet).toLocaleString()}`;
                 document.getElementById('label-total-val').innerText = `₱${fee.toLocaleString()}`;
                 document.getElementById('recovery-bar').style.width = Math.max((dailyNet/fee)*100, 0.5) + "%";
             };
             window.calculateROI();
             
-            document.getElementById('debug-status-text').innerText = "SUCCESS";
         } catch (e) {
-            console.error(e);
-            document.getElementById('debug-status-text').innerText = "FAIL: " + e.message;
+            console.error("API Load Failed", e);
         }
     }
 
