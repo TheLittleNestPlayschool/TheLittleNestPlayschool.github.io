@@ -54,29 +54,56 @@
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
 
-        /* NEW LOADING BAR STYLES */
-        #loading-bar-container {
+        /* CENTERED LOADING MODAL STYLES */
+        #sync-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(4px);
+            display: none; /* Controlled by JS */
+            align-items: center;
+            justify-content: center;
             z-index: 9999;
-            pointer-events: none;
         }
-        #loading-bar {
-            height: 100%;
+
+        .sync-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            width: 300px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .sync-loader-track {
+            width: 100%;
+            height: 8px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 1.5rem;
+        }
+
+        .sync-loader-fill {
             width: 0%;
+            height: 100%;
             background: #00d1b2;
-            box-shadow: 0 0 10px #00d1b2, 0 0 5px #00d1b2;
-            transition: width 0.4s ease;
+            transition: width 0.3s ease;
         }
     </style>
 </head>
 <body class="bg-[#f8fafc] font-['Inter',_sans-serif]">
 
-<div id="loading-bar-container">
-    <div id="loading-bar"></div>
+<div id="sync-overlay">
+    <div class="sync-box">
+        <div class="text-2xl mb-2">⚡</div>
+        <h3 id="sync-title" class="text-sm font-black text-slate-800 uppercase tracking-tight">Syncing Module</h3>
+        <p id="sync-subtitle" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Fetching Data...</p>
+        <div class="sync-loader-track">
+            <div id="sync-fill" class="sync-loader-fill"></div>
+        </div>
+    </div>
 </div>
 
 <div class="flex h-screen w-full overflow-hidden">
@@ -243,15 +270,18 @@
         finalizeUnlock(fname);
     }
 
-    // MODIFIED LOADMODULE WITH PROGRESS BAR LOGIC
+    // MODIFIED LOADMODULE WITH CENTERED MODAL LOGIC
     async function loadModule(file, title) {
         const workspace = document.getElementById('main-workspace');
         const breadcrumbText = document.getElementById('breadcrumb-text');
-        const loadingBar = document.getElementById('loading-bar');
-        
-        // Start animation
-        loadingBar.style.transition = 'width 0.4s ease';
-        loadingBar.style.width = '30%';
+        const overlay = document.getElementById('sync-overlay');
+        const fill = document.getElementById('sync-fill');
+        const sub = document.getElementById('sync-subtitle');
+
+        // Show Modal
+        overlay.style.display = 'flex';
+        fill.style.width = '20%';
+        sub.innerText = `Connecting to ${title}...`;
 
         workspace.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 font-bold italic text-sm animate-pulse">Syncing ${title}...</div>`;
         if(breadcrumbText) breadcrumbText.innerText = title;
@@ -260,14 +290,14 @@
         const secureUrl = GITHUB_ROOT + file + authParams;
 
         try {
-            // Jump to 60% while fetching
-            loadingBar.style.width = '60%';
+            fill.style.width = '50%';
+            sub.innerText = `Fetching ${file}...`;
 
             const res = await fetch(secureUrl + (secureUrl.includes('?') ? '&' : '?') + 'v=' + Date.now());
             const html = await res.text();
             
-            // Jump to 90%
-            loadingBar.style.width = '90%';
+            fill.style.width = '85%';
+            sub.innerText = "Processing Scripts...";
 
             workspace.innerHTML = `<div class="p-8">${html}</div>`;
             
@@ -280,16 +310,19 @@
             });
 
             // Finish
-            loadingBar.style.width = '100%';
+            fill.style.width = '100%';
+            sub.innerText = "Secured.";
+            
             setTimeout(() => {
-                loadingBar.style.transition = 'none';
-                loadingBar.style.width = '0%';
-            }, 500);
+                overlay.style.display = 'none';
+                fill.style.width = '0%';
+            }, 600);
 
         } catch (e) { 
             workspace.innerHTML = `<div class="p-10 text-red-500 font-bold">Sync Error: ${e.message}</div>`; 
-            loadingBar.style.backgroundColor = '#ef4444'; // Red for error
-            loadingBar.style.width = '100%';
+            sub.innerText = "Sync Failed.";
+            fill.style.backgroundColor = "#ef4444";
+            setTimeout(() => { overlay.style.display = 'none'; }, 2000);
         }
     }
 
