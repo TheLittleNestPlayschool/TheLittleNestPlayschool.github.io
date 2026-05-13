@@ -165,7 +165,6 @@
                     localStorage.setItem('locked_franchise_name', matched.name);
                     localStorage.setItem('nestmind_f_id', matched.id);
                     localStorage.setItem('nestmind_f_name', matched.name);
-                    
                     finalizeUnlock(matched.name);
                 } else {
                     statusText.innerText = "Access Denied.";
@@ -187,15 +186,18 @@
         navMenu.classList.remove('hidden');
         
         setTimeout(() => {
-            // Hide specific modules for regular franchises
+            // Updated logic to hide performance for EVERYONE (including HO) based on your request
+            const perfBtn = document.getElementById('menu-performance');
+            const assessmentBtn = document.getElementById('menu-assessments');
+            const pixifyBtn = document.getElementById('menu-pixify');
+
+            // This hides Performance regardless of login type
+            if (perfBtn) perfBtn.style.setProperty('display', 'none', 'important');
+
+            // Keep the standard behavior for these two
             if (!isHO) {
-                const assessmentBtn = document.getElementById('menu-assessments');
-                const pixifyBtn = document.getElementById('menu-pixify');
-                const performanceBtn = document.getElementById('menu-performance');
-                
                 if (assessmentBtn) assessmentBtn.style.setProperty('display', 'none', 'important');
                 if (pixifyBtn) pixifyBtn.style.setProperty('display', 'none', 'important');
-                if (performanceBtn) performanceBtn.style.setProperty('display', 'none', 'important');
             }
         }, 50);
 
