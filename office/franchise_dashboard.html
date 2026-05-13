@@ -84,7 +84,7 @@
 
         <nav id="nav-menu" class="hidden px-2 overflow-y-auto space-y-0.5 custom-scrollbar pb-10">
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Management</div>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('franchise_performance.html', 'Performance')">
+            <button id="menu-performance" class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('franchise_performance.html', 'Performance')">
                 <span class="text-sm">📈</span> Performance
             </button>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('parents.html', 'Parents')">
@@ -143,7 +143,6 @@
 
         if (!tlnpKey) return;
 
-        // Ensure current access key is synced
         localStorage.setItem('nestmind_access_key', tlnpKey);
 
         try {
@@ -162,8 +161,6 @@
                 const matched = franchises.find(f => f.access_key === tlnpKey);
                 if (matched) {
                     localStorage.setItem('is_head_office', 'false');
-                    
-                    // DUAL-KEY SYNC: Force both storage conventions to match the URL identity
                     localStorage.setItem('locked_franchise_id', matched.id);
                     localStorage.setItem('locked_franchise_name', matched.name);
                     localStorage.setItem('nestmind_f_id', matched.id);
@@ -190,11 +187,15 @@
         navMenu.classList.remove('hidden');
         
         setTimeout(() => {
+            // Hide specific modules for regular franchises
             if (!isHO) {
                 const assessmentBtn = document.getElementById('menu-assessments');
                 const pixifyBtn = document.getElementById('menu-pixify');
+                const performanceBtn = document.getElementById('menu-performance');
+                
                 if (assessmentBtn) assessmentBtn.style.setProperty('display', 'none', 'important');
                 if (pixifyBtn) pixifyBtn.style.setProperty('display', 'none', 'important');
+                if (performanceBtn) performanceBtn.style.setProperty('display', 'none', 'important');
             }
         }, 50);
 
@@ -210,8 +211,6 @@
         const fname = select.options[select.selectedIndex].text;
         
         localStorage.setItem('is_head_office', 'false');
-        
-        // DUAL-KEY SYNC for manual dropdown selection
         localStorage.setItem('locked_franchise_id', fid);
         localStorage.setItem('locked_franchise_name', fname);
         localStorage.setItem('nestmind_f_id', fid);
