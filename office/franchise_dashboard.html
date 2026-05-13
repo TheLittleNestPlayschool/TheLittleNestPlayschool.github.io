@@ -53,11 +53,6 @@
             align-items: center; gap: 8px;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
-
-        /* PERMANENT HIDDEN ELEMENTS */
-        #menu-performance, #menu-receipts, .handshake-debugger, [id*="debugger"] { 
-            display: none !important; 
-        }
     </style>
 </head>
 <body class="bg-[#f8fafc] font-['Inter',_sans-serif]">
@@ -90,21 +85,12 @@
         <nav id="nav-menu" class="hidden px-2 overflow-y-auto space-y-0.5 custom-scrollbar pb-10">
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Management</div>
             
-            <button id="menu-performance" class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('franchise_performance.html', 'Performance')">
-                <span class="text-sm">📈</span> Performance
-            </button>
-
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('parents.html', 'Parents')">
                 <span class="text-sm">👨‍👩‍👧</span> Parents
             </button>
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('students.html', 'Students')">
                 <span class="text-sm">🏫</span> Students
             </button>
-            
-            <button id="menu-receipts" class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('receipt.html', 'Receipts')">
-                <span class="text-sm">🧾</span> Receipts
-            </button>
-
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('teacher_v2.html', 'Teachers')">
                 <span class="text-sm">🧑‍🏫</span> Teachers
             </button>
@@ -237,7 +223,6 @@
             const res = await fetch(secureUrl + (secureUrl.includes('?') ? '&' : '?') + 'v=' + Date.now());
             const html = await res.text();
             
-            // Re-injection of raw HTML to maintain formatting
             workspace.innerHTML = `<div class="p-8">${html}</div>`;
             
             const scripts = workspace.querySelectorAll('script');
