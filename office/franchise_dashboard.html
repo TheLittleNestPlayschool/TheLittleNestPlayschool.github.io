@@ -54,8 +54,8 @@
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
 
-        /* PERMANENT HIDDEN ELEMENTS */
-        #menu-performance, .handshake-debugger, [id*="debugger"] { 
+        /* PERMANENT HIDDEN ELEMENTS - Added #menu-receipts here */
+        #menu-performance, #menu-receipts, .handshake-debugger, [id*="debugger"] { 
             display: none !important; 
         }
     </style>
@@ -81,7 +81,7 @@
                 <div id="breadcrumb-container" class="hidden mt-2 pt-2 border-t border-slate-700/30">
                     <div class="flex items-center justify-center gap-1.5">
                         <div id="status-dot" class="w-1.5 h-1.5 rounded-full bg-[#00d1b2] animate-pulse"></div>
-                        <span id="breadcrumb-text" class="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">Portal Root</span>
+                        <span id="breadcrumb-text" class="text-[8px] font-bold text-slate-400 uppercase tracking-widest pointer-events-none leading-none">Portal Root</span>
                     </div>
                 </div>
             </div>
@@ -100,9 +100,11 @@
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('students.html', 'Students')">
                 <span class="text-sm">🏫</span> Students
             </button>
-            <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('receipt.html', 'Receipts')">
+            
+            <button id="menu-receipts" class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('receipt.html', 'Receipts')">
                 <span class="text-sm">🧾</span> Receipts
             </button>
+
             <button class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('teacher_v2.html', 'Teachers')">
                 <span class="text-sm">🧑‍🏫</span> Teachers
             </button>
@@ -235,7 +237,7 @@
             const res = await fetch(secureUrl + (secureUrl.includes('?') ? '&' : '?') + 'v=' + Date.now());
             const html = await res.text();
             
-            // Back to the original method: No parsing, just direct injection.
+            // Clean direct injection to maintain the enrollment form layout
             workspace.innerHTML = `<div class="p-8">${html}</div>`;
             
             const scripts = workspace.querySelectorAll('script');
