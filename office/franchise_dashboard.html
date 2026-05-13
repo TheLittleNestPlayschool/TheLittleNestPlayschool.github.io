@@ -228,8 +228,23 @@
 
         try {
             const res = await fetch(secureUrl + (secureUrl.includes('?') ? '&' : '?') + 'v=' + Date.now());
-            const html = await res.text();
-            workspace.innerHTML = `<div class="p-8">${html}</div>`;
+            const rawHtml = await res.text();
+            
+            // CLEANING THE INJECTED HTML: 
+            // We search for the specific "HANDSHAKE DEBUGGER" block and remove it before injection.
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(rawHtml, 'text/html');
+            
+            // This targets the specific debug container found in your screenshots
+            const debugHeader = Array.from(doc.querySelectorAll('div')).find(el => 
+                el.textContent.includes('HANDSHAKE DEBUGGER')
+            );
+            
+            if (debugHeader) {
+                debugHeader.remove();
+            }
+
+            workspace.innerHTML = `<div class="p-8">${doc.body.innerHTML}</div>`;
             
             const scripts = workspace.querySelectorAll('script');
             scripts.forEach(oldScript => {
