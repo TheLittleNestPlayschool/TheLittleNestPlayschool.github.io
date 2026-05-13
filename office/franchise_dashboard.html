@@ -53,6 +53,11 @@
             align-items: center; gap: 8px;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
+
+        /* PERMANENT HIDDEN ELEMENTS */
+        #menu-performance, .handshake-debugger, [id*="debugger"] { 
+            display: none !important; 
+        }
     </style>
 </head>
 <body class="bg-[#f8fafc] font-['Inter',_sans-serif]">
@@ -85,7 +90,7 @@
         <nav id="nav-menu" class="hidden px-2 overflow-y-auto space-y-0.5 custom-scrollbar pb-10">
             <div class="text-[10px] font-bold text-[#475569] uppercase tracking-[0.1em] px-3 py-2 mt-2">Management</div>
             
-            <button class="hidden w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('franchise_performance.html', 'Performance')">
+            <button id="menu-performance" class="w-full group cursor-pointer p-2 text-[#94a3b8] text-xs font-semibold hover:bg-[#1e293b] hover:text-[#00d1b2] rounded-lg transition-all flex items-center gap-2.5" onclick="loadModule('franchise_performance.html', 'Performance')">
                 <span class="text-sm">📈</span> Performance
             </button>
 
@@ -228,12 +233,9 @@
 
         try {
             const res = await fetch(secureUrl + (secureUrl.includes('?') ? '&' : '?') + 'v=' + Date.now());
-            let html = await res.text();
+            const html = await res.text();
             
-            // Remove debugger bar via string replacement to prevent DOMParser formatting issues
-            const debugPattern = /<div[^>]*>[\s\S]*?HANDSHAKE DEBUGGER[\s\S]*?<\/div>/i;
-            html = html.replace(debugPattern, '');
-
+            // Back to the original method: No parsing, just direct injection.
             workspace.innerHTML = `<div class="p-8">${html}</div>`;
             
             const scripts = workspace.querySelectorAll('script');
