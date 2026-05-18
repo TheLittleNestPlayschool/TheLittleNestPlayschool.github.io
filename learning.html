@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Little Nest - Learning Core</title>
+    <title>The Little Nest - Learning Portal</title>
     
     <link rel="stylesheet" href="nest_style.css">
     
     <style>
-        /* --- Strict Mobile Window Locking --- */
+        /* --- Mobile Layout Device Constraints --- */
         body {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            align-items: center;
-            background-color: var(--nest-border); /* Limits width on desktop viewports */
+            align-items: center; 
+            background-color: var(--nest-border); /* Framed background for desktop previewing */
         }
 
-        .phone-container {
+        .app-wrapper {
             width: 100%;
-            max-width: 430px; /* Locks execution to standard mobile screen width */
+            max-width: 430px; /* Dimensions locked to standard phone width */
             background-color: var(--nest-bg);
             display: flex;
             flex-direction: column;
@@ -28,119 +28,89 @@
             box-shadow: var(--nest-shadow);
         }
 
-        /* --- Header Adjustments --- */
-        .app-header {
+        /* --- Header Configuration --- */
+        header {
             background-color: #ffffff;
-            padding: 12px 16px;
+            padding: 14px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--nest-border);
         }
 
-        .app-header h1 {
-            font-size: 1.05rem;
-            margin: 0;
+        header .nest-header {
+            font-size: 1.1rem;
         }
 
-        /* --- Main Content Base --- */
-        .content-space {
+        /* --- Main Work Envelope --- */
+        main {
             flex: 1;
-            padding: 16px;
             display: flex;
             flex-direction: column;
+            padding: 16px;
             gap: 16px;
-        }
-
-        /* --- 16:9 Low-Egress Video Frame --- */
-        .video-box-wrapper {
-            background-color: var(--nest-dark);
-            border-radius: var(--nest-radius-lg);
-            overflow: hidden;
             width: 100%;
-            aspect-ratio: 16 / 9;
-            box-shadow: var(--nest-shadow);
         }
 
-        .video-box-wrapper video {
-            width: 100%;
-            height: 100%;
-            display: block;
-            object-fit: cover;
-        }
-
-        /* --- Category Pill Alignment --- */
-        .category-row {
+        /* --- Category Grid Display --- */
+        .dashboard-categories {
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
-            margin-bottom: 4px;
+            margin: 8px 0 16px 0;
         }
 
-        .category-tag {
-            font-size: 0.65rem;
-            font-weight: 800;
-            padding: 4px 10px;
-            border-radius: 9999px;
-            text-transform: uppercase;
-            background-color: var(--nest-slate);
-            color: #ffffff;
-            letter-spacing: 0.025em;
-        }
-
-        /* --- Interactive Tapping Pad Layout --- */
-        .game-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            width: 100%;
+        /* Big Launch Button Optimization for Mobile Thumbs */
+        .launch-btn-space {
             margin-top: 12px;
-        }
-
-        /* Overriding .nest-btn properties for large, low-friction mobile finger touch spaces */
-        .game-grid .nest-btn {
-            padding: 16px 8px;
-            font-size: 1.1rem;
-            border-radius: var(--nest-radius-lg);
-            border: 2px solid var(--nest-border);
             width: 100%;
-            background-color: #ffffff;
-            color: var(--nest-text-main);
         }
 
-        /* Immediate touch confirmation feedback native to mobile platforms */
-        .game-grid .nest-btn:active {
-            background-color: var(--nest-teal);
-            color: var(--nest-dark);
-            border-color: var(--nest-teal-dark);
+        .launch-btn-space .nest-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 1rem;
+            border-radius: var(--nest-radius-lg);
+            box-shadow: var(--nest-shadow);
         }
 
-        /* --- Success/Feedback Banners --- */
-        .feedback-alert {
-            display: none;
-            padding: 12px;
-            border-radius: var(--nest-radius-sm);
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-align: center;
+        /* --- Journey Roadmap List Layout --- */
+        .roadmap-title-space {
+            margin-top: 8px;
+            padding-left: 4px;
+        }
+
+        .session-road-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
             margin-top: 8px;
         }
-        .alert-success { background-color: rgba(16, 185, 129, 0.15); color: var(--nest-success); }
-        .alert-error { background-color: rgba(239, 68, 68, 0.15); color: var(--nest-danger); }
 
-        /* --- Offline Practice Block --- */
-        .offline-accent-box {
-            border-left: 4px solid var(--nest-success) !important;
-        }
-
-        .offline-flex {
+        .road-node {
             display: flex;
-            align-items: flex-start;
-            gap: 12px;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: #ffffff;
+            border: 1px solid var(--nest-border);
+            border-radius: var(--nest-radius-lg);
+            font-size: 0.9rem;
+            font-weight: 700;
         }
 
-        /* --- Footer Alignment --- */
-        .app-footer {
+        .road-node-active {
+            border-left: 6px solid var(--nest-teal);
+            box-shadow: var(--nest-shadow);
+        }
+
+        .road-node-locked {
+            opacity: 0.5;
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        /* --- Sticky Fixed Footer Navigation --- */
+        footer {
             background-color: #ffffff;
             border-top: 1px solid var(--nest-border);
             padding: 12px 16px;
@@ -152,127 +122,135 @@
             z-index: 900;
         }
 
-        .footer-tab {
+        .nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
+            gap: 4px;
             color: var(--nest-text-muted);
             text-decoration: none;
             font-size: 0.65rem;
             font-weight: 800;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        .footer-tab.active {
+        .nav-item.active {
             color: var(--nest-teal-dark);
         }
     </style>
 </head>
 <body>
 
-    <div class="phone-container">
+    <div class="app-wrapper">
 
-        <header class="app-header">
-            <h1 class="nest-header" id="display-session-title">SESSION 1</h1>
-            <span class="nest-badge nest-badge-teal" id="display-level-badge" style="color: var(--nest-teal-dark);">LEVEL 1</span>
+        <header>
+            <div class="nest-header">THE LITTLE NEST</div>
+            <div class="nest-badge nest-badge-teal" style="color: var(--nest-teal-dark);" id="level-indicator">LEVEL 1</div>
         </header>
 
-        <main class="content-space">
+        <main>
             
-            <div class="video-box-wrapper">
-                <video id="session-video-core" controls poster="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='56' viewBox='0 0 100 56'><rect width='100%' height='100%' fill='%230f172a'/></svg>">
-                    <source src="" type="video/mp4">
-                </video>
-            </div>
+            <div class="nest-card" style="border-top: 4px solid var(--nest-teal);">
+                <span class="nest-label" id="session-number-label">CURRENT MILESTONE</span>
+                <h2 class="nest-header" style="font-size: 1.4rem;" id="session-main-title">Session 14</h2>
+                
+                <p style="font-size: 0.85rem; color: var(--nest-text-muted); margin-top: 12px;">Today's learning categories:</p>
+                
+                <div class="dashboard-categories" id="category-badge-container">
+                    </div>
 
-            <div class="nest-step-container nest-step-active">
-                <div class="category-row" id="container-categories">
-                    <span class="category-tag">Reading</span>
-                    <span class="category-tag">Nature</span>
-                    <span class="category-tag">Logic</span>
-                </div>
-
-                <span class="nest-label">Screen Activity</span>
-                <p style="font-size: 0.9rem; font-weight: 700; line-height: 1.4; margin-bottom: 8px;" id="text-game-prompt">
-                    🔊 "Look at the screen! Can you tap the item that matches the sound?"
-                </p>
-
-                <div class="game-grid">
-                    <button class="nest-btn" onclick="evaluateSelection(1)">⭐</button>
-                    <button class="nest-btn" onclick="evaluateSelection(2)">🍎</button>
-                    <button class="nest-btn" onclick="evaluateSelection(3)">🚗</button>
-                    <button class="nest-btn" onclick="evaluateSelection(4)">🎈</button>
-                </div>
-
-                <div id="feedback-success" class="feedback-alert alert-success">✓ Tama! Excellent job!</div>
-                <div id="feedback-error" class="feedback-alert alert-error">Let's try again! Listen closely.</div>
-            </div>
-
-            <div class="nest-step-container offline-accent-box">
-                <span class="nest-label" style="color: var(--nest-success);">Household Challenge</span>
-                <div class="offline-flex">
-                    <div style="font-size: 1.5rem; line-height: 1;">🏡</div>
-                    <p style="font-size: 0.85rem; line-height: 1.45;" id="text-household-instruction">
-                        Loading today's physical practice activity...
-                    </p>
+                <div class="launch-btn-space">
+                    <button class="nest-btn nest-btn-teal" onclick="startActiveLesson()">
+                        🚀 START LESSON 14
+                    </button>
                 </div>
             </div>
+
+            <div class="roadmap-title-space">
+                <span class="nest-label">Your 60-Session Journey Road</span>
+            </div>
+
+            <div class="session-road-list" id="journey-roadmap-container">
+                </div>
 
         </main>
 
-        <footer class="app-footer">
-            <a href="#" class="footer-tab active"><span>📖 Stories</span></a>
-            <a href="#" class="footer-tab"><span>✏️ Lessons</span></a>
-            <a href="#" class="footer-tab"><span>👤 Profile</span></a>
+        <footer>
+            <a href="#" class="nav-item active">
+                <span style="font-size: 1.25rem;">📖</span>
+                <span>Stories</span>
+            </a>
+            <a href="#" class="nav-item">
+                <span style="font-size: 1.25rem;">✏️</span>
+                <span>Lessons</span>
+            </a>
+            <a href="#" class="nav-item">
+                <span style="font-size: 1.25rem;">👤</span>
+                <span>Profile</span>
+            </a>
         </footer>
 
     </div>
 
     <script>
-        // Production Configuration Mock mapping your spreadsheet scheme arrays
-        const sessionSampleRecord = {
-            level: "Level 1 (18-24 Months)",
-            sessionNumber: 1,
-            categories: ["Reading", "Nature", "Logic"],
-            promptText: "🔊 \"Listen to Billy Bird! Tap the shape that has 3 stones!\"",
-            correctTargetId: 2,
-            householdChallenge: "Go search your floor space for 3 small stones or clean bottle caps, and count them safely into Mama's hand!"
+        // Simulation Profile State representing data fetched from your Xano user record
+        const userProgressProfile = {
+            currentLevelName: "Level 1 (18-24 Mos)",
+            activeSessionIndex: 14,
+            totalLevelSessions: 60,
+            todayCategories: ["Reading", "Nature", "Logic"]
         };
 
-        // UI Initialization Function executing spreadsheet parameters to screen templates
-        function initializeSessionScreen(data) {
-            document.getElementById('display-session-title').innerText = `SESSION ${data.sessionNumber}`;
-            document.getElementById('text-game-prompt').innerText = data.promptText;
-            document.getElementById('text-household-instruction').innerText = data.householdChallenge;
+        function renderDashboardPortal(profile) {
+            // 1. Map current milestone identities
+            document.getElementById('level-indicator').innerText = profile.currentLevelName.split(' ')[0] + " " + profile.currentLevelName.split(' ')[1];
+            document.getElementById('session-main-title').innerText = `Session ${profile.activeSessionIndex}`;
             
-            // Re-render categories cleanly without heavy layout scripts
-            const catContainer = document.getElementById('container-categories');
-            catContainer.innerHTML = '';
-            data.categories.forEach(cat => {
-                const tag = document.createElement('span');
-                tag.className = 'category-tag';
-                tag.innerText = cat;
-                catContainer.appendChild(tag);
+            // 2. Clear and build category metrics dynamically
+            const badgeContainer = document.getElementById('category-badge-container');
+            badgeContainer.innerHTML = '';
+            profile.todayCategories.forEach(category => {
+                const badge = document.createElement('span');
+                badge.className = 'nest-badge';
+                badge.style.background = 'var(--nest-border)';
+                badge.style.color = 'var(--nest-text-main)';
+                badge.style.marginRight = '4px';
+                badge.innerText = category;
+                badgeContainer.appendChild(badge);
             });
-        }
 
-        // Zero-Egress evaluation routine checking inputs locally
-        function evaluateSelection(buttonId) {
-            const successBar = document.getElementById('feedback-success');
-            const errorBar = document.getElementById('feedback-error');
-            
-            if(buttonId === sessionSampleRecord.correctTargetId) {
-                errorBar.style.display = 'none';
-                successBar.style.display = 'block';
-            } else {
-                successBar.style.display = 'none';
-                errorBar.style.display = 'block';
+            // 3. Build a sample preview snippet of the roadmap list (Sessions 12 to 17 for testing layout visualization)
+            const roadmapContainer = document.getElementById('journey-roadmap-container');
+            roadmapContainer.innerHTML = '';
+
+            for (let i = 12; i <= 17; i++) {
+                const node = document.createElement('div');
+                
+                if (i < profile.activeSessionIndex) {
+                    // Completed State
+                    node.className = 'road-node';
+                    node.innerHTML = `<span>Session ${i}</span> <span style="color: var(--nest-success);">✓ Review</span>`;
+                } else if (i === profile.activeSessionIndex) {
+                    // Active State
+                    node.className = 'road-node road-node-active';
+                    node.innerHTML = `<span>Session ${i} (Today)</span> <span style="color: var(--nest-teal-dark);">● Ready</span>`;
+                } else {
+                    // Locked State
+                    node.className = 'road-node road-node-locked';
+                    node.innerHTML = `<span>Session ${i}</span> <span style="font-size: 0.85rem;">🔒 Locked</span>`;
+                }
+                
+                roadmapContainer.appendChild(node);
             }
         }
 
-        // Run screen setup on load
-        initializeSessionScreen(sessionSampleRecord);
+        function startActiveLesson() {
+            alert("Opening lesson screen data wrapper... This launches the multimedia interface component.");
+        }
+
+        // Initialize display configuration layout values
+        renderDashboardPortal(userProgressProfile);
     </script>
 </body>
 </html>
