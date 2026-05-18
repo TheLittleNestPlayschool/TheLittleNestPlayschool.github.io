@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Little Nest - Learning Portal</title>
+    <style>
+        /* --- Core Mobile Reset & Typography --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #F9F6F0; /* Soft warm background to reduce eye strain */
+            color: #4A3E3D;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* --- Xano Dynamic Renewal Warning Bar --- */
+        #renewal-banner {
+            display: none; /* Controlled dynamically via backend/frontend logic */
+            background-color: #FF6B6B;
+            color: white;
+            text-align: center;
+            padding: 10px 15px;
+            font-weight: bold;
+            font-size: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #renewal-banner a {
+            color: #FFF275;
+            text-decoration: underline;
+            margin-left: 5px;
+            display: inline-block;
+        }
+
+        /* --- Global Header --- */
+        header {
+            background-color: #FFF;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #EAE5D9;
+        }
+
+        .brand-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #FF9F43;
+            letter-spacing: 0.5px;
+        }
+
+        .level-badge {
+            background-color: #48DBFB;
+            color: #FFF;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* --- Main Content Layout --- */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            gap: 15px;
+            max-width: 480px; /* Standard mobile optimization width */
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* --- Module 1: The Video Component Container --- */
+        .video-container {
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            /* Forces clean 16:9 widescreen format on mobile screens */
+            aspect-ratio: 16 / 9; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+
+        /* --- Module 2: Interactive Game Board / Learning Content --- */
+        .interaction-card {
+            background: #FFF;
+            border-radius: 16px;
+            border: 2px solid #EAE5D9;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            min-height: 180px;
+        }
+
+        .instruction-text {
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.4;
+            color: #5C4E4D;
+        }
+
+        /* Interactive Tapping Grid */
+        .choice-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .choice-button {
+            background: #FFF;
+            border: 3px solid #FF9F43;
+            border-radius: 12px;
+            padding: 15px 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #FF9F43;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.2s ease;
+            outline: none;
+        }
+
+        /* High-contrast tap feedback state native to mobile */
+        .choice-button:active {
+            transform: scale(0.95);
+            background-color: #FF9F43;
+            color: #FFF;
+        }
+
+        /* --- Module 3: Household Challenge / Action Step --- */
+        .challenge-box {
+            background: #EDF9FA;
+            border: 2px dashed #10AC84;
+            border-radius: 16px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .challenge-icon {
+            font-size: 32px;
+            background: #FFF;
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .challenge-details h3 {
+            font-size: 14px;
+            color: #10AC84;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .challenge-details p {
+            font-size: 13px;
+            line-height: 1.4;
+            color: #3B4B48;
+        }
+
+        /* --- Bottom Navigation Area --- */
+        footer {
+            background: #FFF;
+            border-top: 2px solid #EAE5D9;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: sticky;
+            bottom: 0;
+            z-index: 900;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: #A09493;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .nav-item.active {
+            color: #FF9F43;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Dynamic Renewal Banner Component -->
+    <!-- Display logic toggles this section to 'flex' or 'block' if account is nearing expiration -->
+    <div id="renewal-banner">
+        Your storybook access expires in 3 days! <a href="#">Renew via GCash</a>
+    </div>
+
+    <!-- Main Header Bar -->
+    <header>
+        <div class="brand-title">THE LITTLE NEST</div>
+        <div class="level-badge" id="current-level">Level 2</div>
+    </header>
+
+    <!-- Core Interactive App Space -->
+    <main>
+        
+        <!-- Module 1: The Video Layer (Pre-baked Intro/Outro + AI Loop) -->
+        <div class="video-container">
+            <!-- Bunny.net Stream / HLS Player hooks directly into this element -->
+            <video id="main-video-player" controls poster="https://via.placeholder.com/480x270/FF9F43/FFF?text=Loading+Story...">
+                <source src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+
+        <!-- Module 2: Zero-Text Screen Tapping Grid Component -->
+        <div class="interaction-card">
+            <div class="instruction-text" id="audio-prompt-text">
+                🔊 "Listen closely... Tap the box that has exactly THREE stones!"
+            </div>
+            
+            <div class="choice-grid">
+                <!-- Large click targets explicitly optimized for toddlers' fingers -->
+                <button class="choice-button" onclick="handleChoice(1)">🔴 1</button>
+                <button class="choice-button" onclick="handleChoice(2)">🔴 2</button>
+                <button class="choice-button" onclick="handleChoice(3)">🔴 3</button>
+                <button class="choice-button" onclick="handleChoice(4)">🔴 4</button>
+            </div>
+        </div>
+
+        <!-- Module 3: Low-Resource Household Physical Challenge -->
+        <div class="challenge-box">
+            <div class="challenge-icon">🥄</div>
+            <div class="challenge-details">
+                <h3>Household Challenge</h3>
+                <p id="challenge-instruction">Go find 3 spoons in the kitchen area and count them out loud with Mama or Papa!</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bottom App Navigation Control -->
+    <footer>
+        <a href="#" class="nav-item active">
+            <span class="nav-icon">📖</span>
+            <span>Stories</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">✏️</span>
+            <span>Lessons</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span>Profile</span>
+        </a>
+    </footer>
+
+    <script>
+        // Placeholder interaction controller for mobile tap testing
+        function handleChoice(selection) {
+            if(selection === 3) {
+                alert("✓ Tama! Great job!");
+            } else {
+                alert("Try again! Let's count together.");
+            }
+        }
+    </script>
+</body>
+</html>
