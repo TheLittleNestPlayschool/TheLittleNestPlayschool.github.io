@@ -3,24 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Little Nest - Learning Portal</title>
+    <title>The Little Nest - Learning Core</title>
     
     <link rel="stylesheet" href="nest_style.css">
     
     <style>
-        /* --- Mobile Layout Constraint Overrides --- */
+        /* --- Strict Mobile Window Locking --- */
         body {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            align-items: center; /* Centers container on widescreen desktop tests */
-            background-color: var(--nest-border); /* Darker split background for desktop framing */
+            align-items: center;
+            background-color: var(--nest-border); /* Limits width on desktop viewports */
         }
 
-        /* Enforces mobile dimensions on the screen shell */
-        .app-wrapper {
+        .phone-container {
             width: 100%;
-            max-width: 430px; /* Targets modern smartphone aspect ratio envelopes */
+            max-width: 430px; /* Locks execution to standard mobile screen width */
             background-color: var(--nest-bg);
             display: flex;
             flex-direction: column;
@@ -29,116 +28,119 @@
             box-shadow: var(--nest-shadow);
         }
 
-        /* --- Global App Header --- */
-        header {
+        /* --- Header Adjustments --- */
+        .app-header {
             background-color: #ffffff;
-            padding: 14px 16px;
+            padding: 12px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--nest-border);
         }
 
-        header .nest-header {
-            font-size: 1.1rem;
+        .app-header h1 {
+            font-size: 1.05rem;
+            margin: 0;
         }
 
-        /* --- Main Content Envelope --- */
-        main {
+        /* --- Main Content Base --- */
+        .content-space {
             flex: 1;
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            padding: 16px;
             gap: 16px;
-            width: 100%;
         }
 
-        /* --- 16:9 Video Component Core --- */
-        .video-player-box {
-            background: #000000;
+        /* --- 16:9 Low-Egress Video Frame --- */
+        .video-box-wrapper {
+            background-color: var(--nest-dark);
             border-radius: var(--nest-radius-lg);
             overflow: hidden;
-            position: relative;
             width: 100%;
             aspect-ratio: 16 / 9;
             box-shadow: var(--nest-shadow);
         }
 
-        .video-player-box video {
+        .video-box-wrapper video {
             width: 100%;
             height: 100%;
             display: block;
             object-fit: cover;
         }
 
-        /* --- Zero-Text Tapping Button Grid --- */
-        .choice-grid {
+        /* --- Category Pill Alignment --- */
+        .category-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+
+        .category-tag {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            background-color: var(--nest-slate);
+            color: #ffffff;
+            letter-spacing: 0.025em;
+        }
+
+        /* --- Interactive Tapping Pad Layout --- */
+        .game-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            gap: 10px;
             width: 100%;
             margin-top: 12px;
         }
 
-        /* Customizing your .nest-btn template specifically for large mobile kid touch targets */
-        .choice-grid .nest-btn {
-            padding: 18px 10px;
-            font-size: 1rem;
+        /* Overriding .nest-btn properties for large, low-friction mobile finger touch spaces */
+        .game-grid .nest-btn {
+            padding: 16px 8px;
+            font-size: 1.1rem;
             border-radius: var(--nest-radius-lg);
             border: 2px solid var(--nest-border);
             width: 100%;
-        }
-
-        /* Snappy mobile tap feedback interaction instead of desktop hovers */
-        .choice-grid .nest-btn:active {
-            transform: scale(0.95);
-            background-color: var(--nest-teal-dark);
-        }
-
-        /* --- Household Exercise Variant Layout --- */
-        .household-accent {
-            border-left: 6px solid var(--nest-success) !important;
-        }
-
-        .challenge-row {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .challenge-icon {
-            font-size: 1.75rem;
-            line-height: 1;
-        }
-
-        .challenge-text-space p {
-            font-size: 0.85rem;
-            line-height: 1.45;
+            background-color: #ffffff;
             color: var(--nest-text-main);
         }
 
-        /* --- Sticky Xano Renewal Warning Component --- */
-        #renewal-banner {
-            display: none; /* Managed dynamically via backend execution states */
-            background-color: var(--nest-danger);
-            color: #ffffff;
-            text-align: center;
+        /* Immediate touch confirmation feedback native to mobile platforms */
+        .game-grid .nest-btn:active {
+            background-color: var(--nest-teal);
+            color: var(--nest-dark);
+            border-color: var(--nest-teal-dark);
+        }
+
+        /* --- Success/Feedback Banners --- */
+        .feedback-alert {
+            display: none;
             padding: 12px;
-            font-weight: 700;
+            border-radius: var(--nest-radius-sm);
             font-size: 0.85rem;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            font-weight: 700;
+            text-align: center;
+            margin-top: 8px;
+        }
+        .alert-success { background-color: rgba(16, 185, 129, 0.15); color: var(--nest-success); }
+        .alert-error { background-color: rgba(239, 68, 68, 0.15); color: var(--nest-danger); }
+
+        /* --- Offline Practice Block --- */
+        .offline-accent-box {
+            border-left: 4px solid var(--nest-success) !important;
         }
 
-        #renewal-banner a {
-            color: var(--nest-teal);
-            text-decoration: underline;
-            margin-left: 6px;
+        .offline-flex {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
         }
 
-        /* --- Fixed Application Footer Navigation --- */
-        footer {
+        /* --- Footer Alignment --- */
+        .app-footer {
             background-color: #ffffff;
             border-top: 1px solid var(--nest-border);
             padding: 12px 16px;
@@ -150,103 +152,127 @@
             z-index: 900;
         }
 
-        .nav-item {
+        .footer-tab {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 2px;
             color: var(--nest-text-muted);
             text-decoration: none;
             font-size: 0.65rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
 
-        .nav-item.active {
+        .footer-tab.active {
             color: var(--nest-teal-dark);
-        }
-
-        .nav-icon {
-            font-size: 1.25rem;
         }
     </style>
 </head>
 <body>
 
-    <div class="app-wrapper">
+    <div class="phone-container">
 
-        <div id="renewal-banner">
-            Subscription ending soon! <a href="#">Renew via GCash</a>
-        </div>
-
-        <header>
-            <div class="nest-header">THE LITTLE NEST</div>
-            <div class="nest-badge nest-badge-teal" style="color: var(--nest-teal-dark);">Level 2</div>
+        <header class="app-header">
+            <h1 class="nest-header" id="display-session-title">SESSION 1</h1>
+            <span class="nest-badge nest-badge-teal" id="display-level-badge" style="color: var(--nest-teal-dark);">LEVEL 1</span>
         </header>
 
-        <main>
+        <main class="content-space">
             
-            <div class="video-player-box">
-                <video id="main-player" controls poster="https://via.placeholder.com/480x270/0f172a/fff?text=Loading+Lesson...">
+            <div class="video-box-wrapper">
+                <video id="session-video-core" controls poster="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='56' viewBox='0 0 100 56'><rect width='100%' height='100%' fill='%230f172a'/></svg>">
                     <source src="" type="video/mp4">
                 </video>
             </div>
 
             <div class="nest-step-container nest-step-active">
-                <span class="nest-label">Interactive Game</span>
-                <div class="challenge-text-space">
-                    <p style="font-weight: 700; font-size: 0.9rem; margin-bottom: 8px;">
-                        🔊 "Listen closely... Tap the box that has exactly THREE stones!"
-                    </p>
+                <div class="category-row" id="container-categories">
+                    <span class="category-tag">Reading</span>
+                    <span class="category-tag">Nature</span>
+                    <span class="category-tag">Logic</span>
                 </div>
-                
-                <div class="choice-grid">
-                    <button class="nest-btn nest-btn-outline" onclick="checkChoice(1)">🔴 1</button>
-                    <button class="nest-btn nest-btn-outline" onclick="checkChoice(2)">🔴 2</button>
-                    <button class="nest-btn nest-btn-outline" onclick="checkChoice(3)">🔴 3</button>
-                    <button class="nest-btn nest-btn-outline" onclick="checkChoice(4)">🔴 4</button>
+
+                <span class="nest-label">Screen Activity</span>
+                <p style="font-size: 0.9rem; font-weight: 700; line-height: 1.4; margin-bottom: 8px;" id="text-game-prompt">
+                    🔊 "Look at the screen! Can you tap the item that matches the sound?"
+                </p>
+
+                <div class="game-grid">
+                    <button class="nest-btn" onclick="evaluateSelection(1)">⭐</button>
+                    <button class="nest-btn" onclick="evaluateSelection(2)">🍎</button>
+                    <button class="nest-btn" onclick="evaluateSelection(3)">🚗</button>
+                    <button class="nest-btn" onclick="evaluateSelection(4)">🎈</button>
                 </div>
+
+                <div id="feedback-success" class="feedback-alert alert-success">✓ Tama! Excellent job!</div>
+                <div id="feedback-error" class="feedback-alert alert-error">Let's try again! Listen closely.</div>
             </div>
 
-            <div class="nest-step-container household-accent">
+            <div class="nest-step-container offline-accent-box">
                 <span class="nest-label" style="color: var(--nest-success);">Household Challenge</span>
-                <div class="challenge-row">
-                    <div class="challenge-icon">🥄</div>
-                    <div class="challenge-text-space">
-                        <p>Go find 3 spoons in the kitchen area and count them out loud with Mama or Papa!</p>
-                    </div>
+                <div class="offline-flex">
+                    <div style="font-size: 1.5rem; line-height: 1;">🏡</div>
+                    <p style="font-size: 0.85rem; line-height: 1.45;" id="text-household-instruction">
+                        Loading today's physical practice activity...
+                    </p>
                 </div>
             </div>
 
         </main>
 
-        <footer>
-            <a href="#" class="nav-item active">
-                <span class="nav-icon">📖</span>
-                <span>Stories</span>
-            </a>
-            <a href="#" class="nav-item">
-                <span class="nav-icon">✏️</span>
-                <span>Lessons</span>
-            </a>
-            <a href="#" class="nav-item">
-                <span class="nav-icon">👤</span>
-                <span>Profile</span>
-            </a>
+        <footer class="app-footer">
+            <a href="#" class="footer-tab active"><span>📖 Stories</span></a>
+            <a href="#" class="footer-tab"><span>✏️ Lessons</span></a>
+            <a href="#" class="footer-tab"><span>👤 Profile</span></a>
         </footer>
 
     </div>
 
     <script>
-        // Simple functional verification script verifying active target selection outputs
-        function checkChoice(selection) {
-            if(selection === 3) {
-                alert("✓ Tama! Great job!");
+        // Production Configuration Mock mapping your spreadsheet scheme arrays
+        const sessionSampleRecord = {
+            level: "Level 1 (18-24 Months)",
+            sessionNumber: 1,
+            categories: ["Reading", "Nature", "Logic"],
+            promptText: "🔊 \"Listen to Billy Bird! Tap the shape that has 3 stones!\"",
+            correctTargetId: 2,
+            householdChallenge: "Go search your floor space for 3 small stones or clean bottle caps, and count them safely into Mama's hand!"
+        };
+
+        // UI Initialization Function executing spreadsheet parameters to screen templates
+        function initializeSessionScreen(data) {
+            document.getElementById('display-session-title').innerText = `SESSION ${data.sessionNumber}`;
+            document.getElementById('text-game-prompt').innerText = data.promptText;
+            document.getElementById('text-household-instruction').innerText = data.householdChallenge;
+            
+            // Re-render categories cleanly without heavy layout scripts
+            const catContainer = document.getElementById('container-categories');
+            catContainer.innerHTML = '';
+            data.categories.forEach(cat => {
+                const tag = document.createElement('span');
+                tag.className = 'category-tag';
+                tag.innerText = cat;
+                catContainer.appendChild(tag);
+            });
+        }
+
+        // Zero-Egress evaluation routine checking inputs locally
+        function evaluateSelection(buttonId) {
+            const successBar = document.getElementById('feedback-success');
+            const errorBar = document.getElementById('feedback-error');
+            
+            if(buttonId === sessionSampleRecord.correctTargetId) {
+                errorBar.style.display = 'none';
+                successBar.style.display = 'block';
             } else {
-                alert("Try again! Let's count together.");
+                successBar.style.display = 'none';
+                errorBar.style.display = 'block';
             }
         }
+
+        // Run screen setup on load
+        initializeSessionScreen(sessionSampleRecord);
     </script>
 </body>
 </html>
