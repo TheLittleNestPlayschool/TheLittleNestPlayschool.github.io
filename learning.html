@@ -2,299 +2,287 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- The most important tag: Prevents page scaling/pinching glitches on mobile browsers -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Little Nest - Learning Portal</title>
+    <title>The Little Nest - Mobile Learning</title>
     <style>
-        /* --- Core Mobile Reset & Typography --- */
+        /* --- Mobile Structural Reset --- */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            -webkit-tap-highlight-color: transparent;
+            /* Removes the default blue highlight box when tapping components on Android/iOS */
+            -webkit-tap-highlight-color: transparent; 
         }
-        
+
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #F9F6F0; /* Soft warm background to reduce eye strain */
-            color: #4A3E3D;
-            overflow-x: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #FDFBF7;
+            color: #332C2B;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
         }
 
-        /* --- Xano Dynamic Renewal Warning Bar --- */
+        /* --- Global Sticky Alert Bar --- */
         #renewal-banner {
-            display: none; /* Controlled dynamically via backend/frontend logic */
-            background-color: #FF6B6B;
-            color: white;
-            text-align: center;
-            padding: 10px 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #FF5A5A;
+            color: #FFFFFF;
+            padding: 12px;
+            font-size: 13px;
             font-weight: bold;
-            font-size: 14px;
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         #renewal-banner a {
-            color: #FFF275;
+            color: #FFF380;
+            margin-left: 6px;
             text-decoration: underline;
-            margin-left: 5px;
-            display: inline-block;
         }
 
-        /* --- Global Header --- */
+        /* --- Header Space --- */
         header {
-            background-color: #FFF;
-            padding: 12px 15px;
+            background-color: #FFFFFF;
+            padding: 14px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #EAE5D9;
+            border-bottom: 2px solid #F1EDE4;
         }
 
-        .brand-title {
-            font-size: 18px;
-            font-weight: 800;
+        .brand-logo {
+            font-size: 16px;
+            font-weight: 900;
             color: #FF9F43;
             letter-spacing: 0.5px;
         }
 
-        .level-badge {
-            background-color: #48DBFB;
-            color: #FFF;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
+        .level-pill {
+            background-color: #26D0CE;
+            color: #FFFFFF;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
         }
 
-        /* --- Main Content Layout --- */
+        /* --- Main Mobile Container --- */
         main {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 15px;
-            gap: 15px;
-            max-width: 480px; /* Standard mobile optimization width */
-            margin: 0 auto;
+            padding: 16px;
+            gap: 16px;
             width: 100%;
+            max-width: 480px; /* Targets classic smartphone viewport envelope */
+            margin: 0 auto;
         }
 
-        /* --- Module 1: The Video Component Container --- */
-        .video-container {
-            background: #000;
+        /* --- Video Component Framework --- */
+        .video-wrapper {
+            background-color: #000000;
             border-radius: 16px;
             overflow: hidden;
             position: relative;
             width: 100%;
-            /* Forces clean 16:9 widescreen format on mobile screens */
+            /* Forces 16:9 cinematic display proportion regardless of phone screen height */
             aspect-ratio: 16 / 9; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
         }
 
-        .video-container video {
+        .video-wrapper video {
             width: 100%;
             height: 100%;
-            display: block;
             object-fit: cover;
+            display: block;
         }
 
-        /* --- Module 2: Interactive Game Board / Learning Content --- */
-        .interaction-card {
-            background: #FFF;
+        /* --- Tapping Interface Grid --- */
+        .interactive-board {
+            background-color: #FFFFFF;
             border-radius: 16px;
-            border: 2px solid #EAE5D9;
-            padding: 20px;
+            border: 2px solid #F1EDE4;
+            padding: 20px 16px;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            min-height: 180px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
         }
 
-        .instruction-text {
-            font-size: 16px;
-            font-weight: 600;
+        .audio-prompt {
+            font-size: 15px;
+            font-weight: 700;
             line-height: 1.4;
-            color: #5C4E4D;
+            margin-bottom: 16px;
+            color: #4A403F;
         }
 
-        /* Interactive Tapping Grid */
-        .choice-grid {
+        .choices-layout {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
             width: 100%;
-            margin-top: 10px;
         }
 
-        .choice-button {
-            background: #FFF;
+        .tap-target {
+            background-color: #FFFFFF;
             border: 3px solid #FF9F43;
-            border-radius: 12px;
-            padding: 15px 10px;
-            font-size: 16px;
-            font-weight: bold;
+            border-radius: 14px;
+            padding: 18px 12px;
+            font-size: 18px;
+            font-weight: 800;
             color: #FF9F43;
             cursor: pointer;
-            transition: transform 0.1s ease, background-color 0.2s ease;
             outline: none;
+            transition: transform 0.05s ease;
         }
 
-        /* High-contrast tap feedback state native to mobile */
-        .choice-button:active {
-            transform: scale(0.95);
+        /* Mobile Tap Response: Activates immediately on finger contact */
+        .tap-target:active {
+            transform: scale(0.94);
             background-color: #FF9F43;
-            color: #FFF;
+            color: #FFFFFF;
         }
 
-        /* --- Module 3: Household Challenge / Action Step --- */
-        .challenge-box {
-            background: #EDF9FA;
+        /* --- Physical Household Exercise Panel --- */
+        .household-card {
+            background-color: #F0FAF7;
             border: 2px dashed #10AC84;
             border-radius: 16px;
-            padding: 15px;
+            padding: 16px;
             display: flex;
-            align-items: center;
-            gap: 15px;
+            align-items: flex-start;
+            gap: 14px;
         }
 
-        .challenge-icon {
-            font-size: 32px;
-            background: #FFF;
-            padding: 8px;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        .card-glyph {
+            font-size: 28px;
+            background-color: #FFFFFF;
+            padding: 6px 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            line-height: 1;
         }
 
-        .challenge-details h3 {
-            font-size: 14px;
+        .card-text-space h3 {
+            font-size: 13px;
             color: #10AC84;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
-        .challenge-details p {
+        .card-text-space p {
             font-size: 13px;
-            line-height: 1.4;
-            color: #3B4B48;
+            line-height: 1.45;
+            color: #404B48;
         }
 
-        /* --- Bottom Navigation Area --- */
+        /* --- Base App Footer Navigation --- */
         footer {
-            background: #FFF;
-            border-top: 2px solid #EAE5D9;
-            padding: 10px 15px;
+            background-color: #FFFFFF;
+            border-top: 2px solid #F1EDE4;
+            padding: 10px 0;
             display: flex;
             justify-content: space-around;
-            align-items: center;
             position: sticky;
             bottom: 0;
             z-index: 900;
         }
 
-        .nav-item {
+        .footer-action {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
-            color: #A09493;
+            gap: 3px;
+            color: #A69B9A;
             text-decoration: none;
-            font-size: 11px;
-            font-weight: bold;
+            font-size: 10px;
+            font-weight: 700;
         }
 
-        .nav-item.active {
+        .footer-action.active {
             color: #FF9F43;
         }
 
-        .nav-icon {
-            font-size: 20px;
+        .action-glyph {
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Dynamic Renewal Banner Component -->
-    <!-- Display logic toggles this section to 'flex' or 'block' if account is nearing expiration -->
+    <!-- Dynamic Warning Module -->
     <div id="renewal-banner">
-        Your storybook access expires in 3 days! <a href="#">Renew via GCash</a>
+        Subscription ending soon! <a href="#">Renew via GCash</a>
     </div>
 
-    <!-- Main Header Bar -->
+    <!-- Top App Bracket -->
     <header>
-        <div class="brand-title">THE LITTLE NEST</div>
-        <div class="level-badge" id="current-level">Level 2</div>
+        <div class="brand-logo">THE LITTLE NEST</div>
+        <div class="level-pill">Level 2</div>
     </header>
 
-    <!-- Core Interactive App Space -->
+    <!-- Main Stack -->
     <main>
         
-        <!-- Module 1: The Video Layer (Pre-baked Intro/Outro + AI Loop) -->
-        <div class="video-container">
-            <!-- Bunny.net Stream / HLS Player hooks directly into this element -->
-            <video id="main-video-player" controls poster="https://via.placeholder.com/480x270/FF9F43/FFF?text=Loading+Story...">
+        <!-- Video Space -->
+        <div class="video-wrapper">
+            <video id="player" controls poster="https://via.placeholder.com/480x270/FF9F43/FFF?text=Loading+Story...">
                 <source src="" type="video/mp4">
-                Your browser does not support the video tag.
             </video>
         </div>
 
-        <!-- Module 2: Zero-Text Screen Tapping Grid Component -->
-        <div class="interaction-card">
-            <div class="instruction-text" id="audio-prompt-text">
-                🔊 "Listen closely... Tap the box that has exactly THREE stones!"
+        <!-- Interactive Space -->
+        <div class="interactive-board">
+            <div class="audio-prompt">
+                🔊 "Listen to the birds... Tap the box with 3 stones!"
             </div>
-            
-            <div class="choice-grid">
-                <!-- Large click targets explicitly optimized for toddlers' fingers -->
-                <button class="choice-button" onclick="handleChoice(1)">🔴 1</button>
-                <button class="choice-button" onclick="handleChoice(2)">🔴 2</button>
-                <button class="choice-button" onclick="handleChoice(3)">🔴 3</button>
-                <button class="choice-button" onclick="handleChoice(4)">🔴 4</button>
+            <div class="choices-layout">
+                <button class="tap-target" onclick="evaluateTap(1)">💎 1</button>
+                <button class="tap-target" onclick="evaluateTap(2)">💎 2</button>
+                <button class="tap-target" onclick="evaluateTap(3)">💎 3</button>
+                <button class="tap-target" onclick="evaluateTap(4)">💎 4</button>
             </div>
         </div>
 
-        <!-- Module 3: Low-Resource Household Physical Challenge -->
-        <div class="challenge-box">
-            <div class="challenge-icon">🥄</div>
-            <div class="challenge-details">
+        <!-- Off-Screen Physical Action Box -->
+        <div class="household-card">
+            <div class="card-glyph">🥄</div>
+            <div class="card-text-space">
                 <h3>Household Challenge</h3>
-                <p id="challenge-instruction">Go find 3 spoons in the kitchen area and count them out loud with Mama or Papa!</p>
+                <p>Go find 3 spoons in the kitchen area and count them out loud with Mama or Papa!</p>
             </div>
         </div>
 
     </main>
 
-    <!-- Bottom App Navigation Control -->
+    <!-- Bottom Bar Navigation -->
     <footer>
-        <a href="#" class="nav-item active">
-            <span class="nav-icon">📖</span>
+        <a href="#" class="footer-action active">
+            <span class="action-glyph">📖</span>
             <span>Stories</span>
         </a>
-        <a href="#" class="nav-item">
-            <span class="nav-icon">✏️</span>
+        <a href="#" class="footer-action">
+            <span class="action-glyph">✏️</span>
             <span>Lessons</span>
         </a>
-        <a href="#" class="nav-item">
-            <span class="nav-icon">👤</span>
+        <a href="#" class="footer-action">
+            <span class="action-glyph">👤</span>
             <span>Profile</span>
         </a>
     </footer>
 
     <script>
-        // Placeholder interaction controller for mobile tap testing
-        function handleChoice(selection) {
-            if(selection === 3) {
-                alert("✓ Tama! Great job!");
+        function evaluateTap(number) {
+            if (number === 3) {
+                alert("✓ Tama! Correct!");
             } else {
-                alert("Try again! Let's count together.");
+                alert("Try again! Let's recount.");
             }
         }
     </script>
