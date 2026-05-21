@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Learning Session: The Letter A</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #canvas-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: #fffdf6;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 4px solid #4a5568;
+            overflow: hidden;
+        }
+
+        /* The Animation Layer (Simulating the RoughAnimator Zoom) */
+        #intro-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #4a5568;
+            z-index: 10;
+            transition: opacity 0.5s ease;
+        }
+
+        .zoom-active {
+            animation: simulatedZoom 2.5s forwards cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @keyframes simulatedZoom {
+            0% { transform: scale(0.3) rotate(-5deg); opacity: 0; }
+            30% { opacity: 1; }
+            70% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1); }
+        }
+
+        /* The Interactive Canvas Layers */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #guide-canvas {
+            z-index: 1; /* Holds the static/background letter 'A' */
+        }
+
+        #drawing-canvas {
+            z-index: 2; /* Holds the kid's finger marks */
+            cursor: crosshair;
+        }
+
+        /* UI Overlay Elements */
+        #ui-overlay {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .btn {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            pointer-events: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-clear { background: #ef4444; }
+        .btn-success { background: #10b981; display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container">
+        <!-- 1. The Intro Layer: Plays your flipbook zoom sequence -->
+        <div id="intro-animation" class="zoom-active">📖 Flipping to Lesson 1...</div>
+
+        <!-- 2. The Background Template Layer -->
+        <canvas id="guide-canvas" width="800" height="600"></canvas>
+
+        <!-- 3. The Active Touch Interaction Layer -->
+        <canvas id="drawing-canvas" width="800" height="600"></canvas>
+
+        <!-- Controls -->
+        <div id="ui-overlay">
+            <button class="btn btn-clear" id="clearBtn">Start Over</button>
+            <button class="btn btn-success" id="nextBtn">Next Lesson ✨</button>
+        </div>
+    </div>
+
+    <script>
+        const introLayer = document.getElementById('intro-animation');
+        const guideCanvas = document.getElementById('guide-canvas');
+        const drawCanvas = document.getElementById('drawing-canvas');
+        const ctxGuide = guideCanvas.getContext('2d');
+        const ctxDraw = drawCanvas.getContext('2d');
+        const clearBtn = document.getElementById('clearBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        let isDrawing = false;
+
+        // Initialize Audio context for synthesized sounds
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(frequency, type, duration) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.value = frequency;
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // --- STEP 1: Handle Intro Animation & Tracing Visual Prompt ---
+        window.addEventListener('load', () => {
+            // Simulated voiceover audio prompt using native browser synth
+            setTimeout(() => {
+                const speech = new SpeechSynthesisUtterance("Trace the capital letter A with your finger!");
+                speech.rate = 0.9;
+                window.speechSynthesis.speak(speech);
+            }, 500);
+
+            // After 2.5 seconds (when the animation finishes scaling up), turn on drawing
+            setTimeout(() => {
+                introLayer.style.opacity = 0;
+                setTimeout(() => introLayer.style.display = 'none', 500);
+                drawGuideLetter();
+            }, 2500);
+        });
+
+        // --- STEP 2: Render the Template Letter A Guide Background ---
+        function drawGuideLetter() {
+            ctxGuide.clearRect(0, 0, 800, 600);
+            
+            // Draw a beautiful, large, solid pastel guide skeleton
+            ctxGuide.lineCap = 'round';
+            ctxGuide.lineJoin = 'round';
+            ctxGuide.lineWidth = 60;
+            ctxGuide.strokeStyle = '#e2e8f0'; // Faint tracking track
+
+            ctxGuide.beginPath();
+            // Left leg up to apex
+            ctxGuide.moveTo(250, 480);
+            ctxGuide.lineTo(400, 120);
+            // Apex down to right leg
+            ctxGuide.lineTo(550, 480);
+            ctxGuide.stroke();
+
+            // Crossbar
+            ctxGuide.beginPath();
+            ctxGuide.moveTo(310, 340);
+            ctxGuide.lineTo(490, 340);
+            ctxGuide.stroke();
+
+            // Inner dotted structural lines for high-visibility pathing
+            ctxGuide.lineWidth = 4;
+            ctxGuide.strokeStyle = '#a3b8cc';
+            ctxGuide.setLineDash([10, 10]);
+            
+            ctxGuide.beginPath();
+            ctxGuide.moveTo(250, 480); ctxGuide.lineTo(400, 120); ctxGuide.lineTo(550, 480);
+            ctxGuide.moveTo(310, 340); ctxGuide.lineTo(490, 340);
+            ctxGuide.stroke();
+            ctxGuide.setLineDash([]); // Reset dash sequence
+        }
+
+        // --- STEP 3: Handle Responsive Touch/Mouse Interactions ---
+        const drawingSettings = {
+            color: '#4f46e5',
+            width: 16
+        };
+
+        function getCoordinates(e) {
+            const rect = drawCanvas.getBoundingClientRect();
+            // Supports both desktop mice and touch screens
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            return {
+                x: (clientX - rect.left) * (drawCanvas.width / rect.width),
+                y: (clientY - rect.top) * (drawCanvas.height / rect.height)
+            };
+        }
+
+        function startTracking(e) {
+            isDrawing = true;
+            const coords = getCoordinates(e);
+            ctxDraw.beginPath();
+            ctxDraw.moveTo(coords.x, coords.y);
+            ctxDraw.lineCap = 'round';
+            ctxDraw.lineJoin = 'round';
+            ctxDraw.lineWidth = drawingSettings.width;
+            ctxDraw.strokeStyle = drawingSettings.color;
+            playSound(300, 'triangle', 0.1);
+        }
+
+        function drawMovement(e) {
+            if (!isDrawing) return;
+            e.preventDefault(); // Prevents tablets from bouncing or pulling down down the screen
+            const coords = getCoordinates(e);
+            ctxDraw.lineTo(coords.x, coords.y);
+            ctxDraw.stroke();
+        }
+
+        function stopTracking() {
+            if (!isDrawing) return;
+            isDrawing = false;
+            // Every time they lift their finger, evaluate if they are done
+            nextBtn.style.display = 'block'; 
+        }
+
+        // Event Listeners for Touch Screen Devices
+        drawCanvas.addEventListener('touchstart', startTracking);
+        drawCanvas.addEventListener('touchmove', drawMovement);
+        drawCanvas.addEventListener('touchend', stopTracking);
+
+        // Event Listeners for Standard Mice
+        drawCanvas.addEventListener('mousedown', startTracking);
+        drawCanvas.addEventListener('mousemove', drawMovement);
+        drawCanvas.addEventListener('mouseup', stopTracking);
+
+        // --- STEP 4: Success Rewards & Starburst Trigger ---
+        clearBtn.addEventListener('click', () => {
+            ctxDraw.clearRect(0, 0, 800, 600);
+            nextBtn.style.display = 'none';
+            playSound(150, 'sawtooth', 0.1);
+        });
+
+        nextBtn.addEventListener('click', () => {
+            // Trigger synthesized celebration sounds
+            playSound(523.25, 'sine', 0.15); // C5
+            setTimeout(() => playSound(659.25, 'sine', 0.15), 100); // E5
+            setTimeout(() => playSound(783.99, 'sine', 0.15), 200); // G5
+            setTimeout(() => playSound(1046.50, 'sine', 0.4), 300); // C6
+
+            // Simulated Star burst particles rendered using canvas manipulation
+            for (let i = 0; i < 40; i++) {
+                createStarParticle(400, 300);
+            }
+        });
+
+        function createStarParticle(x, y) {
+            let px = x;
+            let py = y;
+            let vx = (Math.random() - 0.5) * 15;
+            let vy = (Math.random() - 0.5) * 15;
+            let alpha = 1;
+            const colors = ['#fbbf24', '#f43f5e', '#3b82f6', '#10b981', '#a855f7'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+
+            function animateParticle() {
+                if (alpha <= 0) return;
+                ctxDraw.fillStyle = color;
+                ctxDraw.globalAlpha = alpha;
+                ctxDraw.beginPath();
+                ctxDraw.arc(px, py, Math.random() * 8 + 4, 0, Math.PI * 2);
+                ctxDraw.fill();
+                
+                px += vx;
+                py += vy;
+                vy += 0.2; // Gravity effect pulling stars down fluidly
+                alpha -= 0.02;
+                
+                requestAnimationFrame(animateParticle);
+            }
+            ctxDraw.globalAlpha = 1; // Reset alpha
+            animateParticle();
+        }
+    </script>
+</body>
+</html>
