@@ -256,13 +256,10 @@
         </div>
     </div>
 
-    <!-- Main Sidebar Vertical Stack Container -->
     <div class="playbook-container" id="playbookContainer">
         
-        <!-- Live filtered playbook templates render here -->
         <div id="dynamicIntentsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
 
-        <!-- Selected Franchise Database Field Info Display Tab -->
         <div class="intent-item" id="franchiseMetaPanel" onclick="toggleAccordion(this)">
             <div class="intent-header" style="color: var(--teal-primary);">
                 <span>ℹ️ Branch Reference Data</span>
@@ -373,11 +370,11 @@
 
             const cleanQuery = keywordQuery.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?\u2031]/g, " ").trim();
             
-            // Reverted back to hide everything when search field is completely empty
             if (cleanQuery === "") {
                 return;
             }
 
+            // Word Splitting Tokenization Engine
             const searchWordsArr = cleanQuery.split(/\s+/).filter(w => w.length > 1);
 
             if (searchWordsArr.length === 0) {
@@ -386,6 +383,7 @@
 
             const matchedIntents = masterPlaybookCache.filter(intent => {
                 const searchHaystack = `${intent.question_label || ''} ${intent.search_keywords || ''}`.toLowerCase();
+                // Verifies if standalone parsed search words exist in our fields stack
                 return searchWordsArr.some(word => searchHaystack.includes(word));
             });
 
@@ -398,8 +396,9 @@
         }
 
         function renderCardsList(intents) {
-            intents.forEach((intent, idx) => {
-                const shouldBeOpen = idx === 0;
+            intents.forEach((intent) => {
+                // Keep all filtered output cards collapsed initially for scannability
+                const shouldBeOpen = false; 
                 const activeStateClass = shouldBeOpen ? "active" : "";
                 const initialChevron = shouldBeOpen ? "▼" : "▶";
 
