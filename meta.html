@@ -6,7 +6,7 @@
     <title>The Little Nest - Sales Sidebar</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -256,10 +256,13 @@
         </div>
     </div>
 
+    <!-- Main Sidebar Vertical Stack Container -->
     <div class="playbook-container" id="playbookContainer">
         
+        <!-- Live filtered playbook templates render here -->
         <div id="dynamicIntentsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
 
+        <!-- Selected Franchise Database Field Info Display Tab -->
         <div class="intent-item" id="franchiseMetaPanel" onclick="toggleAccordion(this)">
             <div class="intent-header" style="color: var(--teal-primary);">
                 <span>ℹ️ Branch Reference Data</span>
@@ -312,7 +315,6 @@
             }
         }
 
-        // Context switcher logic for selected branch data layout mapping
         function handleBranchChange() {
             const selectedId = parseInt(branchSelect.value);
             if (!selectedId) return;
@@ -366,32 +368,24 @@
             return parsedText;
         }
 
-        // High-efficiency keyword token splitting search engine
         function filterAndRenderPlaybook(keywordQuery) {
             dynamicIntentsContainer.innerHTML = "";
 
-            // Clean punctuation marks out of the pasted text and isolate individual word fragments
             const cleanQuery = keywordQuery.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?\u2031]/g, " ").trim();
             
-            // If search box is empty, fallback to open-access master list view mode
+            // Reverted back to hide everything when search field is completely empty
             if (cleanQuery === "") {
-                renderCardsList(masterPlaybookCache, true);
                 return;
             }
 
-            // Explode pasted string into clean unique word elements, ignoring filler spacing
             const searchWordsArr = cleanQuery.split(/\s+/).filter(w => w.length > 1);
 
             if (searchWordsArr.length === 0) {
-                renderCardsList(masterPlaybookCache, true);
                 return;
             }
 
-            // Core Matching Logic: Find entries where at least ONE keyword token matches a stored field property
             const matchedIntents = masterPlaybookCache.filter(intent => {
                 const searchHaystack = `${intent.question_label || ''} ${intent.search_keywords || ''}`.toLowerCase();
-                
-                // Return true if any keyword parsed from the copy-paste string exists inside the text block
                 return searchWordsArr.some(word => searchHaystack.includes(word));
             });
 
@@ -400,13 +394,12 @@
                 return;
             }
 
-            renderCardsList(matchedIntents, false);
+            renderCardsList(matchedIntents);
         }
 
-        function renderCardsList(intents, isUnfilteredView) {
+        function renderCardsList(intents) {
             intents.forEach((intent, idx) => {
-                // Auto-open top hit during filtration, close everything up during master overview lists
-                const shouldBeOpen = !isUnfilteredView && idx === 0;
+                const shouldBeOpen = idx === 0;
                 const activeStateClass = shouldBeOpen ? "active" : "";
                 const initialChevron = shouldBeOpen ? "▼" : "▶";
 
