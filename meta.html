@@ -192,13 +192,10 @@
             line-height: 1.5;
             white-space: pre-wrap;
             color: #E2E8F0;
-            
-            /* The fixed height layout tweak */
             height: 120px;
             overflow-y: auto; 
         }
 
-        /* Custom scrollbars matching your dark theme */
         .script-box::-webkit-scrollbar {
             width: 6px;
         }
@@ -233,10 +230,10 @@
         </div>
     </div>
 
-    <!-- Container for static rendering -->
+    <!-- Main Sidebar Vertical Stack Container -->
     <div class="playbook-container" id="playbookContainer">
         
-        <!-- Row 1 Mock -->
+        <!-- Row 1 Mock Data (Kept intact exactly as before) -->
         <div class="intent-item active" onclick="toggleAccordion(this)">
             <div class="intent-header">
                 <span>What is the tuition fee and structure?</span>
@@ -265,7 +262,7 @@
             </div>
         </div>
 
-        <!-- Row 2 Mock -->
+        <!-- Row 2 Mock Data (Kept intact exactly as before) -->
         <div class="intent-item" onclick="toggleAccordion(this)">
             <div class="intent-header">
                 <span>Where is your branch located / Landmarks?</span>
@@ -289,6 +286,31 @@
     </div>
 
     <script>
+        // API Configuration Target Route
+        const FRANCHISE_API_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/meta_franchise_id';
+        
+        // This variable holds the fetched data block in the frontend application memory
+        let selectedBranchData = null;
+
+        const branchSelect = document.getElementById('branchSelect');
+
+        // Dynamic API Integration Task
+        async function updateActiveBranch() {
+            const franchiseId = branchSelect.value;
+            
+            try {
+                const response = await fetch(`${FRANCHISE_API_URL}?franchise_id=${franchiseId}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                // Store the returned franchise table properties object inside memory
+                selectedBranchData = await response.json();
+                console.log("Active Branch Memory Refreshed po:", selectedBranchData);
+
+            } catch (error) {
+                console.error("Failed to query branch data row from Xano backend:", error);
+            }
+        }
+
         function toggleAccordion(element) {
             const allItems = document.querySelectorAll('.intent-item');
             allItems.forEach(item => {
@@ -319,6 +341,12 @@
                 btn.style.backgroundColor = "var(--teal-primary)";
             }, 1000);
         }
+
+        // Monitors dropdown selections to trigger the data storage update loop
+        branchSelect.addEventListener('change', updateActiveBranch);
+        
+        // Fire the initialization process immediately on DOM content layout load
+        window.addEventListener('DOMContentLoaded', updateActiveBranch);
     </script>
 </body>
 </html>
