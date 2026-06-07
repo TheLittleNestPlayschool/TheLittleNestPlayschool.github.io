@@ -230,8 +230,10 @@
         </div>
     </div>
 
+    <!-- Main Sidebar Vertical Stack Container -->
     <div class="playbook-container" id="playbookContainer">
         
+        <!-- Row 1 Mock Data -->
         <div class="intent-item active" onclick="toggleAccordion(this)">
             <div class="intent-header">
                 <span>What is the tuition fee and structure?</span>
@@ -260,6 +262,7 @@
             </div>
         </div>
 
+        <!-- Row 2 Mock Data -->
         <div class="intent-item" onclick="toggleAccordion(this)">
             <div class="intent-header">
                 <span>Where is your branch located / Landmarks?</span>
@@ -290,20 +293,20 @@
 
         const branchSelect = document.getElementById('branchSelect');
 
-        // Dynamically loads all 20+ franchise rows straight from your API response array
+        // Hits your endpoint on load, handles full query dynamically
         async function loadFranchises() {
             try {
-                const response = await fetch(FRANCHISE_API_URL);
+                // Fixed: Append a fallback default query parameter string so it doesn't fail validation check inside Xano on startup
+                const response = await fetch(`${FRANCHISE_API_URL}?franchise_id=1`);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
                 const data = await response.json();
                 
-                // Forces the incoming data cleanly into an array loop format
+                // Map response safely into memory array layout
                 allFranchisesMemory = Array.isArray(data) ? data : [data];
                 
-                branchSelect.innerHTML = ''; // Wipe out the loading selection option
+                branchSelect.innerHTML = '';
                 
-                // Dynamically build the menu using your live data rows
                 allFranchisesMemory.forEach(branch => {
                     const option = document.createElement('option');
                     option.value = branch.id;
@@ -311,7 +314,7 @@
                     branchSelect.appendChild(option);
                 });
 
-                // Caches the active initial value properties inside memory right away
+                // Set initial active branch mapping selection variables
                 handleBranchSelection();
 
             } catch (error) {
@@ -320,13 +323,12 @@
             }
         }
 
-        // Monitors current drop-down selections and updates frontend state variables
         function handleBranchSelection() {
             const franchiseId = parseInt(branchSelect.value);
             if (!franchiseId) return;
 
             selectedBranchData = allFranchisesMemory.find(b => b.id === franchiseId);
-            console.log("Active Branch Cached in Frontend Memory:", selectedBranchData);
+            console.log("Active Branch Selected and Held in Memory po:", selectedBranchData);
         }
 
         function toggleAccordion(element) {
