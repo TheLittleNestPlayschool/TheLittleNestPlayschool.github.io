@@ -6,7 +6,7 @@
     <title>The Little Nest - Sales Sidebar</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -284,11 +284,7 @@
         let masterPlaybookCache = [];
         let currentlySelectedBranch = null;
 
-        // =========================================================================
-        // CUSTOM SEARCH EXCLUSION LIST (STOP WORDS)
-        // Add any words here that you want the search engine to completely ignore.
-        // Keep them lower-case and separated by commas.
-        // =========================================================================
+        // Custom search exclusion stop words list
         const SEARCH_EXCLUSION_LIST = new Set([
             'of', 'if', 'the', 'and', 'is', 'in', 'to', 'sa', 'po', 'mam', 'sir', 'at'
         ]);
@@ -357,11 +353,15 @@
 
             let parsedText = templateText;
             
+            const rawAddress = (branchData.address || "").trim();
+            const rawLandmarks = (branchData.landmarks || "").trim();
+
+            // Setup our core replacement parameters mapping
             const textReplacements = {
                 '%branch_name%': branchData.name || 'Branch',
                 '%tuition_fee%': branchData.tuition_fee !== undefined ? branchData.tuition_fee : '0',
-                '%address%': branchData.address || branchData.landmarks || 'our location',
-                '%landmarks%': branchData.landmarks || 'local landmarks',
+                '%address%': rawAddress,
+                '%landmarks%': rawLandmarks,
                 '%google_maps_link%': branchData.google_maps_link || '',
                 '%schedule_details%': branchData.schedule_details || '',
                 '%branch_phone%': branchData.branch_phone || '',
@@ -369,9 +369,25 @@
                 '%tuition_fee_special%': branchData.tuition_fee_special !== undefined ? branchData.tuition_fee_special : '0'
             };
 
+            // Loop and parse placeholders
             for (const [placeholder, value] of Object.entries(textReplacements)) {
                 const regex = new RegExp(placeholder, 'g');
                 parsedText = parsedText.replace(regex, value);
+            }
+
+            // CLEANUP POST-PARSE: Dynamically handles the template text layout lines based on your API fields
+            if (rawAddress === "" || rawAddress.toLowerCase() === rawLandmarks.toLowerCase()) {
+                // If address is absent or mirrors landmark, scrub the redundant line structures cleanly
+                parsedText = parsedText.replace(/^.*is located at \*\*?\*\*?\.?\s*\n?/gim, "");
+                parsedText = parsedText.replace(/^.*matatagpuan sa \*\*?\*\*?\.?\s*\n?/gim, "");
+            } else {
+                // If address exists, strip out any residual fallback placeholders cleanly
+                parsedText = parsedText.replace(/our location/gi, "");
+            }
+
+            if (rawLandmarks === "") {
+                parsedText = parsedText.replace(/^.*landmarks and markers:.*\n?/gim, "");
+                parsedText = parsedText.replace(/^.*pinaka-marker or landmark natin.*\n?/gim, "");
             }
 
             return parsedText;
@@ -386,20 +402,22 @@
                 return;
             }
 
-            // Explode input into raw words, then strip out anything matching your Exclusion List
             const searchWordsArr = cleanQuery.split(/\s+/)
                 .filter(word => word.length > 0 && !SEARCH_EXCLUSION_LIST.has(word));
 
-            // If the admin has only typed exclusion words so far, halt execution to prevent accidental matches
             if (searchWordsArr.length === 0) {
                 return;
             }
 
             const matchedIntents = masterPlaybookCache.filter(intent => {
-                const searchHaystack = `${intent.question_label || ''} ${intent.search_keywords || ''}`.toLowerCase();
+                const labelStack = (intent.question_label || '').toLowerCase();
+                const keywordStack = (intent.search_keywords || '').toLowerCase();
+                const searchHaystack = `${labelStack} ${keywordStack}`;
                 
-                // Flexible Character Matching: Allows mid-word partial strings (like "locatio" matching "location")
-                return searchWordsArr.every(word => searchHaystack.includes(word));
+                return searchWordsArr.every(word => {
+                    const wordRegex = new RegExp('\\b' + word + '\\b', 'i');
+                    return wordRegex.test(searchHaystack);
+                });
             });
 
             if (matchedIntents.length === 0) {
