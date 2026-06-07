@@ -6,7 +6,7 @@
     <title>The Little Nest - Sales Sidebar</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -356,7 +356,7 @@
             const rawAddress = (branchData.address || "").trim();
             const rawLandmarks = (branchData.landmarks || "").trim();
 
-            // Setup our core replacement parameters mapping
+            // Direct mapping of structural placeholder fields
             const textReplacements = {
                 '%branch_name%': branchData.name || 'Branch',
                 '%tuition_fee%': branchData.tuition_fee !== undefined ? branchData.tuition_fee : '0',
@@ -369,25 +369,17 @@
                 '%tuition_fee_special%': branchData.tuition_fee_special !== undefined ? branchData.tuition_fee_special : '0'
             };
 
-            // Loop and parse placeholders
+            // Execute regular data replacements
             for (const [placeholder, value] of Object.entries(textReplacements)) {
                 const regex = new RegExp(placeholder, 'g');
                 parsedText = parsedText.replace(regex, value);
             }
 
-            // CLEANUP POST-PARSE: Dynamically handles the template text layout lines based on your API fields
+            // Single-Line Targeted Cleaning: Removes ONLY the exact sentence fragment if the address field is redundant
             if (rawAddress === "" || rawAddress.toLowerCase() === rawLandmarks.toLowerCase()) {
-                // If address is absent or mirrors landmark, scrub the redundant line structures cleanly
-                parsedText = parsedText.replace(/^.*is located at \*\*?\*\*?\.?\s*\n?/gim, "");
-                parsedText = parsedText.replace(/^.*matatagpuan sa \*\*?\*\*?\.?\s*\n?/gim, "");
-            } else {
-                // If address exists, strip out any residual fallback placeholders cleanly
-                parsedText = parsedText.replace(/our location/gi, "");
-            }
-
-            if (rawLandmarks === "") {
-                parsedText = parsedText.replace(/^.*landmarks and markers:.*\n?/gim, "");
-                parsedText = parsedText.replace(/^.*pinaka-marker or landmark natin.*\n?/gim, "");
+                parsedText = parsedText.replace(/Our premium educational space is located at\s*\.?\s*/gi, "");
+                parsedText = parsedText.replace(/Para po sa ating premium educational space, ang ating %branch_name% ay matatagpuan sa\s*\.?\s*/gi, "Ang ating %branch_name% ay ");
+                parsedText = parsedText.replace(/matatagpuan sa\s*\.?\s*/gi, "");
             }
 
             return parsedText;
