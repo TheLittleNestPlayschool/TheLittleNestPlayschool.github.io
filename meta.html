@@ -221,7 +221,7 @@
         <div class="input-group">
             <label for="branchSelect">Active Branch</label>
             <select id="branchSelect">
-                <option value="1">Atimonan</option>
+                <option value="">Loading branches po...</option>
             </select>
         </div>
         <div class="input-group">
@@ -284,28 +284,49 @@
 
     <script>
         const FRANCHISE_API_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/meta_franchise_id';
+        
+        let allFranchisesMemory = [];
         let selectedBranchData = null;
 
         const branchSelect = document.getElementById('branchSelect');
 
-        // This calls the API correctly by passing the parameter via URL string
-        async function updateActiveBranch() {
-            const franchiseId = branchSelect.value || "1"; 
-            
+        // Dynamically loads all 20+ franchise rows straight from your API response array
+        async function loadFranchises() {
             try {
-                // Fixed: Explicitly attaching ?franchise_id= to stop Xano from throwing a parameter error
-                const response = await fetch(`${FRANCHISE_API_URL}?franchise_id=${franchiseId}`);
+                const response = await fetch(FRANCHISE_API_URL);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
                 const data = await response.json();
                 
-                // If your endpoint returns an array of objects, extract the selected one
-                selectedBranchData = Array.isArray(data) ? data[0] : data;
-                console.log("Active Branch Selected and Held in Memory po:", selectedBranchData);
+                // Forces the incoming data cleanly into an array loop format
+                allFranchisesMemory = Array.isArray(data) ? data : [data];
+                
+                branchSelect.innerHTML = ''; // Wipe out the loading selection option
+                
+                // Dynamically build the menu using your live data rows
+                allFranchisesMemory.forEach(branch => {
+                    const option = document.createElement('option');
+                    option.value = branch.id;
+                    option.text = branch.name;
+                    branchSelect.appendChild(option);
+                });
+
+                // Caches the active initial value properties inside memory right away
+                handleBranchSelection();
 
             } catch (error) {
-                console.error("Failed to query branch data row from Xano backend:", error);
+                console.error("Failed to load franchise list rows from Xano:", error);
+                branchSelect.innerHTML = '<option value="">Error loading branches po</option>';
             }
+        }
+
+        // Monitors current drop-down selections and updates frontend state variables
+        function handleBranchSelection() {
+            const franchiseId = parseInt(branchSelect.value);
+            if (!franchiseId) return;
+
+            selectedBranchData = allFranchisesMemory.find(b => b.id === franchiseId);
+            console.log("Active Branch Cached in Frontend Memory:", selectedBranchData);
         }
 
         function toggleAccordion(element) {
@@ -325,7 +346,6 @@
             }
         }
 
-        @rule_expert_guide(The prompt is broad, ambiguous, or explicitly seeks advice. Ask a single relevant follow-up question to guide the conversation forward.)
         function copyText(elementId) {
             const text = document.getElementById(elementId).innerText;
             navigator.clipboard.writeText(text);
@@ -340,8 +360,8 @@
             }, 1000);
         }
 
-        branchSelect.addEventListener('change', updateActiveBranch);
-        window.addEventListener('DOMContentLoaded', updateActiveBranch);
+        branchSelect.addEventListener('change', handleBranchSelection);
+        window.addEventListener('DOMContentLoaded', loadFranchises);
     </script>
 </body>
 </html>
