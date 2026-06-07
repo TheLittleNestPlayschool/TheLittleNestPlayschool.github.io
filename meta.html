@@ -256,13 +256,10 @@
         </div>
     </div>
 
-    <!-- Main Sidebar Vertical Stack Container -->
     <div class="playbook-container" id="playbookContainer">
         
-        <!-- Live filtered playbook templates render here -->
         <div id="dynamicIntentsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
 
-        <!-- Selected Franchise Database Field Info Display Tab -->
         <div class="intent-item" id="franchiseMetaPanel" onclick="toggleAccordion(this)">
             <div class="intent-header" style="color: var(--teal-primary);">
                 <span>ℹ️ Branch Reference Data</span>
@@ -380,12 +377,15 @@
                 parsedText = parsedText.replace(/Our premium educational space is located at\s*\**\**\.?\s*/gi, "");
                 parsedText = parsedText.replace(/Para po sa ating premium educational space, ang ating %branch_name% ay matatagpuan sa\s*\**\**\.?\s*/gi, "Ang ating %branch_name% ay ");
                 parsedText = parsedText.replace(/matatagpuan sa\s*\**\**\.?\s*/gi, "");
-                
-                // Final clean sweep for any standalone remaining bold markers or stray punctuation left behind
-                parsedText = parsedText.replace(/\s*\*\*\s*\*\*\s*\.?/g, "");
             } else {
+                // If the address exists, ensure it cleanly breaks to the next line instead of clumping up
+                parsedText = parsedText.replace(new RegExp(`\\*\\*${rawAddress}\\*\\*\\.?\\s*`, 'gi'), `**${rawAddress}**.\n\n`);
                 parsedText = parsedText.replace(/our location/gi, "");
             }
+
+            // Clean sweep to remove any empty bold residual configurations or stray trailing asterisks
+            parsedText = parsedText.replace(/\s*\*\*\s*\*\*\s*/g, "");
+            parsedText = parsedText.replace(/\s+\*\*(?=\s|\.|$)/g, "");
 
             return parsedText;
         }
