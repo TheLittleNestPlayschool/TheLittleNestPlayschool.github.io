@@ -6,7 +6,7 @@
     <title>The Little Nest - Sales Sidebar</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -91,7 +91,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            padding-right: 2px; /* Scrollbar breathing room */
+            padding-right: 2px;
         }
 
         /* Accordion Item Wrapper */
@@ -132,7 +132,7 @@
 
         /* Expandable Content Body */
         .intent-body {
-            display: none; /* Dynamic expansion handled via javascript toggles */
+            display: none; 
             padding: 12px;
             background-color: rgba(15, 23, 42, 0.4);
             flex-direction: column;
@@ -200,8 +200,29 @@
             line-height: 1.5;
             white-space: pre-wrap;
             color: #E2E8F0;
-            max-height: 180px;
-            overflow-y: auto; /* Adds a clean inner scroll if text gets extra long */
+            
+            /* Fixed internal height constraints with custom scroll styling */
+            height: 120px;
+            overflow-y: auto; 
+        }
+
+        /* Sleek custom scrollbars for the inner script windows */
+        .script-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .script-box::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+            border-radius: 4px;
+        }
+
+        .script-box::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .script-box::-webkit-scrollbar-thumb:hover {
+            background: var(--teal-primary);
         }
     </style>
 </head>
@@ -212,6 +233,7 @@
         <div class="input-group">
             <label for="branchSelect">Active Branch</label>
             <select id="branchSelect">
+                <!-- Dropdown items dynamically sync with franchise table IDs -->
                 <option value="1">Atimonan</option>
             </select>
         </div>
@@ -223,79 +245,124 @@
 
     <!-- Main Sidebar Vertical Stack Container -->
     <div class="playbook-container" id="playbookContainer">
-        
-        <!-- Accordion Item Card (Active Example) -->
-        <div class="intent-item active" onclick="toggleAccordion(this)">
-            <div class="intent-header">
-                <span>What is the tuition fee and structure?</span>
-                <span class="chevron">▼</span>
-            </div>
-            <div class="intent-body" onclick="event.stopPropagation();">
-                <!-- Inline Admin Guidelines Box -->
-                <div class="notes-box">
-                    <strong>Admin Rule:</strong> Remind the admin to ask for the child's age at the end of the message to keep the qualification moving.
-                </div>
-                
-                <!-- Taglish Row block -->
-                <div class="script-wrapper">
-                    <div class="script-meta">
-                        <span class="script-label">✨ Taglish</span>
-                        <button class="copy-btn" onclick="copyText('taglishText1')">Copy</button>
-                    </div>
-                    <div class="script-box" id="taglishText1">Hello po!<br><br>Para po sa ating Atimonan Branch, ang ating tuition ay ₱3,500 all-inclusive po.<br><br>Narito po ang buong detalye ng structure natin:<br>✨ Good for 12 structured sessions over 4 weeks<br>✨ 3 times a week po ang pasok ni baby...</div>
-                </div>
-
-                <!-- English Row block -->
-                <div class="script-wrapper">
-                    <div class="script-meta">
-                        <span class="script-label">🌐 English</span>
-                        <button class="copy-btn" onclick="copyText('englishText1')">Copy</button>
-                    </div>
-                    <div class="script-box" id="englishText1">Hello po!<br><br>For our Atimonan Branch, our tuition is ₱3,500 all-inclusive po.<br><br>Here are the complete program details:<br>✨ Inclusive of 12 structured sessions over 4 weeks...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Accordion Item Card (Collapsed Example) -->
-        <div class="intent-item" onclick="toggleAccordion(this)">
-            <div class="intent-header">
-                <span>Where is your branch located / Landmarks?</span>
-                <span class="chevron">▶</span>
-            </div>
-            <div class="intent-body" onclick="event.stopPropagation();">
-                <!-- Expanded contents go here when clicked -->
-            </div>
-        </div>
-
+        <!-- Javascript automatically injects matching master rows here -->
     </div>
 
     <script>
-        // Simple client side accordion panel switcher
-        function toggleAccordion(element) {
-            // Un-collapse all other elements to save immediate vertical space
-            const items = document.querySelectorAll('.intent-item');
-            items.forEach(item => {
-                if(item !== element) {
-                    item.classList.remove('active');
-                    const chevron = item.querySelector('.chevron');
-                    if(chevron) chevron.innerText = '▶';
-                }
-            });
+        // Configuration: Change this to your live Xano base URL string
+        const XANO_API_URL = 'https://YOUR_XANO_API_BASE_URL/api:playbook/search';
 
-            // Toggle active selection state on targets
-            element.classList.toggle('active');
-            const chevron = element.querySelector('.chevron');
-            if (chevron) {
-                chevron.innerText = element.classList.contains('active') ? '▼' : '▶';
+        const branchSelect = document.getElementById('branchSelect');
+        const searchInput = document.getElementById('searchInput');
+        const playbookContainer = document.getElementById('playbookContainer');
+        let searchTimeout;
+
+        // Query Xano Backend and repaint the interface cards
+        async function loadPlaybook() {
+            const franchiseId = branchSelect.value;
+            const searchQuery = searchInput.value.trim();
+
+            try {
+                let url = `${XANO_API_URL}?franchise_id=${franchiseId}`;
+                if (searchQuery) {
+                    url += `&search_query=${encodeURIComponent(searchQuery)}`;
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                playbookContainer.innerHTML = '';
+
+                if (data.length === 0) {
+                    playbookContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">No matching intents found po.</div>';
+                    return;
+                }
+
+                data.forEach((intent) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'intent-item';
+                    itemDiv.id = `intent-${intent.id}`;
+                    
+                    itemDiv.innerHTML = `
+                        <div class="intent-header" onclick="toggleAccordion(this.parentElement)">
+                            <span>${intent.question_label}</span>
+                            <span class="chevron">▶</span>
+                        </div>
+                        <div class="intent-body" onclick="event.stopPropagation();">
+                            ${intent.admin_action_notes ? `
+                                <div class="notes-box">
+                                    <strong>Admin Rule:</strong> ${intent.admin_action_notes}
+                                </div>
+                            ` : ''}
+                            
+                            <div class="script-wrapper">
+                                <div class="script-meta">
+                                    <span class="script-label">✨ Taglish</span>
+                                    <button class="copy-btn" onclick="copyText('taglish-${intent.id}')">Copy</button>
+                                </div>
+                                <div class="script-box" id="taglish-${intent.id}">${intent.taglish_format}</div>
+                            </div>
+
+                            <div class="script-wrapper">
+                                <div class="script-meta">
+                                    <span class="script-label">🌐 English</span>
+                                    <button class="copy-btn" onclick="copyText('english-${intent.id}')">Copy</button>
+                                </div>
+                                <div class="script-box" id="english-${intent.id}">${intent.english_format}</div>
+                            </div>
+                        </div>
+                    `;
+                    playbookContainer.appendChild(itemDiv);
+                });
+
+            } catch (error) {
+                console.error("Xano Fetch Error:", error);
+                playbookContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#EF4444; font-size:13px;">Error connecting to backend server po.</div>';
             }
         }
 
-        // Fast clean copy-to-clipboard filter function
+        // Toggles active card open and snaps others shut to protect vertical room
+        function toggleAccordion(element) {
+            const allItems = document.querySelectorAll('.intent-item');
+            allItems.forEach(item => {
+                if (item !== element) {
+                    item.classList.remove('active');
+                    const chevron = item.querySelector('.chevron');
+                    if (chevron) chevron.innerText = '▶';
+                }
+            });
+
+            element.classList.toggle('active');
+            const currentChevron = element.querySelector('.chevron');
+            if (currentChevron) {
+                currentChevron.innerText = element.classList.contains('active') ? '▼' : '▶';
+            }
+        }
+
+        // Copy mechanism with high-speed color feedback
         function copyText(elementId) {
             const text = document.getElementById(elementId).innerText;
             navigator.clipboard.writeText(text);
-            alert("Copied po!");
+            
+            const btn = document.querySelector(`[onclick="copyText('${elementId}')"]`);
+            const originalText = btn.innerText;
+            btn.innerText = "Copied!";
+            btn.style.backgroundColor = "#047857";
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.backgroundColor = "var(--teal-primary)";
+            }, 1000);
         }
+
+        // Search inputs setup with 250ms debouncing delay
+        branchSelect.addEventListener('change', loadPlaybook);
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(loadPlaybook, 250); 
+        });
+
+        // Load initially when ready
+        window.addEventListener('DOMContentLoaded', loadPlaybook);
     </script>
 </body>
 </html>
