@@ -6,7 +6,7 @@
     <title>The Little Nest - Sales Sidebar</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -375,11 +375,16 @@
                 parsedText = parsedText.replace(regex, value);
             }
 
-            // Single-Line Targeted Cleaning: Removes ONLY the exact sentence fragment if the address field is redundant
+            // Single-Line Targeted Cleaning with strict Markdown syntax scrubbers
             if (rawAddress === "" || rawAddress.toLowerCase() === rawLandmarks.toLowerCase()) {
-                parsedText = parsedText.replace(/Our premium educational space is located at\s*\.?\s*/gi, "");
-                parsedText = parsedText.replace(/Para po sa ating premium educational space, ang ating %branch_name% ay matatagpuan sa\s*\.?\s*/gi, "Ang ating %branch_name% ay ");
-                parsedText = parsedText.replace(/matatagpuan sa\s*\.?\s*/gi, "");
+                parsedText = parsedText.replace(/Our premium educational space is located at\s*\**\**\.?\s*/gi, "");
+                parsedText = parsedText.replace(/Para po sa ating premium educational space, ang ating %branch_name% ay matatagpuan sa\s*\**\**\.?\s*/gi, "Ang ating %branch_name% ay ");
+                parsedText = parsedText.replace(/matatagpuan sa\s*\**\**\.?\s*/gi, "");
+                
+                // Final clean sweep for any standalone remaining bold markers or stray punctuation left behind
+                parsedText = parsedText.replace(/\s*\*\*\s*\*\*\s*\.?/g, "");
+            } else {
+                parsedText = parsedText.replace(/our location/gi, "");
             }
 
             return parsedText;
@@ -427,7 +432,7 @@
                 const initialChevron = shouldBeOpen ? "▼" : "▶";
 
                 const formattedTaglish = parseScriptPlaceholders(intent.taglish_format, currentlySelectedBranch);
-                const formattedEnglish = parseScriptPlaceholders(intent.english_format, currentlySelectedBranch);
+                const formattedEnglish = intent.english_format ? parseScriptPlaceholders(intent.english_format, currentlySelectedBranch) : '';
 
                 const accordionHtml = `
                     <div class="intent-item ${activeStateClass}" onclick="toggleAccordion(this)">
