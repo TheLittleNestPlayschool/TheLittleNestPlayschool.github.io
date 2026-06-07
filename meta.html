@@ -6,7 +6,7 @@
     <title>The Little Nest - Sales Sidebar</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -214,7 +214,6 @@
             background: var(--teal-primary);
         }
 
-        /* Specific styles for the metadata info box view */
         .franchise-meta-grid {
             display: flex;
             flex-direction: column;
@@ -248,7 +247,7 @@
         <div class="input-group">
             <label for="branchSelect">Active Branch</label>
             <select id="branchSelect">
-                <option value="">Loading branches po...</option>
+                <option value="">Loading workspace po...</option>
             </select>
         </div>
         <div class="input-group">
@@ -257,56 +256,13 @@
         </div>
     </div>
 
+    <!-- Main Sidebar Vertical Stack Container -->
     <div class="playbook-container" id="playbookContainer">
         
-        <div class="intent-item active" onclick="toggleAccordion(this)">
-            <div class="intent-header">
-                <span>What is the tuition fee and structure?</span>
-                <span class="chevron">▼</span>
-            </div>
-            <div class="intent-body" onclick="event.stopPropagation();">
-                <div class="notes-box">
-                    <strong>Admin Rule:</strong> Remind the admin to ask for the child's age at the end of the message to keep the qualification moving.
-                </div>
-                
-                <div class="script-wrapper">
-                    <div class="script-meta">
-                        <span class="script-label">✨ Taglish</span>
-                        <button class="copy-btn" onclick="copyText('taglish-1')">Copy</button>
-                    </div>
-                    <div class="script-box" id="taglish-1">Hello po!<br><br>Para po sa ating Atimonan Branch, ang ating tuition ay ₱3,500 all-inclusive po.<br><br>Narito po ang buong detalye ng structure natin:<br>✨ Good for 12 structured sessions over 4 weeks<br>✨ 3 times a week po ang pasok ni baby<br>✨ Ganap na 2 oras kada session para sa kaniyang learning layer<br>❌ Walang hidden upfront joining o registration fees<br><br>Ang ating mga classes ay 100% guided ng mga Licensed Professional Teachers (LPTs) gamit ang ating play-based Canadian Curriculum.<br><br>May I know kung ilang taon o buwan na po si baby para macheck natin ang tamang class group para sa kaniya? ❤️</div>
-                </div>
+        <!-- Live filtered playbook templates render here -->
+        <div id="dynamicIntentsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
 
-                <div class="script-wrapper">
-                    <div class="script-meta">
-                        <span class="script-label">🌐 English</span>
-                        <button class="copy-btn" onclick="copyText('english-1')">Copy</button>
-                    </div>
-                    <div class="script-box" id="english-1">Hello po!<br><br>For our Atimonan Branch, our tuition is ₱3,500 all-inclusive po.<br><br>Here are the complete program details:<br>✨ Inclusive of 12 structured sessions over 4 weeks<br>✨ Classes are held 3 times a week<br>✨ Full 2 hours per session dedicated to your child's developmental layer<br>❌ ZERO upfront joining or registration fees<br><br>Our program is 100% led by Licensed Professional Teachers (LPTs) using our play-based Canadian Curriculum.<br><br>May I know how old your little one is so we can check the right class group for them? ❤️</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="intent-item" onclick="toggleAccordion(this)">
-            <div class="intent-header">
-                <span>Where is your branch located / Landmarks?</span>
-                <span class="chevron">▶</span>
-            </div>
-            <div class="intent-body" onclick="event.stopPropagation();">
-                <div class="notes-box">
-                    <strong>Admin Rule:</strong> Instruct the admin to copy the maps link manually from the system if the platform doesn't auto-render the link preview cleanly.
-                </div>
-                
-                <div class="script-wrapper">
-                    <div class="script-meta">
-                        <span class="script-label">✨ Taglish</span>
-                        <button class="copy-btn" onclick="copyText('taglish-2')">Copy</button>
-                    </div>
-                    <div class="script-box" id="taglish-2">Naku, pwedeng-pwede po kayong bumisita! 🌟<br><br>Ang ating premium educational space ay matatagpuan sa Atimonan, Quezon.<br><br>Para po mas madali ninyong matunton ang ating facility, narito po ang ating local markers at landmark:<br>📍 Landmark text goes here...</div>
-                </div>
-            </div>
-        </div>
-
+        <!-- Selected Franchise Database Field Info Display Tab -->
         <div class="intent-item" id="franchiseMetaPanel" onclick="toggleAccordion(this)">
             <div class="intent-header" style="color: var(--teal-primary);">
                 <span>ℹ️ Branch Reference Data</span>
@@ -322,52 +278,62 @@
     </div>
 
     <script>
-        const FRANCHISE_API_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/meta_franchise_id';
+        const API_ENDPOINT_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/meta_franchise_id';
         
-        let allFranchisesMemory = [];
-        let selectedBranchData = null;
+        // Storage buckets to cache our data objects globally
+        let masterFranchiseCache = [];
+        let masterPlaybookCache = [];
+        let currentlySelectedBranch = null;
 
         const branchSelect = document.getElementById('branchSelect');
+        const searchInput = document.getElementById('searchInput');
+        const dynamicIntentsContainer = document.getElementById('dynamicIntentsContainer');
         const metaFieldsDisplay = document.getElementById('metaFieldsDisplay');
 
-        async function loadFranchises() {
+        // Initial launch load function - runs once in the morning
+        async function bootstrapWorkspace() {
             try {
-                const response = await fetch(`${FRANCHISE_API_URL}?franchise_id=1`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                // Pass a fallback query argument so Xano inputs bypass validation rules
+                const response = await fetch(`${API_ENDPOINT_URL}?franchise_id=24`);
+                if (!response.ok) throw new Error(`HTTP Status Error: ${response.status}`);
                 
-                const data = await response.json();
-                allFranchisesMemory = Array.isArray(data) ? data : [data];
+                const payload = await response.json();
                 
+                // Unpack variables directly out of your unified response object format
+                masterFranchiseCache = payload.franchise_list || [];
+                masterPlaybookCache = payload.playbook_list || [];
+                
+                // Build selection menu
                 branchSelect.innerHTML = '';
-                
-                allFranchisesMemory.forEach(branch => {
+                masterFranchiseCache.forEach(branch => {
                     const option = document.createElement('option');
                     option.value = branch.id;
                     option.text = branch.name;
                     branchSelect.appendChild(option);
                 });
 
-                handleBranchSelection();
+                // Establish baseline active data models in memory
+                handleBranchChange();
 
-            } catch (error) {
-                console.error("Failed to load franchise list rows from Xano:", error);
-                branchSelect.innerHTML = '<option value="">Error loading branches po</option>';
+            } catch (err) {
+                console.error("Workspace download failed:", err);
+                branchSelect.innerHTML = '<option value="">Error loading system po</option>';
+                dynamicIntentsContainer.innerHTML = '<div style="padding:16px; text-align:center; color:#EF4444;">Could not sync workspace with Xano.</div>';
             }
         }
 
-        // Extracts matching properties and injects them clean into the display container rows
-        function handleBranchSelection() {
-            const franchiseId = parseInt(branchSelect.value);
-            if (!franchiseId) return;
+        // Monitors active branch context switches and redraws the display cards instantly
+        function handleBranchChange() {
+            const selectedId = parseInt(branchSelect.value);
+            if (!selectedId) return;
 
-            selectedBranchData = allFranchisesMemory.find(b => b.id === franchiseId);
-            console.log("Active Branch Selected and Held in Memory po:", selectedBranchData);
+            currentlySelectedBranch = masterFranchiseCache.find(b => b.id === selectedId);
+            console.log("Context updated to branch po:", currentlySelectedBranch);
 
-            if (selectedBranchData) {
-                // Generate clean HTML labels automatically for every database field returned
+            // 1. Redraw reference log panel at the bottom
+            if (currentlySelectedBranch) {
                 let htmlContent = '';
-                for (const [key, value] of Object.entries(selectedBranchData)) {
-                    // Skip internal fields that admins don't need to read directly
+                for (const [key, value] of Object.entries(currentlySelectedBranch)) {
                     if (key === 'id' || key === 'created_at') continue;
                     
                     const cleanLabel = key.replace(/_/g, ' ').toUpperCase();
@@ -382,6 +348,103 @@
                 }
                 metaFieldsDisplay.innerHTML = htmlContent;
             }
+
+            // 2. Force re-render of active playbook template entries using new property profiles
+            filterAndRenderPlaybook(searchInput.value);
+        }
+
+        // String replacement logic - swaps out format tags for live properties dynamically
+        function parseScriptPlaceholders(templateText, branchData) {
+            if (!templateText) return "";
+            if (!branchData) return templateText;
+
+            let parsedText = templateText;
+            
+            // Map table column lookups cleanly to your specific bracket formats
+            const textReplacements = {
+                '%branch_name%': branchData.name || 'Branch',
+                '%tuition_fee%': branchData.tuition_fee !== undefined ? branchData.tuition_fee : '0',
+                '%address%': branchData.address || branchData.landmarks || 'our location',
+                '%landmarks%': branchData.landmarks || 'local landmarks',
+                '%google_maps_link%': branchData.google_maps_link || '',
+                '%schedule_details%': branchData.schedule_details || '',
+                '%branch_phone%': branchData.branch_phone || '',
+                '%special_needs_schedule%': branchData.special_needs_schedule || '',
+                '%tuition_fee_special%': branchData.tuition_fee_special !== undefined ? branchData.tuition_fee_special : '0'
+            };
+
+            for (const [placeholder, value] of Object.entries(textReplacements)) {
+                // Global regex lookups to catch multiple instances across deep paragraphs
+                const regex = new RegExp(placeholder, 'g');
+                parsedText = parsedText.replace(regex, value);
+            }
+
+            return parsedText;
+        }
+
+        // Client-side real-time filter engine
+        function filterAndRenderPlaybook(keywordQuery) {
+            const cleanQuery = keywordQuery.toLowerCase().trim();
+            dynamicIntentsContainer.innerHTML = "";
+
+            // Evaluate search criteria instantly out of internal lookup arrays
+            const matchedIntents = masterPlaybookCache.filter(intent => {
+                if (cleanQuery === "") return true; // Show all entries by default
+                
+                const questionMatch = (intent.question_label || "").toLowerCase().includes(cleanQuery);
+                const keywordMatch = (intent.search_keywords || "").toLowerCase().includes(cleanQuery);
+                
+                return questionMatch || keywordMatch;
+            });
+
+            if (matchedIntents.length === 0) {
+                dynamicIntentsContainer.innerHTML = `<div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 13px;">No matching sales playbook items found po...</div>`;
+                return;
+            }
+
+            // Build card collections dynamically matching current text filters
+            matchedIntents.forEach((intent, idx) => {
+                const shouldBeOpen = cleanQuery !== "" && idx === 0;
+                const activeStateClass = shouldBeOpen ? "active" : "";
+                const initialChevron = shouldBeOpen ? "▼" : "▶";
+
+                // Formulate active text variants replacing tags with live profiles in real time
+                const formattedTaglish = parseScriptPlaceholders(intent.taglish_format, currentlySelectedBranch);
+                const formattedEnglish = parseScriptPlaceholders(intent.english_format, currentlySelectedBranch);
+
+                const accordionHtml = `
+                    <div class="intent-item ${activeStateClass}" onclick="toggleAccordion(this)">
+                        <div class="intent-header">
+                            <span>${intent.question_label}</span>
+                            <span class="chevron">${initialChevron}</span>
+                        </div>
+                        <div class="intent-body" onclick="event.stopPropagation();">
+                            <div class="notes-box">
+                                <strong>Admin Rule:</strong> ${intent.admin_action_notes || 'Follow standard workflow presentation rules.'}
+                            </div>
+                            
+                            <div class="script-wrapper">
+                                <div class="script-meta">
+                                    <span class="script-label">✨ Taglish</span>
+                                    <button class="copy-btn" onclick="copyText('taglish-${intent.id}')">Copy</button>
+                                </div>
+                                <div class="script-box" id="taglish-${intent.id}">${formattedTaglish}</div>
+                            </div>
+
+                            ${intent.english_format ? `
+                            <div class="script-wrapper">
+                                <div class="script-meta">
+                                    <span class="script-label">🌐 English</span>
+                                    <button class="copy-btn" onclick="copyText('english-${intent.id}')">Copy</button>
+                                </div>
+                                <div class="script-box" id="english-${intent.id}">${formattedEnglish}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                dynamicIntentsContainer.insertAdjacentHTML('beforeend', accordionHtml);
+            });
         }
 
         function toggleAccordion(element) {
@@ -415,8 +478,13 @@
             }, 1000);
         }
 
-        branchSelect.addEventListener('change', handleBranchSelection);
-        window.addEventListener('DOMContentLoaded', loadFranchises);
+        // Real-time listener: triggers client-side layout adjustments instantaneously
+        searchInput.addEventListener('input', (e) => {
+            filterAndRenderPlaybook(e.target.value);
+        });
+
+        branchSelect.addEventListener('change', handleBranchChange);
+        window.addEventListener('DOMContentLoaded', bootstrapWorkspace);
     </script>
 </body>
 </html>
