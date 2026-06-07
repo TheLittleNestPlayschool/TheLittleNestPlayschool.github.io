@@ -1,14 +1,3 @@
-Looking at **image_854027.png** and **image_853fa6.png**, you can see the exact moment the word-boundary engine runs into trouble with short two-letter words.
-
-Even though we upgraded the search to check for complete words, the code still splits `"location of"` into two separate search targets: `["location", "of"]`. It then scans your playbook text fields looking for matches for *either* word.
-
-The word `"of"` is trigger-happy because it appears inside your English text data fields—specifically in strings like `"Age/Months of the child:"` inside your **Booking a branch tour / Intake form** template record. Because the engine sees a clean, standalone match for `"of"`, it incorrectly assumes that card is relevant and forces it onto the screen!
-
-To fix this for good, we need to enforce a **minimum word length rule** on the search tokens. If we tell the code to completely ignore any word that is shorter than 3 letters long, words like `"of"`, `"in"`, `"to"`, or `"sa"` will be instantly dropped from the search calculation, while `"location"` keeps doing its job flawlessly.
-
-Here is your complete, updated `meta.html` file with that length safety threshold added to the search algorithm, keeping every other layout, style, and logic behavior completely unchanged:
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
