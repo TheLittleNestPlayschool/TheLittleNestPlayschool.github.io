@@ -281,7 +281,6 @@
         let masterPlaybookCache = [];
         let currentlySelectedBranch = null;
 
-        // Custom search exclusion stop words list
         const SEARCH_EXCLUSION_LIST = new Set([
             'of', 'if', 'the', 'and', 'is', 'in', 'to', 'sa', 'po', 'mam', 'sir', 'at'
         ]);
@@ -350,29 +349,26 @@
 
             let parsedText = templateText;
             
+            // Standardize explicit HTML line break strings into standard carriage breaks natively
+            parsedText = parsedText.replace(/<br\s*\/?>/gi, '\n');
+
             const rawAddress = (branchData.address || "").trim();
             const rawLandmarks = (branchData.landmarks || "").trim();
             const hasNoAddress = (rawAddress === "" || rawAddress.toLowerCase() === rawLandmarks.toLowerCase());
 
-            // 1. Core structural cleanup rules if address matches landmarks or is entirely blank
+            // 1. Structural self-healing rules if the current branch address field is blank
             if (hasNoAddress) {
-                parsedText = parsedText.replace(/Our premium educational space is located at\s*\**%address%\**\.?\s*/gi, "");
-                parsedText = parsedText.replace(/Para po sa ating premium educational space, ang ating %branch_name% ay matatagpuan sa\s*\**%address%\**\.?\s*/gi, "Ang ating %branch_name% ay ");
-                parsedText = parsedText.replace(/matatagpuan sa\s*\**%address%\**\.?\s*/gi, "");
-            } else {
-                // If it is a real address string, explicitly clear any static raw asterisks wrapping the target placeholder parameter row
-                parsedText = parsedText.replace(/\**%address%\**/g, "%address%");
+                parsedText = parsedText.replace(/Our premium educational space is located at\s*%address%\.?\s*/gi, "");
+                parsedText = parsedText.replace(/Para po sa ating premium educational space, ang ating %branch_name% ay matatagpuan sa\s*%address%\.?\s*/gi, "Ang ating %branch_name% ay ");
+                parsedText = parsedText.replace(/matatagpuan sa\s*%address%\.?\s*/gi, "");
             }
 
-            // Clean static syntax anchors wrapping around local landmarks variable
-            parsedText = parsedText.replace(/\**%landmarks%\**/g, "%landmarks%");
-
-            // 2. Map structural token swaps cleanly
+            // 2. Direct string value variable assignment swaps
             const textReplacements = {
                 '%branch_name%': branchData.name || 'Branch',
                 '%tuition_fee%': branchData.tuition_fee !== undefined ? branchData.tuition_fee : '0',
-                '%address%': rawAddress ? `**${rawAddress}**.\n\n` : '', // Locks in asterisks natively inside data mapping layer
-                '%landmarks%': rawLandmarks ? `**${rawLandmarks}**` : '',
+                '%address%': rawAddress,
+                '%landmarks%': rawLandmarks,
                 '%google_maps_link%': branchData.google_maps_link || '',
                 '%schedule_details%': branchData.schedule_details || '',
                 '%branch_phone%': branchData.branch_phone || '',
@@ -385,10 +381,8 @@
                 parsedText = parsedText.replace(regex, value);
             }
 
-            // 3. Force clean-up to prevent syntax anomalies
+            // 3. Prevent excessive cascading breaks from cluttering script window blocks
             parsedText = parsedText.replace(/\n{3,}/g, "\n\n");
-            parsedText = parsedText.replace(/ \./g, ".");
-            parsedText = parsedText.replace(/\s*\*\*\s*\*\*\s*/g, " ");
 
             return parsedText.trim();
         }
