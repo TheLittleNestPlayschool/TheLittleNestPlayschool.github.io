@@ -6,7 +6,7 @@
     <title>The Little Nest - Sales Sidebar</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -252,7 +252,7 @@
         </div>
         <div class="input-group">
             <label for="searchInput">Search Keywords</label>
-            <input type="text" id="searchInput" placeholder="Type keyword (e.g. tuition, saan, slots)...">
+            <input type="text" id="searchInput" placeholder="Type keyword (e.g. tuition, saan, slots)..." autofocus>
         </div>
     </div>
 
@@ -280,7 +280,6 @@
     <script>
         const API_ENDPOINT_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/meta_franchise_id';
         
-        // Storage buckets to cache our data objects globally
         let masterFranchiseCache = [];
         let masterPlaybookCache = [];
         let currentlySelectedBranch = null;
@@ -290,20 +289,16 @@
         const dynamicIntentsContainer = document.getElementById('dynamicIntentsContainer');
         const metaFieldsDisplay = document.getElementById('metaFieldsDisplay');
 
-        // Initial launch load function - runs once in the morning
         async function bootstrapWorkspace() {
             try {
-                // Pass a fallback query argument so Xano inputs bypass validation rules
                 const response = await fetch(`${API_ENDPOINT_URL}?franchise_id=24`);
                 if (!response.ok) throw new Error(`HTTP Status Error: ${response.status}`);
                 
                 const payload = await response.json();
                 
-                // Unpack variables directly out of your unified response object format
                 masterFranchiseCache = payload.franchise_list || [];
                 masterPlaybookCache = payload.playbook_list || [];
                 
-                // Build selection menu
                 branchSelect.innerHTML = '';
                 masterFranchiseCache.forEach(branch => {
                     const option = document.createElement('option');
@@ -312,25 +307,20 @@
                     branchSelect.appendChild(option);
                 });
 
-                // Establish baseline active data models in memory
                 handleBranchChange();
 
             } catch (err) {
                 console.error("Workspace download failed:", err);
                 branchSelect.innerHTML = '<option value="">Error loading system po</option>';
-                dynamicIntentsContainer.innerHTML = '<div style="padding:16px; text-align:center; color:#EF4444;">Could not sync workspace with Xano.</div>';
             }
         }
 
-        // Monitors active branch context switches and redraws the display cards instantly
         function handleBranchChange() {
             const selectedId = parseInt(branchSelect.value);
             if (!selectedId) return;
 
             currentlySelectedBranch = masterFranchiseCache.find(b => b.id === selectedId);
-            console.log("Context updated to branch po:", currentlySelectedBranch);
 
-            // 1. Redraw reference log panel at the bottom
             if (currentlySelectedBranch) {
                 let htmlContent = '';
                 for (const [key, value] of Object.entries(currentlySelectedBranch)) {
@@ -349,18 +339,15 @@
                 metaFieldsDisplay.innerHTML = htmlContent;
             }
 
-            // 2. Force re-render of active playbook template entries using new property profiles
             filterAndRenderPlaybook(searchInput.value);
         }
 
-        // String replacement logic - swaps out format tags for live properties dynamically
         function parseScriptPlaceholders(templateText, branchData) {
             if (!templateText) return "";
             if (!branchData) return templateText;
 
             let parsedText = templateText;
             
-            // Map table column lookups cleanly to your specific bracket formats
             const textReplacements = {
                 '%branch_name%': branchData.name || 'Branch',
                 '%tuition_fee%': branchData.tuition_fee !== undefined ? branchData.tuition_fee : '0',
@@ -374,7 +361,6 @@
             };
 
             for (const [placeholder, value] of Object.entries(textReplacements)) {
-                // Global regex lookups to catch multiple instances across deep paragraphs
                 const regex = new RegExp(placeholder, 'g');
                 parsedText = parsedText.replace(regex, value);
             }
@@ -382,18 +368,18 @@
             return parsedText;
         }
 
-        // Client-side real-time filter engine
         function filterAndRenderPlaybook(keywordQuery) {
             const cleanQuery = keywordQuery.toLowerCase().trim();
             dynamicIntentsContainer.innerHTML = "";
 
-            // Evaluate search criteria instantly out of internal lookup arrays
+            // FIX: If search string is completely empty, render absolutely nothing below it
+            if (cleanQuery === "") {
+                return;
+            }
+
             const matchedIntents = masterPlaybookCache.filter(intent => {
-                if (cleanQuery === "") return true; // Show all entries by default
-                
                 const questionMatch = (intent.question_label || "").toLowerCase().includes(cleanQuery);
                 const keywordMatch = (intent.search_keywords || "").toLowerCase().includes(cleanQuery);
-                
                 return questionMatch || keywordMatch;
             });
 
@@ -402,13 +388,11 @@
                 return;
             }
 
-            // Build card collections dynamically matching current text filters
             matchedIntents.forEach((intent, idx) => {
-                const shouldBeOpen = cleanQuery !== "" && idx === 0;
+                const shouldBeOpen = idx === 0;
                 const activeStateClass = shouldBeOpen ? "active" : "";
                 const initialChevron = shouldBeOpen ? "▼" : "▶";
 
-                // Formulate active text variants replacing tags with live profiles in real time
                 const formattedTaglish = parseScriptPlaceholders(intent.taglish_format, currentlySelectedBranch);
                 const formattedEnglish = parseScriptPlaceholders(intent.english_format, currentlySelectedBranch);
 
@@ -478,7 +462,6 @@
             }, 1000);
         }
 
-        // Real-time listener: triggers client-side layout adjustments instantaneously
         searchInput.addEventListener('input', (e) => {
             filterAndRenderPlaybook(e.target.value);
         });
