@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Little Nest - Sales Playbook Dashboard</title>
-    <!-- Inter Typography for high-end professional look -->
+    <title>The Little Nest - Sales Sidebar</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -19,6 +18,9 @@
             --text-main: #F8FAFC;
             --text-muted: #94A3B8;
             --border-color: #334155;
+            --notes-bg: rgba(234, 179, 8, 0.1);
+            --notes-border: rgba(234, 179, 8, 0.3);
+            --notes-text: #FDE047;
         }
 
         * {
@@ -31,32 +33,35 @@
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
-            padding: 24px;
+            padding: 12px;
+            /* Narrow, fixed width optimized for side-by-side window multitasking */
+            max-width: 400px; 
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
             height: 100vh;
         }
 
-        /* Top Configuration Row */
-        .top-bar {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 24px;
+        /* Compact Header Controls */
+        .controls-container {
             background-color: var(--panel-dark);
-            padding: 16px;
-            border-radius: 12px;
+            padding: 12px;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .input-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            flex: 1;
+            gap: 4px;
         }
 
         label {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
             color: var(--text-muted);
@@ -67,114 +72,116 @@
             background-color: var(--bg-dark);
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
             outline: none;
             transition: border-color 0.2s;
+            width: 100%;
         }
 
         select:focus, input:focus {
             border-color: var(--teal-primary);
         }
 
-        /* Main App Workspace */
-        .workspace {
-            display: grid;
-            grid-template-columns: 450px 1fr;
-            gap: 24px;
+        /* Vertical Accordion List Workspace */
+        .playbook-container {
             flex: 1;
-            min-height: 0; /* Prevents layout grid overflow */
-        }
-
-        /* Left Side: Filtered List */
-        .question-panel {
-            background-color: var(--panel-dark);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
+            gap: 8px;
+            padding-right: 2px; /* Scrollbar breathing room */
+        }
+
+        /* Accordion Item Wrapper */
+        .intent-item {
+            background-color: var(--panel-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
             overflow: hidden;
+            transition: border-color 0.2s;
         }
 
-        .panel-header {
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--text-muted);
-        }
-
-        .question-list {
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        .question-item {
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
+        /* Clickable Header */
+        .intent-header {
+            padding: 12px;
             cursor: pointer;
-            transition: background-color 0.2s;
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 13px;
+            font-weight: 600;
             line-height: 1.4;
-        }
-
-        .question-item:hover {
-            background-color: rgba(13, 148, 136, 0.1);
-        }
-
-        .question-item.active {
-            background-color: var(--teal-primary);
-            color: white;
-        }
-
-        /* Right Side: Scripts Screen */
-        .output-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            overflow-y: auto;
-        }
-
-        .script-box {
-            background-color: var(--panel-dark);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            padding: 20px;
-            position: relative;
-        }
-
-        .script-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
+            user-select: none;
         }
 
-        .script-title {
-            font-size: 14px;
-            font-weight: 600;
+        .intent-header:hover {
+            background-color: rgba(13, 148, 136, 0.08);
+        }
+
+        .intent-item.active {
+            border-color: var(--teal-primary);
+        }
+
+        .intent-item.active .intent-header {
+            background-color: rgba(13, 148, 136, 0.15);
+            color: white;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Expandable Content Body */
+        .intent-body {
+            display: none; /* Dynamic expansion handled via javascript toggles */
+            padding: 12px;
+            background-color: rgba(15, 23, 42, 0.4);
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .intent-item.active .intent-body {
+            display: flex;
+        }
+
+        /* Condensed Admin Context Alerts */
+        .notes-box {
+            background-color: var(--notes-bg);
+            border: 1px solid var(--notes-border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 11px;
+            color: var(--notes-text);
+            line-height: 1.4;
+        }
+
+        /* Script Output Containers */
+        .script-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .script-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .script-label {
+            font-size: 11px;
+            font-weight: 700;
             color: var(--teal-primary);
             text-transform: uppercase;
-        }
-
-        .script-content {
-            font-size: 15px;
-            line-height: 1.6;
-            white-space: pre-wrap; /* Honors the HTML breaking structure cleanly */
-            color: #E2E8F0;
+            letter-spacing: 0.02em;
         }
 
         .copy-btn {
             background-color: var(--teal-primary);
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s;
@@ -184,88 +191,110 @@
             background-color: var(--teal-hover);
         }
 
-        .notes-box {
-            background-color: rgba(234, 179, 8, 0.1);
-            border: 1px solid rgba(234, 179, 8, 0.3);
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 13px;
-            color: #FDE047;
-            display: flex;
-            gap: 8px;
-            align-items: flex-start;
+        .script-box {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 12.5px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            color: #E2E8F0;
+            max-height: 180px;
+            overflow-y: auto; /* Adds a clean inner scroll if text gets extra long */
         }
     </style>
 </head>
 <body>
 
-    <!-- Top Configuration Row -->
-    <div class="top-bar">
-        <div class="input-group" style="max-width: 250px;">
-            <label for="branchSelect">Active Franchise Branch</label>
+    <!-- Header Control Configuration Panel -->
+    <div class="controls-container">
+        <div class="input-group">
+            <label for="branchSelect">Active Branch</label>
             <select id="branchSelect">
                 <option value="1">Atimonan</option>
-                <option value="2">San Pablo</option>
             </select>
         </div>
         <div class="input-group">
-            <label for="searchInput">Search Intent Keywords</label>
-            <input type="text" id="searchInput" placeholder="Type a parent keyword (e.g., magkano, saan po, slots, visit)...">
+            <label for="searchInput">Search Keywords</label>
+            <input type="text" id="searchInput" placeholder="Type keyword (e.g. tuition, saan, slots)...">
         </div>
     </div>
 
-    <!-- Main Workspace -->
-    <div class="workspace">
+    <!-- Main Sidebar Vertical Stack Container -->
+    <div class="playbook-container" id="playbookContainer">
         
-        <!-- Left Side Bar -->
-        <div class="question-panel">
-            <div class="panel-header">Matching Sales Intents</div>
-            <div class="question-list" id="questionList">
-                <div class="question-item active">What is the tuition fee and structure?</div>
-                <div class="question-item">Where is your branch located / Landmarks?</div>
-                <div class="question-item">Is enrollment still open / Can we still register?</div>
-                <div class="question-item">Booking a branch tour / Intake form</div>
+        <!-- Accordion Item Card (Active Example) -->
+        <div class="intent-item active" onclick="toggleAccordion(this)">
+            <div class="intent-header">
+                <span>What is the tuition fee and structure?</span>
+                <span class="chevron">▼</span>
+            </div>
+            <div class="intent-body" onclick="event.stopPropagation();">
+                <!-- Inline Admin Guidelines Box -->
+                <div class="notes-box">
+                    <strong>Admin Rule:</strong> Remind the admin to ask for the child's age at the end of the message to keep the qualification moving.
+                </div>
+                
+                <!-- Taglish Row block -->
+                <div class="script-wrapper">
+                    <div class="script-meta">
+                        <span class="script-label">✨ Taglish</span>
+                        <button class="copy-btn" onclick="copyText('taglishText1')">Copy</button>
+                    </div>
+                    <div class="script-box" id="taglishText1">Hello po!<br><br>Para po sa ating Atimonan Branch, ang ating tuition ay ₱3,500 all-inclusive po.<br><br>Narito po ang buong detalye ng structure natin:<br>✨ Good for 12 structured sessions over 4 weeks<br>✨ 3 times a week po ang pasok ni baby...</div>
+                </div>
+
+                <!-- English Row block -->
+                <div class="script-wrapper">
+                    <div class="script-meta">
+                        <span class="script-label">🌐 English</span>
+                        <button class="copy-btn" onclick="copyText('englishText1')">Copy</button>
+                    </div>
+                    <div class="script-box" id="englishText1">Hello po!<br><br>For our Atimonan Branch, our tuition is ₱3,500 all-inclusive po.<br><br>Here are the complete program details:<br>✨ Inclusive of 12 structured sessions over 4 weeks...</div>
+                </div>
             </div>
         </div>
 
-        <!-- Right Side Previews -->
-        <div class="output-panel">
-            
-            <!-- Admin Guidance Notes Box -->
-            <div class="notes-box">
-                <span>⚠️</span>
-                <div>
-                    <strong>Admin Note:</strong> Remind the admin to ask for the child's age at the end of the message to keep the qualification moving.
-                </div>
+        <!-- Accordion Item Card (Collapsed Example) -->
+        <div class="intent-item" onclick="toggleAccordion(this)">
+            <div class="intent-header">
+                <span>Where is your branch located / Landmarks?</span>
+                <span class="chevron">▶</span>
             </div>
-
-            <!-- Taglish Script Output Panel -->
-            <div class="script-box">
-                <div class="script-header">
-                    <span class="script-title">✨ Taglish Script</span>
-                    <button class="copy-btn" onclick="copyText('taglishText')">Copy Taglish</button>
-                </div>
-                <div class="script-content" id="taglishText">Hello po!<br><br>Para po sa ating Atimonan Branch, ang ating tuition ay ₱3,500 all-inclusive po.<br><br>Narito po ang buong detalye ng structure natin:<br>✨ Good for 12 structured sessions over 4 weeks<br>✨ 3 times a week po ang pasok ni baby...</div>
+            <div class="intent-body" onclick="event.stopPropagation();">
+                <!-- Expanded contents go here when clicked -->
             </div>
-
-            <!-- English Script Output Panel -->
-            <div class="script-box">
-                <div class="script-header">
-                    <span class="script-title">🌐 English Script</span>
-                    <button class="copy-btn" onclick="copyText('englishText')">Copy English</button>
-                </div>
-                <div class="script-content" id="englishText">Hello po!<br><br>For our Atimonan Branch, our tuition is ₱3,500 all-inclusive po.<br><br>Here are the complete program details:<br>✨ Inclusive of 12 structured sessions over 4 weeks...</div>
-            </div>
-
         </div>
+
     </div>
 
     <script>
-        // Simple client side copy function for immediate responsiveness
+        // Simple client side accordion panel switcher
+        function toggleAccordion(element) {
+            // Un-collapse all other elements to save immediate vertical space
+            const items = document.querySelectorAll('.intent-item');
+            items.forEach(item => {
+                if(item !== element) {
+                    item.classList.remove('active');
+                    const chevron = item.querySelector('.chevron');
+                    if(chevron) chevron.innerText = '▶';
+                }
+            });
+
+            // Toggle active selection state on targets
+            element.classList.toggle('active');
+            const chevron = element.querySelector('.chevron');
+            if (chevron) {
+                chevron.innerText = element.classList.contains('active') ? '▼' : '▶';
+            }
+        }
+
+        // Fast clean copy-to-clipboard filter function
         function copyText(elementId) {
             const text = document.getElementById(elementId).innerText;
             navigator.clipboard.writeText(text);
-            alert("Script copied to clipboard smoothly po!");
+            alert("Copied po!");
         }
     </script>
 </body>
