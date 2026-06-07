@@ -378,16 +378,23 @@
                 parsedText = parsedText.replace(/Para po sa ating premium educational space, ang ating %branch_name% ay matatagpuan sa\s*\**\**\.?\s*/gi, "Ang ating %branch_name% ay ");
                 parsedText = parsedText.replace(/matatagpuan sa\s*\**\**\.?\s*/gi, "");
             } else {
-                // If the address exists, ensure it cleanly breaks to the next line instead of clumping up
-                parsedText = parsedText.replace(new RegExp(`\\*\\*${rawAddress}\\*\\*\\.?\\s*`, 'gi'), `**${rawAddress}**.\n\n`);
+                // Address layout normalization logic: Finds the address parameter row and forces a neat clean line break (\n\n)
+                parsedText = parsedText.replace(new RegExp(`located at\\s*\\*\\*${rawAddress}\\*\\*\\.?`, 'gi'), `located at **${rawAddress}**.\n\n`);
+                parsedText = parsedText.replace(new RegExp(`matatagpuan sa\\s*\\*\\*${rawAddress}\\*\\*\\.?`, 'gi'), `matatagpuan sa **${rawAddress}**.\n\n`);
                 parsedText = parsedText.replace(/our location/gi, "");
             }
 
-            // Clean sweep to remove any empty bold residual configurations or stray trailing asterisks
-            parsedText = parsedText.replace(/\s*\*\*\s*\*\*\s*/g, "");
-            parsedText = parsedText.replace(/\s+\*\*(?=\s|\.|$)/g, "");
+            // GLOBAL SYNTAX CLEANING REBUILT: Broad clean sweep that eliminates any empty, dangling, or touching asterisks entirely
+            parsedText = parsedText.replace(/\s*\*\*\s*\*\*\s*/g, " ");
+            parsedText = parsedText.replace(/\b\s*\*\*\s*(?=\.)/g, "");
+            parsedText = parsedText.replace(/\b\s*\*\*\s*$/g, "");
+            parsedText = parsedText.replace(/\s*\*\*\s*(?=\n|$)/g, "");
+            parsedText = parsedText.replace(/\n\s*\*\*\s*\n/g, "\n\n");
+            
+            // Re-verify and squeeze out any triple/quadruple multi-asterisk collisions
+            parsedText = parsedText.replace(/\*{3,}/g, "");
 
-            return parsedText;
+            return parsedText.trim();
         }
 
         function filterAndRenderPlaybook(keywordQuery) {
