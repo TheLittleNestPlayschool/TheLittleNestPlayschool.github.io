@@ -230,10 +230,8 @@
         </div>
     </div>
 
-    <!-- Main Sidebar Vertical Stack Container -->
     <div class="playbook-container" id="playbookContainer">
         
-        <!-- Row 1 Mock Data -->
         <div class="intent-item active" onclick="toggleAccordion(this)">
             <div class="intent-header">
                 <span>What is the tuition fee and structure?</span>
@@ -262,7 +260,6 @@
             </div>
         </div>
 
-        <!-- Row 2 Mock Data -->
         <div class="intent-item" onclick="toggleAccordion(this)">
             <div class="intent-header">
                 <span>Where is your branch located / Landmarks?</span>
@@ -286,61 +283,45 @@
     </div>
 
     <script>
-        // API Configuration Target Route
         const FRANCHISE_API_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/meta_franchise_id';
         
-        // This variable holds the fetched data block in the frontend application memory
+        let allFranchisesMemory = [];
         let selectedBranchData = null;
 
         const branchSelect = document.getElementById('branchSelect');
 
-        // Step 1: Populate Dropdown with Active Branches on Startup
-        async function loadDropdownOptions() {
+        // Hits your endpoint on load, handles full query dynamically
+        async function loadFranchises() {
             try {
-                // Pointing to your general franchise lookup or a list endpoint
-                // Note: If you have a designated list endpoint like /api:franchise, swap this URL string.
-                // For now, we seed the core branch IDs so the layout updates immediately:
-                const branches = [
-                    { id: 1, name: "Atimonan" },
-                    { id: 2, name: "Sariaya" },
-                    { id: 3, name: "Calbayog" },
-                    { id: 4, name: "Mulanay" }
-                ];
-
-                branchSelect.innerHTML = ''; // Clear loading text
+                const response = await fetch(FRANCHISE_API_URL);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
-                branches.forEach(branch => {
+                const data = await response.json();
+                allFranchisesMemory = Array.isArray(data) ? data : [data];
+                
+                branchSelect.innerHTML = '';
+                
+                allFranchisesMemory.forEach(branch => {
                     const option = document.createElement('option');
                     option.value = branch.id;
                     option.text = branch.name;
                     branchSelect.appendChild(option);
                 });
 
-                // Auto-run the fetch for the first item right away
-                updateActiveBranch();
+                handleBranchSelection();
 
             } catch (error) {
-                console.error("Failed to construct franchise list options:", error);
+                console.error("Failed to load franchise list rows from Xano:", error);
                 branchSelect.innerHTML = '<option value="">Error loading branches po</option>';
             }
         }
 
-        // Step 2: Dynamic API Integration Task for specific branch details
-        async function updateActiveBranch() {
-            const franchiseId = branchSelect.value;
+        function handleBranchSelection() {
+            const franchiseId = parseInt(branchSelect.value);
             if (!franchiseId) return;
-            
-            try {
-                const response = await fetch(`${FRANCHISE_API_URL}?franchise_id=${franchiseId}`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-                // Store the returned franchise table properties object inside memory
-                selectedBranchData = await response.json();
-                console.log("Active Branch Memory Refreshed po:", selectedBranchData);
 
-            } catch (error) {
-                console.error("Failed to query branch data row from Xano backend:", error);
-            }
+            selectedBranchData = allFranchisesMemory.find(b => b.id === franchiseId);
+            console.log("Active Branch Selected and Held in Memory po:", selectedBranchData);
         }
 
         function toggleAccordion(element) {
@@ -374,11 +355,8 @@
             }, 1000);
         }
 
-        // Monitors dropdown selections to trigger the data storage update loop
-        branchSelect.addEventListener('change', updateActiveBranch);
-        
-        // Fire the initialization process immediately on DOM content layout load
-        window.addEventListener('DOMContentLoaded', loadDropdownOptions);
+        branchSelect.addEventListener('change', handleBranchSelection);
+        window.addEventListener('DOMContentLoaded', loadFranchises);
     </script>
 </body>
 </html>
