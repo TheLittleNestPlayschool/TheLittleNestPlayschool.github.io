@@ -281,6 +281,7 @@
         let masterPlaybookCache = [];
         let currentlySelectedBranch = null;
 
+        // Custom search exclusion stop words list
         const SEARCH_EXCLUSION_LIST = new Set([
             'of', 'if', 'the', 'and', 'is', 'in', 'to', 'sa', 'po', 'mam', 'sir', 'at'
         ]);
@@ -353,24 +354,24 @@
             const rawLandmarks = (branchData.landmarks || "").trim();
             const hasNoAddress = (rawAddress === "" || rawAddress.toLowerCase() === rawLandmarks.toLowerCase());
 
-            // 1. Strip raw markdown markers wrapped around our specific address variable block completely
+            // 1. Core structural cleanup rules if address matches landmarks or is entirely blank
             if (hasNoAddress) {
                 parsedText = parsedText.replace(/Our premium educational space is located at\s*\**%address%\**\.?\s*/gi, "");
                 parsedText = parsedText.replace(/Para po sa ating premium educational space, ang ating %branch_name% ay matatagpuan sa\s*\**%address%\**\.?\s*/gi, "Ang ating %branch_name% ay ");
                 parsedText = parsedText.replace(/matatagpuan sa\s*\**%address%\**\.?\s*/gi, "");
             } else {
-                // Strip structural asterisks around the placeholder to let the loop wrap them explicitly
+                // If it is a real address string, explicitly clear any static raw asterisks wrapping the target placeholder parameter row
                 parsedText = parsedText.replace(/\**%address%\**/g, "%address%");
             }
 
-            // Strip static asterisks around landmarks to control tag closure programmatically 
+            // Clean static syntax anchors wrapping around local landmarks variable
             parsedText = parsedText.replace(/\**%landmarks%\**/g, "%landmarks%");
 
-            // 2. Map pure, unformatted replacement data values natively
+            // 2. Map structural token swaps cleanly
             const textReplacements = {
                 '%branch_name%': branchData.name || 'Branch',
                 '%tuition_fee%': branchData.tuition_fee !== undefined ? branchData.tuition_fee : '0',
-                '%address%': rawAddress ? `**${rawAddress}**.\n\n` : '', // Explicitly wraps address and drops layout down a line
+                '%address%': rawAddress ? `**${rawAddress}**.\n\n` : '', // Locks in asterisks natively inside data mapping layer
                 '%landmarks%': rawLandmarks ? `**${rawLandmarks}**` : '',
                 '%google_maps_link%': branchData.google_maps_link || '',
                 '%schedule_details%': branchData.schedule_details || '',
@@ -384,7 +385,7 @@
                 parsedText = parsedText.replace(regex, value);
             }
 
-            // 3. Fallback clean up to eliminate accidental loose punctuation spacing anomalies
+            // 3. Force clean-up to prevent syntax anomalies
             parsedText = parsedText.replace(/\n{3,}/g, "\n\n");
             parsedText = parsedText.replace(/ \./g, ".");
             parsedText = parsedText.replace(/\s*\*\*\s*\*\*\s*/g, " ");
@@ -499,4 +500,15 @@
             setTimeout(() => {
                 btn.innerText = originalText;
                 btn.style.backgroundColor = "var(--teal-primary)";
-            }, 10
+            }, 1000);
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            filterAndRenderPlaybook(e.target.value);
+        });
+
+        branchSelect.addEventListener('change', handleBranchChange);
+        window.addEventListener('DOMContentLoaded', bootstrapWorkspace);
+    </script>
+</body>
+</html>
