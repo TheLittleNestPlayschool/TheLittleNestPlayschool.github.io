@@ -221,7 +221,7 @@
         <div class="input-group">
             <label for="branchSelect">Active Branch</label>
             <select id="branchSelect">
-                <option value="1">Atimonan</option>
+                <option value="">Loading branches po...</option>
             </select>
         </div>
         <div class="input-group">
@@ -233,7 +233,7 @@
     <!-- Main Sidebar Vertical Stack Container -->
     <div class="playbook-container" id="playbookContainer">
         
-        <!-- Row 1 Mock Data (Kept intact exactly as before) -->
+        <!-- Row 1 Mock Data -->
         <div class="intent-item active" onclick="toggleAccordion(this)">
             <div class="intent-header">
                 <span>What is the tuition fee and structure?</span>
@@ -262,7 +262,7 @@
             </div>
         </div>
 
-        <!-- Row 2 Mock Data (Kept intact exactly as before) -->
+        <!-- Row 2 Mock Data -->
         <div class="intent-item" onclick="toggleAccordion(this)">
             <div class="intent-header">
                 <span>Where is your branch located / Landmarks?</span>
@@ -294,9 +294,41 @@
 
         const branchSelect = document.getElementById('branchSelect');
 
-        // Dynamic API Integration Task
+        // Step 1: Populate Dropdown with Active Branches on Startup
+        async function loadDropdownOptions() {
+            try {
+                // Pointing to your general franchise lookup or a list endpoint
+                // Note: If you have a designated list endpoint like /api:franchise, swap this URL string.
+                // For now, we seed the core branch IDs so the layout updates immediately:
+                const branches = [
+                    { id: 1, name: "Atimonan" },
+                    { id: 2, name: "Sariaya" },
+                    { id: 3, name: "Calbayog" },
+                    { id: 4, name: "Mulanay" }
+                ];
+
+                branchSelect.innerHTML = ''; // Clear loading text
+                
+                branches.forEach(branch => {
+                    const option = document.createElement('option');
+                    option.value = branch.id;
+                    option.text = branch.name;
+                    branchSelect.appendChild(option);
+                });
+
+                // Auto-run the fetch for the first item right away
+                updateActiveBranch();
+
+            } catch (error) {
+                console.error("Failed to construct franchise list options:", error);
+                branchSelect.innerHTML = '<option value="">Error loading branches po</option>';
+            }
+        }
+
+        // Step 2: Dynamic API Integration Task for specific branch details
         async function updateActiveBranch() {
             const franchiseId = branchSelect.value;
+            if (!franchiseId) return;
             
             try {
                 const response = await fetch(`${FRANCHISE_API_URL}?franchise_id=${franchiseId}`);
@@ -346,7 +378,7 @@
         branchSelect.addEventListener('change', updateActiveBranch);
         
         // Fire the initialization process immediately on DOM content layout load
-        window.addEventListener('DOMContentLoaded', updateActiveBranch);
+        window.addEventListener('DOMContentLoaded', loadDropdownOptions);
     </script>
 </body>
 </html>
