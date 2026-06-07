@@ -256,10 +256,13 @@
         </div>
     </div>
 
+    <!-- Main Sidebar Vertical Stack Container -->
     <div class="playbook-container" id="playbookContainer">
         
+        <!-- Live filtered playbook templates render here -->
         <div id="dynamicIntentsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
 
+        <!-- Selected Franchise Database Field Info Display Tab -->
         <div class="intent-item" id="franchiseMetaPanel" onclick="toggleAccordion(this)">
             <div class="intent-header" style="color: var(--teal-primary);">
                 <span>ℹ️ Branch Reference Data</span>
@@ -353,7 +356,20 @@
             const rawAddress = (branchData.address || "").trim();
             const rawLandmarks = (branchData.landmarks || "").trim();
 
-            // Direct mapping of structural placeholder fields
+            // Clean down layout triggers if fields mirror each other or are empty
+            const hasNoRealAddress = (rawAddress === "" || rawAddress.toLowerCase() === rawLandmarks.toLowerCase());
+
+            // 1. Check template conditional fields BEFORE doing basic replacement swaps
+            if (hasNoRealAddress) {
+                parsedText = parsedText.replace(/Our premium educational space is located at\s*\**%address%\**\.?\s*/gi, "");
+                parsedText = parsedText.replace(/Para po sa ating premium educational space, ang ating %branch_name% ay matatagpuan sa\s*\**%address%\**\.?\s*/gi, "Ang ating %branch_name% ay ");
+                parsedText = parsedText.replace(/matatagpuan sa\s*\**%address%\**\.?\s*/gi, "");
+            } else {
+                // If it exists, inject a line drop right after the address placeholder block
+                parsedText = parsedText.replace(/%address%\s*\**\.?\s*/gi, `%address%.\n\n`);
+            }
+
+            // 2. Perform safe core parameter evaluations
             const textReplacements = {
                 '%branch_name%': branchData.name || 'Branch',
                 '%tuition_fee%': branchData.tuition_fee !== undefined ? branchData.tuition_fee : '0',
@@ -366,33 +382,21 @@
                 '%tuition_fee_special%': branchData.tuition_fee_special !== undefined ? branchData.tuition_fee_special : '0'
             };
 
-            // Execute regular data replacements
             for (const [placeholder, value] of Object.entries(textReplacements)) {
                 const regex = new RegExp(placeholder, 'g');
                 parsedText = parsedText.replace(regex, value);
             }
 
-            // Single-Line Targeted Cleaning with strict Markdown syntax scrubbers
-            if (rawAddress === "" || rawAddress.toLowerCase() === rawLandmarks.toLowerCase()) {
-                parsedText = parsedText.replace(/Our premium educational space is located at\s*\**\**\.?\s*/gi, "");
-                parsedText = parsedText.replace(/Para po sa ating premium educational space, ang ating %branch_name% ay matatagpuan sa\s*\**\**\.?\s*/gi, "Ang ating %branch_name% ay ");
-                parsedText = parsedText.replace(/matatagpuan sa\s*\**\**\.?\s*/gi, "");
-            } else {
-                // Address layout normalization logic: Finds the address parameter row and forces a neat clean line break (\n\n)
-                parsedText = parsedText.replace(new RegExp(`located at\\s*\\*\\*${rawAddress}\\*\\*\\.?`, 'gi'), `located at **${rawAddress}**.\n\n`);
-                parsedText = parsedText.replace(new RegExp(`matatagpuan sa\\s*\\*\\*${rawAddress}\\*\\*\\.?`, 'gi'), `matatagpuan sa **${rawAddress}**.\n\n`);
-                parsedText = parsedText.replace(/our location/gi, "");
+            // 3. FORCE BALANCE ENGINE: Safely verifies all raw asterisks on the page to prevent unclosed rendering tags
+            let totalAsterisks = (parsedText.match(/\*/g) || []).length;
+            if (totalAsterisks % 2 !== 0) {
+                // If odd, clear markdown tags to keep the output safe and flat
+                parsedText = parsedText.replace(/\*/g, "");
             }
 
-            // GLOBAL SYNTAX CLEANING REBUILT: Broad clean sweep that eliminates any empty, dangling, or touching asterisks entirely
+            // Clean up any double blank spaces or residual syntax collisions
             parsedText = parsedText.replace(/\s*\*\*\s*\*\*\s*/g, " ");
-            parsedText = parsedText.replace(/\b\s*\*\*\s*(?=\.)/g, "");
-            parsedText = parsedText.replace(/\b\s*\*\*\s*$/g, "");
-            parsedText = parsedText.replace(/\s*\*\*\s*(?=\n|$)/g, "");
-            parsedText = parsedText.replace(/\n\s*\*\*\s*\n/g, "\n\n");
-            
-            // Re-verify and squeeze out any triple/quadruple multi-asterisk collisions
-            parsedText = parsedText.replace(/\*{3,}/g, "");
+            parsedText = parsedText.replace(/ \./g, ".");
 
             return parsedText.trim();
         }
