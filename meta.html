@@ -213,6 +213,33 @@
         .script-box::-webkit-scrollbar-thumb:hover {
             background: var(--teal-primary);
         }
+
+        /* Specific styles for the metadata info box view */
+        .franchise-meta-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 4px;
+        }
+
+        .meta-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .meta-val {
+            color: #E2E8F0;
+            text-align: right;
+            max-width: 65%;
+            word-break: break-word;
+        }
     </style>
 </head>
 <body>
@@ -230,10 +257,8 @@
         </div>
     </div>
 
-    <!-- Main Sidebar Vertical Stack Container -->
     <div class="playbook-container" id="playbookContainer">
         
-        <!-- Row 1 Mock Data -->
         <div class="intent-item active" onclick="toggleAccordion(this)">
             <div class="intent-header">
                 <span>What is the tuition fee and structure?</span>
@@ -262,7 +287,6 @@
             </div>
         </div>
 
-        <!-- Row 2 Mock Data -->
         <div class="intent-item" onclick="toggleAccordion(this)">
             <div class="intent-header">
                 <span>Where is your branch located / Landmarks?</span>
@@ -283,6 +307,18 @@
             </div>
         </div>
 
+        <div class="intent-item" id="franchiseMetaPanel" onclick="toggleAccordion(this)">
+            <div class="intent-header" style="color: var(--teal-primary);">
+                <span>ℹ️ Branch Reference Data</span>
+                <span class="chevron">▶</span>
+            </div>
+            <div class="intent-body" onclick="event.stopPropagation();">
+                <div class="franchise-meta-grid" id="metaFieldsDisplay">
+                    <div style="color: var(--text-muted); font-style: italic;">Select a branch to pull details...</div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -292,17 +328,14 @@
         let selectedBranchData = null;
 
         const branchSelect = document.getElementById('branchSelect');
+        const metaFieldsDisplay = document.getElementById('metaFieldsDisplay');
 
-        // Hits your endpoint on load, handles full query dynamically
         async function loadFranchises() {
             try {
-                // Fixed: Append a fallback default query parameter string so it doesn't fail validation check inside Xano on startup
                 const response = await fetch(`${FRANCHISE_API_URL}?franchise_id=1`);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
                 const data = await response.json();
-                
-                // Map response safely into memory array layout
                 allFranchisesMemory = Array.isArray(data) ? data : [data];
                 
                 branchSelect.innerHTML = '';
@@ -314,7 +347,6 @@
                     branchSelect.appendChild(option);
                 });
 
-                // Set initial active branch mapping selection variables
                 handleBranchSelection();
 
             } catch (error) {
@@ -323,12 +355,33 @@
             }
         }
 
+        // Extracts matching properties and injects them clean into the display container rows
         function handleBranchSelection() {
             const franchiseId = parseInt(branchSelect.value);
             if (!franchiseId) return;
 
             selectedBranchData = allFranchisesMemory.find(b => b.id === franchiseId);
             console.log("Active Branch Selected and Held in Memory po:", selectedBranchData);
+
+            if (selectedBranchData) {
+                // Generate clean HTML labels automatically for every database field returned
+                let htmlContent = '';
+                for (const [key, value] of Object.entries(selectedBranchData)) {
+                    // Skip internal fields that admins don't need to read directly
+                    if (key === 'id' || key === 'created_at') continue;
+                    
+                    const cleanLabel = key.replace(/_/g, ' ').toUpperCase();
+                    const cleanValue = value !== null && value !== '' ? value : 'Not set';
+
+                    htmlContent += `
+                        <div class="meta-row">
+                            <span class="meta-label">${cleanLabel}</span>
+                            <span class="meta-val">${cleanValue}</span>
+                        </div>
+                    `;
+                }
+                metaFieldsDisplay.innerHTML = htmlContent;
+            }
         }
 
         function toggleAccordion(element) {
