@@ -6,7 +6,7 @@
     <title>The Little Nest - Sales Sidebar</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -256,10 +256,13 @@
         </div>
     </div>
 
+    <!-- Main Sidebar Vertical Stack Container -->
     <div class="playbook-container" id="playbookContainer">
         
+        <!-- Live filtered playbook templates render here -->
         <div id="dynamicIntentsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
 
+        <!-- Selected Franchise Database Field Info Display Tab -->
         <div class="intent-item" id="franchiseMetaPanel" onclick="toggleAccordion(this)">
             <div class="intent-header" style="color: var(--teal-primary);">
                 <span>ℹ️ Branch Reference Data</span>
@@ -280,6 +283,15 @@
         let masterFranchiseCache = [];
         let masterPlaybookCache = [];
         let currentlySelectedBranch = null;
+
+        // =========================================================================
+        // CUSTOM SEARCH EXCLUSION LIST (STOP WORDS)
+        // Add any words here that you want the search engine to completely ignore.
+        // Keep them lower-case and separated by commas.
+        // =========================================================================
+        const SEARCH_EXCLUSION_LIST = new Set([
+            'of', 'if', 'the', 'and', 'is', 'in', 'to', 'sa', 'po', 'mam', 'sir', 'at'
+        ]);
 
         const branchSelect = document.getElementById('branchSelect');
         const searchInput = document.getElementById('searchInput');
@@ -374,21 +386,20 @@
                 return;
             }
 
-            // Word Splitting Tokenization Engine - Enforces minimum 3-character threshold
-            const searchWordsArr = cleanQuery.split(/\s+/).filter(w => w.length >= 3);
+            // Explode input into raw words, then strip out anything matching your Exclusion List
+            const searchWordsArr = cleanQuery.split(/\s+/)
+                .filter(word => word.length > 0 && !SEARCH_EXCLUSION_LIST.has(word));
 
+            // If the admin has only typed exclusion words so far, halt execution to prevent accidental matches
             if (searchWordsArr.length === 0) {
                 return;
             }
 
             const matchedIntents = masterPlaybookCache.filter(intent => {
-                const labelStack = (intent.question_label || '').toLowerCase();
-                const keywordStack = (intent.search_keywords || '').toLowerCase();
+                const searchHaystack = `${intent.question_label || ''} ${intent.search_keywords || ''}`.toLowerCase();
                 
-                return searchWordsArr.some(word => {
-                    const wordRegex = new RegExp('\\b' + word + '\\b', 'i');
-                    return wordRegex.test(labelStack) || wordRegex.test(keywordStack);
-                });
+                // Flexible Character Matching: Allows mid-word partial strings (like "locatio" matching "location")
+                return searchWordsArr.every(word => searchHaystack.includes(word));
             });
 
             if (matchedIntents.length === 0) {
