@@ -18,9 +18,14 @@
             --text-main: #F8FAFC;
             --text-muted: #94A3B8;
             --border-color: #334155;
-            --notes-bg: rgba(234, 179, 8, 0.1);
-            --notes-border: rgba(234, 179, 8, 0.3);
-            --notes-text: #FDE047;
+        }
+
+        body.light-mode {
+            --bg-dark: #F1F5F9;
+            --panel-dark: #FFFFFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border-color: #CBD5E1;
         }
 
         * {
@@ -39,6 +44,7 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            transition: background 0.3s;
         }
 
         .controls-container {
@@ -245,8 +251,11 @@
 <body>
 
     <div class="controls-container">
-        <div class="input-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
             <label for="branchSelect">Active Branch</label>
+            <button onclick="toggleTheme()" style="background:none; border:none; cursor:pointer; font-size:16px;">🌙</button>
+        </div>
+        <div class="input-group">
             <select id="branchSelect">
                 <option value="">Loading workspace po...</option>
             </select>
@@ -290,6 +299,12 @@
         const searchInput = document.getElementById('searchInput');
         const dynamicIntentsContainer = document.getElementById('dynamicIntentsContainer');
         const metaFieldsDisplay = document.getElementById('metaFieldsDisplay');
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const btn = document.querySelector('[onclick="toggleTheme()"]');
+            btn.innerText = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
+        }
 
         async function bootstrapWorkspace() {
             try {
