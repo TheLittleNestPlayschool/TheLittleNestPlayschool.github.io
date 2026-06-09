@@ -259,7 +259,7 @@
 
         /* SCROLLABLE INDEX CONFIGURATION */
         .master-scroll-container {
-            max-height: 520px;        /* Increased window length here */
+            max-height: 520px;
             overflow-y: auto;
             padding-right: 4px;
             display: flex;
@@ -371,6 +371,7 @@
 
     <script>
         const API_ENDPOINT_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/meta_franchise_id';
+        const TRACK_COPY_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/track_copy';
         
         let masterFranchiseCache = [];
         let masterPlaybookCache = [];
@@ -457,7 +458,6 @@
                 const keywords = intent.search_keywords || 'None mapped';
                 const adminNotes = intent.admin_action_notes || 'Follow standard presentation rules.';
                 
-                // Parse strings dynamically based on selected workspace branch parameters
                 const taglishParsed = parseScriptPlaceholders(intent.taglish_format, currentlySelectedBranch);
                 const englishParsed = intent.english_format ? parseScriptPlaceholders(intent.english_format, currentlySelectedBranch) : 'Not available';
 
@@ -482,7 +482,7 @@
                         <div>
                             <div class="master-index-section-header">
                                 <span class="master-index-section-label">✨ Taglish Template</span>
-                                <button class="copy-btn" onclick="copyMasterListText('master-taglish-${intent.id}', this)">Copy</button>
+                                <button class="copy-btn" onclick="copyMasterListText('master-taglish-${intent.id}', this, ${intent.id}, 'taglish')">Copy</button>
                             </div>
                             <div class="master-index-text-block" id="master-taglish-${intent.id}">${taglishParsed}</div>
                         </div>
@@ -490,7 +490,7 @@
                         <div>
                             <div class="master-index-section-header">
                                 <span class="master-index-section-label">🌐 English Template</span>
-                                ${intent.english_format ? `<button class="copy-btn" onclick="copyMasterListText('master-english-${intent.id}', this)">Copy</button>` : ''}
+                                ${intent.english_format ? `<button class="copy-btn" onclick="copyMasterListText('master-english-${intent.id}', this, ${intent.id}, 'english')">Copy</button>` : ''}
                             </div>
                             <div class="master-index-text-block" id="master-english-${intent.id}">${englishParsed}</div>
                         </div>
@@ -586,7 +586,7 @@
                             <div class="script-wrapper">
                                 <div class="script-meta">
                                     <span class="script-label">✨ Taglish</span>
-                                    <button class="copy-btn" onclick="copyText('taglish-${intent.id}')">Copy</button>
+                                    <button class="copy-btn" onclick="copyText('taglish-${intent.id}', ${intent.id}, 'taglish')">Copy</button>
                                 </div>
                                 <div class="script-box" id="taglish-${intent.id}">${formattedTaglish}</div>
                             </div>
@@ -595,7 +595,7 @@
                             <div class="script-wrapper">
                                 <div class="script-meta">
                                     <span class="script-label">🌐 English</span>
-                                    <button class="copy-btn" onclick="copyText('english-${intent.id}')">Copy</button>
+                                    <button class="copy-btn" onclick="copyText('english-${intent.id}', ${intent.id}, 'english')">Copy</button>
                                 </div>
                                 <div class="script-box" id="english-${intent.id}">${formattedEnglish}</div>
                             </div>
@@ -624,11 +624,28 @@
             }
         }
 
-        function copyText(elementId) {
+        async function sendAnalyticsTracking(intentId, languageType) {
+            try {
+                fetch(TRACK_COPY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        intent_type: intentId,
+                        language_type: languageType
+                    })
+                });
+            } catch (err) {
+                console.error("Analytics tracking failed:", err);
+            }
+        }
+
+        function copyText(elementId, intentId, languageType) {
             const text = document.getElementById(elementId).innerText;
             navigator.clipboard.writeText(text);
             
-            const btn = document.querySelector(`[onclick="copyText('${elementId}')"]`);
+            sendAnalyticsTracking(intentId, languageType);
+            
+            const btn = document.querySelector(`[onclick="copyText('${elementId}', ${intentId}, '${languageType}')"]`);
             const originalText = btn.innerText;
             btn.innerText = "Copied!";
             btn.style.backgroundColor = "#1E4263";
@@ -638,9 +655,11 @@
             }, 1000);
         }
 
-        function copyMasterListText(elementId, btnElement) {
+        function copyMasterListText(elementId, btnElement, intentId, languageType) {
             const text = document.getElementById(elementId).innerText;
             navigator.clipboard.writeText(text);
+            
+            sendAnalyticsTracking(intentId, languageType);
             
             const originalText = btnElement.innerText;
             btnElement.innerText = "Copied!";
