@@ -259,7 +259,7 @@
 
         /* SCROLLABLE INDEX CONFIGURATION */
         .master-scroll-container {
-            max-height: 380px;
+            max-height: 520px;        /* Increased window length here */
             overflow-y: auto;
             padding-right: 4px;
             display: flex;
@@ -289,13 +289,18 @@
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 4px;
         }
+        .master-index-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2px;
+        }
         .master-index-section-label {
             font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.03em;
             color: var(--accent-primary);
-            margin-top: 2px;
         }
         .master-index-text-block {
             font-size: 12px;
@@ -306,11 +311,13 @@
             padding: 6px 8px;
             border-radius: 4px;
             border: 1px solid rgba(255,255,255,0.03);
+            margin-top: 4px;
         }
         .master-index-keywords-text {
             font-size: 11px;
             color: var(--text-muted);
             font-style: italic;
+            margin-top: 4px;
         }
     </style>
 </head>
@@ -459,23 +466,33 @@
                         <div class="master-index-title">🔹 ${intent.question_label}</div>
                         
                         <div>
-                            <div class="master-index-section-label">Keywords</div>
+                            <div class="master-index-section-header">
+                                <span class="master-index-section-label">Keywords</span>
+                            </div>
                             <div class="master-index-keywords-text">${keywords}</div>
                         </div>
 
                         <div>
-                            <div class="master-index-section-label">Admin Action Strategy</div>
+                            <div class="master-index-section-header">
+                                <span class="master-index-section-label">Admin Action Strategy</span>
+                            </div>
                             <div class="master-index-text-block" style="font-style: italic; color: var(--text-muted); font-size:11px;">${adminNotes}</div>
                         </div>
 
                         <div>
-                            <div class="master-index-section-label">✨ Taglish Template</div>
-                            <div class="master-index-text-block">${taglishParsed}</div>
+                            <div class="master-index-section-header">
+                                <span class="master-index-section-label">✨ Taglish Template</span>
+                                <button class="copy-btn" onclick="copyMasterListText('master-taglish-${intent.id}', this)">Copy</button>
+                            </div>
+                            <div class="master-index-text-block" id="master-taglish-${intent.id}">${taglishParsed}</div>
                         </div>
 
                         <div>
-                            <div class="master-index-section-label">🌐 English Template</div>
-                            <div class="master-index-text-block">${englishParsed}</div>
+                            <div class="master-index-section-header">
+                                <span class="master-index-section-label">🌐 English Template</span>
+                                ${intent.english_format ? `<button class="copy-btn" onclick="copyMasterListText('master-english-${intent.id}', this)">Copy</button>` : ''}
+                            </div>
+                            <div class="master-index-text-block" id="master-english-${intent.id}">${englishParsed}</div>
                         </div>
                     </div>
                 `;
@@ -618,6 +635,19 @@
             setTimeout(() => {
                 btn.innerText = originalText;
                 btn.style.backgroundColor = "var(--accent-primary)";
+            }, 1000);
+        }
+
+        function copyMasterListText(elementId, btnElement) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text);
+            
+            const originalText = btnElement.innerText;
+            btnElement.innerText = "Copied!";
+            btnElement.style.backgroundColor = "#1E4263";
+            setTimeout(() => {
+                btnElement.innerText = originalText;
+                btnElement.style.backgroundColor = "var(--accent-primary)";
             }, 1000);
         }
 
