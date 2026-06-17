@@ -406,7 +406,7 @@
     </div>
 
     <script>
-        // CORE INTEGRATED PRODUCTION ENDPOINTS
+        // FIXED PRODUCTION CONFIGURATION ENDPOINTS
         const XANO_OPERATORS_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:YLM1xvBg/get_admin_names'; 
         const XANO_SHIFTS_LOAD_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:YLM1xvBg/get_admin_active_shifts';
         const XANO_FRANCHISES_LOAD_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:YLM1xvBg/get_active_franchises';
@@ -446,7 +446,7 @@
                 await refreshOperatorShiftState(selectedAdminId);
                 
                 noticeStream.classList.remove('hidden');
-                bottomConsole.remove('hidden'); 
+                bottomConsole.classList.remove('hidden'); 
             } else {
                 noticeStream.classList.add('hidden');
                 bottomConsole.classList.add('hidden'); 
@@ -475,8 +475,11 @@
                 // Map out active franchise connections instantly to set structure keys
                 operatorActiveShiftIds = new Set(activeShiftsArray.map(item => Number(item.franchise)));
                 
-                // Map out system wide unattended franchise IDs from specialized Option 1 endpoint
-                globalUnattendedIds = new Set(unattendedRawData.map(item => Number(item.id)));
+                // SAFE PARSING FIX: Dynamically handles the array whether Xano drops raw numbers or objects
+                globalUnattendedIds = new Set(unattendedRawData.map(item => {
+                    if (item === null || item === undefined) return null;
+                    return typeof item === 'object' ? Number(item.id) : Number(item);
+                }).filter(val => val !== null));
                 
                 // Synchronize rendering outputs cleanly across display panels
                 renderAllBranchPanels(adminId);
@@ -531,12 +534,10 @@
             if (wasActive) {
                 chipElement.classList.remove('active');
                 operatorActiveShiftIds.delete(franchiseIdNum);
-                // If turning off, treat it locally as unattended until server confirms true state
                 globalUnattendedIds.add(franchiseIdNum);
             } else {
                 chipElement.classList.add('active');
                 operatorActiveShiftIds.add(franchiseIdNum);
-                // If turning on, it is no longer unattended anywhere
                 globalUnattendedIds.delete(franchiseIdNum);
             }
             
@@ -559,7 +560,10 @@
                 const freshUnattendedRes = await fetch(XANO_UNATTENDED_LOAD_URL);
                 if (freshUnattendedRes.ok) {
                     const freshUnattendedData = await freshUnattendedRes.json();
-                    globalUnattendedIds = new Set(freshUnattendedData.map(item => Number(item.id)));
+                    globalUnattendedIds = new Set(freshUnattendedData.map(item => {
+                        if (item === null || item === undefined) return null;
+                        return typeof item === 'object' ? Number(item.id) : Number(item);
+                    }).filter(val => val !== null));
                     renderAllBranchPanels(adminId);
                 }
 
@@ -610,7 +614,6 @@
                 } else {
                     admins.forEach(admin => {
                         const option = document.createElement('option');
-                        // Pull database unique parameters using fallback matching flags
                         option.value = admin.id || admin.admin_id;   
                         option.text = admin.name || admin.admin_name || admin.field_value;   
                         operatorSelect.appendChild(option);
