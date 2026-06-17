@@ -40,6 +40,7 @@
         body.light-mode .branch-chip { background-color: #E2E8F0; }
         body.light-mode .branch-chip.active { background-color: rgba(44, 94, 138, 0.15); }
         body.light-mode .branch-chip.unattended-chip { background-color: rgba(239, 68, 68, 0.1); color: #B91C1C; }
+        body.light-mode .accordion-header { background-color: rgba(44, 94, 138, 0.04); }
 
         * {
             box-sizing: border-box;
@@ -51,7 +52,7 @@
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
-            padding: 4px;              /* Maximizes horizontal real estate on narrow screens */
+            padding: 4px;              
             display: flex;
             flex-direction: column;
             
@@ -140,14 +141,15 @@
             padding: 6px 8px;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start; /* Aligns to top so multi-line text wraps nicely */
+            align-items: center; 
             gap: 8px;
+            min-height: 48px;
         }
 
         .notice-content {
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 1px;
             overflow: hidden;
             flex: 1;
         }
@@ -178,13 +180,13 @@
             background-color: rgba(239, 68, 68, 0.1);
         }
 
-        /* SHOWS AS MUCH FULL TEXT AS POSSIBLE BY WRAPPING LINES */
+        /* STRICT SINGLE LINE WITH ELLIPSIS OVERFLOW */
         .notice-line2 {
             font-size: 11px;
             color: var(--text-muted);
-            white-space: normal;        /* Allows wrapping to show full context */
-            line-height: 1.35;
-            word-break: break-word;
+            white-space: nowrap;        
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* COMPACTED ACTION BUTTON PANEL */
@@ -192,14 +194,13 @@
             display: flex;
             gap: 3px;
             flex-shrink: 0;
-            margin-top: 1px;           /* Minor alignment balance with title block */
         }
 
         .btn-action {
             background-color: var(--accent-primary);
             color: white;
             border: none;
-            padding: 3px 6px;          /* Tighter horizontal size for shortened names */
+            padding: 3px 6px;          
             border-radius: 4px;
             font-size: 10px;
             font-weight: 600;
@@ -223,6 +224,48 @@
             flex-shrink: 0;             
         }
 
+        /* INTERACTIVE CHIPS COLLAPSIBLE CONTAINER */
+        .collapsible-chips-panel {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .accordion-header {
+            padding: 6px 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            background-color: rgba(255, 255, 255, 0.01);
+        }
+
+        .accordion-header:hover {
+            background-color: rgba(70, 130, 180, 0.04);
+        }
+
+        .chevron {
+            font-size: 8px;
+            color: var(--accent-primary);
+            transition: transform 0.2s ease;
+        }
+
+        .collapsible-chips-panel.active .chevron {
+            transform: rotate(90deg); 
+        }
+
+        .accordion-body {
+            display: none; 
+            padding: 6px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .collapsible-chips-panel.active .accordion-body {
+            display: block; 
+        }
+
         /* GRID-CONTAINER SHARED CLASS RULES */
         .chips-container {
             max-height: 75px;         
@@ -241,14 +284,14 @@
             border: 1px solid var(--border-color);
             color: var(--text-muted);
             padding: 2px 6px;
-            border-radius: 4px;        /* Swapped to matching layout rounded grid lines */
+            border-radius: 4px;        
             font-size: 10px;
             font-weight: 500;
             user-select: none;
             white-space: nowrap;
         }
 
-        /* MY TRACKED SELECTION STATES */
+        /* TRACKED SELECTION STATES */
         .tracked-chip {
             cursor: pointer;
             transition: all 0.2s;
@@ -264,7 +307,7 @@
             font-weight: 600;
         }
 
-        /* UNATTENDED GRID CHIP RULES (MATCHES LOOK WITH SYSTEM COLOR ALERT VARIATION) */
+        /* UNATTENDED GRID CHIPS */
         .unattended-chip {
             background-color: rgba(239, 68, 68, 0.04);
             border-color: rgba(239, 68, 68, 0.2);
@@ -341,19 +384,26 @@
             </div>
         </div>
 
-        <label class="operator-label">My Tracked Feeds</label>
-        <div class="chips-container">
-            <div class="chips-wrap" id="branchChipsDisplay">
-                <div class="branch-chip tracked-chip active">Atimonan</div>
-                <div class="branch-chip tracked-chip active">Sariaya</div>
-                <div class="branch-chip tracked-chip active">Calbayog</div>
-                <div class="branch-chip tracked-chip">Mulanay</div>
-                <div class="branch-chip tracked-chip">Candelaria</div>
-                <div class="branch-chip tracked-chip">Lucena</div>
-                <div class="branch-chip tracked-chip">Tayabas</div>
-                <div class="branch-chip tracked-chip">Pagbilao</div>
-                <div class="branch-chip tracked-chip">Gumaca</div>
-                <div class="branch-chip tracked-chip">Lopez</div>
+        <div class="collapsible-chips-panel" id="chipsAccordion">
+            <div class="accordion-header" onclick="toggleChipsAccordion()">
+                <span class="operator-label" style="margin-bottom:0; cursor:pointer;">My Tracked Feeds</span>
+                <span class="chevron">▶</span>
+            </div>
+            <div class="accordion-body">
+                <div class="chips-container">
+                    <div class="chips-wrap" id="branchChipsDisplay">
+                        <div class="branch-chip tracked-chip active">Atimonan</div>
+                        <div class="branch-chip tracked-chip active">Sariaya</div>
+                        <div class="branch-chip tracked-chip active">Calbayog</div>
+                        <div class="branch-chip tracked-chip">Mulanay</div>
+                        <div class="branch-chip tracked-chip">Candelaria</div>
+                        <div class="branch-chip tracked-chip">Lucena</div>
+                        <div class="branch-chip tracked-chip">Tayabas</div>
+                        <div class="branch-chip tracked-chip">Pagbilao</div>
+                        <div class="branch-chip tracked-chip">Gumaca</div>
+                        <div class="branch-chip tracked-chip">Lopez</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -363,11 +413,16 @@
         const XANO_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:yfZ0RK8Z/get_admin_names'; 
 
         const operatorSelect = document.getElementById('operatorSelect');
+        const chipsAccordion = document.getElementById('chipsAccordion');
 
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
             const btn = document.querySelector('.theme-toggle-btn');
             btn.innerText = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
+        }
+
+        function toggleChipsAccordion() {
+            chipsAccordion.classList.toggle('active');
         }
 
         async function loadOperatorDropdown() {
