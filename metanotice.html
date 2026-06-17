@@ -431,39 +431,4 @@
             btn.innerText = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
         }
 
-        function toggleChipsAccordion() {
-            chipsAccordion.classList.toggle('active');
-        }
-
-        // EVENT LISTENER TO HANDLE SECURE DISPLAY REVEAL
-        operatorSelect.addEventListener('change', (e) => {
-            const selectedValue = e.target.value;
-            
-            if (selectedValue && selectedValue !== "") {
-                // An active operator was chosen -> reveal workspace elements instantly
-                noticeStream.classList.remove('hidden');
-                bottomConsole.remove('hidden'); // Fixed target variable
-            } else {
-                // Selection reset back to blank -> hide console parameters
-                noticeStream.classList.add('hidden');
-                bottomConsole.add('hidden'); // Fixed target variable
-            }
-        });
-
-        async function loadOperatorDropdown() {
-            try {
-                const response = await fetch(XANO_ENDPOINT);
-                if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
-                
-                const rawData = await response.json();
-                const admins = Array.isArray(rawData) ? rawData : (rawData.admin_name || []);
-                
-                operatorSelect.innerHTML = '<option value="">Select your name po...</option>';
-                
-                if (admins.length === 0) {
-                    operatorSelect.innerHTML = '<option value="">No admins found in DB</option>';
-                    return;
-                }
-                
-                admins.forEach(admin => {
-                    const option = document.
+        function
