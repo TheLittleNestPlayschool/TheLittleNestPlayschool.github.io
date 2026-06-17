@@ -367,7 +367,7 @@
         const XANO_TOGGLE_SHIFT_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:YLM1xvBg/toggle_admin_shift';
         const XANO_UNATTENDED_LOAD_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:YLM1xvBg/get_unattended_franchises';
         
-        // YOUR INBOUND ALERTS GET QUEUE
+        // RECEPTION DATABASE QUEUE STREAM PATHWAY
         const XANO_MESSAGES_STREAM_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:iB-rBShc/message_raw';
 
         const operatorSelect = document.getElementById('operatorSelect');
@@ -384,7 +384,7 @@
         let operatorActiveShiftIds = new Set();
         let globalUnattendedIds = new Set();
         
-        // Array Data-Driven Engines
+        // Array Core Notification Engine State Mappings
         let liveNotifications = [];
         let dataPollerTimer = null;
         let uiClockTimer = null;
@@ -405,7 +405,7 @@
         async function handleOperatorSelectionChange() {
             const selectedAdminId = operatorSelect.value;
             
-            // Clean shutdown of old polling handles on context swap
+            // Clean shutdown of old polling timer loops
             if (dataPollerTimer) clearInterval(dataPollerTimer);
             if (uiClockTimer) clearInterval(uiClockTimer);
             dataPollerTimer = null;
@@ -419,11 +419,11 @@
                 noticeStream.classList.remove('hidden');
                 bottomConsole.classList.remove('hidden'); 
                 
-                // Fetch immediately, then update local data arrays every 5 seconds
+                // Fetch layout array data immediately, then poll row changes every 5 seconds
                 await syncNotificationsArray();
                 dataPollerTimer = setInterval(syncNotificationsArray, 5000);
                 
-                // Keep minute/second text ticking smoothly without redundant database hits
+                // Keep front clock strings ticking every second without running API queries
                 uiClockTimer = setInterval(renderNotificationCards, 1000);
             } else {
                 noticeStream.classList.add('hidden');
@@ -448,11 +448,14 @@
                 const activeShiftsArray = await shiftsResponse.json();
                 const unattendedRawData = await unattendedResponse.json();
                 
-                operatorActiveShiftIds = new Set(activeShiftsArray.map(item => Number(item.franchise)));
+                // Save raw text branch name values (e.g. "Sariaya") straight into selection checker structures
+                operatorActiveShiftIds = new Set(activeShiftsArray.map(item => {
+                    return item.franchise ? String(item.franchise) : String(item.franchise_id || item);
+                }));
                 
                 globalUnattendedIds = new Set(unattendedRawData.map(item => {
                     if (item === null || item === undefined) return null;
-                    return typeof item === 'object' ? Number(item.id) : Number(item);
+                    return typeof item === 'object' ? String(item.name || item.id) : String(item);
                 }).filter(val => val !== null));
                 
                 renderAllBranchPanels(adminId);
@@ -462,7 +465,7 @@
         }
 
         /**
-         * ARRAY SYNC: Pulls raw Xano table data, targets your checked filters, and merges into the array
+         * ARRAY SYNC: Pulls raw Xano table rows and updates local notification arrays
          */
         async function syncNotificationsArray() {
             if (!operatorSelect.value) return;
@@ -472,10 +475,10 @@
                 
                 const dbRecords = await response.json();
                 
-                // Match the inbound facebook_page_id directly to the admin shifts
+                // Track matching branches using the exact franchise string name mapping
                 liveNotifications = dbRecords.filter(msg => {
                     const branchMatch = masterFranchiseList.find(f => String(f.facebook_page_id) === String(msg.facebook_page_id));
-                    return branchMatch && operatorActiveShiftIds.has(Number(branchMatch.id));
+                    return branchMatch && operatorActiveShiftIds.has(String(branchMatch.name));
                 });
                 
                 renderNotificationCards();
@@ -485,7 +488,7 @@
         }
 
         /**
-         * UI RENDER LOOP: Re-builds notification lists and dynamic counters straight out of the data array
+         * UI RENDER LOOP: Loops through arrays, handles time equations, and prints out card items
          */
         function renderNotificationCards() {
             noticeStream.innerHTML = '';
@@ -493,13 +496,13 @@
             const totalAlerts = liveNotifications.length;
             const now = Date.now();
             
-            // Calculate how many items inside the array are past your 10-minute threshold
+            // Track how many items currently inside our array contain elapsed wait metrics over 10 minutes
             const staleCount = liveNotifications.filter(msg => {
                 const elapsedMs = now - Number(msg.received_at || msg.created_at);
                 return elapsedMs >= 600000;
             }).length;
 
-            // Handle Console Head Labels dynamically
+            // Update panel header string states dynamically
             trackedHeaderLabel.textContent = `My Tracked Feeds (${totalAlerts})`;
             unattendedHeaderLabel.textContent = `⚠️ Unattended Branches [Stale Feeds: ${staleCount}]`;
 
@@ -511,19 +514,19 @@
                 return;
             }
 
-            // Draw cards directly from your tracked data indices
+            // Map grid boxes directly from array state indices
             liveNotifications.forEach((msg, index) => {
                 const branchMatch = masterFranchiseList.find(f => String(f.facebook_page_id) === String(msg.facebook_page_id));
                 const branchName = branchMatch ? branchMatch.name : 'Unknown Location';
                 const contentBody = msg.payload?.body || msg.payload || 'Empty message content...';
                 
-                // Live ticking time equations
+                // Calculate incremental ticking seconds 
                 const elapsedMs = now - Number(msg.received_at || msg.created_at);
                 const totalSeconds = Math.floor(elapsedMs / 1000);
                 const displayMins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
                 const displaySecs = String(totalSeconds % 60).padStart(2, '0');
                 
-                const isStale = totalSeconds >= 600; // 10 minutes
+                const isStale = totalSeconds >= 600; // 10 minute escalation border
 
                 const card = document.createElement('div');
                 card.className = 'notice-card';
@@ -545,19 +548,19 @@
         }
 
         /**
-         * BUTTON HANDLER: Splices items from your local array for instant visual clear, then patches the DB
+         * BUTTON HANDLER: Splices items from your array instantly, then sends back a quiet background database call
          */
         async function dispatchCardAction(arrayIndex, databaseId, actionType, conversationId = '') {
-            // OPTIMISTIC FRONTEND ACTION: Drop from array and redraw immediately with 0 visual delay
+            // OPTIMISTIC LAYOUT UPDATE: Splicing drops card immediately with zero interface latency masking
             liveNotifications.splice(arrayIndex, 1);
             renderNotificationCards();
 
             if (actionType === 'goto') {
                 console.log(`Navigating view focus straight onto target thread: ${conversationId}`);
-                // Link your proprietary dashboard window iframe layout routing context right here
+                // Link your internal conversation views or window router handles right here po
             }
 
-            // Quietly hit Xano in the background background thread to mark as processed
+            // Run table line processing update quietly on background threads
             try {
                 await fetch(`${XANO_MESSAGES_STREAM_URL}/${databaseId}`, {
                     method: 'PATCH',
@@ -582,8 +585,8 @@
             }
 
             masterFranchiseList.forEach(branch => {
-                const isTrackedByMe = operatorActiveShiftIds.has(Number(branch.id));
-                const isGloballyUnattended = globalUnattendedIds.has(Number(branch.id));
+                const isTrackedByMe = operatorActiveShiftIds.has(String(branch.name));
+                const isGloballyUnattended = globalUnattendedIds.has(String(branch.name)) || globalUnattendedIds.has(String(branch.id));
 
                 // 1. Build Interactive Chip under "My Tracked Feeds"
                 const trackedChip = document.createElement('div');
@@ -609,20 +612,23 @@
         async function handleShiftToggleOperation(adminId, franchiseId, chipElement) {
             const wasActive = chipElement.classList.contains('active');
             const franchiseIdNum = Number(franchiseId);
+            
+            const branchMatch = masterFranchiseList.find(f => Number(f.id) === franchiseIdNum);
+            const branchNameStr = branchMatch ? String(branchMatch.name) : String(franchiseId);
 
             if (wasActive) {
                 chipElement.classList.remove('active');
-                operatorActiveShiftIds.delete(franchiseIdNum);
-                globalUnattendedIds.add(franchiseIdNum);
+                operatorActiveShiftIds.delete(branchNameStr);
+                globalUnattendedIds.add(branchNameStr);
             } else {
                 chipElement.classList.add('active');
-                operatorActiveShiftIds.add(franchiseIdNum);
-                globalUnattendedIds.delete(franchiseIdNum);
+                operatorActiveShiftIds.add(branchNameStr);
+                globalUnattendedIds.delete(branchNameStr);
             }
             
             renderAllBranchPanels(adminId);
             
-            // Hot reload notification metrics instantly whenever feeds are toggled on/off
+            // Hot reload notification filters immediately upon shift checking changes
             syncNotificationsArray();
 
             try {
@@ -642,7 +648,7 @@
                     const freshUnattendedData = await freshUnattendedRes.json();
                     globalUnattendedIds = new Set(freshUnattendedData.map(item => {
                         if (item === null || item === undefined) return null;
-                        return typeof item === 'object' ? Number(item.id) : Number(item);
+                        return typeof item === 'object' ? String(item.name || item.id) : String(item);
                     }).filter(val => val !== null));
                     renderAllBranchPanels(adminId);
                 }
@@ -650,11 +656,11 @@
             } catch (err) {
                 console.error("Database connection synchronization failure, running hard data reversion loop:", err);
                 if (wasActive) {
-                    operatorActiveShiftIds.add(franchiseIdNum);
-                    globalUnattendedIds.delete(franchiseIdNum);
+                    operatorActiveShiftIds.add(branchNameStr);
+                    globalUnattendedIds.delete(branchNameStr);
                 } else {
-                    operatorActiveShiftIds.delete(franchiseIdNum);
-                    globalUnattendedIds.add(franchiseIdNum);
+                    operatorActiveShiftIds.delete(branchNameStr);
+                    globalUnattendedIds.add(branchNameStr);
                 }
                 renderAllBranchPanels(adminId);
                 syncNotificationsArray();
