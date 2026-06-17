@@ -405,7 +405,7 @@
     </div>
 
     <script>
-        // FIXED PRODUCTION CONFIGURATION ENDPOINTS
+        // CORE INTEGRATED PRODUCTION ENDPOINTS
         const XANO_OPERATORS_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:YLM1xvBg/get_admin_names'; 
         const XANO_SHIFTS_LOAD_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:YLM1xvBg/get_admin_active_shifts';
         const XANO_FRANCHISES_LOAD_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:YLM1xvBg/get_active_franchises';
@@ -443,7 +443,7 @@
                 await refreshOperatorShiftState(selectedAdminId);
                 
                 noticeStream.classList.remove('hidden');
-                bottomConsole.remove('hidden'); 
+                bottomConsole.classList.remove('hidden'); 
             } else {
                 noticeStream.classList.add('hidden');
                 bottomConsole.classList.add('hidden'); 
@@ -556,13 +556,24 @@
          */
         async function loadSystemDashboardContext() {
             try {
-                // Step A: Load Operator Selection Dropdown using the true working URL
+                // Step A: Fetch Operator Data Rows
                 const opResponse = await fetch(XANO_OPERATORS_URL);
-                if (!opResponse.ok) throw new Error(`Operator lookup anomaly status: ${opResponse.status}`);
+                if (!opResponse.ok) throw new Error(`Operator HTTP Error: ${opResponse.status}`);
                 
                 const rawOpData = await opResponse.json();
-                const admins = Array.isArray(rawData) ? rawOpData : (rawData.admin_name || []);
                 
+                // BULLETPROOF PARSING SAFETY NET: Checks raw lists, object wraps, and common tables schemas freely
+                let admins = [];
+                if (Array.isArray(rawOpData)) {
+                    admins = rawOpData;
+                } else if (rawOpData && Array.isArray(rawOpData.admin_name)) {
+                    admins = rawOpData.admin_name;
+                } else if (rawOpData && typeof rawOpData === 'object') {
+                    // Pull the first available array property found inside the payload object wrapper
+                    const structuralKey = Object.keys(rawOpData).find(key => Array.isArray(rawOpData[key]));
+                    admins = structuralKey ? rawOpData[structuralKey] : [];
+                }
+
                 operatorSelect.innerHTML = '<option value="">Select your name po...</option>';
                 
                 if (admins.length === 0) {
@@ -570,8 +581,9 @@
                 } else {
                     admins.forEach(admin => {
                         const option = document.createElement('option');
-                        option.value = admin.id;   
-                        option.text = admin.name;   
+                        // Pull database unique parameters using fallback matching flags
+                        option.value = admin.id || admin.admin_id;   
+                        option.text = admin.name || admin.admin_name || admin.field_value;   
                         operatorSelect.appendChild(option);
                     });
                 }
