@@ -501,8 +501,11 @@
             }
 
             masterFranchiseList.forEach(branch => {
-                // SYSTEM EXCLUSION RULE: Bypass Head Office completely from being rendered as an operational console chip
-                const branchNameUpper = (branch.name || '').toUpperCase();
+                // Safely fetch name strings to prevent object property type errors
+                const branchRawName = branch.name || branch.field_value || '';
+                const branchNameUpper = String(branchRawName).toUpperCase();
+                
+                // SYSTEM EXCLUSION RULE: Bypass Head Office completely from layout trees
                 if (branchNameUpper.includes('HEAD OFFICE')) {
                     return;
                 }
@@ -513,7 +516,7 @@
                 // 1. Build Interactive Chip under "My Tracked Feeds"
                 const trackedChip = document.createElement('div');
                 trackedChip.className = `branch-chip tracked-chip ${isTrackedByMe ? 'active' : ''}`;
-                trackedChip.textContent = branch.name;
+                trackedChip.textContent = branchRawName;
                 
                 // Attach real-time structural event listener loops
                 trackedChip.addEventListener('click', () => handleShiftToggleOperation(adminId, branch.id, trackedChip));
@@ -523,7 +526,7 @@
                 if (isGloballyUnattended) {
                     const unattendedChip = document.createElement('div');
                     unattendedChip.className = 'branch-chip unattended-chip';
-                    unattendedChip.textContent = branch.name;
+                    unattendedChip.textContent = branchRawName;
                     unattendedChipsDisplay.appendChild(unattendedChip);
                 }
             });
