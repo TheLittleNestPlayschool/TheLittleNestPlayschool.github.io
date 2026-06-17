@@ -57,11 +57,16 @@
             flex-direction: column;
             
             width: 100%;
-            height: 100vh;             /* STRETCHES ABSOLUTELY TO THE BOTTOM OF THE PHYSICAL WINDOW */
-            max-height: 100vh;         /* LOCKS THE WINDOW FRAME SCALE */
+            height: 100vh;             
+            max-height: 100vh;         
             
             overflow: hidden;
             transition: background 0.3s;
+        }
+
+        /* UTILITY CLASS FOR GATEKEEPER DISPLAY LOGIC */
+        .hidden {
+            display: none !important;
         }
 
         /* TOP OPERATOR BAR */
@@ -113,9 +118,9 @@
 
         /* MIDDLE LIVE NOTIFICATION STREAM */
         .stream-container {
-            flex: 1;                    /* Takes up 100% of all empty middle space dynamically */
-            min-height: 0;              /* Prevents content layout from breaking the container boundaries */
-            overflow-y: auto;           /* Triggers internal scrolling flawlessly when list is long */
+            flex: 1;                    
+            min-height: 0;              
+            overflow-y: auto;           
             display: flex;
             flex-direction: column;
             gap: 4px;
@@ -224,7 +229,7 @@
             flex-direction: column;
             gap: 6px;
             flex-shrink: 0;             
-            margin-top: auto;           /* PINNED ABSOLUTELY AND PERMANENTLY FLUSH TO WINDOW FLOOR */
+            margin-top: auto;           
         }
 
         /* INTERACTIVE CHIPS COLLAPSIBLE CONTAINER */
@@ -330,7 +335,7 @@
         <button class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
     </div>
 
-    <div class="stream-container" id="noticeStream">
+    <div class="stream-container hidden" id="noticeStream">
         
         <div class="notice-card">
             <div class="notice-content">
@@ -376,7 +381,7 @@
 
     </div>
 
-    <div class="bottom-anchor">
+    <div class="bottom-anchor hidden" id="bottomConsole">
         
         <label class="operator-label" style="color: var(--warning-red);">⚠️ Unattended Branches</label>
         <div class="chips-container" style="max-height: 48px; margin-bottom: 2px;">
@@ -417,6 +422,8 @@
 
         const operatorSelect = document.getElementById('operatorSelect');
         const chipsAccordion = document.getElementById('chipsAccordion');
+        const noticeStream = document.getElementById('noticeStream');
+        const bottomConsole = document.getElementById('bottomConsole');
 
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
@@ -427,6 +434,21 @@
         function toggleChipsAccordion() {
             chipsAccordion.classList.toggle('active');
         }
+
+        // EVENT LISTENER TO HANDLE SECURE DISPLAY REVEAL
+        operatorSelect.addEventListener('change', (e) => {
+            const selectedValue = e.target.value;
+            
+            if (selectedValue && selectedValue !== "") {
+                // An active operator was chosen -> reveal workspace elements instantly
+                noticeStream.classList.remove('hidden');
+                bottomConsole.remove('hidden'); // Fixed target variable
+            } else {
+                // Selection reset back to blank -> hide console parameters
+                noticeStream.classList.add('hidden');
+                bottomConsole.add('hidden'); // Fixed target variable
+            }
+        });
 
         async function loadOperatorDropdown() {
             try {
@@ -444,19 +466,4 @@
                 }
                 
                 admins.forEach(admin => {
-                    const option = document.createElement('option');
-                    option.value = admin.id;   
-                    option.text = admin.name;   
-                    operatorSelect.appendChild(option);
-                });
-
-            } catch (err) {
-                console.error("Failed to load admin names from Xano:", err);
-                operatorSelect.innerHTML = '<option value="">Error loading staff po</option>';
-            }
-        }
-
-        window.addEventListener('DOMContentLoaded', loadOperatorDropdown);
-    </script>
-</body>
-</html>
+                    const option = document.
