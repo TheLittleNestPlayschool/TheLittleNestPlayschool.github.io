@@ -635,14 +635,7 @@
                 // Step B: Load Active Franchises Master Directory Profile Map
                 const franchiseResponse = await fetch(XANO_FRANCHISES_LOAD_URL);
                 if (franchiseResponse.ok) {
-                    const fullFranchiseData = await franchiseResponse.json();
-                    
-                    // CENTRALIZED SOURCE FILTERING: Strip Head Office completely out right here!
-                    // This keeps arrays across Dave/Rime completely clean and prevents loop exceptions.
-                    masterFranchiseList = fullFranchiseData.filter(branch => {
-                        const nameString = String(branch.name || branch.field_value || '').toUpperCase();
-                        return !nameString.includes('HEAD OFFICE');
-                    });
+                    masterFranchiseList = await franchiseResponse.json();
                 }
 
                 // STEP C: STARTUP CHECK - Evaluate default selection state immediately on startup
