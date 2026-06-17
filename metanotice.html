@@ -473,7 +473,10 @@
                 const unattendedRawData = await unattendedResponse.json();
                 
                 // Map out active franchise connections instantly to set structure keys
-                operatorActiveShiftIds = new Set(activeShiftsArray.map(item => Number(item.franchise)));
+                operatorActiveShiftIds = new Set(activeShiftsArray.map(item => {
+                    if (!item) return null;
+                    return item.franchise !== undefined ? Number(item.franchise) : Number(item);
+                }).filter(v => v !== null));
                 
                 // BULLETPROOF PARSING LAYER: Handles array of pure numbers or array of objects dynamically
                 globalUnattendedIds = new Set(unattendedRawData.map(item => {
@@ -501,17 +504,16 @@
             }
 
             masterFranchiseList.forEach(branch => {
-                // Safely fetch name strings to prevent object property type errors
-                const branchRawName = branch.name || branch.field_value || '';
-                const branchNameUpper = String(branchRawName).toUpperCase();
-                
-                // SYSTEM EXCLUSION RULE: Bypass Head Office completely from layout trees
-                if (branchNameUpper.includes('HEAD OFFICE')) {
-                    return;
-                }
+                if (!branch) return;
 
-                const isTrackedByMe = operatorActiveShiftIds.has(Number(branch.id));
-                const isGloballyUnattended = globalUnattendedIds.has(Number(branch.id));
+                // Completely dynamic property fallback extractor to prevent any undefined string runtime breakdowns
+                const branchRawName = branch.name || branch.admin_name || branch.field_value || '';
+                const branchId = branch.id !== undefined ? branch.id : branch.franchise;
+                
+                if (!branchId) return; // Skip broken or corrupt rows safely
+
+                const isTrackedByMe = operatorActiveShiftIds.has(Number(branchId));
+                const isGloballyUnattended = globalUnattendedIds.has(Number(branchId));
 
                 // 1. Build Interactive Chip under "My Tracked Feeds"
                 const trackedChip = document.createElement('div');
@@ -519,7 +521,7 @@
                 trackedChip.textContent = branchRawName;
                 
                 // Attach real-time structural event listener loops
-                trackedChip.addEventListener('click', () => handleShiftToggleOperation(adminId, branch.id, trackedChip));
+                trackedChip.addEventListener('click', () => handleShiftToggleOperation(adminId, branchId, trackedChip));
                 branchChipsDisplay.appendChild(trackedChip);
 
                 // 2. Build Unattended Static Chip if left completely unassigned globally
@@ -633,7 +635,14 @@
                 // Step B: Load Active Franchises Master Directory Profile Map
                 const franchiseResponse = await fetch(XANO_FRANCHISES_LOAD_URL);
                 if (franchiseResponse.ok) {
-                    masterFranchiseList = await franchiseResponse.json();
+                    const fullFranchiseData = await franchiseResponse.json();
+                    
+                    // CENTRALIZED SOURCE FILTERING: Strip Head Office completely out right here!
+                    // This keeps arrays across Dave/Rime completely clean and prevents loop exceptions.
+                    masterFranchiseList = fullFranchiseData.filter(branch => {
+                        const nameString = String(branch.name || branch.field_value || '').toUpperCase();
+                        return !nameString.includes('HEAD OFFICE');
+                    });
                 }
 
                 // STEP C: STARTUP CHECK - Evaluate default selection state immediately on startup
