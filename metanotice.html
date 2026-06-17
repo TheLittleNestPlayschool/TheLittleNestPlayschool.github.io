@@ -430,9 +430,11 @@
             chipsAccordion.classList.toggle('active');
         }
 
-        // SEPARATE RUN EVENT LISTENER FOR HIDE/SHOW SECURITY GATE
-        operatorSelect.addEventListener('change', async function() {
-            const selectedAdminId = this.value;
+        /**
+         * Core Visibility & Refresh Logic Triggered on Selection Changes
+         */
+        async function handleOperatorSelectionChange() {
+            const selectedAdminId = operatorSelect.value;
             
             if (selectedAdminId && selectedAdminId.trim() !== "") {
                 // Fetch shift allocations live for this chosen operator node
@@ -444,7 +446,10 @@
                 noticeStream.classList.add('hidden');
                 bottomConsole.classList.add('hidden'); 
             }
-        });
+        }
+
+        // Listen for manual operator select dropdown adjustments
+        operatorSelect.addEventListener('change', handleOperatorSelectionChange);
 
         /**
          * Fetch active mapping paths from your Xano endpoints
@@ -573,6 +578,12 @@
                 const franchiseResponse = await fetch(`${XANO_NOTICE_BASE}/get_active_franchises`);
                 if (franchiseResponse.ok) {
                     masterFranchiseList = await franchiseResponse.json();
+                }
+
+                // STEP C: STARTUP CHECK - Run view evaluation automatically right at bootup 
+                // If an operator is already pre-selected or focused on load, evaluate their dashboard feeds immediately.
+                if (operatorSelect.value && operatorSelect.value.trim() !== "") {
+                    await handleOperatorSelectionChange();
                 }
 
             } catch (err) {
