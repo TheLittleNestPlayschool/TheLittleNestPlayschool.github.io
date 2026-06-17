@@ -385,11 +385,8 @@
         
         <label class="operator-label" style="color: var(--warning-red);">⚠️ Unattended Branches</label>
         <div class="chips-container" style="max-height: 48px; margin-bottom: 2px;">
-            <div class="chips-wrap">
-                <div class="branch-chip unattended-chip">Mulanay</div>
-                <div class="branch-chip unattended-chip">Candelaria</div>
-                <div class="branch-chip unattended-chip">Lucena</div>
-            </div>
+            <div class="chips-wrap" id="unattendedChipsDisplay">
+                </div>
         </div>
 
         <div class="collapsible-chips-panel" id="chipsAccordion">
@@ -400,17 +397,7 @@
             <div class="accordion-body">
                 <div class="chips-container">
                     <div class="chips-wrap" id="branchChipsDisplay">
-                        <div class="branch-chip tracked-chip active">Atimonan</div>
-                        <div class="branch-chip tracked-chip active">Sariaya</div>
-                        <div class="branch-chip tracked-chip active">Calbayog</div>
-                        <div class="branch-chip tracked-chip">Mulanay</div>
-                        <div class="branch-chip tracked-chip">Candelaria</div>
-                        <div class="branch-chip tracked-chip">Lucena</div>
-                        <div class="branch-chip tracked-chip">Tayabas</div>
-                        <div class="branch-chip tracked-chip">Pagbilao</div>
-                        <div class="branch-chip tracked-chip">Gumaca</div>
-                        <div class="branch-chip tracked-chip">Lopez</div>
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>
@@ -418,12 +405,20 @@
     </div>
 
     <script>
-        const XANO_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:yfZ0RK8Z/get_admin_names'; 
+        // CENTRAL ARCHITECTURE ROUTE ENDPOINTS
+        const XANO_OPERATORS_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:yfZ0RK8Z/get_admin_names'; 
+        const XANO_NOTICE_BASE = 'https://x8ki-letl-twmt.n7.xano.io/api:O_XWbZ8p/nestnotice';
 
         const operatorSelect = document.getElementById('operatorSelect');
         const chipsAccordion = document.getElementById('chipsAccordion');
         const noticeStream = document.getElementById('noticeStream');
         const bottomConsole = document.getElementById('bottomConsole');
+        const branchChipsDisplay = document.getElementById('branchChipsDisplay');
+        const unattendedChipsDisplay = document.getElementById('unattendedChipsDisplay');
+
+        // Global State Trackers
+        let masterFranchiseList = [];
+        let operatorActiveShiftIds = new Set();
 
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
@@ -436,10 +431,13 @@
         }
 
         // SEPARATE RUN EVENT LISTENER FOR HIDE/SHOW SECURITY GATE
-        operatorSelect.addEventListener('change', function() {
-            const selectedValue = this.value;
+        operatorSelect.addEventListener('change', async function() {
+            const selectedAdminId = this.value;
             
-            if (selectedValue && selectedValue.trim() !== "") {
+            if (selectedAdminId && selectedAdminId.trim() !== "") {
+                // Fetch shift allocations live for this chosen operator node
+                await refreshOperatorShiftState(selectedAdminId);
+                
                 noticeStream.classList.remove('hidden');
                 bottomConsole.classList.remove('hidden'); 
             } else {
@@ -448,35 +446,142 @@
             }
         });
 
-        async function loadOperatorDropdown() {
+        /**
+         * Fetch active mapping paths from your Xano endpoints
+         */
+        async function refreshOperatorShiftState(adminId) {
             try {
-                const response = await fetch(XANO_ENDPOINT);
-                if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
+                const response = await fetch(`${XANO_NOTICE_BASE}/get_admin_active_shifts?admin_id=${adminId}`);
+                if (!response.ok) throw new Error('Failed to pull shift context metrics.');
                 
-                const rawData = await response.json();
-                const admins = Array.isArray(rawData) ? rawData : (rawData.admin_name || []);
+                const activeShiftsArray = await response.json();
+                
+                // Map out active franchise connections instantly to set structure keys
+                operatorActiveShiftIds = new Set(activeShiftsArray.map(item => Number(item.franchise)));
+                
+                // Synchronize rendering outputs cleanly across display panels
+                renderAllBranchPanels(adminId);
+            } catch (err) {
+                console.error("Shift tracking synchronizer fault:", err);
+            }
+        }
+
+        /**
+         * Generates and maps chip nodes to matching tracking views
+         */
+        function renderAllBranchPanels(adminId) {
+            branchChipsDisplay.innerHTML = '';
+            unattendedChipsDisplay.innerHTML = '';
+
+            if (masterFranchiseList.length === 0) {
+                branchChipsDisplay.innerHTML = '<span style="font-size: 10px; color: var(--text-muted);">No locations registered.</span>';
+                return;
+            }
+
+            masterFranchiseList.forEach(branch => {
+                const isTrackedByMe = operatorActiveShiftIds.has(Number(branch.id));
+
+                // 1. Build Interactive Chip under "My Tracked Feeds"
+                const trackedChip = document.createElement('div');
+                trackedChip.className = `branch-chip tracked-chip ${isTrackedByMe ? 'active' : ''}`;
+                trackedChip.textContent = branch.name;
+                
+                // Attach real-time structural event listener loops
+                trackedChip.addEventListener('click', () => handleShiftToggleOperation(adminId, branch.id, trackedChip));
+                branchChipsDisplay.appendChild(trackedChip);
+
+                // 2. Build Unattended Static Chip if left completely unassigned
+                if (!isTrackedByMe) {
+                    const unattendedChip = document.createElement('div');
+                    unattendedChip.className = 'branch-chip unattended-chip';
+                    unattendedChip.textContent = branch.name;
+                    unattendedChipsDisplay.appendChild(unattendedChip);
+                }
+            });
+        }
+
+        /**
+         * Dispatches real-time structural inversions back to Xano function stacks
+         */
+        async function handleShiftToggleOperation(adminId, franchiseId, chipElement) {
+            const wasActive = chipElement.classList.contains('active');
+            
+            // Optimistic rendering layout swap for instant fluid interaction feedback
+            if (wasActive) {
+                chipElement.classList.remove('active');
+                operatorActiveShiftIds.delete(franchiseId);
+            } else {
+                chipElement.classList.add('active');
+                operatorActiveShiftIds.add(franchiseId);
+            }
+            
+            // Re-render upper "Unattended" area overview state alongside manual changes
+            renderAllBranchPanels(adminId);
+
+            try {
+                const response = await fetch(`${XANO_NOTICE_BASE}/toggle_admin_shift`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        admin_id: Number(adminId),
+                        franchise_id: Number(franchiseId)
+                    })
+                });
+
+                if (!response.ok) throw new Error('Transaction process rollback response.');
+                console.log(`Successfully synced active toggle state tracker changes for location: ${franchiseId}`);
+
+            } catch (err) {
+                console.error("Database connection synchronization failure, running hard data reversion loop:", err);
+                // Hard rollback of internal UI cache positions on sync dropping faults
+                if (wasActive) {
+                    operatorActiveShiftIds.add(franchiseId);
+                } else {
+                    operatorActiveShiftIds.delete(franchiseId);
+                }
+                renderAllBranchPanels(adminId);
+                alert('Network connection transaction interrupted. Shift state mutation dropped.');
+            }
+        }
+
+        /**
+         * Master system startup pipeline loaders
+         */
+        async function loadSystemDashboardContext() {
+            try {
+                // Step A: Load Operator Selection Dropdown
+                const opResponse = await fetch(XANO_OPERATORS_URL);
+                if (!opResponse.ok) throw new Error(`Operator lookup anomaly status: ${opResponse.status}`);
+                
+                const rawOpData = await opResponse.json();
+                const admins = Array.isArray(rawData) ? rawOpData : (rawData.admin_name || []);
                 
                 operatorSelect.innerHTML = '<option value="">Select your name po...</option>';
                 
                 if (admins.length === 0) {
                     operatorSelect.innerHTML = '<option value="">No admins found in DB</option>';
-                    return;
+                } else {
+                    admins.forEach(admin => {
+                        const option = document.createElement('option');
+                        option.value = admin.id;   
+                        option.text = admin.name;   
+                        operatorSelect.appendChild(option);
+                    });
                 }
-                
-                admins.forEach(admin => {
-                    const option = document.createElement('option');
-                    option.value = admin.id;   
-                    option.text = admin.name;   
-                    operatorSelect.appendChild(option);
-                });
+
+                // Step B: Load Active Franchises Master Directory Profile Map
+                const franchiseResponse = await fetch(`${XANO_NOTICE_BASE}/get_active_franchises`);
+                if (franchiseResponse.ok) {
+                    masterFranchiseList = await franchiseResponse.json();
+                }
 
             } catch (err) {
-                console.error("Failed to load admin names from Xano:", err);
+                console.error("Fatal operational stack initial configuration failure:", err);
                 operatorSelect.innerHTML = '<option value="">Error loading staff po</option>';
             }
         }
 
-        window.addEventListener('DOMContentLoaded', loadOperatorDropdown);
+        window.addEventListener('DOMContentLoaded', loadSystemDashboardContext);
     </script>
 </body>
 </html>
