@@ -345,8 +345,7 @@
             <div class="chips-wrap" id="unattendedChipsDisplay"></div>
         </div>
 
-        <!-- ADDED ACTIVE CLASS HERE TO FORCE STACK OPEN -->
-        <div class="collapsible-chips-panel active" id="chipsAccordion">
+        <div class="collapsible-chips-panel" id="chipsAccordion">
             <div class="accordion-header" onclick="toggleChipsAccordion()">
                 <span class="operator-label" style="margin-bottom:0; cursor:pointer;" id="trackedHeaderLabel">My Tracked Feeds</span>
                 <span class="chevron">▶</span>
@@ -418,7 +417,7 @@
                 await refreshOperatorShiftState(selectedAdminId);
                 
                 noticeStream.classList.remove('hidden');
-                bottomConsole.classList.remove('hidden'); 
+                bottomConsole.remove('hidden'); 
                 
                 // Fetch layout array data immediately, then poll row changes every 5 seconds
                 await syncNotificationsArray();
@@ -449,15 +448,18 @@
                 const activeShiftsArray = await shiftsResponse.json();
                 const unattendedRawData = await unattendedResponse.json();
                 
-                // Save raw text branch name values (e.g. "Sariaya") straight into selection checker structures
+                // RESTORED TO ORIGINAL ID LOOKUPS: Map pure franchise ID numbers to match your original grid system
                 operatorActiveShiftIds = new Set(activeShiftsArray.map(item => {
-                    return item.franchise ? String(item.franchise) : String(item.franchise_id || item);
-                }));
+                    if (item && typeof item === 'object') {
+                        return Number(item.franchise_id || item.franchise || item.id);
+                    }
+                    return Number(item);
+                }).filter(val => !isNaN(val)));
                 
                 globalUnattendedIds = new Set(unattendedRawData.map(item => {
                     if (item === null || item === undefined) return null;
-                    return typeof item === 'object' ? String(item.name || item.id) : String(item);
-                }).filter(val => val !== null));
+                    return typeof item === 'object' ? Number(item.id) : Number(item);
+                }).filter(val => val !== null && !isNaN(val)));
                 
                 renderAllBranchPanels(adminId);
             } catch (err) {
@@ -476,10 +478,10 @@
                 
                 const dbRecords = await response.json();
                 
-                // Track matching branches using the exact franchise string name mapping
+                // Track matching branches using the numeric franchise ID match path
                 liveNotifications = dbRecords.filter(msg => {
                     const branchMatch = masterFranchiseList.find(f => String(f.facebook_page_id) === String(msg.facebook_page_id));
-                    return branchMatch && operatorActiveShiftIds.has(String(branchMatch.name));
+                    return branchMatch && operatorActiveShiftIds.has(Number(branchMatch.id));
                 });
                 
                 renderNotificationCards();
@@ -585,8 +587,11 @@
             }
 
             masterFranchiseList.forEach(branch => {
-                const isTrackedByMe = operatorActiveShiftIds.has(String(branch.name));
-                const isGloballyUnattended = globalUnattendedIds.has(String(branch.name)) || globalUnattendedIds.has(String(branch.id));
+                if (!branch || !branch.id) return;
+                
+                const branchIdNum = Number(branch.id);
+                const isTrackedByMe = operatorActiveShiftIds.has(branchIdNum);
+                const isGloballyUnattended = globalUnattendedIds.has(branchIdNum);
 
                 // 1. Build Interactive Chip under "My Tracked Feeds"
                 const trackedChip = document.createElement('div');
@@ -604,6 +609,9 @@
                     unattendedChipsDisplay.appendChild(unattendedChip);
                 }
             });
+            
+            // Sync dynamic tracking list headers immediately
+            trackedHeaderLabel.textContent = `My Tracked Feeds (${operatorActiveShiftIds.size})`;
         }
 
         /**
@@ -612,18 +620,15 @@
         async function handleShiftToggleOperation(adminId, franchiseId, chipElement) {
             const wasActive = chipElement.classList.contains('active');
             const franchiseIdNum = Number(franchiseId);
-            
-            const branchMatch = masterFranchiseList.find(f => Number(f.id) === franchiseIdNum);
-            const branchNameStr = branchMatch ? String(branchMatch.name) : String(franchiseId);
 
             if (wasActive) {
                 chipElement.classList.remove('active');
-                operatorActiveShiftIds.delete(branchNameStr);
-                globalUnattendedIds.add(branchNameStr);
+                operatorActiveShiftIds.delete(franchiseIdNum);
+                globalUnattendedIds.add(franchiseIdNum);
             } else {
                 chipElement.classList.add('active');
-                operatorActiveShiftIds.add(branchNameStr);
-                globalUnattendedIds.delete(branchNameStr);
+                operatorActiveShiftIds.add(franchiseIdNum);
+                globalUnattendedIds.delete(franchiseIdNum);
             }
             
             renderAllBranchPanels(adminId);
@@ -648,19 +653,19 @@
                     const freshUnattendedData = await freshUnattendedRes.json();
                     globalUnattendedIds = new Set(freshUnattendedData.map(item => {
                         if (item === null || item === undefined) return null;
-                        return typeof item === 'object' ? String(item.name || item.id) : String(item);
-                    }).filter(val => val !== null));
+                        return typeof item === 'object' ? Number(item.id) : Number(item);
+                    }).filter(val => val !== null && !isNaN(val)));
                     renderAllBranchPanels(adminId);
                 }
 
             } catch (err) {
                 console.error("Database connection synchronization failure, running hard data reversion loop:", err);
                 if (wasActive) {
-                    operatorActiveShiftIds.add(branchNameStr);
-                    globalUnattendedIds.delete(branchNameStr);
+                    operatorActiveShiftIds.add(franchiseIdNum);
+                    globalUnattendedIds.delete(franchiseIdNum);
                 } else {
-                    operatorActiveShiftIds.delete(branchNameStr);
-                    globalUnattendedIds.add(branchNameStr);
+                    operatorActiveShiftIds.delete(franchiseIdNum);
+                    globalUnattendedIds.add(franchiseIdNum);
                 }
                 renderAllBranchPanels(adminId);
                 syncNotificationsArray();
