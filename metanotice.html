@@ -431,4 +431,52 @@
             btn.innerText = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
         }
 
-        function
+        function toggleChipsAccordion() {
+            chipsAccordion.classList.toggle('active');
+        }
+
+        // SEPARATE RUN EVENT LISTENER FOR HIDE/SHOW SECURITY GATE
+        operatorSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            
+            if (selectedValue && selectedValue.trim() !== "") {
+                noticeStream.classList.remove('hidden');
+                bottomConsole.classList.remove('hidden'); 
+            } else {
+                noticeStream.classList.add('hidden');
+                bottomConsole.classList.add('hidden'); 
+            }
+        });
+
+        async function loadOperatorDropdown() {
+            try {
+                const response = await fetch(XANO_ENDPOINT);
+                if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
+                
+                const rawData = await response.json();
+                const admins = Array.isArray(rawData) ? rawData : (rawData.admin_name || []);
+                
+                operatorSelect.innerHTML = '<option value="">Select your name po...</option>';
+                
+                if (admins.length === 0) {
+                    operatorSelect.innerHTML = '<option value="">No admins found in DB</option>';
+                    return;
+                }
+                
+                admins.forEach(admin => {
+                    const option = document.createElement('option');
+                    option.value = admin.id;   
+                    option.text = admin.name;   
+                    operatorSelect.appendChild(option);
+                });
+
+            } catch (err) {
+                console.error("Failed to load admin names from Xano:", err);
+                operatorSelect.innerHTML = '<option value="">Error loading staff po</option>';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadOperatorDropdown);
+    </script>
+</body>
+</html>
