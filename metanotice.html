@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notification TLNP</title>
+    <title>The Little Nest - MetaNotice Command Center</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -387,8 +387,7 @@
         <label class="operator-label" style="color: var(--warning-red);">⚠️ Unattended Branches</label>
         <div class="chips-container" style="max-height: 48px; margin-bottom: 2px;">
             <div class="chips-wrap" id="unattendedChipsDisplay">
-                <!-- Loaded dynamically via global unattended backend endpoints -->
-            </div>
+                </div>
         </div>
 
         <div class="collapsible-chips-panel" id="chipsAccordion">
@@ -399,8 +398,7 @@
             <div class="accordion-body">
                 <div class="chips-container">
                     <div class="chips-wrap" id="branchChipsDisplay">
-                        <!-- Loaded dynamically from your Xano database maps -->
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>
@@ -448,7 +446,7 @@
                 await refreshOperatorShiftState(selectedAdminId);
                 
                 noticeStream.classList.remove('hidden');
-                bottomConsole.classList.remove('hidden'); 
+                bottomConsole.remove('hidden'); 
             } else {
                 noticeStream.classList.add('hidden');
                 bottomConsole.classList.add('hidden'); 
@@ -503,6 +501,12 @@
             }
 
             masterFranchiseList.forEach(branch => {
+                // SYSTEM EXCLUSION RULE: Bypass Head Office completely from being rendered as an operational console chip
+                const branchNameUpper = (branch.name || '').toUpperCase();
+                if (branchNameUpper.includes('HEAD OFFICE')) {
+                    return;
+                }
+
                 const isTrackedByMe = operatorActiveShiftIds.has(Number(branch.id));
                 const isGloballyUnattended = globalUnattendedIds.has(Number(branch.id));
 
