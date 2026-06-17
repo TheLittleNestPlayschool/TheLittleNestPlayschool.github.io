@@ -289,7 +289,6 @@
 </head>
 <body>
 
-    <!-- TOP: IDENTITY SELECTION & THEME TOGGLE -->
     <div class="operator-panel">
         <div class="operator-controls-left">
             <span class="operator-label">Active Operator:</span>
@@ -300,10 +299,8 @@
         <button class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
     </div>
 
-    <!-- MIDDLE: HIGH DENSITY REAL-TIME ALERTS FEED -->
     <div class="stream-container" id="noticeStream">
         
-        <!-- Mock Card 1 -->
         <div class="notice-card">
             <div class="notice-content">
                 <div class="notice-line1">
@@ -318,7 +315,6 @@
             </div>
         </div>
 
-        <!-- Mock Card 2 -->
         <div class="notice-card">
             <div class="notice-content">
                 <div class="notice-line1">
@@ -333,7 +329,6 @@
             </div>
         </div>
 
-        <!-- Mock Card 3 -->
         <div class="notice-card">
             <div class="notice-content">
                 <div class="notice-line1">
@@ -350,16 +345,13 @@
 
     </div>
 
-    <!-- BOTTOM: CONSOLE AND MONITOR CONTROLS ANCHOR -->
     <div class="bottom-anchor">
         
-        <!-- SAFETY NET CONTROL BANNER -->
         <div class="safety-banner">
             <span class="safety-title">⚠️ Unattended:</span>
             <div class="safety-scroll">Mulanay Branch, Candelaria Branch, Lucena Branch</div>
         </div>
 
-        <!-- POP-OUT SHIFT MANAGEMENT GRID -->
         <label class="operator-label">My Tracked Feeds (Toggle Shift Coverage)</label>
         <div class="chips-container">
             <div class="chips-wrap">
@@ -379,8 +371,8 @@
     </div>
 
     <script>
-        // Make sure this points to your specific Xano API Group directory path URL
-        const XANO_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg'; 
+        // CLEAN INSTANCE ENDPOINT ONLY - NO DYNAMIC CONCATENATION STRINGS
+        const XANO_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:yfZ0RK8Z/get_admin_names'; 
 
         const operatorSelect = document.getElementById('operatorSelect');
 
@@ -390,19 +382,18 @@
             btn.innerText = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
         }
 
-        // Live connection function fetching the admin list entries from Xano
         async function loadOperatorDropdown() {
             try {
-                const response = await fetch(`${XANO_BASE_URL}/get_admin_names`);
+                // Fetch directly with the clean literal path variable
+                const response = await fetch(XANO_ENDPOINT);
                 if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
                 
                 const rawData = await response.json();
                 console.log("Xano Data Received:", rawData);
                 
-                // Safely extract the array whether it's raw or wrapped under a table object name
+                // Safely extract data array layout
                 const admins = Array.isArray(rawData) ? rawData : (rawData.admin_name || []);
                 
-                // Reset loading text option clean
                 operatorSelect.innerHTML = '<option value="">Select your name po...</option>';
                 
                 if (admins.length === 0) {
@@ -412,8 +403,8 @@
                 
                 admins.forEach(admin => {
                     const option = document.createElement('option');
-                    option.value = admin.id;   // Stores integer id relation rule
-                    option.text = admin.name;   // Uses the precise 'name' string key from your table schema
+                    option.value = admin.id;   
+                    option.text = admin.name;   
                     operatorSelect.appendChild(option);
                 });
 
@@ -423,7 +414,6 @@
             }
         }
 
-        // Fetch directory profiles immediately upon browser engine load state
         window.addEventListener('DOMContentLoaded', loadOperatorDropdown);
     </script>
 </body>
