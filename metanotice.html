@@ -10,7 +10,7 @@
     
     <style>
         :root {
-            /* MATCHING YOUR PREMIUM STEEL BLUE & RICH SLATE PALETTE */
+            /* PREMIUM STEEL BLUE & RICH SLATE PALETTE - DARK MODE */
             --bg-dark: #0B0F19;         /* Rich Slate Black Background */
             --panel-dark: #131A26;      /* Deep Charcoal Panel Surface */
             --accent-primary: #4682B4;  /* Premium Steel Blue Accent */
@@ -22,8 +22,24 @@
             /* NOTIFICATION SPECIFIC SYSTEM COLORS */
             --timer-green: #10B981;     /* Neon Green for Fresh Messages */
             --warning-red: #EF4444;     /* Deep Red for Safety Net & Long Waits */
-            --action-success: #059669;  /* Dark Green for "Taken Care Of" */
         }
+
+        body.light-mode {
+            /* MODERN STEEL BLUE & SLATE PALETTE - LIGHT MODE */
+            --bg-dark: #F1F5F9;         /* Soft Cool Gray Background */
+            --panel-dark: #FFFFFF;      /* Clean Pure White Surfaces */
+            --accent-primary: #2C5E8A;  /* Deep Steel Blue for Light Mode */
+            --accent-hover: #1E4263;    /* Dark Navy for Light Mode Hover */
+            --text-main: #0F172A;       /* Near-Black Text for Elite Readability */
+            --text-muted: #64748B;      /* Solid Slate Gray for Labels */
+            --border-color: #CBD5E1;    /* Clean Gray Border Lines */
+        }
+
+        /* Readability overrides for light mode elements */
+        body.light-mode .notice-card { background-color: var(--panel-dark); }
+        body.light-mode .branch-chip { background-color: #E2E8F0; }
+        body.light-mode .branch-chip.active { background-color: rgba(44, 94, 138, 0.15); }
+        body.light-mode .safety-banner { background-color: rgba(239, 68, 68, 0.04); }
 
         * {
             box-sizing: border-box;
@@ -39,7 +55,8 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            overflow: hidden; /* Keeps the main screen frame locked */
+            overflow: hidden;
+            transition: background 0.3s;
         }
 
         /* TOP OPERATOR BAR */
@@ -50,9 +67,15 @@
             border: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: space-between;
             margin-bottom: 10px;
             flex-shrink: 0;
+        }
+
+        .operator-controls-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .operator-label {
@@ -75,6 +98,14 @@
             width: 200px;
         }
 
+        .theme-toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            user-select: none;
+        }
+
         /* MIDDLE LIVE NOTIFICATION STREAM */
         .stream-container {
             flex: 1;
@@ -86,35 +117,34 @@
             padding-right: 4px;
         }
 
-        /* Scrollbar Styling for High Density Stream */
         .stream-container::-webkit-scrollbar {
-            width: 6px;
+            width: 4px;
         }
         .stream-container::-webkit-scrollbar-track {
             background: var(--bg-dark);
         }
         .stream-container::-webkit-scrollbar-thumb {
             background: var(--border-color);
-            border-radius: 3px;
+            border-radius: 2px;
         }
 
-        /* HIGH-DENSITY 2-LINE CARD STRIP */
+        /* HIGH-DENSITY CARD STRIP WITH COMPACT CONTROLS */
         .notice-card {
             background-color: var(--panel-dark);
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            padding: 8px 12px;
+            padding: 6px 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 16px;
-            min-height: 54px;
+            min-height: 48px; /* Slightly shorter frame */
         }
 
         .notice-content {
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 1px;
             overflow: hidden;
             flex: 1;
         }
@@ -126,17 +156,17 @@
         }
 
         .branch-tag {
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: 700;
             color: var(--text-main);
         }
 
         .live-timer {
-            font-size: 11px;
+            font-size: 10.5px;
             font-weight: 600;
             color: var(--timer-green);
             background-color: rgba(16, 185, 129, 0.1);
-            padding: 1px 6px;
+            padding: 1px 5px;
             border-radius: 4px;
         }
 
@@ -150,44 +180,30 @@
             color: var(--text-muted);
             white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis; /* Forces single line cutoff with ... */
+            text-overflow: ellipsis;
         }
 
-        /* COMPACT ACTION BUTTONS AREA */
+        /* UNIFIED ACTION BUTTONS PANEL */
         .notice-actions {
             display: flex;
-            gap: 6px;
+            gap: 4px;
             flex-shrink: 0;
         }
 
-        .btn-go {
+        .btn-action {
             background-color: var(--accent-primary);
             color: white;
             border: none;
-            padding: 6px 12px;
+            padding: 4px 10px; /* Shortened padding for lower vertical footprint */
             border-radius: 4px;
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s;
+            white-space: nowrap;
         }
-        .btn-go:hover { background-color: var(--accent-hover); }
-
-        .btn-done {
-            background-color: transparent;
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 11.5px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-done:hover { 
-            background-color: rgba(239, 68, 68, 0.1);
-            color: var(--warning-red);
-            border-color: rgba(239, 68, 68, 0.2);
+        .btn-action:hover { 
+            background-color: var(--accent-hover); 
         }
 
         /* BOTTOM CONTROLS ANCHOR */
@@ -233,7 +249,7 @@
 
         /* POP-OUT BRANCH SELECTION WRAP CHIPS */
         .chips-container {
-            max-height: 110px;
+            max-height: 100px;
             overflow-y: auto;
             padding-right: 2px;
         }
@@ -248,9 +264,9 @@
             background-color: var(--bg-dark);
             border: 1px solid var(--border-color);
             color: var(--text-muted);
-            padding: 5px 10px;
+            padding: 4px 10px;
             border-radius: 20px;
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: 500;
             cursor: pointer;
             user-select: none;
@@ -262,7 +278,6 @@
             color: var(--text-main);
         }
 
-        /* THE VISUAL POP-OUT STATE FOR ACTIVE SHIFTS */
         .branch-chip.active {
             background-color: rgba(70, 130, 180, 0.15);
             border-color: var(--accent-primary);
@@ -274,18 +289,24 @@
 </head>
 <body>
 
+    <!-- TOP: IDENTITY SELECTION & THEME TOGGLE -->
     <div class="operator-panel">
-        <span class="operator-label">Active Operator:</span>
-        <select class="operator-select" id="operatorSelect">
-            <option value="">Select your name po...</option>
-            <option value="1">Jane Doe (Head Admin)</option>
-            <option value="2">John Cruz</option>
-            <option value="3">Mary Santos</option>
-        </select>
+        <div class="operator-controls-left">
+            <span class="operator-label">Active Operator:</span>
+            <select class="operator-select" id="operatorSelect">
+                <option value="">Select your name po...</option>
+                <option value="1">Jane Doe (Head Admin)</option>
+                <option value="2">John Cruz</option>
+                <option value="3">Mary Santos</option>
+            </select>
+        </div>
+        <button class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
     </div>
 
+    <!-- MIDDLE: HIGH DENSITY REAL-TIME ALERTS FEED -->
     <div class="stream-container" id="noticeStream">
         
+        <!-- Mock Card 1 -->
         <div class="notice-card">
             <div class="notice-content">
                 <div class="notice-line1">
@@ -295,11 +316,12 @@
                 <div class="notice-line2">Magkano po ang tuition fee para sa toddler block? May slots pa ba?</div>
             </div>
             <div class="notice-actions">
-                <button class="btn-go">Go to Conversation</button>
-                <button class="btn-done">Taken Care Of</button>
+                <button class="btn-action">Go to Conversation</button>
+                <button class="btn-action">Taken Care Of</button>
             </div>
         </div>
 
+        <!-- Mock Card 2 -->
         <div class="notice-card">
             <div class="notice-content">
                 <div class="notice-line1">
@@ -309,11 +331,12 @@
                 <div class="notice-line2">Ask ko lang po kung anong requirements para sa new enrollment process next week...</div>
             </div>
             <div class="notice-actions">
-                <button class="btn-go">Go to Conversation</button>
-                <button class="btn-done">Taken Care Of</button>
+                <button class="btn-action">Go to Conversation</button>
+                <button class="btn-action">Taken Care Of</button>
             </div>
         </div>
 
+        <!-- Mock Card 3 -->
         <div class="notice-card">
             <div class="notice-content">
                 <div class="notice-line1">
@@ -323,20 +346,23 @@
                 <div class="notice-line2">Hello po, open ba kayo ng Saturday?</div>
             </div>
             <div class="notice-actions">
-                <button class="btn-go">Go to Conversation</button>
-                <button class="btn-done">Taken Care Of</button>
+                <button class="btn-action">Go to Conversation</button>
+                <button class="btn-action">Taken Care Of</button>
             </div>
         </div>
 
     </div>
 
+    <!-- BOTTOM: CONSOLE AND MONITOR CONTROLS ANCHOR -->
     <div class="bottom-anchor">
         
+        <!-- SAFETY NET CONTROL BANNER -->
         <div class="safety-banner">
             <span class="safety-title">⚠️ Unattended:</span>
             <div class="safety-scroll">Mulanay Branch, Candelaria Branch, Lucena Branch</div>
         </div>
 
+        <!-- POP-OUT SHIFT MANAGEMENT GRID -->
         <label class="operator-label">My Tracked Feeds (Toggle Shift Coverage)</label>
         <div class="chips-container">
             <div class="chips-wrap">
@@ -355,5 +381,12 @@
 
     </div>
 
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const btn = document.querySelector('.theme-toggle-btn');
+            btn.innerText = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
+        }
+    </script>
 </body>
 </html>
