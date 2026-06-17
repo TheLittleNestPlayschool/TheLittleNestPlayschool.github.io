@@ -27,7 +27,7 @@
         body.light-mode {
             /* MODERN STEEL BLUE & SLATE PALETTE - LIGHT MODE */
             --bg-dark: #F1F5F9;         /* Soft Cool Gray Background */
-            --panel-dark: #FFFFFF;      /* Clean Pure White Surfaces */
+            --panel-dark: #FFFFFF;      --panel-dark: #FFFFFF;      /* Clean Pure White Surfaces */
             --accent-primary: #2C5E8A;  /* Deep Steel Blue for Light Mode */
             --accent-hover: #1E4263;    /* Dark Navy for Light Mode Hover */
             --text-main: #0F172A;       /* Near-Black Text for Elite Readability */
@@ -40,6 +40,7 @@
         body.light-mode .branch-chip { background-color: #E2E8F0; }
         body.light-mode .branch-chip.active { background-color: rgba(44, 94, 138, 0.15); }
         body.light-mode .safety-banner { background-color: rgba(239, 68, 68, 0.04); }
+        body.light-mode .accordion-header { background-color: rgba(44, 94, 138, 0.04); }
 
         * {
             box-sizing: border-box;
@@ -211,10 +212,10 @@
             background-color: var(--panel-dark);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             flex-shrink: 0;
         }
 
@@ -247,9 +248,52 @@
             width: 100%;
         }
 
+        /* NEW COLLAPSIBLE CHIPS SYSTEM ACCORDION */
+        .collapsible-chips-panel {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .accordion-header {
+            padding: 10px 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            background-color: rgba(255, 255, 255, 0.01);
+        }
+
+        .accordion-header:hover {
+            background-color: rgba(70, 130, 180, 0.04);
+        }
+
+        .chevron {
+            font-size: 10px;
+            color: var(--accent-primary);
+            transition: transform 0.2s ease;
+        }
+
+        /* ACCORDION TRIGGER LOGIC HOOKS */
+        .collapsible-chips-panel.active .chevron {
+            transform: rotate(90deg); /* Snaps arrow from ▶ to ▼ smoothly */
+        }
+
+        .accordion-body {
+            display: none; /* Hidden by default layout blueprint */
+            padding: 12px 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .collapsible-chips-panel.active .accordion-body {
+            display: block; /* Reveals body grid on class activation trigger */
+        }
+
         /* POP-OUT BRANCH SELECTION WRAP CHIPS */
         .chips-container {
-            max-height: 100px;
+            max-height: 125px; /* Restricts maximum expansion size for 100 entries scroll boundary safety net */
             overflow-y: auto;
             padding-right: 2px;
         }
@@ -352,29 +396,36 @@
             <div class="safety-scroll">Mulanay Branch, Candelaria Branch, Lucena Branch</div>
         </div>
 
-        <label class="operator-label">My Tracked Feeds (Toggle Shift Coverage)</label>
-        <div class="chips-container">
-            <div class="chips-wrap">
-                <div class="branch-chip active">Atimonan</div>
-                <div class="branch-chip active">Sariaya</div>
-                <div class="branch-chip active">Calbayog</div>
-                <div class="branch-chip">Mulanay</div>
-                <div class="branch-chip">Candelaria</div>
-                <div class="branch-chip">Lucena</div>
-                <div class="branch-chip">Tayabas</div>
-                <div class="branch-chip">Pagbilao</div>
-                <div class="branch-chip">Gumaca</div>
-                <div class="branch-chip">Lopez</div>
+        <div class="collapsible-chips-panel" id="chipsAccordion">
+            <div class="accordion-header" onclick="toggleChipsAccordion()">
+                <span class="operator-label" style="margin-bottom:0; cursor:pointer;">My Tracked Feeds (Toggle Shift Coverage)</span>
+                <span class="chevron">▶</span>
+            </div>
+            <div class="accordion-body">
+                <div class="chips-container">
+                    <div class="chips-wrap" id="branchChipsDisplay">
+                        <div class="branch-chip active">Atimonan</div>
+                        <div class="branch-chip active">Sariaya</div>
+                        <div class="branch-chip active">Calbayog</div>
+                        <div class="branch-chip">Mulanay</div>
+                        <div class="branch-chip">Candelaria</div>
+                        <div class="branch-chip">Lucena</div>
+                        <div class="branch-chip">Tayabas</div>
+                        <div class="branch-chip">Pagbilao</div>
+                        <div class="branch-chip">Gumaca</div>
+                        <div class="branch-chip">Lopez</div>
+                    </div>
+                </div>
             </div>
         </div>
 
     </div>
 
     <script>
-        // CLEAN INSTANCE ENDPOINT ONLY - NO DYNAMIC CONCATENATION STRINGS
         const XANO_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:yfZ0RK8Z/get_admin_names'; 
 
         const operatorSelect = document.getElementById('operatorSelect');
+        const chipsAccordion = document.getElementById('chipsAccordion');
 
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
@@ -382,16 +433,19 @@
             btn.innerText = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
         }
 
+        // New functional layout trigger logic for accordion frame controls
+        function toggleChipsAccordion() {
+            chipsAccordion.classList.toggle('active');
+        }
+
         async function loadOperatorDropdown() {
             try {
-                // Fetch directly with the clean literal path variable
                 const response = await fetch(XANO_ENDPOINT);
                 if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
                 
                 const rawData = await response.json();
                 console.log("Xano Data Received:", rawData);
                 
-                // Safely extract data array layout
                 const admins = Array.isArray(rawData) ? rawData : (rawData.admin_name || []);
                 
                 operatorSelect.innerHTML = '<option value="">Select your name po...</option>';
