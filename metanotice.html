@@ -405,9 +405,11 @@
     </div>
 
     <script>
-        // CENTRAL ARCHITECTURE ROUTE ENDPOINTS
-        const XANO_OPERATORS_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:yfZ0RK8Z/get_admin_names'; 
-        const XANO_NOTICE_BASE = 'https://x8ki-letl-twmt.n7.xano.io/api:O_XWbZ8p/nestnotice';
+        // FIXED PRODUCTION CONFIGURATION ENDPOINTS
+        const XANO_OPERATORS_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:YLM1xvBg/get_admin_names'; 
+        const XANO_SHIFTS_LOAD_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:YLM1xvBg/get_admin_active_shifts';
+        const XANO_FRANCHISES_LOAD_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:YLM1xvBg/get_active_franchises';
+        const XANO_TOGGLE_SHIFT_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:YLM1xvBg/toggle_admin_shift';
 
         const operatorSelect = document.getElementById('operatorSelect');
         const chipsAccordion = document.getElementById('chipsAccordion');
@@ -441,7 +443,7 @@
                 await refreshOperatorShiftState(selectedAdminId);
                 
                 noticeStream.classList.remove('hidden');
-                bottomConsole.classList.remove('hidden'); 
+                bottomConsole.remove('hidden'); 
             } else {
                 noticeStream.classList.add('hidden');
                 bottomConsole.classList.add('hidden'); 
@@ -456,7 +458,7 @@
          */
         async function refreshOperatorShiftState(adminId) {
             try {
-                const response = await fetch(`${XANO_NOTICE_BASE}/get_admin_active_shifts?admin_id=${adminId}`);
+                const response = await fetch(`${XANO_SHIFTS_LOAD_URL}?admin_id=${adminId}`);
                 if (!response.ok) throw new Error('Failed to pull shift context metrics.');
                 
                 const activeShiftsArray = await response.json();
@@ -524,7 +526,7 @@
             renderAllBranchPanels(adminId);
 
             try {
-                const response = await fetch(`${XANO_NOTICE_BASE}/toggle_admin_shift`, {
+                const response = await fetch(XANO_TOGGLE_SHIFT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -554,7 +556,7 @@
          */
         async function loadSystemDashboardContext() {
             try {
-                // Step A: Load Operator Selection Dropdown
+                // Step A: Load Operator Selection Dropdown using the true working URL
                 const opResponse = await fetch(XANO_OPERATORS_URL);
                 if (!opResponse.ok) throw new Error(`Operator lookup anomaly status: ${opResponse.status}`);
                 
@@ -575,13 +577,12 @@
                 }
 
                 // Step B: Load Active Franchises Master Directory Profile Map
-                const franchiseResponse = await fetch(`${XANO_NOTICE_BASE}/get_active_franchises`);
+                const franchiseResponse = await fetch(XANO_FRANCHISES_LOAD_URL);
                 if (franchiseResponse.ok) {
                     masterFranchiseList = await franchiseResponse.json();
                 }
 
-                // STEP C: STARTUP CHECK - Run view evaluation automatically right at bootup 
-                // If an operator is already pre-selected or focused on load, evaluate their dashboard feeds immediately.
+                // STEP C: STARTUP CHECK - Evaluate default selection state immediately on startup
                 if (operatorSelect.value && operatorSelect.value.trim() !== "") {
                     await handleOperatorSelectionChange();
                 }
