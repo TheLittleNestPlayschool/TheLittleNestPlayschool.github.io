@@ -138,7 +138,7 @@
             justify-content: space-between;
             align-items: center;
             gap: 16px;
-            min-height: 48px; /* Slightly shorter frame */
+            min-height: 48px;
         }
 
         .notice-content {
@@ -194,7 +194,7 @@
             background-color: var(--accent-primary);
             color: white;
             border: none;
-            padding: 4px 10px; /* Shortened padding for lower vertical footprint */
+            padding: 4px 10px;
             border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
@@ -289,24 +289,18 @@
 </head>
 <body>
 
-    <!-- TOP: IDENTITY SELECTION & THEME TOGGLE -->
     <div class="operator-panel">
         <div class="operator-controls-left">
             <span class="operator-label">Active Operator:</span>
             <select class="operator-select" id="operatorSelect">
-                <option value="">Select your name po...</option>
-                <option value="1">Jane Doe (Head Admin)</option>
-                <option value="2">John Cruz</option>
-                <option value="3">Mary Santos</option>
+                <option value="">Loading staff rows po...</option>
             </select>
         </div>
         <button class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
     </div>
 
-    <!-- MIDDLE: HIGH DENSITY REAL-TIME ALERTS FEED -->
     <div class="stream-container" id="noticeStream">
         
-        <!-- Mock Card 1 -->
         <div class="notice-card">
             <div class="notice-content">
                 <div class="notice-line1">
@@ -321,7 +315,6 @@
             </div>
         </div>
 
-        <!-- Mock Card 2 -->
         <div class="notice-card">
             <div class="notice-content">
                 <div class="notice-line1">
@@ -336,7 +329,6 @@
             </div>
         </div>
 
-        <!-- Mock Card 3 -->
         <div class="notice-card">
             <div class="notice-content">
                 <div class="notice-line1">
@@ -353,16 +345,13 @@
 
     </div>
 
-    <!-- BOTTOM: CONSOLE AND MONITOR CONTROLS ANCHOR -->
     <div class="bottom-anchor">
         
-        <!-- SAFETY NET CONTROL BANNER -->
         <div class="safety-banner">
             <span class="safety-title">⚠️ Unattended:</span>
             <div class="safety-scroll">Mulanay Branch, Candelaria Branch, Lucena Branch</div>
         </div>
 
-        <!-- POP-OUT SHIFT MANAGEMENT GRID -->
         <label class="operator-label">My Tracked Feeds (Toggle Shift Coverage)</label>
         <div class="chips-container">
             <div class="chips-wrap">
@@ -382,11 +371,43 @@
     </div>
 
     <script>
+        // Update this string with your specific Xano API Group directory path URL
+        const XANO_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:xxxxxx'; 
+
+        const operatorSelect = document.getElementById('operatorSelect');
+
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
             const btn = document.querySelector('.theme-toggle-btn');
             btn.innerText = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
         }
+
+        // Live connection function fetching the admin list entries from Xano
+        async function loadOperatorDropdown() {
+            try {
+                const response = await fetch(`${XANO_BASE_URL}/get_admin_names`);
+                if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
+                
+                const admins = await response.json();
+                
+                // Reset loading tag options clean
+                operatorSelect.innerHTML = '<option value="">Select your name po...</option>';
+                
+                admins.forEach(admin => {
+                    const option = document.createElement('option');
+                    option.value = admin.id;   // Stores integer id relation rule
+                    option.text = admin.name;   // Displays text title cleanly
+                    operatorSelect.appendChild(option);
+                });
+
+            } catch (err) {
+                console.error("Failed to load admin names from Xano:", err);
+                operatorSelect.innerHTML = '<option value="">Error loading staff po</option>';
+            }
+        }
+
+        // Fetch directory profiles immediately upon browser engine load state
+        window.addEventListener('DOMContentLoaded', loadOperatorDropdown);
     </script>
 </body>
 </html>
