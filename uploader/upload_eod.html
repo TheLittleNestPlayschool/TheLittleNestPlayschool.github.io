@@ -12,9 +12,9 @@
         .camera-box { padding: 40px 20px; text-align: center; border: 2px dashed #cbd5e0; border-radius: 10px; cursor: pointer; background: var(--bg-soft); }
         #preview-img { width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-bottom: 15px; background: #000; display: none; }
         .entry-form { display: none; border-top: 2px solid #edf2f7; padding-top: 20px; margin-top: 15px; }
-        .form-group { margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; position: relative; }
         label { display: block; font-size: 11px; font-weight: 800; color: #4a5568; text-transform: uppercase; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; background: white; box-sizing: border-box; }
+        input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; background: white; box-sizing: border-box; display: block; -webkit-appearance: select; appearance: select; }
         select:disabled { background: #f1f5f9; cursor: not-allowed; color: #94a3b8; }
         .basket-wrap { margin-top: 20px; background: var(--bg-soft); border-radius: 8px; padding: 10px; border: 1px solid var(--border); }
         .basket-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -26,6 +26,10 @@
         .btn-sync { background: var(--success); color: white; display: none; margin-top: 25px; }
         .btn-del { color: var(--danger); font-size: 18px; cursor: pointer; text-align: center; width: 30px; font-weight: bold; }
         #status-msg { font-size: 11px; font-weight: 800; color: var(--nest-blue); text-align: center; margin-top: 15px; }
+        
+        /* Stabilizes the bottom entry row layout context */
+        .entry-row { display: flex; gap: 8px; width: 100%; margin-bottom: 15px; justify-content: space-between; }
+        .entry-row .form-group { flex: 1; margin-bottom: 0; min-width: 0; }
     </style>
 </head>
 <body>
@@ -55,7 +59,7 @@
             </select>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 8px; align-items: end;">
+        <div class="entry-row">
             <div class="form-group">
                 <label>Amount (PHP)</label>
                 <input type="number" id="amount-input" placeholder="0">
@@ -149,7 +153,6 @@
             
             if (Array.isArray(data)) {
                 data.forEach(t => {
-                    // Mapped to your exact column: payment_type
                     const valueText = t.payment_type;
                     if (valueText) {
                         typeSel.innerHTML += `<option value="${valueText}">${valueText}</option>`;
@@ -179,9 +182,9 @@
         const sSel = document.getElementById('student-select');
         const tSel = document.getElementById('teacher-select');
         
-        sSel.innerHTML = '<option value="">-- Select Parent First --</option>';
+        sSel.innerHTML = '<option value="">-- Select Student --</option>';
         sSel.disabled = true;
-        tSel.innerHTML = '<option value="">-- Select Student First --</option>';
+        tSel.innerHTML = '<option value="">-- Select --</option>';
         tSel.disabled = true;
 
         if (!pId) return;
@@ -201,7 +204,7 @@
     async function handleStudentChange(sId) {
         const tSel = document.getElementById('teacher-select');
         if (!sId) {
-            tSel.innerHTML = '<option value="">-- Select Student First --</option>';
+            tSel.innerHTML = '<option value="">-- Select --</option>';
             tSel.disabled = true;
             return;
         }
