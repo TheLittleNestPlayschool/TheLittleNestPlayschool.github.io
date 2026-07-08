@@ -10,7 +10,7 @@
         
         body { 
             font-family: 'Segoe UI', sans-serif; 
-            background: #fff; /* Start with pure white */
+            background: #fff; 
             margin: 0; 
             display: flex; 
             flex-direction: column; 
@@ -28,7 +28,6 @@
             background: #fff; 
         }
 
-        /* ALL UI HIDDEN BY DEFAULT - NO EXCEPTIONS */
         #main-header, #main-nav, #module-frame, #lock-screen { 
             display: none; 
         }
@@ -64,7 +63,6 @@
 
         #module-frame { flex-grow: 1; border: none; width: 100%; background: var(--nest-bg); }
 
-        /* Minimalist Denied State */
         #lock-screen { 
             flex-grow: 1; 
             display: none; 
@@ -122,16 +120,14 @@
                 localStorage.setItem('nestmind_f_slug', slug);
                 localStorage.setItem('nestmind_f_name', matched.name);
                 
-                // Show layout elements
                 mainHeader.style.display = 'block';
                 mainNav.style.display = 'flex';
                 frame.style.display = 'block';
                 title.innerText = matched.name.toUpperCase() + " VAULT";
                 
-                // Automatically route directly into the End of Day uploader module
-                frame.src = 'upload_eod.html';
+                // Added cache busting timestamp (?v=) to drop the old browser version
+                frame.src = 'upload_eod.html?v=' + Date.now();
                 
-                // Hide key from URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             } else {
                 lockScreen.style.display = 'flex';
@@ -145,7 +141,8 @@
     function loadModule(url, el) {
         document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
         el.classList.add('active');
-        document.getElementById('module-frame').src = url;
+        // Cache busting variant on click
+        document.getElementById('module-frame').src = url + '?v=' + Date.now();
     }
 
     window.onload = authenticateAndLoad;
