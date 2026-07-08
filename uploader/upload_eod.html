@@ -55,7 +55,7 @@
             </select>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 8px;">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 8px; align-items: end;">
             <div class="form-group">
                 <label>Amount (PHP)</label>
                 <input type="number" id="amount-input" placeholder="0">
@@ -146,13 +146,16 @@
             const resp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:Hw8UZ2CW/payment_type");
             const data = await resp.json();
             typeSel.innerHTML = '<option value="">-- Select Type --</option>';
-            data.forEach(t => {
-                // Dynamically reads text string values. Checks both 'name' and 'type' keys for compatibility.
-                const valueText = t.name || t.type;
-                if (valueText) {
-                    typeSel.innerHTML += `<option value="${valueText}">${valueText}</option>`;
-                }
-            });
+            
+            if (Array.isArray(data)) {
+                data.forEach(t => {
+                    // Mapped to your exact column: payment_type
+                    const valueText = t.payment_type;
+                    if (valueText) {
+                        typeSel.innerHTML += `<option value="${valueText}">${valueText}</option>`;
+                    }
+                });
+            }
             typeSel.disabled = false;
         } catch (e) { 
             console.error("Payment type configurations missing", e);
