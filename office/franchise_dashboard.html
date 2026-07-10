@@ -1,281 +1,64 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NestMind | Franchise Dashboard</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <link rel="stylesheet" href="../nest_style.css">
-
-    <script src="../api_config.js"></script>
-    <script src="../security.js"></script>
-
-    <style>
-
-        body{
-            margin:0;
-            padding:0;
-            background:#f8fafc;
-            font-family:Arial,Helvetica,sans-serif;
-        }
-
-        #dashboard{
-            max-width:450px;
-            margin:auto;
-            padding:16px;
-        }
-
-        .module{
-            margin-bottom:16px;
-        }
-
-        /* ---------- Sync Overlay ---------- */
-
-        #sync-overlay{
-            position:fixed;
-            inset:0;
-            display:none;
-            align-items:center;
-            justify-content:center;
-            background:rgba(15,23,42,.70);
-            backdrop-filter:blur(5px);
-            z-index:9999;
-        }
-
-        .sync-box{
-            width:300px;
-            background:white;
-            border-radius:20px;
-            padding:30px;
-            text-align:center;
-            box-shadow:0 20px 50px rgba(0,0,0,.20);
-        }
-
-        .sync-track{
-            height:8px;
-            background:#e2e8f0;
-            border-radius:20px;
-            overflow:hidden;
-            margin-top:20px;
-        }
-
-        .sync-fill{
-            width:0%;
-            height:100%;
-            background:#00d1b2;
-            transition:.3s;
-        }
-
-    </style>
-
-</head>
-
-<body>
-
-<div id="sync-overlay">
-
-    <div class="sync-box">
-
-        <div style="font-size:34px;">⚡</div>
-
-        <h2 id="sync-title">Loading Dashboard</h2>
-
-        <p id="sync-text">Connecting...</p>
-
-        <div class="sync-track">
-            <div id="sync-fill" class="sync-fill"></div>
-        </div>
-
-    </div>
-
-</div>
-
-
-
-<div id="dashboard">
-
-    <div id="frdash_header" class="module"></div>
-
-    <div id="frdash_health" class="module"></div>
-
-    <div id="frdash_alerts" class="module"></div>
-
-    <div id="frdash_snapshot" class="module"></div>
-
-    <div id="frdash_sessions" class="module"></div>
-
-    <div id="frdash_marketing" class="module"></div>
-
-    <div id="frdash_growth" class="module"></div>
-
-    <div id="frdash_revenue" class="module"></div>
-
-    <div id="frdash_actions" class="module"></div>
-
-</div>
-
-
-
-<script>
-
-const modules = [
-
-    {
-        id:"frdash_header",
-        file:"./frdash_header.html"
-    },
-
-    {
-        id:"frdash_health",
-        file:"./frdash_health.html"
-    },
-
-    {
-        id:"frdash_alerts",
-        file:"./frdash_alerts.html"
-    },
-
-    {
-        id:"frdash_snapshot",
-        file:"./frdash_snapshot.html"
-    },
-
-    {
-        id:"frdash_sessions",
-        file:"./frdash_sessions.html"
-    },
-
-    {
-        id:"frdash_marketing",
-        file:"./frdash_marketing.html"
-    },
-
-    {
-        id:"frdash_growth",
-        file:"./frdash_growth.html"
-    },
-
-    {
-        id:"frdash_revenue",
-        file:"./frdash_revenue.html"
-    },
-
-    {
-        id:"frdash_actions",
-        file:"./frdash_actions.html"
-    }
-
-];
-
-
-
-async function init(){
-
-    const urlParams=new URLSearchParams(window.location.search);
-
-    const tlnpKey=urlParams.get("tlnp");
-
-    if(!tlnpKey){
-
-        alert("Invalid Dashboard Link");
-
-        return;
-
-    }
-
-    localStorage.setItem("nestmind_access_key",tlnpKey);
-
-    try{
-
-        const response=await fetch(NEST_ENDPOINTS.franchise.list);
-
-        const data=await response.json();
-
-        const franchises=Array.isArray(data)?data:(data.items||[]);
-
-        if(tlnpKey==="TLNP624163"){
-
-            localStorage.setItem("is_head_office","true");
-            localStorage.setItem("nestmind_f_id","all");
-            localStorage.setItem("nestmind_f_name","HEAD OFFICE");
-
-        }else{
-
-            const matched=franchises.find(f=>f.access_key===tlnpKey);
-
-            if(!matched){
-
-                alert("Access Denied");
-
-                return;
-
-            }
-
-            localStorage.setItem("is_head_office","false");
-            localStorage.setItem("nestmind_f_id",matched.id);
-            localStorage.setItem("nestmind_f_name",matched.name);
-
-        }
-
-        window.history.replaceState({},document.title,window.location.pathname);
-
-        await loadDashboardModules();
-
-    }
-
-    catch(err){
-
-        console.error(err);
-
-        alert("Unable to load dashboard.");
-
-    }
-
+/* ===========================
+   DASHBOARD LAYOUT
+=========================== */
+
+body{
+    margin:0;
+    padding:0;
+    background:#f3f7fb;
+    font-family:'Inter',sans-serif;
 }
 
-
-
-async function loadDashboardModules(){
-
-    document.getElementById("sync-overlay").style.display="flex";
-
-    for(let i=0;i<modules.length;i++){
-
-        document.getElementById("sync-text").innerText="Loading "+modules[i].id;
-
-        document.getElementById("sync-fill").style.width=((i+1)/modules.length*100)+"%";
-
-        await loadModule(modules[i]);
-
-    }
-
-    setTimeout(()=>{
-
-        document.getElementById("sync-overlay").style.display="none";
-
-    },300);
-
+#dashboard{
+    max-width:450px;
+    margin:0 auto;
+    padding:18px;
 }
 
+/* ===========================
+   STANDARD MODULE CARD
+=========================== */
 
-
-async function loadModule(module){
-
-    const response=await fetch(module.file+"?v="+Date.now());
-
-    const html=await response.text();
-
-    document.getElementById(module.id).innerHTML=html;
-
+.frdash-card{
+    background:#ffffff;
+    border-radius:20px;
+    padding:18px;
+    margin-bottom:18px;
+    box-shadow:0 8px 25px rgba(15,23,42,.08);
+    border:1px solid #e8eef5;
 }
 
+.frdash-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
 
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:1px;
 
-window.onload=init;
+    color:#334155;
 
-</script>
+    margin-bottom:18px;
+}
 
-</body>
-</html>
+.frdash-title span{
+    font-size:20px;
+}
+
+.frdash-subtitle{
+    color:#64748b;
+    font-size:12px;
+}
+
+.frdash-divider{
+    height:1px;
+    background:#edf2f7;
+    margin:14px 0;
+}
+
+.placeholder{
+    color:#94a3b8;
+    font-style:italic;
+}
