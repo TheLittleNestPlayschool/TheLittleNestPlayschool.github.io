@@ -1,44 +1,61 @@
-<div class="upload-section" style="border: 1px solid #ccc; padding: 15px; margin-top: 20px;">
-    <h3>Manual Upload & Link</h3>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Posting Engine</title>
+</head>
+<body>
+    <h1>Google Posting Engine</h1>
     
-    <label for="manualPostId">Enter Post Record ID:</label>
-    <input type="number" id="manualPostId" placeholder="e.g. 3">
-    
-    <br><br>
-    
-    <input type="file" id="imageInput" accept="image/*">
-    <button onclick="uploadImage()">Upload and Link Picture</button>
-</div>
+    <button onclick="connectGoogle()">Connect Google Business</button>
 
-<script>
-async function uploadImage() {
-    const fileInput = document.getElementById('imageInput');
-    const postId = document.getElementById('manualPostId').value;
-    const file = fileInput.files[0];
+    <hr>
 
-    if (!postId) return alert("Please enter the Post Record ID first.");
-    if (!file) return alert("Please select a file.");
-
-    const formData = new FormData();
-    formData.append('file_resource', file);
-    formData.append('file_name', file.name);
-    formData.append('post_content_id', postId);
-
-    try {
-        const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:zS4wKXR6/post_image_upload', {
-            method: 'POST',
-            body: formData
-        });
+    <div class="upload-section" style="border: 1px solid #ccc; padding: 15px; margin-top: 20px;">
+        <h3>Manual Upload & Link</h3>
         
-        const result = await response.json();
-        alert("Success! Picture uploaded and linked to record #" + postId);
+        <label for="manualPostId">Enter Post Record ID:</label>
+        <input type="number" id="manualPostId" placeholder="e.g. 3">
         
-        // Optional: Clear fields after success
-        document.getElementById('manualPostId').value = '';
-        fileInput.value = '';
-    } catch (error) {
-        console.error("Upload failed:", error);
-        alert("Upload failed. Check the console.");
+        <br><br>
+        
+        <input type="file" id="imageInput" accept="image/*">
+        <button onclick="uploadImage()">Upload and Link Picture</button>
+    </div>
+
+    <script>
+    async function uploadImage() {
+        const fileInput = document.getElementById('imageInput');
+        const postId = document.getElementById('manualPostId').value;
+        const file = fileInput.files[0];
+
+        if (!postId) return alert("Please enter the Post Record ID first.");
+        if (!file) return alert("Please select a file.");
+
+        const formData = new FormData();
+        formData.append('file_resource', file);
+        formData.append('file_name', file.name);
+        formData.append('post_content_id', postId);
+
+        try {
+            const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:zS4wKXR6/post_image_upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            alert("Success! Picture uploaded and linked to record #" + postId);
+            
+            document.getElementById('manualPostId').value = '';
+            fileInput.value = '';
+        } catch (error) {
+            console.error("Upload failed:", error);
+            alert("Upload failed. Check the console.");
+        }
     }
-}
-</script>
+
+    function connectGoogle() {
+        // Your existing Google connection logic
+    }
+    </script>
+</body>
+</html>
