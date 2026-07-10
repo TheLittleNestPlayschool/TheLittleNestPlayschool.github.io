@@ -12,7 +12,6 @@
         }
         .container { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 30px; }
         .card-content { padding: 15px; word-wrap: break-word; }
-        /* Removed fixed height to allow proportional scaling */
         .card img { width: 100%; display: block; }
         input[type="number"], input[type="file"] { width: 100%; margin: 10px 0; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
         button { background-color: #4a90e2; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
@@ -24,7 +23,7 @@
 <body>
 
     <h1>Google Posting Engine</h1>
-    <button style="background-color: #db4437;" onclick="connectGoogle()">Connect Google Business</button>
+    <button id="authBtn" style="background-color: #db4437;">Connect Google Business</button>
 
     <div class="card" style="padding: 20px; margin-top: 20px; width: 350px;">
         <h3>Manual Upload & Link</h3>
@@ -42,7 +41,20 @@
     <div id="postCardContainer" class="container"></div>
 
     <script>
-        // CLIENT-SIDE RESIZER: Force 1080px width, scale height proportionally
+        // GOOGLE AUTH LOGIC
+        document.getElementById('authBtn').addEventListener('click', async () => {
+            const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:WmBkvZnb/google/auth_url');
+            const data = await response.json();
+            const authUrl = data.Response; 
+            
+            if (authUrl) {
+                window.location.href = authUrl;
+            } else {
+                console.error("Could not find auth URL in response", data);
+            }
+        });
+
+        // CLIENT-SIDE RESIZER (1080px Width)
         async function resizeImage(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -69,6 +81,7 @@
             });
         }
 
+        // UPLOAD LOGIC
         async function uploadImage() {
             const fileInput = document.getElementById('imageInput');
             const postId = document.getElementById('manualPostId').value;
@@ -101,6 +114,7 @@
             }
         }
 
+        // PREVIEW LOGIC
         async function loadPreview() {
             const container = document.getElementById('postCardContainer');
             container.innerHTML = "Loading...";
@@ -129,8 +143,6 @@
                 container.innerHTML = "Error loading preview.";
             }
         }
-
-        function connectGoogle() { }
     </script>
 </body>
 </html>
