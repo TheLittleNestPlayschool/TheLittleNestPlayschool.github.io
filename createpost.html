@@ -1,36 +1,44 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Google Posting Engine</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 40px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 20px; width: 350px; }
+        input[type="number"], input[type="file"] { width: 100%; margin: 10px 0; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background-color: #4a90e2; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
+        button:hover { background-color: #357abd; }
+        #status { margin-top: 15px; font-size: 0.9em; color: #555; text-align: center; }
+    </style>
 </head>
 <body>
+
     <h1>Google Posting Engine</h1>
-    
-    <button onclick="connectGoogle()">Connect Google Business</button>
+    <button style="width: auto; background-color: #db4437;" onclick="connectGoogle()">Connect Google Business</button>
 
-    <hr>
-
-    <div class="upload-section" style="border: 1px solid #ccc; padding: 15px; margin-top: 20px;">
-        <h3>Manual Upload & Link</h3>
-        
-        <label for="manualPostId">Enter Post Record ID:</label>
+    <div class="card">
+        <h3>Upload Media</h3>
+        <label>Post Record ID:</label>
         <input type="number" id="manualPostId" placeholder="e.g. 3">
         
-        <br><br>
-        
         <input type="file" id="imageInput" accept="image/*">
-        <button onclick="uploadImage()">Upload and Link Picture</button>
+        
+        <button id="uploadBtn" onclick="uploadImage()">Upload & Link</button>
+        <div id="status"></div>
     </div>
 
     <script>
     async function uploadImage() {
-        const fileInput = document.getElementById('imageInput');
+        const btn = document.getElementById('uploadBtn');
+        const status = document.getElementById('status');
         const postId = document.getElementById('manualPostId').value;
-        const file = fileInput.files[0];
+        const file = document.getElementById('imageInput').files[0];
 
-        if (!postId) return alert("Please enter the Post Record ID first.");
-        if (!file) return alert("Please select a file.");
+        if (!postId || !file) return alert("Please enter ID and select a file.");
+
+        // Show "working" state
+        btn.disabled = true;
+        btn.innerText = "Uploading...";
+        status.innerText = "Processing, please wait...";
 
         const formData = new FormData();
         formData.append('file_resource', file);
@@ -43,19 +51,17 @@
                 body: formData
             });
             
-            const result = await response.json();
-            alert("Success! Picture uploaded and linked to record #" + postId);
-            
-            document.getElementById('manualPostId').value = '';
-            fileInput.value = '';
+            if (response.ok) {
+                status.innerText = "✅ Upload complete!";
+            } else {
+                throw new Error("Server error");
+            }
         } catch (error) {
-            console.error("Upload failed:", error);
-            alert("Upload failed. Check the console.");
+            status.innerText = "❌ Upload failed. Try again.";
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Upload & Link";
         }
-    }
-
-    function connectGoogle() {
-        // Your existing Google connection logic
     }
     </script>
 </body>
