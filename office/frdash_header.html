@@ -1,0 +1,45 @@
+<!-- office/frdash_header.html -->
+<div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+        <!-- Brand Icon / Miniature Logo Context -->
+        <div class="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center text-2xl border border-teal-100/50">
+            🪺
+        </div>
+        <div>
+            <h2 id="header-branch-title" class="text-base font-black text-slate-800 uppercase tracking-tight leading-none">
+                Loading Branch...
+            </h2>
+            <p id="header-timestamp" class="text-[9px] text-slate-400 font-medium uppercase tracking-wider mt-1">
+                Syncing timestamp...
+            </p>
+        </div>
+    </div>
+    
+    <!-- Premium Differentiator Tag -->
+    <div class="bg-amber-50/60 border border-amber-100 rounded-full px-2.5 py-1 text-center">
+        <span class="text-[8px] font-bold text-amber-700 uppercase tracking-widest block">LPT Staffed</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // Pull context from the parent controller shell variables or localStorage
+        const branchName = localStorage.getItem('nestmind_f_name') || 'The Little Nest';
+        const titleEl = document.getElementById('header-branch-title');
+        const timeEl = document.getElementById('header-timestamp');
+        
+        if (titleEl) {
+            titleEl.innerText = branchName;
+        }
+        
+        if (timeEl) {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'pm' : 'am';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // Handle midnight/noon edge case
+            timeEl.innerText = `Updated Today ${hours}:${minutes}${ampm}`;
+        }
+    })();
+</script>
