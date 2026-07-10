@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>Google Posting Engine</h1>
+    <button id="authBtn">Connect Google Business</button>
+
+    <script>
+        document.getElementById('authBtn').addEventListener('click', async () => {
+            // 1. Call your Xano API
+            const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:WmBkvZnb/google/auth_url');
+            const data = await response.json();
+            
+            // 2. The API returns the JSON. Extract the URL.
+            // Note: Use 'Response' if that's the key showing in your JSON output
+            const authUrl = data.Response; 
+            
+            // 3. This executes the "run" command in the browser
+            if (authUrl) {
+                window.location.href = authUrl;
+            } else {
+                console.error("Could not find auth URL in response", data);
+            }
+        });
+    </script>
+</body>
+</html>
