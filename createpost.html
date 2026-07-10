@@ -45,21 +45,50 @@
     <div id="postCardContainer" class="container"></div>
 
     <script>
+        // CLIENT-SIDE RESIZER
+        async function resizeImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 1200;
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        canvas.toBlob((blob) => {
+                            resolve(new File([blob], file.name.split('.')[0] + ".webp", { type: 'image/webp' }));
+                        }, 'image/webp', 0.8);
+                    };
+                };
+            });
+        }
+
         // UPLOAD LOGIC
         async function uploadImage() {
+            const fileInput = document.getElementById('imageInput');
+            const postId = document.getElementById('manualPostId').value;
+            if (!postId || !fileInput.files[0]) return alert("Please enter ID and select a file.");
+
             const btn = document.getElementById('uploadBtn');
             const status = document.getElementById('status');
-            const postId = document.getElementById('manualPostId').value;
-            const file = document.getElementById('imageInput').files[0];
-
-            if (!postId || !file) return alert("Please enter ID and select a file.");
-
+            
             btn.disabled = true;
-            btn.innerText = "Uploading...";
+            btn.innerText = "Resizing & Uploading...";
+            
+            // Resize before sending
+            const resizedFile = await resizeImage(fileInput.files[0]);
             
             const formData = new FormData();
-            formData.append('file_resource', file);
-            formData.append('file_name', file.name);
+            formData.append('file_resource', resizedFile);
+            formData.append('file_name', resizedFile.name);
             formData.append('post_content_id', postId);
 
             try {
@@ -68,11 +97,7 @@
                     body: formData
                 });
                 
-                if (response.ok) {
-                    status.innerText = "✅ Upload complete!";
-                } else {
-                    status.innerText = "❌ Upload failed.";
-                }
+                status.innerText = response.ok ? "✅ Upload complete!" : "❌ Upload failed.";
             } catch (error) {
                 status.innerText = "❌ Error occurred.";
             } finally {
@@ -95,8 +120,6 @@
                 posts.forEach(post => {
                     const card = document.createElement('div');
                     card.className = 'card';
-                    
-                    // Replace literal "\n" strings with HTML line breaks
                     const formattedText = post.final_text.replace(/\\n/g, '<br>');
 
                     card.innerHTML = `
@@ -115,9 +138,7 @@
             }
         }
 
-        function connectGoogle() { 
-            // Existing logic
-        }
+        function connectGoogle() { }
     </script>
 </body>
 </html>
