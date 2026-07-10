@@ -14,7 +14,6 @@
         .container { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 30px; }
         .card-content { 
             padding: 15px; 
-            white-space: pre-wrap; 
             word-wrap: break-word; 
         }
         .card img { width: 100%; height: 200px; object-fit: cover; }
@@ -96,11 +95,15 @@
                 posts.forEach(post => {
                     const card = document.createElement('div');
                     card.className = 'card';
+                    
+                    // Replace literal "\n" strings with HTML line breaks
+                    const formattedText = post.final_text.replace(/\\n/g, '<br>');
+
                     card.innerHTML = `
                         <img src="${post.media}" onerror="this.style.display='none'">
                         <div class="card-content">
                             <h3>${post.franchise_name}</h3>
-                            <p>${post.final_text}</p>
+                            <p>${formattedText}</p>
                             <small><strong>Scheduled:</strong> ${post.display_date}</small>
                         </div>
                     `;
