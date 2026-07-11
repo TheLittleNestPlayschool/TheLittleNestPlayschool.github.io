@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -169,14 +168,17 @@
                 const data = await response.json();
 
                 const gridData = {};
+                
                 data.forEach(item => {
                     const fName = item.franchise_name || 'Unassigned';
                     if (!gridData[fName]) gridData[fName] = new Array(30).fill(null);
                     
-                    const dateObj = new Date(item.scheduled_publication_time);
-                    if (!isNaN(dateObj.getTime())) {
-                        const day = dateObj.getDate();
-                        if (day >= 1 && day <= 30) {
+                    // Manual extraction to handle "Jul 11, 2026" string format
+                    const dateStr = item.scheduled_publication_time;
+                    if (dateStr && dateStr.includes(',')) {
+                        const day = parseInt(dateStr.split(',')[1].trim().split(' ')[0]);
+                        
+                        if (!isNaN(day) && day >= 1 && day <= 30) {
                             gridData[fName][day - 1] = item;
                         }
                     }
