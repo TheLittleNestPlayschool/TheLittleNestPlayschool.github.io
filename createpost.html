@@ -168,12 +168,12 @@
                 const data = await response.json();
 
                 const gridData = {};
-                let currentMonth = "Schedule";
+                let displayMonth = "Schedule";
                 
-                // Identify the month from the first valid record
-                const firstPost = data.find(item => item.scheduled_publication_time && item.scheduled_publication_time.includes(','));
+                // Use the first post's display_date to set the header, if available
+                const firstPost = data.find(item => item.display_date);
                 if (firstPost) {
-                    currentMonth = firstPost.scheduled_publication_time.split(' ')[0];
+                    displayMonth = firstPost.display_date.split(' ')[0];
                 }
                 
                 data.forEach(item => {
@@ -192,7 +192,7 @@
                     }
                 });
 
-                let html = `<h3>${currentMonth}</h3><table><thead><tr><th>Franchise</th>`;
+                let html = `<h3>${displayMonth}</h3><table><thead><tr><th>Franchise</th>`;
                 for(let i=1; i<=30; i++) html += `<th>${i}</th>`;
                 html += '</tr></thead><tbody>';
 
