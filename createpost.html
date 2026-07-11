@@ -26,6 +26,9 @@
         /* Expanded column for Franchise Name */
         th:first-child, td:first-child { width: 180px; text-align: left; padding-left: 10px; }
         th { background: #f8f9fa; }
+        
+        /* Larger cell style for visibility */
+        .post-cell { height: 45px; cursor: pointer; border: 1px solid #eee; }
     </style>
 </head>
 <body>
@@ -170,22 +173,22 @@
                 const gridData = {};
                 let displayMonth = "Schedule";
                 
-                // Set month based on the first available display_date
+                // Logic to set month header
                 const firstPost = data.find(item => item.display_date);
                 if (firstPost) {
                     displayMonth = firstPost.display_date.split(' ')[0];
                 }
                 
+                // Logic to map posts into grid
                 data.forEach(item => {
                     const fName = item.franchise_name || 'Unassigned';
-                    if (!gridData[fName]) gridData[fName] = new Array(30).fill(null);
+                    if (!gridData[fName]) {
+                        gridData[fName] = new Array(30).fill(null);
+                    }
                     
-                    // Parse day from the same display_date used in cards (e.g., "July 21, 2026")
                     const dateStr = item.display_date;
                     if (dateStr && dateStr.includes(',')) {
-                        const parts = dateStr.split(',');
-                        const dayPart = parts[0].trim().split(' ').pop();
-                        const day = parseInt(dayPart);
+                        const day = parseInt(dateStr.split(',')[0].trim().split(' ').pop());
                         
                         if (!isNaN(day) && day >= 1 && day <= 30) {
                             gridData[fName][day - 1] = item;
@@ -193,15 +196,25 @@
                     }
                 });
 
+                // Logic to render HTML table
                 let html = `<h3>${displayMonth}</h3><table><thead><tr><th>Franchise</th>`;
-                for(let i=1; i<=30; i++) html += `<th>${i}</th>`;
+                for(let i=1; i<=30; i++) {
+                    html += `<th>${i}</th>`;
+                }
                 html += '</tr></thead><tbody>';
 
                 for (const [franchise, days] of Object.entries(gridData)) {
                     html += `<tr><td><strong>${franchise}</strong></td>`;
+                    
                     days.forEach((post) => {
-                        const color = post ? `hsl(${(post.post_content_id * 137.5) % 360}, 70%, 80%)` : '#fff';
-                        html += `<td style="background-color: ${color};" title="${post ? post.final_text : 'No post'}">
+                        const color = post ? `hsl(${(post.id * 137.5) % 360}, 70%, 80%)` : '#fff';
+                        
+                        // Detailed hover info for the requested enhancement
+                        const hoverTitle = post 
+                            ? `Post ID: ${post.id} | Scheduled: ${post.display_date} | Text: ${post.final_text}` 
+                            : 'No post';
+                            
+                        html += `<td class="post-cell" style="background-color: ${color};" title="${hoverTitle}">
                                     ${post ? '●' : ''}
                                  </td>`;
                     });
