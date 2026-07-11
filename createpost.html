@@ -18,10 +18,13 @@
         button:hover { background-color: #357abd; }
         #status { margin-top: 15px; font-size: 0.9em; color: #555; }
         h3 { margin: 0 0 10px 0; }
+        
         /* Grid Styles */
         #scheduleGridContainer { margin-top: 20px; background: white; padding: 20px; border-radius: 8px; overflow-x: auto; }
         table { border-collapse: collapse; width: 100%; font-size: 0.8em; table-layout: fixed; }
         th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+        /* Expanded column for Franchise Name */
+        th:first-child, td:first-child { width: 180px; text-align: left; padding-left: 10px; }
         th { background: #f8f9fa; }
     </style>
 </head>
@@ -170,9 +173,11 @@
                     if (!gridData[fName]) gridData[fName] = new Array(30).fill(null);
                     
                     const dateObj = new Date(item.scheduled_publication_time);
-                    const day = dateObj.getDate();
-                    if (day >= 1 && day <= 30) {
-                        gridData[fName][day - 1] = item;
+                    if (!isNaN(dateObj.getTime())) {
+                        const day = dateObj.getDate();
+                        if (day >= 1 && day <= 30) {
+                            gridData[fName][day - 1] = item;
+                        }
                     }
                 });
 
@@ -184,7 +189,7 @@
                     html += `<tr><td><strong>${franchise}</strong></td>`;
                     days.forEach((post) => {
                         const color = post ? `hsl(${(post.post_content_id * 137.5) % 360}, 70%, 80%)` : '#fff';
-                        html += `<td style="background-color: ${color};" title="${post ? post.final_text : ''}">
+                        html += `<td style="background-color: ${color};" title="${post ? post.final_text : 'No post'}">
                                     ${post ? '●' : ''}
                                  </td>`;
                     });
