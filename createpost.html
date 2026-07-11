@@ -21,14 +21,13 @@
         
         /* Grid Styles */
         #scheduleGridContainer { margin-top: 20px; background: white; padding: 20px; border-radius: 8px; overflow-x: auto; }
-        table { border-collapse: collapse; width: 100%; font-size: 0.8em; table-layout: fixed; }
-        th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
-        /* Expanded column for Franchise Name */
+        table { border-collapse: collapse; width: 100%; font-size: 0.75em; table-layout: fixed; }
+        th, td { border: 1px solid #ddd; padding: 4px; text-align: center; }
         th:first-child, td:first-child { width: 180px; text-align: left; padding-left: 10px; }
         th { background: #f8f9fa; }
         
-        /* Larger cell style for visibility */
-        .post-cell { height: 45px; cursor: pointer; border: 1px solid #eee; }
+        /* Bar style for schedule */
+        .post-cell { height: 60px; vertical-align: top; cursor: pointer; font-size: 0.7em; overflow: hidden; }
     </style>
 </head>
 <body>
@@ -209,13 +208,11 @@
                     days.forEach((post) => {
                         const color = post ? `hsl(${(post.id * 137.5) % 360}, 70%, 80%)` : '#fff';
                         
-                        // Detailed hover info for the requested enhancement
-                        const hoverTitle = post 
-                            ? `Post ID: ${post.id} | Scheduled: ${post.display_date} | Text: ${post.final_text}` 
-                            : 'No post';
+                        // ID and Title are now displayed directly in the bar
+                        const displayContent = post ? `<strong>#${post.id}</strong><br>${post.post_title || 'No Title'}` : '';
                             
-                        html += `<td class="post-cell" style="background-color: ${color};" title="${hoverTitle}">
-                                    ${post ? '●' : ''}
+                        html += `<td class="post-cell" style="background-color: ${color};" title="${post ? post.final_text : 'No post'}">
+                                    ${displayContent}
                                  </td>`;
                     });
                     html += '</tr>';
