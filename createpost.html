@@ -20,8 +20,9 @@
         h3 { margin: 0 0 10px 0; }
         /* Grid Styles */
         #scheduleGridContainer { margin-top: 20px; background: white; padding: 20px; border-radius: 8px; overflow-x: auto; }
-        table { border-collapse: collapse; width: 100%; font-size: 0.85em; }
-        th, td { border: 1px solid #eee; padding: 8px; text-align: center; }
+        table { border-collapse: collapse; width: 100%; font-size: 0.8em; table-layout: fixed; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+        th { background: #f8f9fa; }
     </style>
 </head>
 <body>
@@ -157,12 +158,45 @@
         // MASTER SCHEDULE GRID LOGIC
         async function loadScheduleGrid() {
             const container = document.getElementById('scheduleGridContainer');
-            container.innerHTML = "Loading schedule...";
+            container.innerHTML = "Loading schedule grid...";
 
-            // Placeholder for your grid rendering logic
-            // You can now use the 'posts' data structure from the build_posts endpoint 
-            // or fetch from a dedicated post_schedule endpoint.
-            container.innerHTML = "Grid interface initialized. Ready for drag-and-drop implementation.";
+            try {
+                const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:WmBkvZnb/build_posts');
+                const data = await response.json();
+
+                const gridData = {};
+                data.forEach(item => {
+                    const fName = item.franchise_name || 'Unassigned';
+                    if (!gridData[fName]) gridData[fName] = new Array(30).fill(null);
+                    
+                    const dateObj = new Date(item.scheduled_publication_time);
+                    const day = dateObj.getDate();
+                    if (day >= 1 && day <= 30) {
+                        gridData[fName][day - 1] = item;
+                    }
+                });
+
+                let html = '<table><thead><tr><th>Franchise</th>';
+                for(let i=1; i<=30; i++) html += `<th>${i}</th>`;
+                html += '</tr></thead><tbody>';
+
+                for (const [franchise, days] of Object.entries(gridData)) {
+                    html += `<tr><td><strong>${franchise}</strong></td>`;
+                    days.forEach((post) => {
+                        const color = post ? `hsl(${(post.post_content_id * 137.5) % 360}, 70%, 80%)` : '#fff';
+                        html += `<td style="background-color: ${color};" title="${post ? post.final_text : ''}">
+                                    ${post ? '●' : ''}
+                                 </td>`;
+                    });
+                    html += '</tr>';
+                }
+                html += '</tbody></table>';
+                container.innerHTML = html;
+
+            } catch (error) {
+                container.innerHTML = "Error loading grid.";
+                console.error(error);
+            }
         }
     </script>
 </body>
