@@ -168,15 +168,18 @@
                 const data = await response.json();
 
                 const gridData = {};
+                let currentMonth = "Schedule";
                 
                 data.forEach(item => {
                     const fName = item.franchise_name || 'Unassigned';
                     if (!gridData[fName]) gridData[fName] = new Array(30).fill(null);
                     
-                    // Manual extraction to handle "Jul 11, 2026" string format
                     const dateStr = item.scheduled_publication_time;
                     if (dateStr && dateStr.includes(',')) {
-                        const day = parseInt(dateStr.split(',')[1].trim().split(' ')[0]);
+                        const parts = dateStr.split(',');
+                        currentMonth = parts[0].trim().split(' ')[0]; 
+                        const dayPart = parts[0].trim().split(' ').pop();
+                        const day = parseInt(dayPart);
                         
                         if (!isNaN(day) && day >= 1 && day <= 30) {
                             gridData[fName][day - 1] = item;
@@ -184,7 +187,7 @@
                     }
                 });
 
-                let html = '<table><thead><tr><th>Franchise</th>';
+                let html = `<h3>${currentMonth}</h3><table><thead><tr><th>Franchise</th>`;
                 for(let i=1; i<=30; i++) html += `<th>${i}</th>`;
                 html += '</tr></thead><tbody>';
 
