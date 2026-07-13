@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NestMind Payment Record Uploader</title>
+    <title>TLNP NestMind</title>
     <link rel="stylesheet" href="../nest_style.css">
     <script src="../api_config.js"></script>
     <style>
@@ -37,7 +37,7 @@
     <div id="upload-section">
         <div class="camera-box" id="cam-box" onclick="document.getElementById('input-cam').click()">
             <span style="font-size: 40px">📸</span>
-            <p style="font-weight: 800; margin: 10px 0 0; font-size: 14px;">SNAP PAYMENT RECORD</p>
+            <p style="font-weight: 800; margin: 10px 0 0; font-size: 14px;">Snap Payment Receipt</p>
             <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="handleImageSelect(this)">
         </div>
         <img id="preview-img" src="">
@@ -123,7 +123,7 @@
     async function uploadAndInitialize() {
         if (!fId) return alert("Session expired. Please re-login.");
         const status = document.getElementById('status-msg');
-        status.innerText = "☁️ SAVING PHOTO...";
+        status.innerText = "☁️ Saving Photo...";
         const formData = new FormData();
         formData.append('file_resource', document.getElementById('input-cam').files[0]);
         formData.append('file_name', `${slug}/eod_${Date.now()}.jpg`);
@@ -144,7 +144,7 @@
             
             document.getElementById('upload-section').style.display = 'none';
             document.getElementById('entry-section').style.display = 'block';
-            status.innerText = "PHOTO SAVED. SELECT PARENT.";
+            status.innerText = "Photo Saved. Select Parent.";
         } catch (e) { 
             console.error("Upload proxy sequence crashed", e);
             status.innerText = "UPLOAD FAILED."; 
@@ -277,7 +277,7 @@
 
     async function syncBatchToXano() {
         const status = document.getElementById('status-msg');
-        status.innerText = "🚀 SYNCING BATCH...";
+        status.innerText = "🚀 Ssyncing Batch...";
         try {
             const resp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/process_eod", {
                 method: 'POST',
@@ -290,7 +290,7 @@
                 })
             });
             if (resp.ok) {
-                status.innerText = "✅ BATCH SYNC COMPLETE!";
+                status.innerText = "✅ Receipt has been uploaded";
                 setTimeout(() => location.reload(), 2000);
             } else {
                 status.innerText = "❌ SYNC FAILED.";
