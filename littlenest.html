@@ -76,7 +76,7 @@
         <h2 class="text-lg font-bold text-purple-700 flex items-center gap-2">
           <span>🔮</span> Meet Our Licensed Teachers
         </h2>
-        <p class="text-xs text-slate-400 font-medium">Experienced educators at this branch</p>
+        <p class="text-xs text-slate-400 font-medium">Certified educators at this branch</p>
       </div>
       
       <!-- Horizontal Swipeable List -->
@@ -115,13 +115,13 @@
 
   <!-- Sticky Bottom High-Conversion Action Bar -->
   <div id="action-bar" class="hidden fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur-md border-t border-slate-100 px-5 py-4 z-40 max-w-md mx-auto flex gap-3 shadow-lg rounded-t-3xl">
-    <!-- Secondary Nav Action -->
+    <!-- Secondary Nav Action (Google Maps link) -->
     <a id="maps-btn" href="#" target="_blank" class="bg-slate-50 text-slate-700 px-5 rounded-2xl flex items-center justify-center transition active:scale-95 border border-slate-200 shadow-sm" title="Get Directions">
       <svg class="w-5 h-5 text-emerald-600 fill-current" viewBox="0 0 24 24">
         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
       </svg>
     </a>
-    <!-- Main Conversion Action -->
+    <!-- Main Conversion Action (Messenger Link) -->
     <a id="messenger-btn" href="#" target="_blank" class="flex-grow bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold py-4 px-6 rounded-2xl text-center flex items-center justify-center gap-2 shadow-lg shadow-blue-200/80 transition">
       <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
         <path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.914 1.448 5.518 3.7 7.234V22l3.357-1.845c.915.253 1.884.39 2.89.39 5.523 0 10-4.146 10-9.259C22 6.145 17.523 2 12 2zm1.06 12.39-2.58-2.753-5.023 2.753 5.52-5.855 2.636 2.753 4.967-2.753-5.52 5.855z"/>
@@ -143,7 +143,6 @@
 
   <!-- App Logic and API Connector -->
   <script>
-    // 1. Get the parameter from the URL
     const urlParams = new URLSearchParams(window.location.search);
     let branchAccessKey = urlParams.get('branch') || urlParams.get('tlnp');
 
@@ -164,7 +163,7 @@
       loadingEl.classList.add('hidden');
       errorCardEl.classList.remove('hidden');
     } else {
-      // 2. Fetch branch details with the dynamic franchise_media array
+      // Fetch branch details
       fetch(`https://x8ki-letl-twmt.n7.xano.io/api:onKSW4zf/get_franchise?web_key=${encodeURIComponent(branchAccessKey)}`)
         .then(response => {
           if (!response.ok) throw new Error('API connection lost');
@@ -173,8 +172,8 @@
         .then(branch => {
           if (!branch || branch.status === 'closed') throw new Error('Branch is currently closed');
 
-          // 3. Render core location text data
-          document.getElementById('branch-title').innerText = branch.branch_name || branch.name;
+          // Render core location text data
+          document.getElementById('branch-title').innerText = branch.name;
           document.getElementById('branch-sub-address').innerText = branch.address || 'Address information coming soon';
           document.getElementById('branch-schedule').innerText = branch.schedule_details || 'Flexible class sessions available';
           
@@ -184,17 +183,20 @@
             document.getElementById('landmark-section').classList.add('hidden');
           }
 
-          // 4. Configure funnel CTA action pathways
-          const fbPageId = branch.facebook_page_id || 'YOUR_PRIMARY_FB_PAGE_ID';
-          document.getElementById('messenger-btn').href = `https://m.me/${fbPageId}?ref=${branch.access_key}`;
+          // Directly source the numeric facebook_page_id mapped from Xano
+          const fbPageId = branch.facebook_page_id || 'thelittlenestplayschool';
           
+          // Build deep-linked Messenger URL using the page ID and the branch access key as the ref parameter
+          document.getElementById('messenger-btn').href = `https://m.me/${fbPageId}?ref=${encodeURIComponent(branchAccessKey)}`;
+          
+          // Set Maps button with google_maps_link
           if (branch.google_maps_link) {
             document.getElementById('maps-btn').href = branch.google_maps_link;
           } else {
             document.getElementById('maps-btn').classList.add('hidden');
           }
 
-          // 5. Parse and apply media components
+          // Parse and apply media components
           const mediaList = branch.media || [];
           
           // Classroom Photo / Video Header Rendering
@@ -208,7 +210,6 @@
               heroContainer.innerHTML = `<img src="${heroAsset.media_file}" alt="Classroom playground" class="w-full h-full object-cover"/>`;
             }
           } else {
-            // High-quality colorful brand fallback gradient
             heroContainer.innerHTML = `<div class="w-full h-full bg-gradient-to-tr from-blue-100 via-purple-100 to-pink-100 flex items-center justify-center font-bold text-slate-400 tracking-wide text-xs">Ready for Learning & Play 🎨</div>`;
           }
 
@@ -217,7 +218,7 @@
           const teacherRecords = mediaList.filter(m => m.media_type === 'teacher_avatar');
 
           if (teacherRecords.length > 0) {
-            teachersContainer.innerHTML = ''; // Purge visual placeholder blocks
+            teachersContainer.innerHTML = ''; // Clear visual placeholders
             teacherRecords.forEach(teacher => {
               const card = document.createElement('div');
               card.className = "bg-white p-4 rounded-2xl border border-purple-100/60 shadow-sm w-40 shrink-0 snap-center text-center flex flex-col items-center justify-center";
@@ -229,14 +230,13 @@
               teachersContainer.appendChild(card);
             });
           } else {
-            // Clean, reassuring fallback layout if teacher data is absent
             teachersContainer.innerHTML = `
               <div class="bg-white/60 p-4 rounded-2xl border border-purple-100/40 text-center w-full py-5 text-xs font-semibold text-slate-400 italic">
                 Licensed LET Teachers allocated for every session.
               </div>`;
           }
 
-          // 6. Transition page states gracefully
+          // Transition page states gracefully
           loadingEl.classList.add('opacity-0');
           setTimeout(() => loadingEl.classList.add('hidden'), 300);
           containerEl.classList.remove('hidden');
