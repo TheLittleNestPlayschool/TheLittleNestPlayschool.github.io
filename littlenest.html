@@ -38,10 +38,7 @@
     <!-- Visual Hook: Classroom Media Area (Hero) -->
     <section id="hero-media-section">
       <div id="hero-media-container" class="w-full h-52 bg-white rounded-3xl overflow-hidden shadow-md border-4 border-white relative flex items-center justify-center">
-        <div class="w-full h-full bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col items-center justify-center text-center p-4">
-          <span class="text-[10px] font-bold tracking-wider text-indigo-400 mb-1">📸 MAIN ENVIRONMENT</span>
-          <p class="text-[11px] font-semibold text-slate-400">Awaiting media upload</p>
-        </div>
+        <!-- Renders automatically from JS data loop -->
       </div>
       <p class="text-center text-xs italic text-slate-400 mt-2 font-medium">"Where early steps meet lifelong horizons"</p>
     </section>
@@ -80,8 +77,7 @@
       </div>
       
       <div id="media-gallery-list" class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
-        <!-- Dynamically rendered fields from database -->
-        <p class="text-xs text-slate-400 italic p-2">Loading environments...</p>
+        <!-- Rendered dynamically -->
       </div>
     </section>
 
@@ -95,8 +91,7 @@
       </div>
       
       <div id="teachers-list" class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
-        <!-- Dynamically rendered teachers from database -->
-        <p class="text-xs text-slate-400 italic p-2">Loading teacher profiles...</p>
+        <!-- Rendered dynamically -->
       </div>
     </section>
 
@@ -194,6 +189,7 @@
             document.getElementById('maps-btn').classList.add('hidden');
           }
 
+          // Fixed explicit get_franchise_media call configuration
           return fetch(`https://x8ki-letl-twmt.n7.xano.io/api:onKSW4zf/get_franchise_media?franchise_id=${branch.id}`)
             .then(mediaResponse => {
               if (!mediaResponse.ok) return [];
@@ -203,7 +199,7 @@
         .then(mediaList => {
           const safeMedia = mediaList || [];
           
-          // Generate placeholder design when media_file is missing
+          // Generates layout block containers even when asset.media_file is completely empty/null
           function getVisualContainer(asset, isTeacher = false) {
             if (asset.media_file && asset.media_file.url) {
               if (!isTeacher && asset.media_type && asset.media_type.includes('video')) {
@@ -215,23 +211,22 @@
 
             if (isTeacher) {
               return `
-                <div class="w-16 h-16 rounded-full bg-purple-100 border border-purple-200 flex flex-col items-center justify-center text-[9px] font-bold text-purple-400 select-none shadow-inner tracking-tight">
-                  <span>TEACHER</span>
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 border border-purple-200 flex flex-col items-center justify-center text-[10px] font-bold text-purple-500 select-none shadow-inner tracking-tight">
+                  <span>👩‍🏫 LET</span>
                 </div>`;
             }
 
             const isVideo = asset.media_type && asset.media_type.includes('video');
-            const bgGradient = isVideo ? 'from-indigo-50 to-blue-100' : 'from-slate-50 to-slate-100';
-            const textAccent = isVideo ? 'text-indigo-400' : 'text-slate-400';
-            const labelText = isVideo ? '🎥 VIDEO PLACEHOLDER' : '🖼️ PHOTO PLACEHOLDER';
+            const bgGradient = isVideo ? 'from-blue-100 to-indigo-100 text-indigo-500' : 'from-pink-100 to-orange-100 text-pink-500';
+            const iconLabel = isVideo ? '🎥' : '🖼️';
 
             return `
-              <div class="w-full h-32 rounded-xl bg-gradient-to-br ${bgGradient} border border-slate-200/50 flex flex-col items-center justify-center gap-1 select-none p-3 shadow-inner">
-                <span class="${textAccent} font-bold text-[9px] tracking-wider uppercase text-center">${labelText}</span>
+              <div class="w-full h-32 rounded-xl bg-gradient-to-br ${bgGradient} border border-white flex flex-col items-center justify-center text-xl select-none shadow-inner">
+                <span>${iconLabel}</span>
               </div>`;
           }
 
-          // 1. HERO MEDIA RENDER
+          // 1. HERO MEDIA RUNTIME INJECTION
           const heroContainer = document.getElementById('hero-media-container');
           const heroAsset = safeMedia.find(m => ['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(m.media_type));
 
@@ -244,14 +239,22 @@
               }
             } else {
               heroContainer.innerHTML = `
-                <div class="w-full h-full bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col items-center justify-center text-center p-4">
-                  <span class="text-[10px] font-bold tracking-wider text-indigo-400 mb-1">🖼️ ${heroAsset.title || 'HERO MEDIA'}</span>
-                  <p class="text-[11px] font-semibold text-slate-500 max-w-[280px] line-clamp-2">${heroAsset.description || ''}</p>
+                <div class="w-full h-full bg-gradient-to-br from-indigo-950 to-slate-900 flex flex-col items-center justify-center text-center p-5 text-white">
+                  <span class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase mb-1">✨ Featured Highlight</span>
+                  <h3 class="text-sm font-bold tracking-wide">${heroAsset.title || ''}</h3>
+                  <p class="text-slate-300 text-[11px] leading-normal mt-1 max-w-[280px] font-medium line-clamp-2">${heroAsset.description || ''}</p>
                 </div>`;
             }
+          } else {
+            // Ultimate fallback card layout just in case no environmental items are present
+            heroContainer.innerHTML = `
+              <div class="w-full h-full bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col items-center justify-center text-center p-4">
+                <span class="text-[10px] font-bold tracking-wider text-indigo-400 mb-1">📸 MAIN ENVIRONMENT</span>
+                <p class="text-[11px] font-semibold text-slate-500">Welcome to The Little Nest</p>
+              </div>`;
           }
 
-          // 2. ENVIRONMENT CAROUSEL RENDER
+          // 2. ENVIRONMENT CAROUSEL RUNTIME INJECTION
           const galleryContainer = document.getElementById('media-gallery-list');
           const envMedia = safeMedia.filter(m => ['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(m.media_type));
 
@@ -270,10 +273,10 @@
               galleryContainer.appendChild(card);
             });
           } else {
-            galleryContainer.innerHTML = `<p class="text-xs text-slate-400 italic p-2">No environment items added to table yet.</p>`;
+            galleryContainer.innerHTML = `<p class="text-xs text-slate-400 italic p-2 w-full text-center">No environment data found in backend configuration.</p>`;
           }
 
-          // 3. TEACHERS CAROUSEL RENDER
+          // 3. TEACHERS CAROUSEL RUNTIME INJECTION
           const teachersContainer = document.getElementById('teachers-list');
           const teacherRecords = safeMedia.filter(m => m.media_type === 'teacher_avatar');
 
@@ -294,7 +297,7 @@
               teachersContainer.appendChild(card);
             });
           } else {
-            teachersContainer.innerHTML = `<p class="text-xs text-slate-400 italic p-2">No teacher items added to table yet.</p>`;
+            teachersContainer.innerHTML = `<p class="text-xs text-slate-400 italic p-2 w-full text-center">No teacher data found in backend configuration.</p>`;
           }
 
           loadingEl.classList.add('opacity-0');
