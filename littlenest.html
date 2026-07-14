@@ -67,7 +67,7 @@
       </div>
     </section>
 
-    <!-- Environment Showcase (Carousel) -->
+    <!-- Environment Showcase (Single Column) -->
     <section id="media-showcase-section">
       <div class="px-2 mb-3">
         <h2 class="text-lg font-bold text-indigo-900 flex items-center gap-2">
@@ -76,7 +76,7 @@
         <p class="text-xs text-slate-400 font-medium">Real spaces & active environments</p>
       </div>
       
-      <div id="media-gallery-list" class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
+      <div id="media-gallery-list" class="flex flex-col gap-4">
         <!-- Rendered dynamically -->
       </div>
     </section>
@@ -158,7 +158,6 @@
     const actionBarEl = document.getElementById('action-bar');
     const errorCardEl = document.getElementById('error-card');
 
-    // General Fallback Placeholders when no database image URL exists
     const FALLBACK_ENV_IMAGE = "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=640&auto=format&fit=crop";
     const FALLBACK_TEACHER_IMAGE = "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=320&auto=format&fit=crop";
 
@@ -211,11 +210,9 @@
 
           let firstEnvAsset = null;
 
-          // DIRECT UNCONDITIONAL LOOP: Output everything directly to screen
           safeMedia.forEach(item => {
             if (!item) return;
 
-            // TEACHERS (teacher_avatar)
             if (item.media_type === 'teacher_avatar') {
               const imgUrl = (item.media_file && item.media_file.url) ? item.media_file.url : FALLBACK_TEACHER_IMAGE;
               const card = document.createElement('div');
@@ -230,20 +227,18 @@
                 </div>
               `;
               teachersContainer.appendChild(card);
-            }
-
-            // ENVIRONMENTS (classroom_photo, classroom_video, outside_photo, outside_video)
+            } 
             else if (['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(item.media_type)) {
-              if (!firstEnvAsset) firstEnvAsset = item; // Keep first matched one for our Hero element
+              if (!firstEnvAsset) firstEnvAsset = item;
               
               const imgUrl = (item.media_file && item.media_file.url) ? item.media_file.url : FALLBACK_ENV_IMAGE;
               const card = document.createElement('div');
-              card.className = "bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm w-64 shrink-0 snap-center flex flex-col gap-2";
+              // Updated to w-full for single column layout
+              card.className = "bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm w-full flex flex-col gap-2";
               
-              let visualElement = `<img src="${imgUrl}" alt="${item.title || ''}" class="w-full h-32 rounded-xl object-cover" />`;
-              // If we have an active video file url, use it
+              let visualElement = `<img src="${imgUrl}" alt="${item.title || ''}" class="w-full h-48 rounded-xl object-cover" />`;
               if (item.media_file && item.media_file.url && String(item.media_type).includes('video')) {
-                visualElement = `<video src="${item.media_file.url}" autoplay loop muted playsinline class="w-full h-32 object-cover rounded-xl"></video>`;
+                visualElement = `<video src="${item.media_file.url}" autoplay loop muted playsinline class="w-full h-48 object-cover rounded-xl"></video>`;
               }
 
               card.innerHTML = `
@@ -257,7 +252,6 @@
             }
           });
 
-          // Render Hero (Classroom Media Area) using the first environmental asset
           if (firstEnvAsset) {
             const imgUrl = (firstEnvAsset.media_file && firstEnvAsset.media_file.url) ? firstEnvAsset.media_file.url : FALLBACK_ENV_IMAGE;
             if (firstEnvAsset.media_file && firstEnvAsset.media_file.url && String(firstEnvAsset.media_type).includes('video')) {
