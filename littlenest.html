@@ -38,7 +38,7 @@
     <!-- Visual Hook: Classroom Media Area (Hero) -->
     <section id="hero-media-section">
       <div id="hero-media-container" class="w-full h-52 bg-white rounded-3xl overflow-hidden shadow-md border-4 border-white relative flex items-center justify-center">
-        <!-- Renders automatically from JS data loop -->
+        <!-- Injected dynamically based on record availability -->
       </div>
       <p class="text-center text-xs italic text-slate-400 mt-2 font-medium">"Where early steps meet lifelong horizons"</p>
     </section>
@@ -189,7 +189,6 @@
             document.getElementById('maps-btn').classList.add('hidden');
           }
 
-          // Fixed explicit get_franchise_media call configuration
           return fetch(`https://x8ki-letl-twmt.n7.xano.io/api:onKSW4zf/get_franchise_media?franchise_id=${branch.id}`)
             .then(mediaResponse => {
               if (!mediaResponse.ok) return [];
@@ -199,10 +198,10 @@
         .then(mediaList => {
           const safeMedia = mediaList || [];
           
-          // Generates layout block containers even when asset.media_file is completely empty/null
+          // Unified media box builder handles null assets transparently 
           function getVisualContainer(asset, isTeacher = false) {
-            if (asset.media_file && asset.media_file.url) {
-              if (!isTeacher && asset.media_type && asset.media_type.includes('video')) {
+            if (asset && asset.media_file && asset.media_file.url) {
+              if (!isTeacher && asset.media_type && String(asset.media_type).includes('video')) {
                 return `<video src="${asset.media_file.url}" autoplay loop muted playsinline class="w-full h-32 object-cover rounded-xl"></video>`;
               }
               const dimensions = isTeacher ? 'w-16 h-16 rounded-full' : 'w-full h-32 rounded-xl';
@@ -216,7 +215,8 @@
                 </div>`;
             }
 
-            const isVideo = asset.media_type && asset.media_type.includes('video');
+            const mType = asset && asset.media_type ? String(asset.media_type) : '';
+            const isVideo = mType.includes('video');
             const bgGradient = isVideo ? 'from-blue-100 to-indigo-100 text-indigo-500' : 'from-pink-100 to-orange-100 text-pink-500';
             const iconLabel = isVideo ? '🎥' : '🖼️';
 
@@ -226,13 +226,13 @@
               </div>`;
           }
 
-          // 1. HERO MEDIA RUNTIME INJECTION
+          // 1. HERO MAIN HIGHLIGHT SELECTION
           const heroContainer = document.getElementById('hero-media-container');
-          const heroAsset = safeMedia.find(m => ['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(m.media_type));
+          const heroAsset = safeMedia.find(m => m && ['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(m.media_type));
 
           if (heroAsset) {
             if (heroAsset.media_file && heroAsset.media_file.url) {
-              if (heroAsset.media_type.includes('video')) {
+              if (String(heroAsset.media_type).includes('video')) {
                 heroContainer.innerHTML = `<video src="${heroAsset.media_file.url}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>`;
               } else {
                 heroContainer.innerHTML = `<img src="${heroAsset.media_file.url}" alt="" class="w-full h-full object-cover"/>`;
@@ -246,21 +246,21 @@
                 </div>`;
             }
           } else {
-            // Ultimate fallback card layout just in case no environmental items are present
             heroContainer.innerHTML = `
               <div class="w-full h-full bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col items-center justify-center text-center p-4">
                 <span class="text-[10px] font-bold tracking-wider text-indigo-400 mb-1">📸 MAIN ENVIRONMENT</span>
-                <p class="text-[11px] font-semibold text-slate-500">Welcome to The Little Nest</p>
+                <p class="text-[11px] font-semibold text-slate-400">Welcome to The Little Nest</p>
               </div>`;
           }
 
-          // 2. ENVIRONMENT CAROUSEL RUNTIME INJECTION
+          // 2. UNCONDITIONAL ENVIRONMENT LOOP (No matching rules that drop records)
           const galleryContainer = document.getElementById('media-gallery-list');
-          const envMedia = safeMedia.filter(m => ['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(m.media_type));
+          galleryContainer.innerHTML = '';
+          let totalEnvCount = 0;
 
-          if (envMedia.length > 0) {
-            galleryContainer.innerHTML = '';
-            envMedia.forEach(asset => {
+          safeMedia.forEach(asset => {
+            if (asset && ['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(asset.media_type)) {
+              totalEnvCount++;
               const card = document.createElement('div');
               card.className = "bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm w-64 shrink-0 snap-center flex flex-col gap-2";
               card.innerHTML = `
@@ -271,18 +271,21 @@
                 </div>
               `;
               galleryContainer.appendChild(card);
-            });
-          } else {
-            galleryContainer.innerHTML = `<p class="text-xs text-slate-400 italic p-2 w-full text-center">No environment data found in backend configuration.</p>`;
+            }
+          });
+
+          if (totalEnvCount === 0) {
+            galleryContainer.innerHTML = `<p class="text-xs text-slate-400 italic p-2 w-full text-center">No environment records matches found.</p>`;
           }
 
-          // 3. TEACHERS CAROUSEL RUNTIME INJECTION
+          // 3. UNCONDITIONAL TEACHER LOOP
           const teachersContainer = document.getElementById('teachers-list');
-          const teacherRecords = safeMedia.filter(m => m.media_type === 'teacher_avatar');
+          teachersContainer.innerHTML = '';
+          let totalTeacherCount = 0;
 
-          if (teacherRecords.length > 0) {
-            teachersContainer.innerHTML = '';
-            teacherRecords.forEach(teacher => {
+          safeMedia.forEach(teacher => {
+            if (teacher && teacher.media_type === 'teacher_avatar') {
+              totalTeacherCount++;
               const card = document.createElement('div');
               card.className = "bg-white p-4 rounded-2xl border border-purple-100/60 shadow-sm w-40 shrink-0 snap-center text-center flex flex-col items-center gap-2";
               card.innerHTML = `
@@ -295,9 +298,11 @@
                 </div>
               `;
               teachersContainer.appendChild(card);
-            });
-          } else {
-            teachersContainer.innerHTML = `<p class="text-xs text-slate-400 italic p-2 w-full text-center">No teacher data found in backend configuration.</p>`;
+            }
+          });
+
+          if (totalTeacherCount === 0) {
+            teachersContainer.innerHTML = `<p class="text-xs text-slate-400 italic p-2 w-full text-center">No teacher records matches found.</p>`;
           }
 
           loadingEl.classList.add('opacity-0');
