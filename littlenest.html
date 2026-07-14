@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Little Nest Playschool</title>
+  <!-- Tailwind CSS CDN for easy, no-cost styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col justify-between">
+
+  <!-- Main Content Container -->
+  <main class="max-w-md mx-auto w-full px-5 py-8 flex-grow flex flex-col justify-center">
+    
+    <!-- Logo & Branding -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-extrabold text-amber-500 tracking-tight">The Little Nest</h1>
+      <p class="text-sm text-slate-500 uppercase tracking-wider font-semibold">Playschool & Learning Center</p>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="text-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+      <p class="text-slate-500">Loading branch details...</p>
+    </div>
+
+    <!-- Main Dynamic Card (Hidden until data loads) -->
+    <div id="branch-card" class="hidden bg-white shadow-xl rounded-3xl p-6 border border-slate-100 flex flex-col gap-6">
+      
+      <!-- Branch Header -->
+      <div class="text-center border-b border-slate-100 pb-4">
+        <h2 id="branch-name" class="text-2xl font-bold text-slate-800">Branch Name</h2>
+        <p id="branch-address" class="text-sm text-slate-500 mt-2">Branch Address</p>
+      </div>
+
+      <!-- Quick Branch Info Blocks -->
+      <div class="grid grid-cols-1 gap-4 text-sm">
+        <!-- Schedule -->
+        <div class="bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
+          <span class="block text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Class Schedule</span>
+          <span id="branch-schedule" class="font-medium text-slate-700">Loading...</span>
+        </div>
+
+        <!-- Landmarks -->
+        <div id="landmark-container" class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+          <span class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">How to find us</span>
+          <span id="branch-landmarks" class="font-medium text-slate-700">Loading...</span>
+        </div>
+      </div>
+
+      <!-- High-Conversion Actions -->
+      <div class="flex flex-col gap-3 mt-4">
+        <!-- PRIMARY CTA: Messenger Chat (Deep-linked with access_key ref parameter) -->
+        <a id="messenger-btn" href="#" target="_blank" 
+           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-blue-200 transition text-center flex items-center justify-center gap-2">
+          <!-- Simple Messenger Icon -->
+          <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+            <path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.914 1.448 5.518 3.7 7.234V22l3.357-1.845c.915.253 1.884.39 2.89.39 5.523 0 10-4.146 10-9.259C22 6.145 17.523 2 12 2zm1.06 12.39-2.58-2.753-5.023 2.753 5.52-5.855 2.636 2.753 4.967-2.753-5.52 5.855z"/>
+          </svg>
+          Inquire via Messenger
+        </a>
+
+        <!-- SECONDARY CTA: Google Maps Navigation -->
+        <a id="maps-btn" href="#" target="_blank" 
+           class="w-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 font-bold py-4 px-6 rounded-2xl transition text-center flex items-center justify-center gap-2">
+          <!-- Simple Pin Icon -->
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+          Open in Google Maps / Waze
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Error State Container -->
+    <div id="error-card" class="hidden text-center py-8 bg-red-50 border border-red-100 rounded-2xl p-6">
+      <p class="text-red-600 font-semibold mb-2">Location Not Found</p>
+      <p class="text-sm text-slate-500">Please scan a valid branch QR code or select your branch on Facebook.</p>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-6 text-center text-xs text-slate-400">
+    &copy; 2026 The Little Nest Playschool. All rights reserved.
+  </footer>
+
+  <!-- App Logic -->
+  <script>
+    // 1. Parse the URL to get the branch parameter (e.g., ?branch=lucena-main-9a2f)
+    const urlParams = new URLSearchParams(window.location.search);
+    const branchAccessKey = urlParams.get('branch');
+
+    const loadingEl = document.getElementById('loading');
+    const branchCardEl = document.getElementById('branch-card');
+    const errorCardEl = document.getElementById('error-card');
+
+    if (!branchAccessKey) {
+      // Hide loading and show error if no branch parameter is passed
+      loadingEl.classList.add('hidden');
+      errorCardEl.classList.remove('hidden');
+    } else {
+      // 2. Fetch from your exact endpoint using "web_key" as the query parameter
+      fetch(`https://x8ki-letl-twmt.n7.xano.io/api:onKSW4zf/get_franchise?web_key=${encodeURIComponent(branchAccessKey)}`)
+        .then(response => {
+          if (!response.ok) throw new Error('Network error');
+          return response.json();
+        })
+        .then(branch => {
+          // Check if Xano returned a valid object and that the branch isn't closed
+          if (!branch || branch.status === 'closed') {
+            throw new Error('Branch unavailable');
+          }
+
+          // 3. Populate your HTML fields with the data from your franchise table
+          document.getElementById('branch-name').innerText = branch.branch_name || branch.name;
+          document.getElementById('branch-address').innerText = branch.address || 'Address coming soon';
+          document.getElementById('branch-schedule').innerText = branch.schedule_details || 'Flexible schedules available';
+          
+          if (branch.landmarks) {
+            document.getElementById('branch-landmarks').innerText = branch.landmarks;
+          } else {
+            document.getElementById('landmark-container').classList.add('hidden');
+          }
+
+          // 4. Setup CTAs
+          // Directs to Messenger, appending the access_key to the ref parameter
+          const messengerBtn = document.getElementById('messenger-btn');
+          const fbPageId = branch.facebook_page_id || 'YOUR_PRIMARY_FB_PAGE_ID'; // Fallback if missing
+          messengerBtn.href = `https://m.me/${fbPageId}?ref=${branch.access_key}`;
+
+          // Map navigation using your google_maps_link field
+          const mapsBtn = document.getElementById('maps-btn');
+          if (branch.google_maps_link) {
+            mapsBtn.href = branch.google_maps_link;
+          } else {
+            mapsBtn.classList.add('hidden'); // Hide button if no link is saved
+          }
+
+          // Show UI, hide loading
+          loadingEl.classList.add('hidden');
+          branchCardEl.classList.remove('hidden');
+        })
+        .catch(err => {
+          console.error(err);
+          loadingEl.classList.add('hidden');
+          errorCardEl.classList.remove('hidden');
+        });
+    }
+  </script>
+</body>
+</html>
