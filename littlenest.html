@@ -158,6 +158,10 @@
     const actionBarEl = document.getElementById('action-bar');
     const errorCardEl = document.getElementById('error-card');
 
+    // General Fallback Placeholders when no database image URL exists
+    const FALLBACK_ENV_IMAGE = "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=640&auto=format&fit=crop";
+    const FALLBACK_TEACHER_IMAGE = "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=320&auto=format&fit=crop";
+
     if (!branchAccessKey) {
       loadingEl.classList.add('hidden');
       errorCardEl.classList.remove('hidden');
@@ -196,7 +200,7 @@
             });
         })
         .then(mediaList => {
-          const safeMedia = Array.isArray(mediaList) ? mediaList : [];
+          const safeMedia = mediaList || [];
           
           const galleryContainer = document.getElementById('media-gallery-list');
           const teachersContainer = document.getElementById('teachers-list');
@@ -207,87 +211,62 @@
 
           let firstEnvAsset = null;
 
+          // DIRECT UNCONDITIONAL LOOP: Output everything directly to screen
           safeMedia.forEach(item => {
             if (!item) return;
 
-            // Normalize media_type to eliminate any matching or formatting issues
-            const rawType = item.media_type ? String(item.media_type).toLowerCase().trim() : '';
-
-            // 1. TEACHERS (teacher_avatar)
-            if (rawType === 'teacher_avatar') {
+            // TEACHERS (teacher_avatar)
+            if (item.media_type === 'teacher_avatar') {
+              const imgUrl = (item.media_file && item.media_file.url) ? item.media_file.url : FALLBACK_TEACHER_IMAGE;
               const card = document.createElement('div');
               card.className = "bg-white p-4 rounded-2xl border border-purple-100/60 shadow-sm w-40 shrink-0 snap-center text-center flex flex-col items-center gap-2";
-              
-              let visualBox = '';
-              if (item.media_file && item.media_file.url) {
-                visualBox = `<img src="${item.media_file.url}" alt="${item.title || ''}" class="w-16 h-16 rounded-full object-cover border-2 border-purple-200" />`;
-              } else {
-                // Inline placeholder layout box if media_file doesn't exist
-                visualBox = `
-                  <div class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-100 to-indigo-50 border-2 border-purple-200 flex items-center justify-center text-[10px] font-bold text-purple-400 tracking-tight shadow-inner select-none">
-                    <span>LET 👩‍🏫</span>
-                  </div>`;
-              }
-
               card.innerHTML = `
                 <div class="relative shrink-0">
-                  ${visualBox}
+                  <img src="${imgUrl}" alt="${item.title || ''}" class="w-16 h-16 rounded-full object-cover border-2 border-purple-200" />
                 </div>
                 <div class="w-full">
-                  <h3 class="font-bold text-xs text-slate-800 line-clamp-1">${item.title || 'Nest Teacher'}</h3>
-                  <p class="text-slate-500 text-[10px] leading-tight mt-1 line-clamp-2 px-1">${item.description || 'Licensed Educator'}</p>
+                  <h3 class="font-bold text-xs text-slate-800 line-clamp-1">${item.title || ''}</h3>
+                  <p class="text-slate-500 text-[10px] leading-tight mt-1 line-clamp-2 px-1">${item.description || ''}</p>
                 </div>
               `;
               teachersContainer.appendChild(card);
             }
 
-            // 2. ALL OTHER MEDIA TYPES (Environments, showcases, etc.)
-            else {
-              if (!firstEnvAsset) firstEnvAsset = item; // Capture the first encountered asset for Hero element
+            // ENVIRONMENTS (classroom_photo, classroom_video, outside_photo, outside_video)
+            else if (['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(item.media_type)) {
+              if (!firstEnvAsset) firstEnvAsset = item; // Keep first matched one for our Hero element
               
+              const imgUrl = (item.media_file && item.media_file.url) ? item.media_file.url : FALLBACK_ENV_IMAGE;
               const card = document.createElement('div');
               card.className = "bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm w-64 shrink-0 snap-center flex flex-col gap-2";
               
-              let visualBox = '';
-              if (item.media_file && item.media_file.url) {
-                if (rawType.includes('video')) {
-                  visualBox = `<video src="${item.media_file.url}" autoplay loop muted playsinline class="w-full h-32 object-cover rounded-xl"></video>`;
-                } else {
-                  visualBox = `<img src="${item.media_file.url}" alt="${item.title || ''}" class="w-full h-32 rounded-xl object-cover" />`;
-                }
-              } else {
-                // Inline placeholder layout box if media_file doesn't exist
-                visualBox = `
-                  <div class="w-full h-32 rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 flex flex-col items-center justify-center text-xs text-slate-400 font-bold select-none shadow-inner">
-                    <span>📸 Layout Box</span>
-                  </div>`;
+              let visualElement = `<img src="${imgUrl}" alt="${item.title || ''}" class="w-full h-32 rounded-xl object-cover" />`;
+              // If we have an active video file url, use it
+              if (item.media_file && item.media_file.url && String(item.media_type).includes('video')) {
+                visualElement = `<video src="${item.media_file.url}" autoplay loop muted playsinline class="w-full h-32 object-cover rounded-xl"></video>`;
               }
 
               card.innerHTML = `
-                ${visualBox}
+                ${visualElement}
                 <div>
-                  <h3 class="font-bold text-xs text-slate-800 tracking-wide">${item.title || 'Campus Update'}</h3>
-                  <p class="text-slate-500 text-[10px] leading-tight mt-1 line-clamp-2">${item.description || 'Play environment highlight.'}</p>
+                  <h3 class="font-bold text-xs text-slate-800 tracking-wide">${item.title || ''}</h3>
+                  <p class="text-slate-500 text-[10px] leading-tight mt-1 line-clamp-2">${item.description || ''}</p>
                 </div>
               `;
               galleryContainer.appendChild(card);
             }
           });
 
-          // Render top Hero banner graphic safely
-          if (firstEnvAsset && firstEnvAsset.media_file && firstEnvAsset.media_file.url) {
-            const rawHeroType = firstEnvAsset.media_type ? String(firstEnvAsset.media_type).toLowerCase().trim() : '';
-            if (rawHeroType.includes('video')) {
+          // Render Hero (Classroom Media Area) using the first environmental asset
+          if (firstEnvAsset) {
+            const imgUrl = (firstEnvAsset.media_file && firstEnvAsset.media_file.url) ? firstEnvAsset.media_file.url : FALLBACK_ENV_IMAGE;
+            if (firstEnvAsset.media_file && firstEnvAsset.media_file.url && String(firstEnvAsset.media_type).includes('video')) {
               heroContainer.innerHTML = `<video src="${firstEnvAsset.media_file.url}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>`;
             } else {
-              heroContainer.innerHTML = `<img src="${firstEnvAsset.media_file.url}" alt="" class="w-full h-full object-cover"/>`;
+              heroContainer.innerHTML = `<img src="${imgUrl}" alt="" class="w-full h-full object-cover"/>`;
             }
           } else {
-            heroContainer.innerHTML = `
-              <div class="w-full h-full bg-gradient-to-br from-indigo-950 to-slate-900 flex flex-col items-center justify-center text-center p-4 text-white">
-                <span class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase mb-1">✨ The Little Nest</span>
-                <p class="text-[11px] font-medium text-slate-300">Operational Branch Layout</p>
-              </div>`;
+            heroContainer.innerHTML = `<img src="${FALLBACK_ENV_IMAGE}" alt="" class="w-full h-full object-cover"/>`;
           }
 
           loadingEl.classList.add('opacity-0');
