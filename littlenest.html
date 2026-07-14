@@ -203,21 +203,31 @@
               headers.forEach(h => container.appendChild(h));
 
               if (sessions && sessions.length > 0) {
+                // Sort sessions by start time chronologically
+                sessions.sort((a, b) => {
+                  const parseTime = (t) => new Date(`1970/01/01 ${t}`);
+                  return parseTime(a.start_time_text) - parseTime(b.start_time_text);
+                });
+
                 const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
                 const colorMap = {
                   'monday': 'blue', 'wednesday': 'blue', 'friday': 'blue',
                   'tuesday': 'indigo', 'thursday': 'indigo', 'saturday': 'indigo',
                   'sunday': 'slate'
                 };
+                
                 const sessionsPerDay = days.map(day => 
                   sessions.filter(s => s.scheduled_days.some(d => d.toLowerCase() === day))
                 );
+
                 const maxRows = Math.max(...sessionsPerDay.map(arr => arr.length));
+                
                 for (let i = 0; i < maxRows; i++) {
                   days.forEach(day => {
                     const daySessions = sessionsPerDay[days.indexOf(day)];
                     const session = daySessions[i];
                     const cell = document.createElement('div');
+                    
                     if (session) {
                       const color = colorMap[day] || 'blue';
                       cell.className = `bg-${color}-600 rounded-lg p-1 text-white text-[9px] font-bold flex flex-col justify-center h-12`;
