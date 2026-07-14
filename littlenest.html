@@ -159,11 +159,19 @@
     const actionBarEl = document.getElementById('action-bar');
     const errorCardEl = document.getElementById('error-card');
 
+    // High-quality global Unsplash placeholders to use when media_file is null or empty
+    const PLACEHOLDERS = {
+      classroom_photo: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800",
+      classroom_video: "https://images.unsplash.com/photo-1540479859555-17af45c78a62?auto=format&fit=crop&q=80&w=800",
+      outside_photo: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&q=80&w=800",
+      teacher_avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200"
+    };
+
     if (!branchAccessKey) {
       loadingEl.classList.add('hidden');
       errorCardEl.classList.remove('hidden');
     } else {
-      // Fetch branch details
+      // Step 1: Fetch core franchise details
       fetch(`https://x8ki-letl-twmt.n7.xano.io/api:onKSW4zf/get_franchise?web_key=${encodeURIComponent(branchAccessKey)}`)
         .then(response => {
           if (!response.ok) throw new Error('API connection lost');
@@ -196,34 +204,53 @@
             document.getElementById('maps-btn').classList.add('hidden');
           }
 
-          // Parse and apply media components
-          const mediaList = branch.media || [];
+          // Step 2: Fetch corresponding media items from the franchise_media endpoint
+          return fetch(`https://x8ki-letl-twmt.n7.xano.io/api:onKSW4zf/get_franchise_media?franchise_id=${branch.id}`)
+            .then(mediaResponse => {
+              if (!mediaResponse.ok) return []; // Fallback to empty list gracefully on failure
+              return mediaResponse.json();
+            });
+        })
+        .then(mediaList => {
+          // Parse and apply media components retrieved from franchise_media
+          const safeMedia = mediaList || [];
           
           // Classroom Photo / Video Header Rendering
           const heroContainer = document.getElementById('hero-media-container');
-          const heroAsset = mediaList.find(m => m.media_type === 'classroom_photo' || m.media_type === 'classroom_video');
           
-          if (heroAsset && heroAsset.media_file) {
-            if (heroAsset.media_type === 'classroom_video') {
-              heroContainer.innerHTML = `<video src="${heroAsset.media_file}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>`;
+          // Match priority: classroom_photo, classroom_video, outside_photo, outside_video
+          const heroAsset = safeMedia.find(m => 
+            ['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(m.media_type)
+          );
+          
+          if (heroAsset) {
+            const hasFile = heroAsset.media_file && heroAsset.media_file.url;
+            const mediaUrl = hasFile ? heroAsset.media_file.url : (PLACEHOLDERS[heroAsset.media_type] || PLACEHOLDERS.classroom_photo);
+
+            if (heroAsset.media_type.includes('video') && hasFile) {
+              heroContainer.innerHTML = `<video src="${mediaUrl}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>`;
             } else {
-              heroContainer.innerHTML = `<img src="${heroAsset.media_file}" alt="Classroom playground" class="w-full h-full object-cover"/>`;
+              heroContainer.innerHTML = `<img src="${mediaUrl}" alt="${heroAsset.title || 'Branch playground'}" class="w-full h-full object-cover"/>`;
             }
           } else {
-            heroContainer.innerHTML = `<div class="w-full h-full bg-gradient-to-tr from-blue-100 via-purple-100 to-pink-100 flex items-center justify-center font-bold text-slate-400 tracking-wide text-xs">Ready for Learning & Play 🎨</div>`;
+            // Default ultimate fallback if table has absolutely no structural hero matches
+            heroContainer.innerHTML = `<img src="${PLACEHOLDERS.classroom_photo}" alt="Classroom playground" class="w-full h-full object-cover"/>`;
           }
 
           // Teacher Bios Horizontal Carousel Rendering
           const teachersContainer = document.getElementById('teachers-list');
-          const teacherRecords = mediaList.filter(m => m.media_type === 'teacher_avatar');
+          const teacherRecords = safeMedia.filter(m => m.media_type === 'teacher_avatar');
 
           if (teacherRecords.length > 0) {
-            teachersContainer.innerHTML = ''; // Clear visual placeholders
+            teachersContainer.innerHTML = ''; // Clear loading card
             teacherRecords.forEach(teacher => {
               const card = document.createElement('div');
               card.className = "bg-white p-4 rounded-2xl border border-purple-100/60 shadow-sm w-40 shrink-0 snap-center text-center flex flex-col items-center justify-center";
+              
+              const avatarUrl = (teacher.media_file && teacher.media_file.url) ? teacher.media_file.url : PLACEHOLDERS.teacher_avatar;
+              
               card.innerHTML = `
-                <img src="${teacher.media_file || 'https://via.placeholder.com/150'}" alt="${teacher.title}" class="w-16 h-16 rounded-full object-cover mb-2.5 border-2 border-purple-200 shadow-sm"/>
+                <img src="${avatarUrl}" alt="${teacher.title}" class="w-16 h-16 rounded-full object-cover mb-2.5 border-2 border-purple-200 shadow-sm"/>
                 <h3 class="font-bold text-xs text-slate-800 line-clamp-1">${teacher.title}</h3>
                 <p class="text-slate-500 text-[10px] leading-tight mt-1 line-clamp-2 px-1">${teacher.description || 'LET Licensed Teacher'}</p>
               `;
