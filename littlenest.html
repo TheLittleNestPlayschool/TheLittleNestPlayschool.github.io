@@ -41,7 +41,7 @@
     <!-- Visual Hook: Classroom Media Area (Hero) -->
     <section>
       <div id="hero-media-container" class="w-full h-52 bg-white rounded-3xl overflow-hidden shadow-md border-4 border-white relative flex items-center justify-center">
-        <span class="text-xs text-slate-400">Loading branch environment...</span>
+        <!-- Will show live main classroom photo or fallback interior -->
       </div>
       <p class="text-center text-xs italic text-slate-400 mt-2 font-medium">"Where early steps meet lifelong horizons"</p>
     </section>
@@ -70,7 +70,7 @@
       </div>
     </section>
 
-    <!-- NEW SECTION: Interactive Media Showcase Carousel -->
+    <!-- Interactive Media Showcase Carousel -->
     <section id="media-showcase-section" class="hidden">
       <div class="px-2 mb-3">
         <h2 class="text-lg font-bold text-indigo-900 flex items-center gap-2">
@@ -81,7 +81,7 @@
       
       <!-- Horizontal Swipeable Media Cards -->
       <div id="media-gallery-list" class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
-        <!-- Generated Dynamically -->
+        <!-- Dynamically rendered (Live or Demo Fallbacks) -->
       </div>
     </section>
 
@@ -96,12 +96,7 @@
       
       <!-- Horizontal Swipeable List -->
       <div id="teachers-list" class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
-        <!-- Loading Placeholders -->
-        <div class="bg-white p-4 rounded-2xl border border-purple-100 shadow-sm w-40 shrink-0 snap-center text-center">
-          <div class="w-16 h-16 bg-purple-50 rounded-full mx-auto mb-3 border border-purple-100 animate-pulse"></div>
-          <div class="h-3 w-16 bg-slate-200 mx-auto rounded animate-pulse mb-1.5"></div>
-          <div class="h-2.5 w-24 bg-slate-100 mx-auto rounded animate-pulse"></div>
-        </div>
+        <!-- Dynamically rendered (Live or Demo Fallbacks) -->
       </div>
     </section>
 
@@ -174,14 +169,40 @@
     const actionBarEl = document.getElementById('action-bar');
     const errorCardEl = document.getElementById('error-card');
 
-    // Mapped high-quality placeholders specifically matching each individual media type loaded
-    const PLACEHOLDERS = {
-      teacher_avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200",
-      classroom_photo: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=600",
-      classroom_video: "https://images.unsplash.com/photo-1540479859555-17af45c78a62?auto=format&fit=crop&q=80&w=600",
-      outside_photo: "https://images.unsplash.com/photo-1564981797816-1043664bf78d?auto=format&fit=crop&q=80&w=600",
-      outside_video: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&q=80&w=600"
-    };
+    // High quality, vibrant placeholder images for playschool layout simulation
+    const DEMO_MEDIA_FALLBACKS = [
+      {
+        media_type: "classroom_photo",
+        title: "Inside our Classroom",
+        description: "A cozy, child-centered space designed for sensory exploration and social play.",
+        url: "https://images.unsplash.com/photo-1564981797816-1043664bf78d?auto=format&fit=crop&q=80&w=600"
+      },
+      {
+        media_type: "outside_photo",
+        title: "Outside Play Area",
+        description: "Safe, secure outdoor structures designed for natural movement and confidence building.",
+        url: "https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&q=80&w=600"
+      },
+      {
+        media_type: "classroom_video",
+        title: "Classroom Walkthrough Video",
+        description: "A quick glimpse into a typical structured active session inside the Nest.",
+        url: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&q=80&w=600"
+      }
+    ];
+
+    const DEMO_TEACHERS_FALLBACKS = [
+      {
+        title: "Teacher Sarah, L.E.T.",
+        description: "Lead Facilitator specializing in Early Childhood Development & sensory play programs.",
+        url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200"
+      },
+      {
+        title: "Teacher Joy, L.E.T.",
+        description: "Specializes in structured motor activities, creative storytelling, and social transitions.",
+        url: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=200"
+      }
+    ];
 
     if (!branchAccessKey) {
       loadingEl.classList.add('hidden');
@@ -207,10 +228,8 @@
             document.getElementById('landmark-section').classList.add('hidden');
           }
 
-          // Directly source the numeric facebook_page_id mapped from Xano
+          // Direct deep-link Messenger connection
           const fbPageId = branch.facebook_page_id || 'thelittlenestplayschool';
-          
-          // Build deep-linked Messenger URL
           document.getElementById('messenger-btn').href = `https://m.me/${fbPageId}?ref=${encodeURIComponent(branchAccessKey)}`;
           
           if (branch.google_maps_link) {
@@ -219,7 +238,7 @@
             document.getElementById('maps-btn').classList.add('hidden');
           }
 
-          // Step 2: Fetch media from the separate franchise_media endpoint using the branch ID
+          // Step 2: Fetch media from the database
           return fetch(`https://x8ki-letl-twmt.n7.xano.io/api:onKSW4zf/get_franchise_media?franchise_id=${branch.id}`)
             .then(mediaResponse => {
               if (!mediaResponse.ok) return [];
@@ -227,17 +246,19 @@
             });
         })
         .then(mediaList => {
-          const safeMedia = mediaList || [];
+          const hasDatabaseMedia = mediaList && mediaList.length > 0;
           
-          // 1. HERO MEDIA: Find first valid asset to feature at the very top
+          // 1. HERO MEDIA RENDER
           const heroContainer = document.getElementById('hero-media-container');
-          const heroAsset = safeMedia.find(m => 
-            ['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(m.media_type)
-          );
+          let heroAsset = null;
           
+          if (hasDatabaseMedia) {
+            heroAsset = mediaList.find(m => ['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(m.media_type));
+          }
+
           if (heroAsset) {
             const hasFile = heroAsset.media_file && heroAsset.media_file.url;
-            const mediaUrl = hasFile ? heroAsset.media_file.url : (PLACEHOLDERS[heroAsset.media_type] || PLACEHOLDERS.classroom_photo);
+            const mediaUrl = hasFile ? heroAsset.media_file.url : DEMO_MEDIA_FALLBACKS[0].url;
 
             if (heroAsset.media_type.includes('video') && hasFile) {
               heroContainer.innerHTML = `<video src="${mediaUrl}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>`;
@@ -245,67 +266,69 @@
               heroContainer.innerHTML = `<img src="${mediaUrl}" alt="${heroAsset.title}" class="w-full h-full object-cover"/>`;
             }
           } else {
-            heroContainer.innerHTML = `<img src="${PLACEHOLDERS.classroom_photo}" alt="Classroom playground" class="w-full h-full object-cover"/>`;
+            // Render beautiful, distinct room default hero instead of apple-on-books
+            heroContainer.innerHTML = `<img src="${DEMO_MEDIA_FALLBACKS[0].url}" alt="Playroom Area" class="w-full h-full object-cover"/>`;
           }
 
-          // 2. GALLERY CAROUSEL: Map out ALL other non-teacher environment media (classroom_photo, outside_photo, videos)
+          // 2. ENVIRONMENT MEDIA SHOWCASE (CAROUSEL)
           const galleryContainer = document.getElementById('media-gallery-list');
-          const environmentMedia = safeMedia.filter(m => 
-            ['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(m.media_type)
-          );
+          document.getElementById('media-showcase-section').classList.remove('hidden'); // Ensure section is visible
+          galleryContainer.innerHTML = ''; 
 
-          if (environmentMedia.length > 0) {
-            document.getElementById('media-showcase-section').classList.remove('hidden');
-            galleryContainer.innerHTML = ''; // Clear fallback
-
-            environmentMedia.forEach(asset => {
-              const card = document.createElement('div');
-              card.className = "bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm w-64 shrink-0 snap-center flex flex-col gap-2";
-              
-              const hasFile = asset.media_file && asset.media_file.url;
-              const assetUrl = hasFile ? asset.media_file.url : PLACEHOLDERS[asset.media_type];
-              
-              // Use video tag if it's explicitly a video and has a real file, otherwise render image placeholder
-              const visualMarkup = (asset.media_type.includes('video') && hasFile)
-                ? `<video src="${assetUrl}" autoplay loop muted playsinline class="w-full h-32 object-cover rounded-xl"></video>`
-                : `<img src="${assetUrl}" alt="${asset.title}" class="w-full h-32 object-cover rounded-xl"/>`;
-
-              card.innerHTML = `
-                ${visualMarkup}
-                <div>
-                  <h3 class="font-bold text-xs text-slate-800 tracking-wide">${asset.title || 'Our Facilities'}</h3>
-                  <p class="text-slate-500 text-[10px] leading-tight mt-1 line-clamp-2">${asset.description || 'Modern spaces curated for children.'}</p>
-                </div>
-              `;
-              galleryContainer.appendChild(card);
-            });
+          let envMedia = [];
+          if (hasDatabaseMedia) {
+            envMedia = mediaList.filter(m => ['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(m.media_type));
           }
 
-          // 3. TEACHERS CAROUSEL: Map out your teacher_avatars using title & description fields
+          // If no database assets exist, populate with beautiful preview cards so we can test the layout
+          const displayAssets = envMedia.length > 0 ? envMedia : DEMO_MEDIA_FALLBACKS;
+
+          displayAssets.forEach(asset => {
+            const card = document.createElement('div');
+            card.className = "bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm w-64 shrink-0 snap-center flex flex-col gap-2";
+            
+            const hasFile = asset.media_file && asset.media_file.url;
+            const assetUrl = hasFile ? asset.media_file.url : asset.url; // Use real database url or fallback structure url
+            
+            const visualMarkup = (asset.media_type && asset.media_type.includes('video') && hasFile)
+              ? `<video src="${assetUrl}" autoplay loop muted playsinline class="w-full h-32 object-cover rounded-xl"></video>`
+              : `<img src="${assetUrl || asset.url}" alt="${asset.title}" class="w-full h-32 object-cover rounded-xl"/>`;
+
+            card.innerHTML = `
+              ${visualMarkup}
+              <div>
+                <h3 class="font-bold text-xs text-slate-800 tracking-wide">${asset.title}</h3>
+                <p class="text-slate-500 text-[10px] leading-tight mt-1 line-clamp-2">${asset.description || 'Cozy early childhood setup.'}</p>
+              </div>
+            `;
+            galleryContainer.appendChild(card);
+          });
+
+          // 3. TEACHERS CAROUSEL RENDER
           const teachersContainer = document.getElementById('teachers-list');
-          const teacherRecords = safeMedia.filter(m => m.media_type === 'teacher_avatar');
+          teachersContainer.innerHTML = '';
 
-          if (teacherRecords.length > 0) {
-            teachersContainer.innerHTML = ''; // Clear loading card
-            teacherRecords.forEach(teacher => {
-              const card = document.createElement('div');
-              card.className = "bg-white p-4 rounded-2xl border border-purple-100/60 shadow-sm w-40 shrink-0 snap-center text-center flex flex-col items-center justify-center";
-              
-              const avatarUrl = (teacher.media_file && teacher.media_file.url) ? teacher.media_file.url : PLACEHOLDERS.teacher_avatar;
-              
-              card.innerHTML = `
-                <img src="${avatarUrl}" alt="${teacher.title}" class="w-16 h-16 rounded-full object-cover mb-2.5 border-2 border-purple-200 shadow-sm"/>
-                <h3 class="font-bold text-xs text-slate-800 line-clamp-1">${teacher.title || 'Teacher Profile'}</h3>
-                <p class="text-slate-500 text-[10px] leading-tight mt-1 line-clamp-2 px-1">${teacher.description || 'LET Licensed Teacher'}</p>
-              `;
-              teachersContainer.appendChild(card);
-            });
-          } else {
-            teachersContainer.innerHTML = `
-              <div class="bg-white/60 p-4 rounded-2xl border border-purple-100/40 text-center w-full py-5 text-xs font-semibold text-slate-400 italic">
-                Licensed LET Teachers allocated for every session.
-              </div>`;
+          let teacherRecords = [];
+          if (hasDatabaseMedia) {
+            teacherRecords = mediaList.filter(m => m.media_type === 'teacher_avatar');
           }
+
+          // Use fallback dynamic cards if database has no active teacher records uploaded yet
+          const displayTeachers = teacherRecords.length > 0 ? teacherRecords : DEMO_TEACHERS_FALLBACKS;
+
+          displayTeachers.forEach(teacher => {
+            const card = document.createElement('div');
+            card.className = "bg-white p-4 rounded-2xl border border-purple-100/60 shadow-sm w-40 shrink-0 snap-center text-center flex flex-col items-center justify-center";
+            
+            const avatarUrl = (teacher.media_file && teacher.media_file.url) ? teacher.media_file.url : (teacher.url || teacher.avatar_url);
+            
+            card.innerHTML = `
+              <img src="${avatarUrl}" alt="${teacher.title}" class="w-16 h-16 rounded-full object-cover mb-2.5 border-2 border-purple-200 shadow-sm"/>
+              <h3 class="font-bold text-xs text-slate-800 line-clamp-1">${teacher.title}</h3>
+              <p class="text-slate-500 text-[10px] leading-tight mt-1 line-clamp-2 px-1">${teacher.description || 'LET Licensed Teacher'}</p>
+            `;
+            teachersContainer.appendChild(card);
+          });
 
           // Transition page states gracefully
           loadingEl.classList.add('opacity-0');
