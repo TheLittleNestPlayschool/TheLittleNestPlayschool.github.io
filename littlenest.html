@@ -41,9 +41,7 @@
 
     <!-- Visual Hook: Classroom Media Area (Hero) + Trust Banner -->
     <section id="hero-media-section" class="fade-in-up">
-      <div id="hero-media-container" class="w-full h-52 bg-white rounded-3xl overflow-hidden shadow-md border-4 border-white relative flex items-center justify-center">
-        <!-- Injected dynamically -->
-      </div>
+      <div id="hero-media-container" class="w-full h-52 bg-white rounded-3xl overflow-hidden shadow-md border-4 border-white relative flex items-center justify-center"></div>
       
       <!-- Trust Banner -->
       <div class="grid grid-cols-3 gap-2 mt-4">
@@ -127,7 +125,9 @@
         <span class="group-open:rotate-180 transition-transform">▼</span>
       </summary>
       <div class="pt-4 space-y-4">
-        <div id="branch-schedule" class="text-sm font-bold text-slate-800 bg-blue-50/50 border border-blue-100 rounded-2xl p-4 text-center tracking-wide">Loading schedule...</div>
+        <div id="schedule-container" class="grid grid-cols-1 gap-2">
+          <p class="text-xs text-slate-400">Loading schedule...</p>
+        </div>
         <div class="text-xs text-slate-500 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
           <strong>The Routine Advantage:</strong> Set batch timetables help synchronize child playtime, minimize separation anxiety, and naturally form structured daily patterns.
         </div>
@@ -200,13 +200,31 @@
           if (!branch || branch.status === 'closed') throw new Error('Branch closed');
           document.getElementById('branch-title').innerText = branch.name;
           document.getElementById('branch-sub-address').innerText = branch.address || 'Address information coming soon';
-          document.getElementById('branch-schedule').innerText = branch.schedule_details || 'Flexible class sessions available';
           if (branch.landmarks) document.getElementById('branch-landmarks').innerText = branch.landmarks;
           else document.getElementById('landmark-section').classList.add('hidden');
           const fbPageId = branch.facebook_page_id || 'thelittlenestplayschool';
           document.getElementById('messenger-btn').href = `https://m.me/${fbPageId}?ref=${encodeURIComponent(branchAccessKey)}`;
           if (branch.google_maps_link) document.getElementById('maps-btn').href = branch.google_maps_link;
           else document.getElementById('maps-btn').classList.add('hidden');
+
+          // Fetch Sessions
+          fetch(`https://x8ki-letl-twmt.n7.xano.io/api:mUsV7Zqx/session?franchise_id=${branch.id}&access_key=${encodeURIComponent(branchAccessKey)}`)
+            .then(res => res.json())
+            .then(sessions => {
+              const container = document.getElementById('schedule-container');
+              container.innerHTML = '';
+              if (sessions && sessions.length > 0) {
+                sessions.forEach((session, index) => {
+                  const colors = ['indigo', 'emerald', 'amber', 'rose', 'sky'];
+                  const color = colors[index % colors.length];
+                  const card = document.createElement('div');
+                  card.className = `flex items-center gap-3 p-3 rounded-2xl bg-${color}-50 border border-${color}-100`;
+                  card.innerHTML = `<div class="w-2 h-10 rounded-full bg-${color}-500"></div><div><p class="text-xs font-bold text-${color}-900 uppercase">Batch ${index + 1}</p><p class="text-sm font-bold text-${color}-700">${session.start_time} – ${session.end_time}</p></div>`;
+                  container.appendChild(card);
+                });
+              } else { container.innerHTML = `<p class="text-xs text-slate-500">No active sessions found.</p>`; }
+            });
+
           return fetch(`https://x8ki-letl-twmt.n7.xano.io/api:onKSW4zf/get_franchise_media?franchise_id=${branch.id}`);
         })
         .then(res => res.json())
