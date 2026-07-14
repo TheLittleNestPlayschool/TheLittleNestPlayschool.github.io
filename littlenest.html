@@ -36,9 +36,12 @@
     </header>
 
     <!-- Visual Hook: Classroom Media Area (Hero) -->
-    <section id="hero-media-section" class="hidden">
+    <section id="hero-media-section">
       <div id="hero-media-container" class="w-full h-52 bg-white rounded-3xl overflow-hidden shadow-md border-4 border-white relative flex items-center justify-center">
-        <!-- Core asset placeholder or file -->
+        <div class="w-full h-full bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col items-center justify-center text-center p-4">
+          <span class="text-[10px] font-bold tracking-wider text-indigo-400 mb-1">📸 MAIN ENVIRONMENT</span>
+          <p class="text-[11px] font-semibold text-slate-400">Awaiting media upload</p>
+        </div>
       </div>
       <p class="text-center text-xs italic text-slate-400 mt-2 font-medium">"Where early steps meet lifelong horizons"</p>
     </section>
@@ -68,7 +71,7 @@
     </section>
 
     <!-- Environment Showcase (Carousel) -->
-    <section id="media-showcase-section" class="hidden">
+    <section id="media-showcase-section">
       <div class="px-2 mb-3">
         <h2 class="text-lg font-bold text-indigo-900 flex items-center gap-2">
           <span>📸</span> Take a Peek Inside
@@ -78,11 +81,12 @@
       
       <div id="media-gallery-list" class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
         <!-- Dynamically rendered fields from database -->
+        <p class="text-xs text-slate-400 italic p-2">Loading environments...</p>
       </div>
     </section>
 
     <!-- Slide 2: Trust Builder (Our Teachers) -->
-    <section id="teachers-section" class="hidden">
+    <section id="teachers-section">
       <div class="px-2 mb-3">
         <h2 class="text-lg font-bold text-purple-700 flex items-center gap-2">
           <span>🔮</span> Meet Our Licensed Teachers
@@ -92,6 +96,7 @@
       
       <div id="teachers-list" class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
         <!-- Dynamically rendered teachers from database -->
+        <p class="text-xs text-slate-400 italic p-2">Loading teacher profiles...</p>
       </div>
     </section>
 
@@ -198,44 +203,39 @@
         .then(mediaList => {
           const safeMedia = mediaList || [];
           
-          // Helper helper to generate stylized local CSS blocks representing files that aren't uploaded yet
+          // Generate placeholder design when media_file is missing
           function getVisualContainer(asset, isTeacher = false) {
             if (asset.media_file && asset.media_file.url) {
-              if (!isTeacher && asset.media_type.includes('video')) {
+              if (!isTeacher && asset.media_type && asset.media_type.includes('video')) {
                 return `<video src="${asset.media_file.url}" autoplay loop muted playsinline class="w-full h-32 object-cover rounded-xl"></video>`;
               }
               const dimensions = isTeacher ? 'w-16 h-16 rounded-full' : 'w-full h-32 rounded-xl';
               return `<img src="${asset.media_file.url}" alt="${asset.title || ''}" class="${dimensions} object-cover"/>`;
             }
 
-            // Fallback structural divs using explicit text hints so you can visualize the layout grid
             if (isTeacher) {
               return `
                 <div class="w-16 h-16 rounded-full bg-purple-100 border border-purple-200 flex flex-col items-center justify-center text-[9px] font-bold text-purple-400 select-none shadow-inner tracking-tight">
                   <span>TEACHER</span>
-                  <span>AVATAR</span>
                 </div>`;
             }
 
             const isVideo = asset.media_type && asset.media_type.includes('video');
             const bgGradient = isVideo ? 'from-indigo-50 to-blue-100' : 'from-slate-50 to-slate-100';
             const textAccent = isVideo ? 'text-indigo-400' : 'text-slate-400';
-            const labelText = isVideo ? '🎥 VIDEO WORKTHROUGH' : '🖼️ ENVIRONMENT PHOTO';
+            const labelText = isVideo ? '🎥 VIDEO PLACEHOLDER' : '🖼️ PHOTO PLACEHOLDER';
 
             return `
               <div class="w-full h-32 rounded-xl bg-gradient-to-br ${bgGradient} border border-slate-200/50 flex flex-col items-center justify-center gap-1 select-none p-3 shadow-inner">
                 <span class="${textAccent} font-bold text-[9px] tracking-wider uppercase text-center">${labelText}</span>
-                <span class="text-[8px] text-slate-400 text-center font-medium line-clamp-1 max-w-[150px]">${asset.title || ''}</span>
               </div>`;
           }
 
           // 1. HERO MEDIA RENDER
-          const heroSection = document.getElementById('hero-media-section');
           const heroContainer = document.getElementById('hero-media-container');
           const heroAsset = safeMedia.find(m => ['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(m.media_type));
 
           if (heroAsset) {
-            heroSection.classList.remove('hidden');
             if (heroAsset.media_file && heroAsset.media_file.url) {
               if (heroAsset.media_type.includes('video')) {
                 heroContainer.innerHTML = `<video src="${heroAsset.media_file.url}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>`;
@@ -243,28 +243,23 @@
                 heroContainer.innerHTML = `<img src="${heroAsset.media_file.url}" alt="" class="w-full h-full object-cover"/>`;
               }
             } else {
-              const label = heroAsset.media_type.includes('video') ? '🎥 PRINCIPAL VIDEO' : '📸 MAIN ENVIRONMENT';
               heroContainer.innerHTML = `
                 <div class="w-full h-full bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col items-center justify-center text-center p-4">
-                  <span class="text-[10px] font-bold tracking-wider text-indigo-400 mb-1">${label}</span>
-                  <p class="text-[11px] font-semibold text-slate-700 line-clamp-1">${heroAsset.title || ''}</p>
+                  <span class="text-[10px] font-bold tracking-wider text-indigo-400 mb-1">🖼️ ${heroAsset.title || 'HERO MEDIA'}</span>
+                  <p class="text-[11px] font-semibold text-slate-500 max-w-[280px] line-clamp-2">${heroAsset.description || ''}</p>
                 </div>`;
             }
           }
 
           // 2. ENVIRONMENT CAROUSEL RENDER
-          const gallerySection = document.getElementById('media-showcase-section');
           const galleryContainer = document.getElementById('media-gallery-list');
           const envMedia = safeMedia.filter(m => ['classroom_photo', 'classroom_video', 'outside_photo', 'outside_video'].includes(m.media_type));
 
           if (envMedia.length > 0) {
-            gallerySection.classList.remove('hidden');
             galleryContainer.innerHTML = '';
-
             envMedia.forEach(asset => {
               const card = document.createElement('div');
               card.className = "bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm w-64 shrink-0 snap-center flex flex-col gap-2";
-              
               card.innerHTML = `
                 ${getVisualContainer(asset, false)}
                 <div>
@@ -274,21 +269,19 @@
               `;
               galleryContainer.appendChild(card);
             });
+          } else {
+            galleryContainer.innerHTML = `<p class="text-xs text-slate-400 italic p-2">No environment items added to table yet.</p>`;
           }
 
           // 3. TEACHERS CAROUSEL RENDER
-          const teachersSection = document.getElementById('teachers-section');
           const teachersContainer = document.getElementById('teachers-list');
           const teacherRecords = safeMedia.filter(m => m.media_type === 'teacher_avatar');
 
           if (teacherRecords.length > 0) {
-            teachersSection.classList.remove('hidden');
             teachersContainer.innerHTML = '';
-
             teacherRecords.forEach(teacher => {
               const card = document.createElement('div');
               card.className = "bg-white p-4 rounded-2xl border border-purple-100/60 shadow-sm w-40 shrink-0 snap-center text-center flex flex-col items-center gap-2";
-              
               card.innerHTML = `
                 <div class="relative shrink-0">
                   ${getVisualContainer(teacher, true)}
@@ -300,6 +293,8 @@
               `;
               teachersContainer.appendChild(card);
             });
+          } else {
+            teachersContainer.innerHTML = `<p class="text-xs text-slate-400 italic p-2">No teacher items added to table yet.</p>`;
           }
 
           loadingEl.classList.add('opacity-0');
