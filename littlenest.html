@@ -88,9 +88,17 @@
 
   <!-- App Logic -->
   <script>
-    // 1. Parse the URL to get the branch parameter (e.g., ?branch=lucena-main-9a2f)
+    // 1. Get the parameter from the URL
     const urlParams = new URLSearchParams(window.location.search);
-    const branchAccessKey = urlParams.get('branch');
+    let branchAccessKey = urlParams.get('branch') || urlParams.get('tlnp');
+
+    // FALLBACK: If they typed "?TLNP584758" directly without "branch=" or "tlnp="
+    if (!branchAccessKey && window.location.search) {
+      const rawSearch = window.location.search.substring(1).trim(); // Remove the "?"
+      if (rawSearch && !rawSearch.includes('=')) {
+        branchAccessKey = rawSearch;
+      }
+    }
 
     const loadingEl = document.getElementById('loading');
     const branchCardEl = document.getElementById('branch-card');
