@@ -203,20 +203,31 @@
               headers.forEach(h => container.appendChild(h));
 
               if (sessions && sessions.length > 0) {
-                sessions.forEach((session) => {
-                  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                const colorMap = {
+                  'monday': 'blue', 'wednesday': 'blue', 'friday': 'blue',
+                  'tuesday': 'indigo', 'thursday': 'indigo', 'saturday': 'indigo',
+                  'sunday': 'slate'
+                };
+                const sessionsPerDay = days.map(day => 
+                  sessions.filter(s => s.scheduled_days.some(d => d.toLowerCase() === day))
+                );
+                const maxRows = Math.max(...sessionsPerDay.map(arr => arr.length));
+                for (let i = 0; i < maxRows; i++) {
                   days.forEach(day => {
-                    const isScheduled = session.scheduled_days.some(d => d.toLowerCase() === day);
+                    const daySessions = sessionsPerDay[days.indexOf(day)];
+                    const session = daySessions[i];
                     const cell = document.createElement('div');
-                    if (isScheduled) {
-                      cell.className = "bg-blue-600 rounded-lg p-1 text-white text-[9px] font-bold";
+                    if (session) {
+                      const color = colorMap[day] || 'blue';
+                      cell.className = `bg-${color}-600 rounded-lg p-1 text-white text-[9px] font-bold flex flex-col justify-center h-12`;
                       cell.innerHTML = `<div>${session.start_time_text}</div><div class="opacity-70">${session.end_time_text}</div>`;
                     } else {
-                      cell.className = "bg-slate-100 rounded-lg h-10";
+                      cell.className = "bg-slate-50 rounded-lg h-12 border border-slate-100";
                     }
                     container.appendChild(cell);
                   });
-                });
+                }
               }
             });
 
