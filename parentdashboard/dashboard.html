@@ -8,6 +8,7 @@
 <body>
 
     <div class="dashboard-layout">
+        <!-- Section Containers where modular files are injected -->
         <div id="profile-section"></div>
         <div id="gauges-section"></div>
         <div id="current-session-section"></div>
@@ -16,8 +17,10 @@
     </div>
 
     <script>
+        // Global variable to hold our live dashboard data package
         window.dashboardData = null;
 
+        // Function to fetch and inject modular HTML files
         async function loadSection(sectionId, file) {
             try {
                 const response = await fetch(file);
@@ -30,17 +33,18 @@
             }
         }
 
+        // Initialize dashboard and fetch live data on page load
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('authToken');
             if (!token) {
-                console.log("No token found in localStorage. Redirecting to login...");
+                console.log("No token found. Redirecting to login...");
                 window.location.href = 'login.html';
                 return;
             }
 
             try {
-                // Ensure the URL perfectly matches your Xano instance group route with the trailing slash
-                const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents/', {
+                // Fetch from the clean /parents endpoint path name
+                const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -53,9 +57,11 @@
                     throw new Error(`Server responded status ${response.status}: ${errorText}`);
                 }
 
+                // Store the parsed response object
                 window.dashboardData = await response.json();
                 console.log("Dashboard data loaded successfully:", window.dashboardData);
 
+                // Load the UI components sequentially
                 await loadSection('profile-section', 'profile.html');
                 await loadSection('gauges-section', 'gauges.html');
                 await loadSection('current-session-section', 'current.html');
@@ -63,10 +69,10 @@
                 await loadSection('gallery-section', 'gallery.html');
 
             } catch (error) {
-                console.error("Dashboard initialization failed:", error);
-                // Commenting out the redirect temporarily so you can see the error in your browser console log
-                // localStorage.removeItem('authToken');
-                // window.location.href = 'login.html';
+                console.error("Dashboard initialization error:", error);
+                // Redirect if the call fails or token expires
+                localStorage.removeItem('authToken');
+                window.location.href = 'login.html';
             }
         });
     </script>
