@@ -1,15 +1,62 @@
-<div class="profile-content">
-    <h2 style="margin-bottom: 5px;">Hi, <span id="parent-name">[Parent Name]</span>!</h2>
-    <p style="color: #666; font-size: 0.9rem;">
-        Viewing progress for <strong><span id="child-name">[Child Name]</span></strong>
-    </p>
-    
-    <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee;">
-        <p style="font-size: 0.85rem;">
-            <strong>Branch:</strong> <span id="branch-name">[Branch Name]</span>
-        </p>
-        <p style="font-size: 0.85rem;">
-            <strong>Current Session:</strong> <span id="session-num">[00]</span>
-        </p>
+<div class="profile-card">
+    <h2>Parent Profile</h2>
+    <div class="profile-details">
+        <p><strong>Name:</strong> <span id="parent-name">Loading...</span></p>
+        <p><strong>Email:</strong> <span id="parent-email">Loading...</span></p>
+        <p><strong>Phone:</strong> <span id="parent-phone">Loading...</span></p>
+        <p><strong>Address:</strong> <span id="parent-address">Loading...</span></p>
+    </div>
+
+    <h2 class="mt-4">Registered Students</h2>
+    <div id="students-container">
+        <p>Loading students...</p>
     </div>
 </div>
+
+<script>
+    (function() {
+        // Ensure the global data from dashboard.html exists before running
+        if (!window.dashboardData) {
+            console.error("Dashboard data is missing.");
+            return;
+        }
+
+        // 1. Populate Parent Data
+        const parent = window.dashboardData.parent;
+        if (parent) {
+            document.getElementById('parent-name').innerText = `${parent.first_name} ${parent.last_name}`;
+            document.getElementById('parent-email').innerText = parent.email;
+            document.getElementById('parent-phone').innerText = parent.phone;
+            document.getElementById('parent-address').innerText = parent.address || 'N/A';
+        }
+
+        // 2. Populate Students Data
+        const students = window.dashboardData.student;
+        const container = document.getElementById('students-container');
+        
+        if (students && students.length > 0) {
+            container.innerHTML = ''; // Clear loading text
+            
+            students.forEach(student => {
+                const studentDiv = document.createElement('div');
+                studentDiv.className = 'student-row';
+                studentDiv.style.borderBottom = '1px solid #eee';
+                studentDiv.style.padding = '8px 0';
+                
+                // Format date of birth if it exists
+                let dob = 'N/A';
+                if (student.date_of_birth) {
+                    dob = new Date(student.date_of_birth).toLocaleDateString();
+                }
+
+                studentDiv.innerHTML = `
+                    <p><strong>Name:</strong> ${student.name}</p>
+                    <p><strong>Status:</strong> ${student.is_active ? 'Active' : 'Inactive'}</p>
+                `;
+                container.appendChild(studentDiv);
+            });
+        } else {
+            container.innerHTML = '<p>No registered students found.</p>';
+        }
+    })();
+</script>
