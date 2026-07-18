@@ -3,32 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Little Nest Dashboard</title>
+    <title>The Little Nest Dashboard</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="app-container">
+        <!-- Header -->
         <header id="header">
             <div>Parent Dashboard</div>
         </header>
 
+        <!-- Main Content Area: Modular sections are loaded into these specific IDs -->
         <main id="content-area">
-            <!-- 1. Parent/Student Data -->
-            <div class="card" id="profile-section"></div>
-            
-            <!-- 2. Gauges Section -->
-            <div class="card" id="gauges-section"></div>
-            
-            <!-- 3. Current Session Section -->
-            <div class="card" id="current-session-section"></div>
-            
-            <!-- 4. Upcoming Sessions Section -->
-            <div class="card" id="upcoming-session-section"></div>
-            
-            <!-- 5. Pictures/Media Section -->
-            <div class="card" id="gallery-section"></div>
+            <div class="card" id="profile-section">Loading Profile...</div>
+            <div class="card" id="gauges-section">Loading Progress...</div>
+            <div class="card" id="current-session-section">Loading Current Lesson...</div>
+            <div class="card" id="upcoming-session-section">Loading Upcoming Lesson...</div>
+            <div class="card" id="gallery-section">Loading Gallery...</div>
         </main>
+
+        <!-- Navigation Boxes -->
+        <nav id="bottom-nav">
+            <div class="nav-box" onclick="loadView('progress')">📊 <span>Progress</span></div>
+            <div class="nav-box" onclick="loadView('curriculum')">📖 <span>Curriculum</span></div>
+            <div class="nav-box" onclick="loadView('gallery')">📸 <span>Media</span></div>
+        </nav>
     </div>
-    <script src="app.js"></script>
+
+    <script>
+        // Function to fetch and inject the modular HTML files
+        async function loadSection(sectionId, file) {
+            try {
+                const response = await fetch(file);
+                if (!response.ok) throw new Error(`Could not load ${file}`);
+                const html = await response.text();
+                document.getElementById(sectionId).innerHTML = html;
+            } catch (error) {
+                console.error(error);
+                document.getElementById(sectionId).innerHTML = "Error loading content.";
+            }
+        }
+
+        // Initialize dashboard content on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSection('profile-section', 'profile.html');
+            loadSection('gauges-section', 'gauges.html');
+            loadSection('current-session-section', 'current.html');
+            loadSection('upcoming-session-section', 'upcoming.html');
+            loadSection('gallery-section', 'gallery.html');
+        });
+
+        // Placeholder for future navigation logic
+        function loadView(view) {
+            console.log("Navigating to: " + view);
+        }
+    </script>
 </body>
 </html>
