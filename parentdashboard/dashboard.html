@@ -39,6 +39,15 @@
 
         // Initialize dashboard content on page load
         document.addEventListener('DOMContentLoaded', () => {
+            // Check if the user is actually logged in
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                // No token found? Kick them back to the login page
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // If token exists, load the dashboard components normally
             loadSection('profile-section', 'profile.html');
             loadSection('gauges-section', 'gauges.html');
             loadSection('current-session-section', 'current.html');
