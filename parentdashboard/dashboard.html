@@ -36,6 +36,8 @@
                 const res = await fetch(file.url);
                 if (res.ok) {
                     document.getElementById(file.id).innerHTML = await res.text();
+                } else {
+                    console.error(`Error loading ${file.url}: ${res.status}`);
                 }
             }));
 
@@ -61,7 +63,11 @@
         const s = data.student_data[0];
         if (s) {
             document.getElementById('student-name').innerText = s.name || 'N/A';
-            document.getElementById('franchise-location').innerText = s.franchise_name || 'N/A';
+        }
+
+        // Populate Franchise Location
+        if (data.franchise_data) {
+            document.getElementById('franchise-location').innerText = data.franchise_data.name || 'N/A';
         }
     }
 
