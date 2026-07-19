@@ -7,7 +7,6 @@
 </head>
 <body>
 
-    <!-- Container for all components -->
     <div id="profile-container"></div>
     <div id="gauges-container"></div>
     <div id="current-container"></div>
@@ -17,17 +16,14 @@
 <script>
     async function loadDashboard() {
         const userId = localStorage.getItem('userId');
-        if (!userId) { 
-            window.location.href = './login.html'; 
-            return; 
-        }
+        if (!userId) { window.location.href = './login.html'; return; }
 
         try {
             // 1. Fetch Data
             const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents?user_id=' + userId);
             const data = await response.json();
 
-            // 2. Define files in order
+            // 2. Load all files in parallel
             const files = [
                 { id: 'profile-container', url: './profile.html' },
                 { id: 'gauges-container', url: './gauges.html' },
@@ -36,17 +32,18 @@
                 { id: 'gallery-container', url: './gallery.html' }
             ];
 
-            // 3. Load files sequentially
-            for (const file of files) {
+            // Use Promise.all to fetch everything at once
+            await Promise.all(files.map(async (file) => {
                 const res = await fetch(file.url);
                 if (res.ok) {
-                    document.getElementById(file.id).innerHTML = await res.text();
+                    const text = await res.text();
+                    document.getElementById(file.id).innerHTML = text;
                 } else {
                     console.error(`Error loading ${file.url}: ${res.status}`);
                 }
-            }
+            }));
 
-            // 4. Populate with the fetched data
+            // 3. Populate
             populateUI(data);
 
         } catch (error) {
@@ -57,30 +54,14 @@
     function populateUI(data) {
         // Populate Profile
         const p = data.parent_data;
-        if (p) {
-            const nameEl = document.getElementById('parent-name');
-            if (nameEl) nameEl.innerText = `${p.first_name || ''} ${p.last_name || ''}`;
-            
-            const emailEl = document.getElementById('parent-email');
-            if (emailEl) emailEl.innerText = p.email || 'N/A';
-            
-            const phoneEl = document.getElementById('parent-phone');
-            if (phoneEl) phoneEl.innerText = p.phone || 'N/A';
-            
-            const addressEl = document.getElementById('parent-address');
-            if (addressEl) addressEl.innerText = p.address || 'N/A';
-        }
-
-        // Populate Students
-        const container = document.getElementById('students-container');
-        if (container && Array.isArray(data.student_data)) {
-            container.innerHTML = '';
-            data.student_data.forEach(student => {
-                container.innerHTML += `<p><strong>Name:</strong> ${student.name || 'Unknown'}</p>`;
-            });
+        if (p && document.getElementById('parent-name')) {
+            document.getElementById('parent-name').innerText = `${p.first_name || ''} ${p.last_name || ''}`;
+            document.getElementById('parent-email').innerText = p.email || 'N/A';
+            document.getElementById('parent-phone').innerText = p.phone || 'N/A';
+            document.getElementById('parent-address').innerText = p.address || 'N/A';
         }
         
-        // Add additional population logic for gauges, current, etc., here
+        // Add additional population logic for your other files here
     }
 
     document.addEventListener('DOMContentLoaded', loadDashboard);
