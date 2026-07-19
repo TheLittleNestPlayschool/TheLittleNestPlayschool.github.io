@@ -1,12 +1,90 @@
-<div class="session-content">
-    <h3 style="margin-bottom: 10px; color: var(--primary-green);">Working on Now</h3>
+<div class="card">
+    <h2 style="margin-top: 0; font-size: 1.1rem; color: var(--primary-green);">Working on Now (Session <span id="session-num"></span>)</h2>
     
-    <div style="margin-bottom: 15px;">
-        <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 5px;">
-            Lesson: <span id="current-lesson-title">[Lesson Title]</span>
-        </p>
-        <p style="font-size: 0.85rem; color: #555; line-height: 1.4;">
-            <span id="current-lesson-desc">[Activity Description and Learning Objectives will appear here...]</span>
-        </p>
+    <div id="session-content">
+        <p><strong>Session Plan Name:</strong> <span id="session-plan-name">Loading...</span></p>
+        <p><strong>Theme Color:</strong> <span id="theme-color"></span></p>
+        <p><strong>Map Icon URL:</strong> <span id="map-icon-url" style="word-break: break-all;"></span></p>
+        <p><strong>Session Description:</strong> <span id="session-description"></span></p>
+        
+        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+        
+        <p><strong>Lesson 1:</strong> <span id="lesson-1-title"></span> (<span id="lesson-1-cat"></span>)</p>
+        <p><strong>Lesson 2:</strong> <span id="lesson-2-title"></span> (<span id="lesson-2-cat"></span>)</p>
+        <p><strong>Manners Topic:</strong> <span id="manner-topic"></span></p>
+        
+        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+        
+        <p><strong>Objectives:</strong></p>
+        <ul style="margin-top: 5px; padding-left: 20px; font-size: 0.9rem;">
+            <li id="obj-1"></li>
+            <li id="obj-2"></li>
+            <li id="obj-3"></li>
+        </ul>
+        
+        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+        
+        <p><strong>Physical Activity:</strong> <span id="physical-activity"></span></p>
+        <p><strong>Home Time Activity:</strong> <span id="home-time-activity"></span></p>
+        <p><strong>Worksheet Plan Name:</strong> <span id="worksheet-plan-name"></span></p>
+        
+        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+        
+        <p><strong>Full Lesson Plan:</strong></p>
+        <p id="full-lesson-plan" style="font-size: 0.85rem; color: #555; white-space: pre-wrap; margin-top: 5px; background: #f9f9f9; padding: 10px; border-radius: 8px;"></p>
     </div>
 </div>
+
+<script>
+(async function loadCurrentSession() {
+    const franchiseStr = localStorage.getItem('franchise_data');
+    if (!franchiseStr) {
+        document.getElementById('session-plan-name').innerText = "No franchise data found.";
+        return;
+    }
+
+    const franchise = JSON.parse(franchiseStr);
+    const sessionId = franchise?.current_session;
+
+    if (sessionId) {
+        try {
+            const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details/${sessionId}`);
+            const session = await res.json();
+
+            if (session) {
+                // Core info
+                document.getElementById('session-num').innerText = session.session_num || '#';
+                document.getElementById('session-plan-name').innerText = session.session_plan_name || 'N/A';
+                document.getElementById('theme-color').innerText = session.theme_color || 'N/A';
+                document.getElementById('map-icon-url').innerText = session.map_icon_url || 'N/A';
+                document.getElementById('session-description').innerText = session.session_description || 'N/A';
+                
+                // Lessons & Manners
+                document.getElementById('lesson-1-title').innerText = session.lesson_1_title || 'N/A';
+                document.getElementById('lesson-1-cat').innerText = session.lesson_1_cat || 'N/A';
+                document.getElementById('lesson-2-title').innerText = session.lesson_2_title || 'N/A';
+                document.getElementById('lesson-2-cat').innerText = session.lesson_2_cat || 'N/A';
+                document.getElementById('manner-topic').innerText = session.manner_topic || 'N/A';
+                
+                // Objectives
+                document.getElementById('obj-1').innerText = session.obj_text_1 || 'N/A';
+                document.getElementById('obj-2').innerText = session.obj_text_2 || 'N/A';
+                document.getElementById('obj-3').innerText = session.obj_text_3 || 'N/A';
+                
+                // Activities & Worksheets
+                document.getElementById('physical-activity').innerText = session.physical_activity || 'N/A';
+                document.getElementById('home-time-activity').innerText = session.home_time_activity || 'N/A';
+                document.getElementById('worksheet-plan-name').innerText = session.worksheet_plan_name || 'N/A';
+                
+                // Full Plan
+                document.getElementById('full-lesson-plan').innerText = session.full_lesson_plan || 'N/A';
+            }
+        } catch (err) {
+            console.error("Failed to load session details:", err);
+            document.getElementById('session-plan-name').innerText = "Error loading session";
+        }
+    } else {
+        document.getElementById('session-plan-name').innerText = "No current session set.";
+    }
+})();
+</script>
