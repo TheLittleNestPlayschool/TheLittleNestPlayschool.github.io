@@ -79,7 +79,7 @@
         // Helper function to scan the JSON structure for the 'user_id' key automatically
         function scanForUserId(obj) {
             if (!obj || typeof obj !== 'object') return null;
-            if ('user_id' in obj && obj.user_id) return obj.user_id;
+            if ('user_id' in obj && obj.user_id !== null) return obj.user_id;
             
             for (let key in obj) {
                 if (obj.hasOwnProperty(key)) {
@@ -118,7 +118,8 @@
                     throw new Error(data.message || 'Invalid credentials.');
                 }
 
-                console.log("Full Xano Login Response Object:", data);
+                // Debugging: Alert the payload structure so we know what is returning
+                alert("Login Success. Keys found in response: " + Object.keys(data).join(', '));
 
                 // Save auth token
                 localStorage.setItem('authToken', data.authToken);
@@ -130,7 +131,7 @@
                     localStorage.setItem('userId', discoveredId);
                     console.log("Discovered and saved user_id:", discoveredId);
                 } else {
-                    console.error("Could not find a valid user_id field anywhere in the Xano response structure.");
+                    alert("CRITICAL ERROR: Could not find a valid 'user_id' field in the Xano response. Payload: " + JSON.stringify(data));
                 }
 
                 // Go to dashboard
@@ -138,7 +139,7 @@
 
             } catch (error) {
                 console.error('Login window error:', error);
-                errorDiv.textContent = error.message || "Login failed. Check your email and password.";
+                errorDiv.textContent = error.message || "Login failed.";
                 errorDiv.style.display = 'block';
             }
         }
