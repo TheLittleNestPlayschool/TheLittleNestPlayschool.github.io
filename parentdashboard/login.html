@@ -109,12 +109,14 @@
                 // Save auth token
                 localStorage.setItem('authToken', data.authToken);
                 
-                // Read and match the ID parameter variations coming out of the user object
-                const actualId = data.user_id || data.userId || (data.user && data.user.id);
-                if (actualId) {
-                    localStorage.setItem('userId', actualId);
+                // Read the user_id field directly from the user record
+                const targetId = data.user && data.user.user_id;
+                
+                if (targetId) {
+                    localStorage.setItem('userId', targetId);
+                    console.log("Saved link value to userId storage:", targetId);
                 } else {
-                    console.warn("User ID missing from authentication response fields structure.");
+                    console.warn("Field 'user_id' not found inside the response user object.");
                 }
 
                 // Redirect directly to the dashboard
