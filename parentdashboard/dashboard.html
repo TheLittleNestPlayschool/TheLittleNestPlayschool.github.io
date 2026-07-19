@@ -33,22 +33,15 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('authToken');
             const storedUserId = localStorage.getItem('userId');
-            
-            // Convert the string from localStorage to an integer for the API call
             const userId = parseInt(storedUserId, 10);
 
-            console.log("Checking saved credentials on load:");
-            console.log("Token present:", !!token);
-            console.log("Saved userId value (as int):", userId);
-
             if (!userId || isNaN(userId)) {
-                console.error("CRITICAL ERROR: 'userId' is null or missing. The dashboard fetch will fail.");
+                console.error("CRITICAL ERROR: 'userId' is null or missing.");
+                return;
             }
 
             try {
-                // Use the integer userId in the query string
                 const apiUrl = `https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents?user_id=${userId}`;
-                console.log("Requesting data from URL:", apiUrl);
                 
                 const response = await fetch(apiUrl, {
                     method: 'GET',
@@ -57,13 +50,12 @@
                     }
                 });
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Server responded status ${response.status}: ${errorText}`);
-                }
+                if (!response.ok) throw new Error(`Server responded status ${response.status}`);
 
                 window.dashboardData = await response.json();
-                console.log("Dashboard data loaded successfully:", window.dashboardData);
+                
+                // Dispatch event so sub-pages know data is ready
+                window.dispatchEvent(new CustomEvent('dashboardDataReady'));
 
                 // Load UI components
                 await loadSection('profile-section', 'profile.html');
