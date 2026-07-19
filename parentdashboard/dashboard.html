@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <div id="app-container">
         <div id="header">The Little Nest</div>
         <div id="content-area">
@@ -37,13 +38,13 @@
 
             await Promise.all(files.map(async (file) => {
                 const res = await fetch(file.url);
-                if (res.ok) document.getElementById(file.id).innerHTML = await res.text();
+                if (res.ok) {
+                    document.getElementById(file.id).innerHTML = await res.text();
+                }
             }));
 
-            // Populate all data once components are injected
             populateUI(data);
 
-            // Fetch and populate session data
             if (data.franchise_data?.session_num) {
                 loadSession(data.franchise_data.session_num);
             }
@@ -54,26 +55,35 @@
 
     async function loadSession(sessionId) {
         try {
-            const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details/${sessionId}`);
-            const session = await res.json();
-            if (session) {
-                document.getElementById('session-num').innerText = session.session_num || '#';
-                document.getElementById('session-plan-name').innerText = session.session_plan_name || 'N/A';
-                document.getElementById('theme-color').innerText = session.theme_color || 'N/A';
-                document.getElementById('map-icon-url').innerText = session.map_icon_url || 'N/A';
-                document.getElementById('session-description').innerText = session.session_description || 'N/A';
-                document.getElementById('lesson-1-title').innerText = session.lesson_1_title || 'N/A';
-                document.getElementById('lesson-1-cat').innerText = session.lesson_1_cat || 'N/A';
-                document.getElementById('lesson-2-title').innerText = session.lesson_2_title || 'N/A';
-                document.getElementById('lesson-2-cat').innerText = session.lesson_2_cat || 'N/A';
-                document.getElementById('manner-topic').innerText = session.manner_topic || 'N/A';
-                document.getElementById('obj-1').innerText = session.obj_text_1 || 'N/A';
-                document.getElementById('obj-2').innerText = session.obj_text_2 || 'N/A';
-                document.getElementById('obj-3').innerText = session.obj_text_3 || 'N/A';
-                document.getElementById('physical-activity').innerText = session.physical_activity || 'N/A';
-                document.getElementById('home-time-activity').innerText = session.home_time_activity || 'N/A';
-                document.getElementById('worksheet-plan-name').innerText = session.worksheet_plan_name || 'N/A';
-                document.getElementById('full-lesson-plan').innerText = session.full_lesson_plan || 'N/A';
+            const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details?session_num=${sessionId}`);
+            const response = await res.json();
+            const data = Array.isArray(response) ? response[0] : response;
+
+            if (data) {
+                const fields = {
+                    'session-num': data.session_num,
+                    'session-plan-name': data.session_plan_name,
+                    'theme-color': data.theme_color,
+                    'map-icon-url': data.map_icon_url,
+                    'session-description': data.session_description,
+                    'lesson-1-title': data.lesson_1_title,
+                    'lesson-1-cat': data.lesson_1_cat,
+                    'lesson-2-title': data.lesson_2_title,
+                    'lesson-2-cat': data.lesson_2_cat,
+                    'manner-topic': data.manner_topic,
+                    'obj-1': data.obj_text_1,
+                    'obj-2': data.obj_text_2,
+                    'obj-3': data.obj_text_3,
+                    'physical-activity': data.physical_activity,
+                    'home-time-activity': data.home_time_activity,
+                    'worksheet-plan-name': data.worksheet_plan_name,
+                    'full-lesson-plan': data.full_lesson_plan
+                };
+
+                for (const [id, value] of Object.entries(fields)) {
+                    const el = document.getElementById(id);
+                    if (el) el.innerText = value || 'N/A';
+                }
             }
         } catch (err) { console.error("Session load error:", err); }
     }
@@ -86,8 +96,14 @@
             document.getElementById('parent-phone').innerText = p.phone || 'N/A';
             document.getElementById('parent-address').innerText = p.address || 'N/A';
         }
-        if (data.student_data?.[0]) document.getElementById('student-name').innerText = data.student_data[0].name || 'N/A';
-        if (data.franchise_data) document.getElementById('franchise-location').innerText = data.franchise_data.name || 'N/A';
+
+        if (data.student_data?.[0]) {
+            document.getElementById('student-name').innerText = data.student_data[0].name || 'N/A';
+        }
+
+        if (data.franchise_data) {
+            document.getElementById('franchise-location').innerText = data.franchise_data.name || 'N/A';
+        }
         
         const progress = data.student_progress || {};
         ['reading', 'writing', 'alphabet', 'numbers', 'manners'].forEach(type => {
