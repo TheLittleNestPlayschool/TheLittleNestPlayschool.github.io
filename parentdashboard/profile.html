@@ -15,44 +15,41 @@
 
 <script>
     (function() {
-        // Ensure the global data from dashboard.html exists before running
-        if (!window.dashboardData) {
-            console.error("Dashboard data is missing.");
-            return;
-        }
+        function populateProfile() {
+            if (!window.dashboardData) return;
 
-        // 1. Populate Parent Data
-        // Mapping to 'parent_data' as returned by the API
-        const parent = window.dashboardData.parent_data;
-        if (parent) {
-            document.getElementById('parent-name').innerText = `${parent.first_name || ''} ${parent.last_name || ''}`;
-            document.getElementById('parent-email').innerText = parent.email || 'N/A';
-            document.getElementById('parent-phone').innerText = parent.phone || 'N/A';
-            document.getElementById('parent-address').innerText = parent.address || 'N/A';
-        }
+            // Map keys exactly as returned by your Xano API
+            const parent = window.dashboardData.parent_data;
+            if (parent) {
+                document.getElementById('parent-name').innerText = `${parent.first_name || ''} ${parent.last_name || ''}`;
+                document.getElementById('parent-email').innerText = parent.email || 'N/A';
+                document.getElementById('parent-phone').innerText = parent.phone || 'N/A';
+                document.getElementById('parent-address').innerText = parent.address || 'N/A';
+            }
 
-        // 2. Populate Students Data
-        // Mapping to 'student_data' as returned by the API
-        const students = window.dashboardData.student_data;
-        const container = document.getElementById('students-container');
-        
-        if (students && Array.isArray(students) && students.length > 0) {
-            container.innerHTML = ''; // Clear loading text
+            const students = window.dashboardData.student_data;
+            const container = document.getElementById('students-container');
             
-            students.forEach(student => {
-                const studentDiv = document.createElement('div');
-                studentDiv.className = 'student-row';
-                studentDiv.style.borderBottom = '1px solid #eee';
-                studentDiv.style.padding = '8px 0';
-                
-                studentDiv.innerHTML = `
-                    <p><strong>Name:</strong> ${student.name || 'Unknown'}</p>
-                    <p><strong>Status:</strong> ${student.is_active ? 'Active' : 'Inactive'}</p>
-                `;
-                container.appendChild(studentDiv);
-            });
+            if (Array.isArray(students) && students.length > 0) {
+                container.innerHTML = '';
+                students.forEach(student => {
+                    const studentDiv = document.createElement('div');
+                    studentDiv.innerHTML = `
+                        <p><strong>Name:</strong> ${student.name || 'Unknown'}</p>
+                        <p><strong>Status:</strong> ${student.is_active ? 'Active' : 'Inactive'}</p>
+                    `;
+                    container.appendChild(studentDiv);
+                });
+            } else {
+                container.innerHTML = '<p>No registered students found.</p>';
+            }
+        }
+
+        // Run immediately if data is already present, otherwise wait for event
+        if (window.dashboardData) {
+            populateProfile();
         } else {
-            container.innerHTML = '<p>No registered students found.</p>';
+            window.addEventListener('dashboardDataReady', populateProfile);
         }
     })();
 </script>
