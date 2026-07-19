@@ -76,20 +76,6 @@
     </div>
 
     <script>
-        // Helper function to scan the JSON structure for the 'user_id' key automatically
-        function scanForUserId(obj) {
-            if (!obj || typeof obj !== 'object') return null;
-            if ('user_id' in obj && obj.user_id !== null) return obj.user_id;
-            
-            for (let key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    const found = scanForUserId(obj[key]);
-                    if (found) return found;
-                }
-            }
-            return null;
-        }
-
         async function handleLogin() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
@@ -118,24 +104,21 @@
                     throw new Error(data.message || 'Invalid credentials.');
                 }
 
-                // Debugging: Alert the payload structure so we know what is returning
-                alert("Login Success. Keys found in response: " + Object.keys(data).join(', '));
+                console.log("Full Xano Login Response:", data);
 
                 // Save auth token
                 localStorage.setItem('authToken', data.authToken);
                 
-                // Scan the response to extract the user_id value
-                const discoveredId = scanForUserId(data);
-                
-                if (discoveredId) {
-                    localStorage.setItem('userId', discoveredId);
-                    console.log("Discovered and saved user_id:", discoveredId);
-                } else {
-                    alert("CRITICAL ERROR: Could not find a valid 'user_id' field in the Xano response. Payload: " + JSON.stringify(data));
-                }
+                // Extract the pointer stored in the 'user' key of the response
+                const userId = data.user; 
 
-                // Go to dashboard
-                window.location.href = './dashboard.html';
+                if (userId) {
+                    localStorage.setItem('userId', userId);
+                    console.log("Successfully saved userId pointer:", userId);
+                    window.location.href = './dashboard.html';
+                } else {
+                    alert("CRITICAL: The API did not return a valid user pointer. Response: " + JSON.stringify(data));
+                }
 
             } catch (error) {
                 console.error('Login window error:', error);
