@@ -7,7 +7,7 @@
 </head>
 <body>
 
-<!-- This is where profile.html will be injected -->
+<!-- This is where profile.html content will be injected -->
 <div id="profile-target">Loading profile...</div>
 
 <hr>
@@ -35,21 +35,27 @@
 
     // 2. Fetch and inject profile.html
     document.addEventListener('DOMContentLoaded', () => {
-        fetch('profile.html')
-            .then(response => response.text())
+        fetch('./profile.html')
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load profile');
+                return response.text();
+            })
             .then(html => {
                 document.getElementById('profile-target').innerHTML = html;
                 
-                // 3. Manually trigger the script inside profile.html 
-                // because innerHTML doesn't execute <script> tags automatically
-                const scripts = document.getElementById('profile-target').getElementsByTagName('script');
+                // 3. Find and execute the script inside the injected profile.html
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                const scripts = tempDiv.getElementsByTagName('script');
                 for (let i = 0; i < scripts.length; i++) {
-                    eval(scripts[i].innerText);
+                    const newScript = document.createElement('script');
+                    newScript.textContent = scripts[i].textContent;
+                    document.body.appendChild(newScript);
                 }
             })
             .catch(err => {
-                document.getElementById('profile-target').innerHTML = "Failed to load profile.";
                 console.error(err);
+                document.getElementById('profile-target').innerHTML = "Error loading profile.";
             });
     });
 </script>
