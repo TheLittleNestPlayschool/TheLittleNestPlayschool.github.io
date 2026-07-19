@@ -22,19 +22,21 @@
         }
 
         // 1. Populate Parent Data
-        const parent = window.dashboardData.parent;
+        // Mapping to 'parent_data' as returned by the API
+        const parent = window.dashboardData.parent_data;
         if (parent) {
-            document.getElementById('parent-name').innerText = `${parent.first_name} ${parent.last_name}`;
-            document.getElementById('parent-email').innerText = parent.email;
-            document.getElementById('parent-phone').innerText = parent.phone;
+            document.getElementById('parent-name').innerText = `${parent.first_name || ''} ${parent.last_name || ''}`;
+            document.getElementById('parent-email').innerText = parent.email || 'N/A';
+            document.getElementById('parent-phone').innerText = parent.phone || 'N/A';
             document.getElementById('parent-address').innerText = parent.address || 'N/A';
         }
 
         // 2. Populate Students Data
-        const students = window.dashboardData.student;
+        // Mapping to 'student_data' as returned by the API
+        const students = window.dashboardData.student_data;
         const container = document.getElementById('students-container');
         
-        if (students && students.length > 0) {
+        if (students && Array.isArray(students) && students.length > 0) {
             container.innerHTML = ''; // Clear loading text
             
             students.forEach(student => {
@@ -43,14 +45,8 @@
                 studentDiv.style.borderBottom = '1px solid #eee';
                 studentDiv.style.padding = '8px 0';
                 
-                // Format date of birth if it exists
-                let dob = 'N/A';
-                if (student.date_of_birth) {
-                    dob = new Date(student.date_of_birth).toLocaleDateString();
-                }
-
                 studentDiv.innerHTML = `
-                    <p><strong>Name:</strong> ${student.name}</p>
+                    <p><strong>Name:</strong> ${student.name || 'Unknown'}</p>
                     <p><strong>Status:</strong> ${student.is_active ? 'Active' : 'Inactive'}</p>
                 `;
                 container.appendChild(studentDiv);
