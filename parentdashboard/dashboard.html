@@ -35,19 +35,19 @@
 
         // Initialize dashboard and fetch live data on page load
         document.addEventListener('DOMContentLoaded', async () => {
-            // Check for the secure authToken and email saved during login
+            // Check for the secure authToken and user_id saved during login
             const token = localStorage.getItem('authToken');
-            const email = localStorage.getItem('userEmail');
+            const userId = localStorage.getItem('userId');
 
-            if (!token || !email) {
-                console.log("Missing auth token or user email. Redirecting to login...");
+            if (!token || !userId) {
+                console.log("Missing auth token or user ID. Redirecting to login...");
                 window.location.href = 'login.html';
                 return;
             }
 
             try {
-                // Fetch the master data package passing the email in the query string
-                const apiUrl = `https://x8ki-letl-twmt.n7.xano.io/api:dashboard_data/parents?email=${encodeURIComponent(email)}`;
+                // Fetch the master data package passing the user_id in the query string
+                const apiUrl = `https://x8ki-letl-twmt.n7.xano.io/api:dashboard_data/parents?user_id=${encodeURIComponent(userId)}`;
                 
                 const response = await fetch(apiUrl, {
                     method: 'GET',
@@ -76,7 +76,7 @@
                 console.error("Dashboard initialization error:", error);
                 // Clear invalid/expired session details and kick back to login
                 localStorage.removeItem('authToken');
-                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userId');
                 window.location.href = 'login.html';
             }
         });
