@@ -8,7 +8,6 @@
 <body>
 
     <div class="dashboard-layout">
-        <!-- Section Containers where modular UI files are injected -->
         <div id="profile-section"></div>
         <div id="gauges-section"></div>
         <div id="current-session-section"></div>
@@ -17,10 +16,8 @@
     </div>
 
     <script>
-        // Global variable to hold our live dashboard data package
         window.dashboardData = null;
 
-        // Function to fetch and inject modular HTML files
         async function loadSection(sectionId, file) {
             try {
                 const response = await fetch(file);
@@ -33,22 +30,24 @@
             }
         }
 
-        // Initialize dashboard and fetch live data on page load
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('authToken');
-            const userId = localStorage.getItem('userId');
+            const storedUserId = localStorage.getItem('userId');
+            
+            // Convert the string from localStorage to an integer for the API call
+            const userId = parseInt(storedUserId, 10);
 
             console.log("Checking saved credentials on load:");
             console.log("Token present:", !!token);
-            console.log("Saved userId value:", userId);
+            console.log("Saved userId value (as int):", userId);
 
-            if (!userId || userId === 'null') {
-                console.error("CRITICAL ERROR: 'userId' is null or missing in localStorage. The dashboard fetch will fail because no ID is present.");
+            if (!userId || isNaN(userId)) {
+                console.error("CRITICAL ERROR: 'userId' is null or missing. The dashboard fetch will fail.");
             }
 
             try {
-                // Updated to point directly to your functional Xano endpoint path
-                const apiUrl = `https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents?user_id=${encodeURIComponent(userId || '')}`;
+                // Use the integer userId in the query string
+                const apiUrl = `https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents?user_id=${userId}`;
                 console.log("Requesting data from URL:", apiUrl);
                 
                 const response = await fetch(apiUrl, {
@@ -63,11 +62,10 @@
                     throw new Error(`Server responded status ${response.status}: ${errorText}`);
                 }
 
-                // Store the parsed response object (parent, student, franchise data)
                 window.dashboardData = await response.json();
                 console.log("Dashboard data loaded successfully:", window.dashboardData);
 
-                // Load the UI components sequentially
+                // Load UI components
                 await loadSection('profile-section', 'profile.html');
                 await loadSection('gauges-section', 'gauges.html');
                 await loadSection('current-session-section', 'current.html');
