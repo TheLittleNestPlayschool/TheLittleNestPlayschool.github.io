@@ -6,23 +6,6 @@
 </head>
 <body>
 
-<script>
-    // Debugging information for parent dashboard
-    window.addEventListener('load', () => {
-        // Adjust this to match the variable that holds your user_id in this file
-        const userId = window.currentUserId; 
-        
-        console.log("--- Dashboard Debug Start ---");
-        console.log("User ID Value:", userId);
-        console.log("User ID Type:", typeof userId);
-        
-        // Log the target lookup
-        console.log("Targeting Database Record ID:", userId);
-        console.log("Expected Match Criteria: parent table id = " + userId);
-        console.log("--- Dashboard Debug End ---");
-    });
-</script>
-
 <h1>Parent Profile</h1>
 <div id="profile-section">
     <p>Name: <span id="parent-name">Loading...</span></p>
@@ -52,28 +35,34 @@
 <p id="next-lesson-desc">[Description of upcoming learning objectives...]</p>
 
 <script>
-    async function loadSection(elementId, file) {
-        try {
-            const response = await fetch(file);
-            const html = await response.text();
-            document.getElementById(elementId).innerHTML = html;
-        } catch (error) {
-            console.error("Error loading section:", error);
-        }
-    }
-
-    // Your main fetch logic
     async function initDashboard() {
-        const apiUrl = 'https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents?user_id=' + window.currentUserId;
+        // Retrieve the stored ID from localStorage as saved by login.html
+        const userId = localStorage.getItem('userId');
+        
+        if (!userId) {
+            console.error("No user found, redirecting to login...");
+            window.location.href = './login.html';
+            return;
+        }
+
+        // Use the retrieved userId for your API call
+        // Ensure this matches the EXACT input name in your Xano API
+        const apiUrl = 'https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents?user_id=' + userId;
+        
         try {
             const response = await fetch(apiUrl);
-            const data = await response.json();
-            window.dashboardData = data;
+            if (!response.ok) throw new Error('API request failed');
             
-            // Proceed to populate
-            await loadSection('profile-section', 'profile.html');
+            const data = await response.json();
+            
+            // Populate your HTML
+            document.getElementById('parent-name').textContent = data.parent_data.first_name + ' ' + data.parent_data.last_name;
+            document.getElementById('parent-email').textContent = data.parent_data.email;
+            document.getElementById('parent-phone').textContent = data.parent_data.phone;
+            document.getElementById('parent-address').textContent = data.parent_data.address;
+            
         } catch (error) {
-            console.error("Dashboard error:", error);
+            console.error("Dashboard load error:", error);
         }
     }
 
