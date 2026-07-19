@@ -1,4 +1,4 @@
-const XANO_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:8Je8Zszx'; 
+const XANO_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV'; 
 
 async function handleLogin() {
     const emailInput = document.getElementById('email').value.trim();
