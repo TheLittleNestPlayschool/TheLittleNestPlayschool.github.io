@@ -2,72 +2,83 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Parent Dashboard</title>
 </head>
 <body>
 
-    <div class="dashboard-layout">
-        <div id="profile-section"></div>
-        <div id="gauges-section"></div>
-        <div id="current-session-section"></div>
-        <div id="upcoming-session-section"></div>
-        <div id="gallery-section"></div>
-    </div>
+<script>
+    // Debugging information for parent dashboard
+    window.addEventListener('load', () => {
+        // Adjust this to match the variable that holds your user_id in this file
+        const userId = window.currentUserId; 
+        
+        console.log("--- Dashboard Debug Start ---");
+        console.log("User ID Value:", userId);
+        console.log("User ID Type:", typeof userId);
+        
+        // Log the target lookup
+        console.log("Targeting Database Record ID:", userId);
+        console.log("Expected Match Criteria: parent table id = " + userId);
+        console.log("--- Dashboard Debug End ---");
+    });
+</script>
 
-    <script>
-        window.dashboardData = null;
+<h1>Parent Profile</h1>
+<div id="profile-section">
+    <p>Name: <span id="parent-name">Loading...</span></p>
+    <p>Email: <span id="parent-email">Loading...</span></p>
+    <p>Phone: <span id="parent-phone">Loading...</span></p>
+    <p>Address: <span id="parent-address">Loading...</span></p>
+</div>
 
-        async function loadSection(sectionId, file) {
-            try {
-                const response = await fetch(file);
-                if (!response.ok) throw new Error(`Could not load ${file}`);
-                const html = await response.text();
-                document.getElementById(sectionId).innerHTML = html;
-            } catch (error) {
-                console.error(error);
-                document.getElementById(sectionId).innerHTML = "Error loading content.";
-            }
+<h2>Registered Students</h2>
+<div id="students-section">Loading students...</div>
+
+<h3>Development Progress</h3>
+<ul>
+    <li>Reading</li>
+    <li>Writing</li>
+    <li>Alphabet</li>
+    <li>Numbers</li>
+    <li>Manners</li>
+</ul>
+
+<h3>Working on Now</h3>
+<p>Lesson: <span id="current-lesson">[Lesson Title]</span></p>
+<p id="current-lesson-desc">[Activity Description and Learning Objectives will appear here...]</p>
+
+<h3>Coming Up Next</h3>
+<p>Lesson: <span id="next-lesson">[Next Lesson Title]</span></p>
+<p id="next-lesson-desc">[Description of upcoming learning objectives...]</p>
+
+<script>
+    async function loadSection(elementId, file) {
+        try {
+            const response = await fetch(file);
+            const html = await response.text();
+            document.getElementById(elementId).innerHTML = html;
+        } catch (error) {
+            console.error("Error loading section:", error);
         }
+    }
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const token = localStorage.getItem('authToken');
-            const storedUserId = localStorage.getItem('userId');
-            const userId = parseInt(storedUserId, 10);
+    // Your main fetch logic
+    async function initDashboard() {
+        const apiUrl = 'https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents?user_id=' + window.currentUserId;
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            window.dashboardData = data;
+            
+            // Proceed to populate
+            await loadSection('profile-section', 'profile.html');
+        } catch (error) {
+            console.error("Dashboard error:", error);
+        }
+    }
 
-            if (!userId || isNaN(userId)) {
-                console.error("CRITICAL ERROR: 'userId' is null or missing.");
-                return;
-            }
+    document.addEventListener('DOMContentLoaded', initDashboard);
+</script>
 
-            try {
-                const apiUrl = `https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents?user_id=${userId}`;
-                
-                const response = await fetch(apiUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) throw new Error(`Server responded status ${response.status}`);
-
-                window.dashboardData = await response.json();
-                
-                // Dispatch event so sub-pages know data is ready
-                window.dispatchEvent(new CustomEvent('dashboardDataReady'));
-
-                // Load UI components
-                await loadSection('profile-section', 'profile.html');
-                await loadSection('gauges-section', 'gauges.html');
-                await loadSection('current-session-section', 'current.html');
-                await loadSection('upcoming-session-section', 'upcoming.html');
-                await loadSection('gallery-section', 'gallery.html');
-
-            } catch (error) {
-                console.error("Dashboard initialization error:", error);
-            }
-        });
-    </script>
 </body>
 </html>
