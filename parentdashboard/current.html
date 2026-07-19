@@ -1,4 +1,3 @@
-
 <div class="card">
     <h2 style="margin-top: 0; font-size: 1.1rem; color: var(--primary-green);">Working on Now (Session <span id="session-num"></span>)</h2>
     
@@ -35,57 +34,3 @@
         <p id="full-lesson-plan" style="font-size: 0.85rem; color: #555; white-space: pre-wrap; margin-top: 5px; background: #f9f9f9; padding: 10px; border-radius: 8px;"></p>
     </div>
 </div>
-
-<script>
-(async function loadCurrentSession() {
-    const franchiseStr = localStorage.getItem('franchise_data');
-    if (!franchiseStr) {
-        document.getElementById('session-plan-name').innerText = "No franchise data found.";
-        return;
-    }
-
-    const franchise = JSON.parse(franchiseStr);
-    const sessionId = franchise?.current_session;
-
-    if (sessionId) {
-        try {
-            const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:joVisOhQ/session_details/${sessionId}`);
-            const session = await res.json();
-
-            if (session) {
-                // Core info
-                document.getElementById('session-num').innerText = session.session_num || '#';
-                document.getElementById('session-plan-name').innerText = session.session_plan_name || 'N/A';
-                document.getElementById('theme-color').innerText = session.theme_color || 'N/A';
-                document.getElementById('map-icon-url').innerText = session.map_icon_url || 'N/A';
-                document.getElementById('session-description').innerText = session.session_description || 'N/A';
-                
-                // Lessons & Manners
-                document.getElementById('lesson-1-title').innerText = session.lesson_1_title || 'N/A';
-                document.getElementById('lesson-1-cat').innerText = session.lesson_1_cat || 'N/A';
-                document.getElementById('lesson-2-title').innerText = session.lesson_2_title || 'N/A';
-                document.getElementById('lesson-2-cat').innerText = session.lesson_2_cat || 'N/A';
-                document.getElementById('manner-topic').innerText = session.manner_topic || 'N/A';
-                
-                // Objectives
-                document.getElementById('obj-1').innerText = session.obj_text_1 || 'N/A';
-                document.getElementById('obj-2').innerText = session.obj_text_2 || 'N/A';
-                document.getElementById('obj-3').innerText = session.obj_text_3 || 'N/A';
-                
-                // Activities & Worksheets
-                document.getElementById('physical-activity').innerText = session.physical_activity || 'N/A';
-                document.getElementById('home-time-activity').innerText = session.home_time_activity || 'N/A';
-                document.getElementById('worksheet-plan-name').innerText = session.worksheet_plan_name || 'N/A';
-                
-                // Full Plan
-                document.getElementById('full-lesson-plan').innerText = session.full_lesson_plan || 'N/A';
-            }
-        } catch (err) {
-            console.error("Failed to load session details:", err);
-            document.getElementById('session-plan-name').innerText = "Error loading session";
-        }
-    } else {
-        document.getElementById('session-plan-name').innerText = "No current session set.";
-    }
-})();
-</script>
