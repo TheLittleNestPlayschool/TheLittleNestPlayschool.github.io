@@ -8,11 +8,16 @@
 </head>
 <body>
 
-    <div id="profile-container"></div>
-    <div id="gauges-container"></div>
-    <div id="current-container"></div>
-    <div id="upcoming-container"></div>
-    <div id="gallery-container"></div>
+    <div id="app-container">
+        <div id="header">The Little Nest</div>
+        <div id="content-area">
+            <div id="profile-container"></div>
+            <div id="gauges-container"></div>
+            <div id="current-container"></div>
+            <div id="upcoming-container"></div>
+            <div id="gallery-container"></div>
+        </div>
+    </div>
 
 <script>
     async function loadDashboard() {
@@ -64,8 +69,13 @@
             document.getElementById('franchise-location').innerText = data.franchise_data.name || 'N/A';
         }
         
-        // Gauges (Update these when your data object is ready)
-        // ...
+        // Gauges
+        const progress = data.student_progress || {};
+        const gauges = ['reading', 'writing', 'alphabet', 'numbers', 'manners'];
+        gauges.forEach(type => {
+            const el = document.getElementById(`gauge-${type}`);
+            if (el) el.style.setProperty('--progress', `${progress[type] || 0}%`);
+        });
     }
 
     document.addEventListener('DOMContentLoaded', loadDashboard);
