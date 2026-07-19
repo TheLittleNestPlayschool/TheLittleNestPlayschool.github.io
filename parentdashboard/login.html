@@ -76,6 +76,20 @@
     </div>
 
     <script>
+        // Helper function to scan the JSON structure for the 'user_id' key automatically
+        function scanForUserId(obj) {
+            if (!obj || typeof obj !== 'object') return null;
+            if ('user_id' in obj && obj.user_id) return obj.user_id;
+            
+            for (let key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    const found = scanForUserId(obj[key]);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
         async function handleLogin() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
@@ -104,22 +118,22 @@
                     throw new Error(data.message || 'Invalid credentials.');
                 }
 
-                console.log("Xano Login Response Data:", data);
+                console.log("Full Xano Login Response Object:", data);
 
                 // Save auth token
                 localStorage.setItem('authToken', data.authToken);
                 
-                // Read the user_id field directly from the user record
-                const targetId = data.user && data.user.user_id;
+                // Scan the response to extract the user_id value
+                const discoveredId = scanForUserId(data);
                 
-                if (targetId) {
-                    localStorage.setItem('userId', targetId);
-                    console.log("Saved link value to userId storage:", targetId);
+                if (discoveredId) {
+                    localStorage.setItem('userId', discoveredId);
+                    console.log("Discovered and saved user_id:", discoveredId);
                 } else {
-                    console.warn("Field 'user_id' not found inside the response user object.");
+                    console.error("Could not find a valid user_id field anywhere in the Xano response structure.");
                 }
 
-                // Redirect directly to the dashboard
+                // Go to dashboard
                 window.location.href = './dashboard.html';
 
             } catch (error) {
