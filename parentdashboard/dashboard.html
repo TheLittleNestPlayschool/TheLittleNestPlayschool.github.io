@@ -32,18 +32,14 @@
                 { id: 'gallery-container', url: './gallery.html' }
             ];
 
-            // Use Promise.all to fetch everything at once
             await Promise.all(files.map(async (file) => {
                 const res = await fetch(file.url);
                 if (res.ok) {
-                    const text = await res.text();
-                    document.getElementById(file.id).innerHTML = text;
-                } else {
-                    console.error(`Error loading ${file.url}: ${res.status}`);
+                    document.getElementById(file.id).innerHTML = await res.text();
                 }
             }));
 
-            // 3. Populate
+            // 3. Populate Data
             populateUI(data);
 
         } catch (error) {
@@ -52,16 +48,21 @@
     }
 
     function populateUI(data) {
-        // Populate Profile
+        // Populate Parent
         const p = data.parent_data;
-        if (p && document.getElementById('parent-name')) {
+        if (p) {
             document.getElementById('parent-name').innerText = `${p.first_name || ''} ${p.last_name || ''}`;
             document.getElementById('parent-email').innerText = p.email || 'N/A';
             document.getElementById('parent-phone').innerText = p.phone || 'N/A';
             document.getElementById('parent-address').innerText = p.address || 'N/A';
         }
-        
-        // Add additional population logic for your other files here
+
+        // Populate Student
+        const s = data.student_data[0];
+        if (s) {
+            document.getElementById('student-name').innerText = s.name || 'N/A';
+            document.getElementById('franchise-location').innerText = s.franchise_name || 'N/A';
+        }
     }
 
     document.addEventListener('DOMContentLoaded', loadDashboard);
