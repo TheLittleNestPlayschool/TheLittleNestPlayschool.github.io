@@ -45,8 +45,9 @@
 
             populateUI(data);
 
-            if (data.franchise_data?.session_num) {
-                loadSession(data.franchise_data.session_num);
+            // Updated trigger to use current_session instead of session_num
+            if (data.franchise_data?.current_session) {
+                await loadSession(data.franchise_data.current_session);
             }
         } catch (error) {
             console.error("Dashboard Load Error:", error);
@@ -55,6 +56,7 @@
 
     async function loadSession(sessionId) {
         try {
+            // sessionId here is the value from franchise_data.current_session
             const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/get_session_details?session_number=${sessionId}`);
             const data = await res.json();
 
