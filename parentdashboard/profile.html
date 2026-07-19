@@ -1,61 +1,12 @@
 <div class="profile-card">
     <h2>Parent Profile</h2>
     <div class="profile-details">
-        <p><strong>Name:</strong> <span id="parent-name">Loading...</span></p>
-        <p><strong>Email:</strong> <span id="parent-email">Loading...</span></p>
-        <p><strong>Phone:</strong> <span id="parent-phone">Loading...</span></p>
-        <p><strong>Address:</strong> <span id="parent-address">Loading...</span></p>
+        <p><strong>Name:</strong> <span id="parent-name"></span></p>
+        <p><strong>Email:</strong> <span id="parent-email"></span></p>
+        <p><strong>Phone:</strong> <span id="parent-phone"></span></p>
+        <p><strong>Address:</strong> <span id="parent-address"></span></p>
     </div>
 
     <h2 class="mt-4">Registered Students</h2>
-    <div id="students-container">
-        <p>Loading students...</p>
-    </div>
+    <div id="students-container"></div>
 </div>
-
-<script>
-    async function initProfile() {
-        const userId = localStorage.getItem('userId');
-        if (!userId) {
-            window.location.href = './login.html';
-            return;
-        }
-
-        const apiUrl = 'https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents?user_id=' + userId;
-
-        try {
-            const response = await fetch(apiUrl);
-            const data = await response.json();
-
-            // Populate Parent Details
-            if (data.parent_data) {
-                const p = data.parent_data;
-                document.getElementById('parent-name').innerText = `${p.first_name || ''} ${p.last_name || ''}`;
-                document.getElementById('parent-email').innerText = p.email || 'N/A';
-                document.getElementById('parent-phone').innerText = p.phone || 'N/A';
-                document.getElementById('parent-address').innerText = p.address || 'N/A';
-            }
-
-            // Populate Students
-            const container = document.getElementById('students-container');
-            if (Array.isArray(data.student_data) && data.student_data.length > 0) {
-                container.innerHTML = '';
-                data.student_data.forEach(student => {
-                    const studentDiv = document.createElement('div');
-                    studentDiv.innerHTML = `
-                        <p><strong>Name:</strong> ${student.name || 'Unknown'}</p>
-                        <p><strong>Status:</strong> ${student.is_active ? 'Active' : 'Inactive'}</p>
-                    `;
-                    container.appendChild(studentDiv);
-                });
-            } else {
-                container.innerHTML = '<p>No registered students found.</p>';
-            }
-        } catch (error) {
-            console.error("Profile load error:", error);
-            document.getElementById('students-container').innerHTML = '<p>Error loading profile data.</p>';
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', initProfile);
-</script>
