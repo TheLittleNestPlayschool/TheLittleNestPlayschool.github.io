@@ -73,11 +73,19 @@ async function loadSession(sessionId) {
         const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/get_session_details?session_number=${sessionId}`);
         const data = await res.json();
         if (data) {
+            // Updated mapping for the new short description
+            const descEl = document.getElementById('session-short-description');
+            if (descEl) descEl.innerText = data.short_description || 'No summary available for today.';
+            
             const fields = {
-                'session-num': data.session_num, 'session-plan-name': data.session_plan_name,
-                'session-description': data.session_description, 'lesson-1-title': data.lesson_1_title,
-                'lesson-1-cat': data.lesson_1_cat, 'lesson-2-title': data.lesson_2_title,
-                'lesson-2-cat': data.lesson_2_cat, 'manner-topic': data.manner_topic
+                'session-num': data.session_num, 
+                'session-plan-name': data.session_plan_name,
+                'session-description': data.session_description, 
+                'lesson-1-title': data.lesson_1_title,
+                'lesson-1-cat': data.lesson_1_cat, 
+                'lesson-2-title': data.lesson_2_title,
+                'lesson-2-cat': data.lesson_2_cat, 
+                'manner-topic': data.manner_topic
             };
             for (const [id, value] of Object.entries(fields)) {
                 const el = document.getElementById(id);
