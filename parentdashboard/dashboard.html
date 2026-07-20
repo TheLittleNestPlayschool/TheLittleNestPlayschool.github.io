@@ -40,8 +40,7 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal('my-data-modal')">&times;</span>
             <div id="profile-content">
-                <h3>Student Details</h3>
-                <!-- Content injected here -->
+                <!-- profile.html will be loaded here -->
             </div>
         </div>
     </div>
@@ -53,8 +52,19 @@
             content.style.display = (content.style.display === "block") ? "none" : "block";
         }
 
+        // Modal logic fetching external HTML
         function openModal(id) {
-            document.getElementById(id).classList.add('show');
+            const modal = document.getElementById(id);
+            modal.classList.add('show');
+
+            if (id === 'my-data-modal') {
+                fetch('profile.html')
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById('profile-content').innerHTML = data;
+                    })
+                    .catch(error => console.error('Error loading profile.html:', error));
+            }
         }
 
         function closeModal(id) {
