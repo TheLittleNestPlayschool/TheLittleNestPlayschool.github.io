@@ -4,6 +4,25 @@ function toggleAccordion(element) {
     content.style.display = (content.style.display === "block") ? "none" : "block";
 }
 
+// --- Modal Logic ---
+function openModal(id) {
+    const modal = document.getElementById(id);
+    modal.classList.add('show');
+
+    if (id === 'my-data-modal') {
+        fetch('profile.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('profile-content').innerHTML = data;
+            })
+            .catch(error => console.error('Error loading profile.html:', error));
+    }
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+}
+
 // --- Main Dashboard Loading Logic ---
 async function loadDashboard() {
     const userId = localStorage.getItem('userId');
