@@ -73,7 +73,7 @@ async function loadSession(sessionId) {
         const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/get_session_details?session_number=${sessionId}`);
         const data = await res.json();
         if (data) {
-            // Updated mapping for the new short description
+            // Mapping short description for recap
             const descEl = document.getElementById('session-short-description');
             if (descEl) descEl.innerText = data.short_description || 'No summary available for today.';
             
@@ -100,15 +100,28 @@ async function loadUpcoming(currentSessionId) {
         const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/get_up_session_details?session_number=${currentSessionId}`);
         const data = await res.json();
         if (data) {
+            // Mapping short description for upcoming
+            const descEl = document.getElementById('up-session-short-description');
+            if (descEl) descEl.innerText = data.short_description || 'No summary available for next session.';
+            
             const fields = {
-                'up-session-num': data.session_num, 'up-session-plan-name': data.session_plan_name,
-                'up-theme-color': data.theme_color, 'up-map-icon-url': data.map_icon_url,
-                'up-session-description': data.session_description, 'up-lesson-1-title': data.lesson_1_title,
-                'up-lesson-1-cat': data.lesson_1_cat, 'up-lesson-2-title': data.lesson_2_title,
-                'up-lesson-2-cat': data.lesson_2_cat, 'up-manner-topic': data.manner_topic,
-                'up-obj-1': data.obj_text_1, 'up-obj-2': data.obj_text_2, 'up-obj-3': data.obj_text_3,
-                'up-physical-activity': data.physical_activity, 'up-home-time-activity': data.home_time_activity,
-                'up-worksheet-plan-name': data.worksheet_plan_name, 'up-full-lesson-plan': data.full_lesson_plan
+                'up-session-num': data.session_num, 
+                'up-session-plan-name': data.session_plan_name,
+                'up-theme-color': data.theme_color, 
+                'up-map-icon-url': data.map_icon_url,
+                'up-session-description': data.session_description, 
+                'up-lesson-1-title': data.lesson_1_title,
+                'up-lesson-1-cat': data.lesson_1_cat, 
+                'up-lesson-2-title': data.lesson_2_title,
+                'up-lesson-2-cat': data.lesson_2_cat, 
+                'up-manner-topic': data.manner_topic,
+                'up-obj-1': data.obj_text_1, 
+                'up-obj-2': data.obj_text_2, 
+                'up-obj-3': data.obj_text_3,
+                'up-physical-activity': data.physical_activity, 
+                'up-home-time-activity': data.home_time_activity,
+                'up-worksheet-plan-name': data.worksheet_plan_name, 
+                'up-full-lesson-plan': data.full_lesson_plan
             };
             for (const [id, value] of Object.entries(fields)) {
                 const el = document.getElementById(id);
