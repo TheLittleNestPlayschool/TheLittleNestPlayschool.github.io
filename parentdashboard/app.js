@@ -7,13 +7,13 @@ async function loadDashboard() {
         const data = await response.json();
 
        const files = [
-    { id: 'ribbon-container', url: './ribbon.html' },
-    { id: 'profile-container', url: './profile.html' },
-    { id: 'gauges-container', url: './gauges.html' },
-    { id: 'current-container', url: './recap.html' },
-    { id: 'upcoming-container', url: './adventure.html' },
-    { id: 'gallery-container', url: './gallery.html' }
-];
+            { id: 'ribbon-container', url: './ribbon.html' },
+            { id: 'profile-container', url: './profile.html' },
+            { id: 'gauges-container', url: './gauges.html' },
+            { id: 'current-container', url: './recap.html' },
+            { id: 'upcoming-container', url: './adventure.html' },
+            { id: 'gallery-container', url: './gallery.html' }
+        ];
 
         await Promise.all(files.map(async (file) => {
             const res = await fetch(file.url);
