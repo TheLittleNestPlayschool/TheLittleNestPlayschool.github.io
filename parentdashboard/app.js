@@ -13,19 +13,21 @@ async function loadDashboard() {
         const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents?user_id=' + userId);
         const data = await response.json();
 
+        // Mapping files to the grid containers in dashboard.html
         const files = [
             { id: 'ribbon-container', url: './ribbon.html' },
             { id: 'profile-container', url: './profile.html' },
             { id: 'gauges-container', url: './gauges.html' },
             { id: 'current-container', url: './recap.html' },
-            { id: 'upcoming-container', url: './adventure.html' },
+            { id: 'upcoming-container', url: './upcoming.html' },
             { id: 'gallery-container', url: './gallery.html' }
         ];
 
         await Promise.all(files.map(async (file) => {
             const res = await fetch(file.url);
             if (res.ok) {
-                document.getElementById(file.id).innerHTML = await res.text();
+                const container = document.getElementById(file.id);
+                if (container) container.innerHTML = await res.text();
             }
         }));
 
@@ -47,13 +49,9 @@ async function loadSession(sessionId) {
         if (data) {
             const fields = {
                 'session-num': data.session_num, 'session-plan-name': data.session_plan_name,
-                'theme-color': data.theme_color, 'map-icon-url': data.map_icon_url,
                 'session-description': data.session_description, 'lesson-1-title': data.lesson_1_title,
                 'lesson-1-cat': data.lesson_1_cat, 'lesson-2-title': data.lesson_2_title,
-                'lesson-2-cat': data.lesson_2_cat, 'manner-topic': data.manner_topic,
-                'obj-1': data.obj_text_1, 'obj-2': data.obj_text_2, 'obj-3': data.obj_text_3,
-                'physical-activity': data.physical_activity, 'home-time-activity': data.home_time_activity,
-                'worksheet-plan-name': data.worksheet_plan_name, 'full-lesson-plan': data.full_lesson_plan
+                'lesson-2-cat': data.lesson_2_cat, 'manner-topic': data.manner_topic
             };
             for (const [id, value] of Object.entries(fields)) {
                 const el = document.getElementById(id);
