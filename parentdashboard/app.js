@@ -6,13 +6,14 @@ async function loadDashboard() {
         const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents?user_id=' + userId);
         const data = await response.json();
 
-        const files = [
-            { id: 'profile-container', url: './profile.html' },
-            { id: 'gauges-container', url: './gauges.html' },
-            { id: 'current-container', url: './current.html' },
-            { id: 'upcoming-container', url: './upcoming.html' },
-            { id: 'gallery-container', url: './gallery.html' }
-        ];
+       const files = [
+    { id: 'ribbon-container', url: './ribbon.html' },
+    { id: 'profile-container', url: './profile.html' },
+    { id: 'gauges-container', url: './gauges.html' },
+    { id: 'current-container', url: './recap.html' },
+    { id: 'upcoming-container', url: './adventure.html' },
+    { id: 'gallery-container', url: './gallery.html' }
+];
 
         await Promise.all(files.map(async (file) => {
             const res = await fetch(file.url);
