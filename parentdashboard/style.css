@@ -1,244 +1,123 @@
-:root { 
-    --deep-night: #2D1B4E;
-    --soft-glow: #FF7BAC;
-    --soft-sunshine: #FDE68A;
-    --cloud: #F8F7FF;
-    --white: #FFFFFF;
-    --form-bg: #F4F4F2;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>TLNP</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Ensure font-family Gagalin is defined */
+        @font-face {
+            font-family: 'Gagalin';
+            src: url('fonts/gagalin.woff2') format('woff2');
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <!-- Header Banner -->
+        <header class="main-header">
+            <h1 style="font-family: 'Gagalin', sans-serif;">
+                THE LITTLE NEST PLAYSCHOOL <span id="franchise-name-display"></span>
+            </h1>
+            <div class="stats-banner">
+                <span class="banner-title">Little Nest Global Network</span>
+                <span class="banner-stat">50,000+ Learning Hours & Counting!</span>
+            </div>
+            <!-- Student/Parent Info Banner -->
+            <div id="student-info-banner">
+                <span id="parent-name" style="font-weight: bold;"></span> &bullet; 
+                <span id="student-name"></span>
+            </div>
+        </header>
 
-/* --- Font Loading --- */
-@font-face {
-    font-family: 'Gagalin';
-    src: url('/fonts/Gagalin-Regular.woff2') format('woff2');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-* { box-sizing: border-box; }
+        <!-- Main Content Area -->
+        <div id="content-area">
+            <div id="current-container"></div>
+            <div id="upcoming-container"></div>
+            <div id="gallery-container"></div>
+        </div>
 
-body { 
-    margin: 0; 
-    padding: 0;
-    font-family: 'Segoe UI', sans-serif; 
-    background-color: var(--deep-night);
-    height: 100dvh; 
-    overflow: hidden; 
-}
+        <!-- Sidebar Right -->
+        <div class="sidebar-right" id="gauges-container"></div>
 
-/* --- Login Form Styles --- */
-.login-form-wrapper {
-    width: 350px;
-    height: 600px;
-    background: var(--form-bg);
-    border-radius: 40px;
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    z-index: 1;
-}
+        <!-- Footer -->
+        <div id="footer-buttons">
+            <button onclick="openModal('my-data-modal')">My Data</button>
+            <button onclick="openModal('gallery-modal')">My Gallery</button>
+            <button onclick="openModal('message-modal')">Message Us</button>
+            <button onclick="openModal('new-modal')">Button New</button>
+        </div>
+    </div>
 
-.login-header-curve {
-    width: 100%;
-    height: 250px;
-    background: var(--soft-glow); 
-    border-bottom-left-radius: 50% 30%;
-    border-bottom-right-radius: 50% 30%;
-    margin-bottom: 40px;
-}
+    <!-- Modals -->
+    <div id="my-data-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('my-data-modal')">&times;</span>
+            <div id="profile-content"></div>
+        </div>
+    </div>
 
-.login-input {
-    width: 100%;
-    border: none;
-    background: var(--white);
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 12px;
-    font-size: 1rem;
-}
+    <div id="gallery-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('gallery-modal')">&times;</span>
+            <div id="gallery-content"></div>
+        </div>
+    </div>
 
-/* --- Dashboard Layout --- */
-#app-container { 
-    display: grid;
-    grid-template-columns: 4fr 1fr; 
-    grid-template-rows: auto 1fr auto;
-    height: 100dvh;
-    width: 100vw;
-    overflow: hidden;
-}
+    <div id="message-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('message-modal')">&times;</span>
+            <div id="message-content"></div>
+        </div>
+    </div>
 
-/* --- Header Banner Styles --- */
-.main-header { 
-    grid-column: 1 / 3;
-    text-align: center;
-    padding: 10px;
-    background: linear-gradient(135deg, #2d1b4e 0%, #4a2c7a 100%);
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
-}
+    <div id="new-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('new-modal')">&times;</span>
+            <div id="new-content"></div>
+        </div>
+    </div>
 
-.main-header h1 {
-    margin: 0 0 5px 0;
-    font-size: 1.2rem;
-    text-transform: uppercase;
-    font-weight: 700;
-    font-family: 'Gagalin', sans-serif;
-    color: var(--white);
-}
+    <script src="./app.js"></script>
+    <script>
+        function toggleAccordion(element) {
+            const content = element.nextElementSibling;
+            content.style.display = (content.style.display === "block") ? "none" : "block";
+        }
 
-/* Unified Banner Styles */
-.stats-banner, #student-info-banner {
-    display: block;
-    margin: 5px auto;
-    padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    text-align: center;
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 0.85rem;
-    color: var(--white);
-    max-width: 90%;
-    width: fit-content;
-    min-width: 250px;
-}
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.add('show');
 
-.banner-title { font-weight: bold; margin-right: 5px; }
-.banner-stat { opacity: 0.9; }
+            if (id === 'my-data-modal') {
+                fetch('profile.html')
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById('profile-content').innerHTML = data;
+                        if(window.populateUI) populateUI(window.latestDashboardData);
+                    })
+                    .catch(error => console.error('Error loading profile.html:', error));
+            } else if (id === 'gallery-modal') {
+                fetch('gallery.html')
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById('gallery-content').innerHTML = data;
+                    })
+                    .catch(error => console.error('Error loading gallery.html:', error));
+            } else if (id === 'message-modal') {
+                fetch('message_us.html')
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById('message-content').innerHTML = data;
+                    })
+                    .catch(error => console.error('Error loading message_us.html:', error));
+            }
+        }
 
-#content-area { 
-    grid-column: 1 / 2;
-    grid-row: 2 / 3;
-    overflow-y: auto;
-    padding: 20px;
-}
-
-.sidebar-right {
-    grid-column: 2 / 3;
-    grid-row: 2 / 3;
-    background: var(--cloud);
-    padding: 10px;
-    border-left: 1px solid #ddd;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-}
-
-/* --- Footer Button Row --- */
-#footer-buttons {
-    grid-column: 1 / 3;
-    background: var(--cloud);
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 12px;
-    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    border-top: 1px solid #ddd;
-    flex-shrink: 0;
-}
-
-#footer-buttons button {
-    padding: 10px 25px;
-    border: none;
-    border-radius: 8px;
-    background: var(--soft-glow);
-    color: var(--deep-night);
-    font-weight: bold;
-    cursor: pointer;
-}
-
-/* --- Modal Overlay --- */
-.modal {
-    display: none; 
-    position: fixed; 
-    bottom: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 85%;
-    background-color: var(--white);
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
-    z-index: 1000;
-    transition: transform 0.3s ease-out;
-    transform: translateY(100%);
-    overflow-y: auto;
-}
-
-.modal.show {
-    display: block;
-    transform: translateY(0);
-}
-
-.modal-content { 
-    padding: 20px; 
-    position: relative;
-}
-
-.close {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 2rem;
-    cursor: pointer;
-    color: var(--deep-night);
-}
-
-/* Components */
-.module-box { 
-    background: var(--white); 
-    padding: 15px; 
-    border-radius: 16px; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
-    border-left: none; 
-    margin-bottom: 15px;
-}
-
-/* Gauge Styles */
-.gauge-column {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.gauge-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-}
-
-.gauge-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: conic-gradient(var(--soft-glow) var(--progress), #e0e0e0 0);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 2px;
-    position: relative;
-}
-
-.gauge-circle::before {
-    content: "";
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: var(--white);
-    position: absolute;
-}
-
-.gauge-label {
-    font-family: 'Gagalin', sans-serif;
-    font-size: 8px;
-    text-transform: uppercase;
-    text-align: center;
-    color: #2c2c2c;
-    line-height: 1;
-}
-
-.badge-slot {
-    height: 15px;
-    margin-top: 2px;
-}
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+    </script>
+</body>
+</html>
