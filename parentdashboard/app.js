@@ -50,7 +50,6 @@ async function loadDashboard() {
 
         // Mapping files to the grid containers in dashboard.html
         const files = [
-            { id: 'ribbon-container', url: './ribbon.html' },
             { id: 'gauges-container', url: './gauges.html' },
             { id: 'current-container', url: './recap.html' },
             { id: 'upcoming-container', url: './upcoming.html' },
@@ -142,29 +141,34 @@ async function loadUpcoming(upcomingSessionId) {
 }
 
 function populateUI(data) {
+    // Populate Header Banner franchise name
+    if (data.franchise_data) {
+        const locHeaderEl = document.getElementById('franchise-name-display');
+        if (locHeaderEl) locHeaderEl.innerText = data.franchise_data.name || '';
+    }
+
+    // Populate Parent/Student Banner
     const p = data.parent_data;
     if (p) {
-        // These IDs are now within profile.html, loaded via modal
         const nameEl = document.getElementById('parent-name');
         if (nameEl) nameEl.innerText = `${p.first_name || ''} ${p.last_name || ''}`;
-        
-        const emailEl = document.getElementById('parent-email');
-        if (emailEl) emailEl.innerText = p.email || 'N/A';
-        
-        const phoneEl = document.getElementById('parent-phone');
-        if (phoneEl) phoneEl.innerText = p.phone || 'N/A';
-        
-        const addressEl = document.getElementById('parent-address');
-        if (addressEl) addressEl.innerText = p.address || 'N/A';
     }
     if (data.student_data?.[0]) {
         const studentEl = document.getElementById('student-name');
         if (studentEl) studentEl.innerText = data.student_data[0].name || 'N/A';
     }
-    if (data.franchise_data) {
-        const locEl = document.getElementById('franchise-location');
-        if (locEl) locEl.innerText = data.franchise_data.name || 'N/A';
-    }
+
+    // Populate profile modal fields if they exist
+    const emailEl = document.getElementById('parent-email');
+    if (emailEl && p) emailEl.innerText = p.email || 'N/A';
+        
+    const phoneEl = document.getElementById('parent-phone');
+    if (phoneEl && p) phoneEl.innerText = p.phone || 'N/A';
+        
+    const addressEl = document.getElementById('parent-address');
+    if (addressEl && p) addressEl.innerText = p.address || 'N/A';
+
+    // Populate Gauges
     const progress = data.student_progress || {};
     ['reading', 'writing', 'alphabet', 'numbers', 'manners'].forEach(type => {
         const el = document.getElementById(`gauge-${type}`);
