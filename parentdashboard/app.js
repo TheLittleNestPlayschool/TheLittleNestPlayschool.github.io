@@ -14,6 +14,10 @@ function openModal(id) {
             .then(response => response.text())
             .then(data => {
                 document.getElementById('profile-content').innerHTML = data;
+                // Populate with the existing data once loaded
+                if (window.latestDashboardData) {
+                    populateUI(window.latestDashboardData);
+                }
             })
             .catch(error => console.error('Error loading profile.html:', error));
     }
@@ -24,6 +28,9 @@ function closeModal(id) {
 }
 
 // --- Main Dashboard Loading Logic ---
+// Store data globally to be accessible by modals
+window.latestDashboardData = null;
+
 async function loadDashboard() {
     const userId = localStorage.getItem('userId');
     if (!userId) { window.location.href = './login.html'; return; }
@@ -31,11 +38,11 @@ async function loadDashboard() {
     try {
         const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents?user_id=' + userId);
         const data = await response.json();
+        window.latestDashboardData = data; // Store data
 
         // Mapping files to the grid containers in dashboard.html
         const files = [
             { id: 'ribbon-container', url: './ribbon.html' },
-            { id: 'profile-container', url: './profile.html' },
             { id: 'gauges-container', url: './gauges.html' },
             { id: 'current-container', url: './recap.html' },
             { id: 'upcoming-container', url: './upcoming.html' },
@@ -106,16 +113,26 @@ async function loadUpcoming(currentSessionId) {
 function populateUI(data) {
     const p = data.parent_data;
     if (p) {
-        document.getElementById('parent-name').innerText = `${p.first_name || ''} ${p.last_name || ''}`;
-        document.getElementById('parent-email').innerText = p.email || 'N/A';
-        document.getElementById('parent-phone').innerText = p.phone || 'N/A';
-        document.getElementById('parent-address').innerText = p.address || 'N/A';
+        // These IDs are now within profile.html, loaded via modal
+        const nameEl = document.getElementById('parent-name');
+        if (nameEl) nameEl.innerText = `${p.first_name || ''} ${p.last_name || ''}`;
+        
+        const emailEl = document.getElementById('parent-email');
+        if (emailEl) emailEl.innerText = p.email || 'N/A';
+        
+        const phoneEl = document.getElementById('parent-phone');
+        if (phoneEl) phoneEl.innerText = p.phone || 'N/A';
+        
+        const addressEl = document.getElementById('parent-address');
+        if (addressEl) addressEl.innerText = p.address || 'N/A';
     }
     if (data.student_data?.[0]) {
-        document.getElementById('student-name').innerText = data.student_data[0].name || 'N/A';
+        const studentEl = document.getElementById('student-name');
+        if (studentEl) studentEl.innerText = data.student_data[0].name || 'N/A';
     }
     if (data.franchise_data) {
-        document.getElementById('franchise-location').innerText = data.franchise_data.name || 'N/A';
+        const locEl = document.getElementById('franchise-location');
+        if (locEl) locEl.innerText = data.franchise_data.name || 'N/A';
     }
     const progress = data.student_progress || {};
     ['reading', 'writing', 'alphabet', 'numbers', 'manners'].forEach(type => {
