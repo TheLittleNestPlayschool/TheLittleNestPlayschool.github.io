@@ -13,6 +13,7 @@
   .circle { 
     position: absolute; border-radius: 50%; background-size: cover; background-position: center;
     border: 2px solid rgba(255,255,255,0.5);
+    /* Ensure circles are layered correctly */
   }
   .content { position: absolute; bottom: 50px; left: 20px; right: 20px; z-index: 10; }
   h3 { font-size: 14px; color: #333; margin-bottom: 10px; text-transform: uppercase; }
@@ -22,10 +23,10 @@
 <body>
 
 <div class="mobile-frame" id="container">
-  <div class="circle" id="c1" style="width:60px; height:60px; background-image:url('image 1.webp');"></div>
-  <div class="circle" id="c2" style="width:150px; height:150px; background-image:url('image2.jpg');"></div>
-  <div class="circle" id="c3" style="width:100px; height:100px; background-image:url('image3.jpg');"></div>
-  <div class="circle" id="c4" style="width:80px; height:80px; background-image:url('image4.png');"></div>
+  <div class="circle" id="c1" style="width:120px; height:120px; z-index:1; background-image:url('image 1.webp');"></div>
+  <div class="circle" id="c2" style="width:100px; height:100px; z-index:2; background-image:url('image2.jpg');"></div>
+  <div class="circle" id="c3" style="width:90px; height:90px; z-index:3; background-image:url('image3.jpg');"></div>
+  <div class="circle" id="c4" style="width:110px; height:110px; z-index:4; background-image:url('image4.png');"></div>
 
   <div class="content">
     <h3>SPEEDSPRINT</h3>
@@ -35,28 +36,38 @@
 
 <script>
   const circles = document.querySelectorAll('.circle');
-  const container = document.getElementById('container');
-  const containerW = 375, containerH = 750;
+  const containerW = 375;
+  const containerH = 750 * 0.75; // Limit to top 75%
 
   let props = Array.from(circles).map(c => ({
     el: c,
-    x: Math.random() * 200, y: Math.random() * 200,
-    vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4,
+    x: Math.random() * (containerW - 100), 
+    y: Math.random() * (containerH - 100),
+    vx: (Math.random() - 0.5) * 4, 
+    vy: (Math.random() - 0.5) * 4,
     r: c.offsetWidth / 2
   }));
 
   function move() {
     props.forEach((p, i) => {
       p.x += p.vx; p.y += p.vy;
+      
+      // Boundary checks (Top 75%)
       if (p.x < 0 || p.x > containerW - p.r * 2) p.vx *= -1;
       if (p.y < 0 || p.y > containerH - p.r * 2) p.vy *= -1;
 
-      // Simple Collision
+      // Improved Collision Detection
       props.forEach((p2, j) => {
         if (i !== j) {
           let dx = (p.x + p.r) - (p2.x + p2.r);
           let dy = (p.y + p.r) - (p2.y + p2.r);
-          if (Math.sqrt(dx*dx + dy*dy) < p.r + p2.r) { p.vx *= -1; p.vy *= -1; }
+          let distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < p.r + p2.r) {
+            // Reverse velocity on impact
+            p.vx *= -1; p.vy *= -1;
+            // Push apart slightly to prevent overlapping
+            p.x += p.vx; p.y += p.vy;
+          }
         }
       });
       p.el.style.left = p.x + 'px';
