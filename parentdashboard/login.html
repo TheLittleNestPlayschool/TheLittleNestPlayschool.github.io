@@ -6,6 +6,12 @@
     <title>The Little Nest - Login</title>
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Override body background specifically for login page */
+        body {
+            background-color: #2D1B4E !important; /* Deep Night */
+            margin: 0;
+            font-family: sans-serif;
+        }
         .login-container {
             display: flex;
             justify-content: center;
@@ -16,49 +22,53 @@
         .login-card {
             width: 100%;
             max-width: 400px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
+        .form-group { margin-bottom: 20px; }
         .form-group label {
             display: block;
-            margin-bottom: 5px;
-            font-size: 0.85rem;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
             font-weight: bold;
+            color: #2D1B4E;
         }
         .form-group input {
             width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            padding: 14px;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
             font-size: 1rem;
             box-sizing: border-box;
         }
         .login-btn {
             width: 100%;
-            padding: 12px;
-            background-color: var(--primary-green);
+            padding: 15px;
+            background-color: #FF7BAC; /* Soft Glow Pink */
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
             font-weight: bold;
             cursor: pointer;
+            transition: background 0.3s;
         }
+        .login-btn:hover { background-color: #f06a9a; }
         .error-message {
             color: #e74c3c;
             text-align: center;
             margin-top: 15px;
             font-size: 0.9rem;
-            font-weight: bold;
             display: none;
         }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <div class="card login-card">
-            <h2 style="margin-bottom: 20px; text-align: center;">Parent Login</h2>
+        <div class="login-card">
+            <h2 style="margin-bottom: 25px; text-align: center; color: #2D1B4E;">Parent Login</h2>
             
             <div class="form-group">
                 <label for="email">Email Address</label>
@@ -92,36 +102,23 @@
             try {
                 const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/auth/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email, password: password })
                 });
 
                 const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Invalid credentials.');
 
-                if (!response.ok) {
-                    throw new Error(data.message || 'Invalid credentials.');
-                }
-
-                console.log("Full Xano Login Response:", data);
-
-                // Save auth token
                 localStorage.setItem('authToken', data.authToken);
-                
-                // Extract the pointer stored in the 'user' key of the response
                 const userId = data.user; 
 
                 if (userId) {
                     localStorage.setItem('userId', userId);
-                    console.log("Successfully saved userId pointer:", userId);
                     window.location.href = './dashboard.html';
                 } else {
-                    alert("CRITICAL: The API did not return a valid user pointer. Response: " + JSON.stringify(data));
+                    alert("CRITICAL: API did not return a valid user pointer.");
                 }
-
             } catch (error) {
-                console.error('Login window error:', error);
                 errorDiv.textContent = error.message || "Login failed.";
                 errorDiv.style.display = 'block';
             }
