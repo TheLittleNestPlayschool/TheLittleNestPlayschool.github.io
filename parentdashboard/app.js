@@ -20,6 +20,14 @@ function openModal(id) {
                 }
             })
             .catch(error => console.error('Error loading profile.html:', error));
+    } else if (id === 'gallery-modal') {
+        // Fetch the full gallery content when opening the gallery modal
+        fetch('gallery.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('gallery-content').innerHTML = data;
+            })
+            .catch(error => console.error('Error loading gallery.html:', error));
     }
 }
 
@@ -46,7 +54,7 @@ async function loadDashboard() {
             { id: 'gauges-container', url: './gauges.html' },
             { id: 'current-container', url: './recap.html' },
             { id: 'upcoming-container', url: './upcoming.html' },
-            { id: 'gallery-container', url: './gallery.html' }
+            { id: 'gallery-container', url: './gallery_main.html' }
         ];
 
         await Promise.all(files.map(async (file) => {
