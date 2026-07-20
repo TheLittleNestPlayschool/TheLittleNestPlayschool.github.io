@@ -61,7 +61,9 @@ async function loadDashboard() {
 
         if (data.franchise_data?.current_session) {
             await loadSession(data.franchise_data.current_session);
-            await loadUpcoming(data.franchise_data.current_session);
+            // Increment the current session to get the next one for "Up Next"
+            const nextSessionId = parseInt(data.franchise_data.current_session) + 1;
+            await loadUpcoming(nextSessionId);
         }
     } catch (error) {
         console.error("Dashboard Load Error:", error);
@@ -95,9 +97,9 @@ async function loadSession(sessionId) {
     } catch (err) { console.error("Session load error:", err); }
 }
 
-async function loadUpcoming(currentSessionId) {
+async function loadUpcoming(upcomingSessionId) {
     try {
-        const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/get_up_session_details?session_number=${currentSessionId}`);
+        const res = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/get_up_session_details?session_number=${upcomingSessionId}`);
         const data = await res.json();
         if (data) {
             // Mapping short description for upcoming
