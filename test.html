@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bouncing Circles UI</title>
+<title>Static Circles UI</title>
 <style>
   body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #e0e0e0; }
   .mobile-frame {
@@ -21,13 +21,13 @@
 </head>
 <body>
 
-<div class="mobile-frame" id="container">
-  <!-- Added all 5 circles -->
-  <div class="circle" style="width:80px; height:80px; z-index:1;"></div>
-  <div class="circle" style="width:90px; height:90px; z-index:2;"></div>
-  <div class="circle" style="width:70px; height:70px; z-index:3;"></div>
-  <div class="circle" style="width:100px; height:100px; z-index:4;"></div>
-  <div class="circle" style="width:85px; height:85px; z-index:5;"></div>
+<div class="mobile-frame">
+  <!-- Static circles with fixed positions -->
+  <div class="circle" style="width:100px; height:100px; top:50px; left:50px; background-image:url('image 1.webp');"></div>
+  <div class="circle" style="width:120px; height:120px; top:100px; right:30px; background-image:url('image2.jpg');"></div>
+  <div class="circle" style="width:90px; height:90px; top:200px; left:120px; background-image:url('image3.jpg');"></div>
+  <div class="circle" style="width:110px; height:110px; top:250px; left:30px; background-image:url('image4.png');"></div>
+  <div class="circle" style="width:95px; height:95px; top:320px; right:80px; background-color:#c09cfb;"></div>
 
   <div class="content">
     <h3>SPEEDSPRINT</h3>
@@ -35,46 +35,5 @@
   </div>
 </div>
 
-<script>
-  const circles = document.querySelectorAll('.circle');
-  const containerW = 375;
-  const containerH = 750 * 0.75; 
-
-  let props = Array.from(circles).map(c => ({
-    el: c,
-    x: Math.random() * (containerW - 80),
-    y: Math.random() * (containerH - 80),
-    vx: (Math.random() - 0.5) * 6,
-    vy: (Math.random() - 0.5) * 6,
-    r: c.offsetWidth / 2
-  }));
-
-  function move() {
-    props.forEach((p, i) => {
-      p.x += p.vx; p.y += p.vy;
-      
-      // Strict boundary check - reset if trapped
-      if (p.x < 0) { p.x = 0; p.vx *= -1; }
-      if (p.x > containerW - p.r * 2) { p.x = containerW - p.r * 2; p.vx *= -1; }
-      if (p.y < 0) { p.y = 0; p.vy *= -1; }
-      if (p.y > containerH - p.r * 2) { p.y = containerH - p.r * 2; p.vy *= -1; }
-
-      // Collision Detection
-      props.forEach((p2, j) => {
-        if (i !== j) {
-          let dx = (p.x + p.r) - (p2.x + p2.r);
-          let dy = (p.y + p.r) - (p2.y + p2.r);
-          if (Math.sqrt(dx*dx + dy*dy) < p.r + p2.r) {
-            p.vx *= -1; p.vy *= -1;
-          }
-        }
-      });
-      p.el.style.left = p.x + 'px';
-      p.el.style.top = p.y + 'px';
-    });
-    requestAnimationFrame(move);
-  }
-  move();
-</script>
 </body>
 </html>
