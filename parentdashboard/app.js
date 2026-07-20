@@ -6,7 +6,7 @@ async function loadDashboard() {
         const response = await fetch('https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/parents?user_id=' + userId);
         const data = await response.json();
 
-       const files = [
+        const files = [
             { id: 'ribbon-container', url: './ribbon.html' },
             { id: 'profile-container', url: './profile.html' },
             { id: 'gauges-container', url: './gauges.html' },
@@ -15,6 +15,7 @@ async function loadDashboard() {
             { id: 'gallery-container', url: './gallery.html' }
         ];
 
+        // Ensure all HTML files are loaded and injected before running UI population
         await Promise.all(files.map(async (file) => {
             const res = await fetch(file.url);
             if (res.ok) {
@@ -22,6 +23,7 @@ async function loadDashboard() {
             }
         }));
 
+        // Elements are now in the DOM; safe to populate
         populateUI(data);
 
         if (data.franchise_data?.current_session) {
