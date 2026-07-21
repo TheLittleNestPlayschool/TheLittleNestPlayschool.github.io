@@ -1,160 +1,145 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NestLoad</title>
-    <link rel="stylesheet" href="../style.css">
-    <script src="../api_config.js"></script>
-    <style>
-        @font-face {
-            font-family: 'Gagalin';
-            src: url('../fonts/gagalin.woff2') format('woff2');
-        }
+<style>
+    #main-header, #module-frame, #lock-screen {
+        display: none;
+    }
 
-        #main-header, #module-frame, #lock-screen {
-            display: none;
-        }
+    #lock-screen {
+        flex-grow: 1;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+    #lock-screen h1 { color: #cbd5e0; font-weight: 400; font-size: 24px; }
 
-        #lock-screen {
-            flex-grow: 1;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
-        #lock-screen h1 { color: #cbd5e0; font-weight: 400; font-size: 24px; }
+    #module-frame {
+        flex-grow: 1;
+        border: none;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+    }
 
-        #module-frame {
-            flex-grow: 1;
-            border: none;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-        }
+    .uploader-content {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        padding: 20px;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 450px;
+        margin: 0 auto;
+        flex-grow: 1;
+        justify-content: center;
+    }
 
-        .uploader-content {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 20px;
-            box-sizing: border-box;
-            width: 100%;
-            max-width: 450px;
-            margin: 0 auto;
-            flex-grow: 1;
-            justify-content: center;
-        }
+    .uploader-btn {
+        width: 100%;
+        padding: 18px;
+        border-radius: 12px;
+        border: none;
+        font-weight: 800;
+        cursor: pointer;
+        text-transform: uppercase;
+        font-size: 15px;
+        background: var(--nest-blue, #4a90e2);
+        color: white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.1s ease;
+    }
 
-        .uploader-btn {
-            width: 100%;
-            padding: 18px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 800;
-            cursor: pointer;
-            text-transform: uppercase;
-            font-size: 15px;
-            background: var(--nest-blue, #4a90e2);
-            color: white;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.1s ease;
-        }
+    .uploader-btn:active {
+        transform: scale(0.98);
+    }
+</style>
 
-        .uploader-btn:active {
-            transform: scale(0.98);
-        }
-    </style>
-</head>
-<body>
-    <div id="app-container">
-        <!-- Header Banner -->
-        <header class="main-header" id="main-header">
-            <div class="stats-banner">
-                <span class="banner-title">Little Nest Global Network</span>
-                <span class="banner-stat"><span class="stat-highlight">50,000+</span> Learning Hours &amp; Counting!</span>
-            </div>
-            
-            <h1 class="main-title">
-                <span class="brand-title">THE LITTLE NEST PLAYSCHOOL</span>
-                <span class="branch-location" id="main-title">NESTLOAD</span>
-            </h1>
-
-            <div id="student-info-banner">
-                <span id="parent-name" style="font-weight: bold;">UPLOADER PORTAL</span>
-            </div>
-        </header>
-
-        <!-- Lock Screen -->
-        <div id="lock-screen">
-            <h1>Access Denied</h1>
+<div id="app-container">
+    <!-- Header Banner -->
+    <header class="main-header" id="main-header">
+        <div class="stats-banner">
+            <span class="banner-title">Little Nest Global Network</span>
+            <span class="banner-stat"><span class="stat-highlight">50,000+</span> Learning Hours &amp; Counting!</span>
         </div>
+        
+        <h1 class="main-title">
+            <span class="brand-title">THE LITTLE NEST PLAYSCHOOL</span>
+            <span class="branch-location" id="main-title">NESTLOAD</span>
+        </h1>
 
-        <!-- Main Content Area / Menu & Frame -->
-        <div id="content-area" style="display: flex; flex-direction: column; flex-grow: 1; overflow: hidden;">
-            <div id="menu-container" class="uploader-content">
-                <button class="uploader-btn" onclick="loadModule('upload_eod.html')">Upload EOD</button>
-                <button class="uploader-btn" onclick="loadModule('upload_attendance.html')">Upload Attendance</button>
-            </div>
-            <iframe id="module-frame" name="module-frame" src="about:blank"></iframe>
+        <div id="student-info-banner">
+            <span id="parent-name" style="font-weight: bold;">UPLOADER PORTAL</span>
         </div>
+    </header>
+
+    <!-- Lock Screen -->
+    <div id="lock-screen">
+        <h1>Access Denied</h1>
     </div>
 
-    <script>
-        async function authenticateAndLoad() {
-            const lockScreen = document.getElementById('lock-screen');
-            const mainHeader = document.getElementById('main-header');
-            const menuContainer = document.getElementById('menu-container');
-            const frame = document.getElementById('module-frame');
-            const title = document.getElementById('main-title');
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            const tlnpKey = urlParams.get('tlnp');
+    <!-- Main Content Area / Menu & Frame -->
+    <div id="content-area" style="display: flex; flex-direction: column; flex-grow: 1; overflow: hidden;">
+        <div id="menu-container" class="uploader-content">
+            <button class="uploader-btn" onclick="loadModule('upload_eod.html')">Upload EOD</button>
+            <button class="uploader-btn" onclick="loadModule('upload_attendance.html')">Upload Attendance</button>
+        </div>
+        <iframe id="module-frame" name="module-frame" src="about:blank"></iframe>
+    </div>
+</div>
 
-            if (!tlnpKey) {
-                lockScreen.style.display = 'flex';
-                document.getElementById('app-container').style.display = 'none';
-                return;
-            }
+<script>
+    async function authenticateAndLoad() {
+        const lockScreen = document.getElementById('lock-screen');
+        const mainHeader = document.getElementById('main-header');
+        const menuContainer = document.getElementById('menu-container');
+        const frame = document.getElementById('module-frame');
+        const title = document.getElementById('main-title');
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const tlnpKey = urlParams.get('tlnp');
 
-            try {
-                const response = await fetch(NEST_ENDPOINTS.franchise.list);
-                const data = await response.json();
-                const matched = data.find(f => f.access_key === tlnpKey);
-
-                if (matched) {
-                    const slug = matched.name.toLowerCase().split(' ')[0].replace(/[^a-z0-9]/g, '');
-                    
-                    localStorage.setItem('nestmind_f_id', matched.id);
-                    localStorage.setItem('nestmind_f_slug', slug);
-                    localStorage.setItem('nestmind_f_name', matched.name);
-                    
-                    mainHeader.style.display = 'block';
-                    menuContainer.style.display = 'flex';
-                    title.innerText = matched.name.toUpperCase() + " UPLOADER";
-                    
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                } else {
-                    lockScreen.style.display = 'flex';
-                    document.getElementById('app-container').style.display = 'none';
-                }
-            } catch (err) {
-                console.error(err);
-                lockScreen.style.display = 'flex';
-                document.getElementById('app-container').style.display = 'none';
-            }
+        if (!tlnpKey) {
+            lockScreen.style.display = 'flex';
+            document.getElementById('app-container').style.display = 'none';
+            return;
         }
 
-        function loadModule(page) {
-            const menuContainer = document.getElementById('menu-container');
-            const frame = document.getElementById('module-frame');
-            
-            menuContainer.style.display = 'none';
-            frame.style.display = 'block';
-            frame.src = page + '?v=' + Date.now();
-        }
+        try {
+            const response = await fetch(NEST_ENDPOINTS.franchise.list);
+            const data = await response.json();
+            const matched = data.find(f => f.access_key === tlnpKey);
 
-        window.onload = authenticateAndLoad;
-    </script>
-</body>
-</html>
+            if (matched) {
+                const slug = matched.name.toLowerCase().split(' ')[0].replace(/[^a-z0-9]/g, '');
+                
+                localStorage.setItem('nestmind_f_id', matched.id);
+                localStorage.setItem('nestmind_f_slug', slug);
+                localStorage.setItem('nestmind_f_name', matched.name);
+                
+                mainHeader.style.display = 'block';
+                menuContainer.style.display = 'flex';
+                title.innerText = matched.name.toUpperCase() + " UPLOADER";
+                
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else {
+                lockScreen.style.display = 'flex';
+                document.getElementById('app-container').style.display = 'none';
+            }
+        } catch (err) {
+            console.error(err);
+            lockScreen.style.display = 'flex';
+            document.getElementById('app-container').style.display = 'none';
+        }
+    }
+
+    function loadModule(page) {
+        const menuContainer = document.getElementById('menu-container');
+        const frame = document.getElementById('module-frame');
+        
+        menuContainer.style.display = 'none';
+        frame.style.display = 'block';
+        frame.src = page + '?v=' + Date.now();
+    }
+
+    // Run authentication since it is now loaded dynamically via fetch inside index.html
+    authenticateAndLoad();
+</script>
