@@ -21,9 +21,12 @@
                 <span class="banner-title">Little Nest Global Network</span>
                 <span class="banner-stat">50,000+ Learning Hours & Counting!</span>
             </div>
-            <h1 style="font-family: 'Gagalin', sans-serif;">
-                THE LITTLE NEST PLAYSCHOOL <span id="franchise-name-display"></span>
+            
+            <h1 class="main-title">
+                <span class="brand-title">THE LITTLE NEST PLAYSCHOOL</span>
+                <span class="branch-location" id="franchise-name-display"></span>
             </h1>
+
             <!-- Student/Parent Info Banner -->
             <div id="student-info-banner">
                 <span id="parent-name" style="font-weight: bold;"></span> &bullet; 
@@ -46,7 +49,7 @@
             <button onclick="openModal('my-data-modal')">My Data</button>
             <button onclick="openModal('gallery-modal')">My Gallery</button>
             <button onclick="openModal('message-modal')">Message Us</button>
-            <button onclick="openModal('new-modal')">Button New</button>
+            <button onclick="openModal('badges-modal')">My Badges</button>
         </div>
     </div>
 
@@ -72,10 +75,10 @@
         </div>
     </div>
 
-    <div id="new-modal" class="modal">
+    <div id="badges-modal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('new-modal')">&times;</span>
-            <div id="new-content"></div>
+            <span class="close" onclick="closeModal('badges-modal')">&times;</span>
+            <div id="badges-content"></div>
         </div>
     </div>
 
@@ -112,6 +115,13 @@
                         document.getElementById('message-content').innerHTML = data;
                     })
                     .catch(error => console.error('Error loading message_us.html:', error));
+            } else if (id === 'badges-modal') {
+                fetch('badges.html')
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById('badges-content').innerHTML = data;
+                    })
+                    .catch(error => console.error('Error loading badges.html:', error));
             }
         }
 
@@ -120,7 +130,7 @@
         }
 
         // Enable drag-to-scroll on modals
-        const modalIds = ['my-data-modal', 'gallery-modal', 'message-modal', 'new-modal'];
+        const modalIds = ['my-data-modal', 'gallery-modal', 'message-modal', 'badges-modal'];
         modalIds.forEach(id => {
             if (typeof enableDragScroll === 'function') {
                 enableDragScroll(id);
