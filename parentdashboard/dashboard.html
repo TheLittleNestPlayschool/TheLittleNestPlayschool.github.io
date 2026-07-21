@@ -1,141 +1,341 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>TLNP</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        /* Ensure font-family Gagalin is defined */
-        @font-face {
-            font-family: 'Gagalin';
-            src: url('fonts/gagalin.woff2') format('woff2');
-        }
-    </style>
-</head>
-<body>
-    <div id="app-container">
-        <!-- Header Banner -->
-        <header class="main-header">
-            <div class="stats-banner">
-                <span class="banner-title">Little Nest Global Network</span>
-                <span class="banner-stat">50,000+ Learning Hours & Counting!</span>
-            </div>
-            
-            <h1 class="main-title">
-                <span class="brand-title">THE LITTLE NEST PLAYSCHOOL</span>
-                <span class="branch-location" id="franchise-name-display"></span>
-            </h1>
+:root { 
+    /* Brighter, High-Vibrancy Palette */
+    --warm-yellow: #FFD54F;
+    --vivid-orange: #FF8A65;
+    --soft-coral: #FF7043;
+    --bright-pink: #EC407A;
+    --electric-purple: #AB47BC;
+    --teal-glow: #26A69A;
+    
+    /* Typography & Contrast Colors */
+    --text-black: #000000;
+    --text-dark: #1A1A1A;
+    --white: #FFFFFF;
+    
+    /* Button Gradient */
+    --pink-purple-gradient: linear-gradient(135deg, #D81B60 0%, #8E24AA 100%);
+}
 
-            <!-- Student/Parent Info Banner -->
-            <div id="student-info-banner">
-                <span id="parent-name" style="font-weight: bold;"></span> &bullet; 
-                <span id="student-name"></span>
-            </div>
-        </header>
+/* --- Font Loading --- */
+@font-face {
+    font-family: 'Gagalin';
+    src: url('fonts/gagalin.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
 
-        <!-- Main Content Area -->
-        <div id="content-area">
-            <div id="current-container"></div>
-            <div id="upcoming-container"></div>
-            <div id="gallery-container"></div>
-        </div>
+* { box-sizing: border-box; }
 
-        <!-- Sidebar Right -->
-        <div class="sidebar-right" id="gauges-container"></div>
+body { 
+    margin: 0; 
+    padding: 0;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; 
+    
+    /* Bright & Rich Gradient Mesh */
+    background-color: var(--warm-yellow);
+    background-image: 
+        radial-gradient(circle at 50% 0%, #FFE082 0%, transparent 60%),
+        radial-gradient(circle at 10% 25%, #FFB74D 0%, transparent 50%),
+        radial-gradient(circle at 90% 40%, #80CBC4 0%, transparent 55%),
+        radial-gradient(circle at 15% 70%, #F48FB1 0%, transparent 50%),
+        radial-gradient(circle at 85% 90%, #CE93D8 0%, transparent 60%);
+    background-attachment: fixed;
+    background-size: cover;
+    
+    height: 100dvh; 
+    overflow: hidden; 
+    color: var(--text-black);
+}
 
-        <!-- Footer -->
-        <div id="footer-buttons">
-            <button onclick="openModal('my-data-modal')">My Data</button>
-            <button onclick="openModal('gallery-modal')">My Gallery</button>
-            <button onclick="openModal('message-modal')">Message Us</button>
-            <button onclick="openModal('badges-modal')">My Badges</button>
-        </div>
-    </div>
+/* --- Dashboard Grid Layout --- */
+#app-container { 
+    display: grid;
+    grid-template-columns: 4fr 1fr; 
+    grid-template-rows: auto 1fr auto;
+    height: 100dvh;
+    width: 100vw;
+    overflow: hidden;
+}
 
-    <!-- Modals -->
-    <div id="my-data-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('my-data-modal')">&times;</span>
-            <div id="profile-content"></div>
-        </div>
-    </div>
+/* --- Transparent Header --- */
+.main-header { 
+    grid-column: 1 / 3;
+    text-align: center;
+    padding: 12px 16px 8px 16px;
+    background: transparent;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
 
-    <div id="gallery-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('gallery-modal')">&times;</span>
-            <div id="gallery-content"></div>
-        </div>
-    </div>
+/* Top Network Banner */
+.stats-banner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin: 0 0 4px 0;
+    padding: 2px 0;
+    background: transparent;
+    border: none;
+    text-align: center;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-black);
+    white-space: nowrap; 
+}
 
-    <div id="message-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('message-modal')">&times;</span>
-            <div id="message-content"></div>
-        </div>
-    </div>
+.banner-title { font-weight: 800; }
+.banner-stat { font-weight: 700; opacity: 0.9; }
 
-    <div id="badges-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('badges-modal')">&times;</span>
-            <div id="badges-content"></div>
-        </div>
-    </div>
+/* 2-Line Header Layout */
+.main-title {
+    margin: 4px 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
 
-    <script src="./app.js"></script>
-    <script>
-        function toggleAccordion(element) {
-            const content = element.nextElementSibling;
-            content.style.display = (content.style.display === "block") ? "none" : "block";
-        }
+/* Line 1: Main Brand Name - Stretches across screen */
+.brand-title {
+    display: block;
+    width: 100%;
+    font-family: 'Gagalin', sans-serif;
+    font-size: clamp(1.4rem, 5.5vw, 2.5rem);
+    font-weight: 900;
+    color: var(--text-black);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    line-height: 1.0;
+    text-align: center;
+    white-space: nowrap;
+    -webkit-font-smoothing: antialiased;
+}
 
-        function openModal(id) {
-            const modal = document.getElementById(id);
-            modal.classList.add('show');
+/* Line 2: Branch Location */
+.branch-location {
+    display: block;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    font-size: clamp(0.9rem, 3vw, 1.25rem);
+    font-weight: 800;
+    color: var(--text-black);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-top: 2px;
+    line-height: 1.1;
+    text-align: center;
+    opacity: 0.9;
+}
 
-            if (id === 'my-data-modal') {
-                fetch('profile.html')
-                    .then(response => response.text())
-                    .then(data => {
-                        document.getElementById('profile-content').innerHTML = data;
-                        if(window.populateUI) populateUI(window.latestDashboardData);
-                    })
-                    .catch(error => console.error('Error loading profile.html:', error));
-            } else if (id === 'gallery-modal') {
-                fetch('gallery.html')
-                    .then(response => response.text())
-                    .then(data => {
-                        document.getElementById('gallery-content').innerHTML = data;
-                    })
-                    .catch(error => console.error('Error loading gallery.html:', error));
-            } else if (id === 'message-modal') {
-                fetch('message_us.html')
-                    .then(response => response.text())
-                    .then(data => {
-                        document.getElementById('message-content').innerHTML = data;
-                    })
-                    .catch(error => console.error('Error loading message_us.html:', error));
-            } else if (id === 'badges-modal') {
-                fetch('badges.html')
-                    .then(response => response.text())
-                    .then(data => {
-                        document.getElementById('badges-content').innerHTML = data;
-                    })
-                    .catch(error => console.error('Error loading badges.html:', error));
-            }
-        }
+/* Parent / Student Info Banner */
+#student-info-banner {
+    display: block;
+    margin: 2px auto 0 auto;
+    padding: 0;
+    background: transparent;
+    border: none;
+    text-align: center;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-black);
+    font-weight: 700;
+    white-space: nowrap;
+    width: 100%;
+}
 
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('show');
-        }
+/* --- Content Area --- */
+#content-area { 
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+    overflow-y: auto;
+    padding: 10px 16px 20px 20px;
+}
 
-        // Enable drag-to-scroll on modals
-        const modalIds = ['my-data-modal', 'gallery-modal', 'message-modal', 'badges-modal'];
-        modalIds.forEach(id => {
-            if (typeof enableDragScroll === 'function') {
-                enableDragScroll(id);
-            }
-        });
-    </script>
-</body>
-</html>
+/* --- Content Modules with Slight Frosting for Legibility --- */
+.module-box { 
+    background: rgba(255, 255, 255, 0.25); 
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 12px 14px; 
+    border-radius: 16px; 
+    border: 1px solid rgba(255, 255, 255, 0.4); 
+    margin-bottom: 16px;
+}
+
+.module-box h2, 
+.module-box h3, 
+.module-box h4 {
+    color: var(--text-black) !important;
+    font-weight: 900;
+    margin-top: 0;
+    margin-bottom: 6px;
+    font-size: 1.2rem;
+}
+
+/* Pure Black Text for Recap & Session Details */
+.module-box p,
+.session-description,
+.recap-text,
+.up-next-text {
+    color: #000000 !important;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* --- Gauges Sidebar --- */
+.sidebar-right {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+    background: transparent;
+    padding: 10px 4px;
+    margin: 0 10px 0 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.gauge-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.gauge-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.gauge-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: conic-gradient(var(--bright-pink) var(--progress), rgba(0, 0, 0, 0.15) 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.gauge-circle.green {
+    background: conic-gradient(#00C853 var(--progress, 100%), rgba(0, 0, 0, 0.15) 0);
+}
+
+.gauge-circle::before {
+    content: "";
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--white);
+    position: absolute;
+}
+
+.gauge-label {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--text-black);
+    line-height: 1.1;
+}
+
+.badge-slot {
+    height: 15px;
+    margin-top: 2px;
+}
+
+/* --- Footer Button Row --- */
+#footer-buttons {
+    grid-column: 1 / 3;
+    background: transparent; 
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 10px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    flex-shrink: 0;
+}
+
+#footer-buttons button {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 20px;
+    background: var(--pink-purple-gradient);
+    color: var(--white);
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.8rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: transform 0.15s ease;
+}
+
+#footer-buttons button:active {
+    transform: scale(0.95);
+}
+
+/* --- Modals --- */
+.modal {
+    display: none; 
+    position: fixed; 
+    bottom: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 85%;
+    background-color: var(--white);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    transition: transform 0.3s ease-out;
+    transform: translateY(100%);
+    overflow-y: auto;
+}
+
+.modal.show {
+    display: block;
+    transform: translateY(0);
+}
+
+.modal-content { 
+    padding: 20px; 
+    position: relative;
+    color: var(--text-black);
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 2rem;
+    cursor: pointer;
+    color: var(--text-black);
+}
+
+/* --- Scrollbar Clean Up --- */
+#content-area,
+.sidebar-right,
+.modal {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+#content-area::-webkit-scrollbar,
+.sidebar-right::-webkit-scrollbar,
+.modal::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
