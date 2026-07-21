@@ -176,4 +176,44 @@ function populateUI(data) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', loadDashboard);
+// --- Desktop Drag-to-Scroll Support ---
+function enableDragScroll(containerId) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+
+    let isDown = false;
+    let startY;
+    let scrollTop;
+
+    el.addEventListener('mousedown', (e) => {
+        isDown = true;
+        el.style.cursor = 'grabbing';
+        el.style.userSelect = 'none';
+        startY = e.pageY - el.offsetTop;
+        scrollTop = el.scrollTop;
+    });
+
+    el.addEventListener('mouseleave', () => {
+        isDown = false;
+        el.style.cursor = 'default';
+    });
+
+    el.addEventListener('mouseup', () => {
+        isDown = false;
+        el.style.cursor = 'default';
+    });
+
+    el.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const y = e.pageY - el.offsetTop;
+        const walk = (y - startY) * 1.5;
+        el.scrollTop = scrollTop - walk;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboard();
+    enableDragScroll('content-area');
+    enableDragScroll('gauges-container');
+});
