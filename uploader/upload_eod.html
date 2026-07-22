@@ -87,26 +87,10 @@
                        </div>
                    </div>
                    
-                   <button class="btn-add" onclick="addEntryToBasket()">+ Add to List</button>
+                   <button class="btn-add" onclick="saveSingleRecord()">Save Payment Receipt</button>
                </div>
 
-               <!-- BASKET & SYNC -->
-               <div class="basket-wrap" id="basket-wrap" style="display:none; margin-top: 8px;">
-                   <table class="basket-table">
-                       <thead>
-                           <tr>
-                               <th>Student</th>
-                               <th>Type</th>
-                               <th>Amount</th>
-                               <th></th>
-                           </tr>
-                       </thead>
-                       <tbody id="basket-body"></tbody>
-                   </table>
-               </div>
-               <button class="btn-action btn-sync" id="sync-btn" style="display:none; margin-top: 8px;" onclick="syncBatchToXano()">Final Sync</button>
-
-                <p id="status-msg" style="display:none; margin: 4px 0 0 0;"></p>
+                <p id="status-msg" style="display:none; margin: 4px 0 0 0; text-align: center; font-weight: 600;"></p>
             </div>
         </div>
     </div>
@@ -119,7 +103,6 @@
 
 <script>
     let mediaUrl = "";
-    let basket = [];
     
     const fId = localStorage.getItem('nestmind_f_id');
     const fName = localStorage.getItem('nestmind_f_name');
@@ -266,7 +249,7 @@
         } catch (e) { console.error("Teacher fetch issue"); }
     }
 
-    function addEntryToBasket() {
+    async function saveSingleRecord() {
         const pSel = document.getElementById('parent-select');
         const sSel = document.getElementById('student-select');
         const typeSel = document.getElementById('payment-type-select');
@@ -277,7 +260,7 @@
             return alert("Complete all fields.");
         }
 
-        basket.push({
+        const singleRecord = [{
             parent_id: parseInt(pSel.value),
             student_id: parseInt(sSel.value),
             student_name: sSel.options[sSel.selectedIndex].text,
@@ -286,38 +269,12 @@
             received_by: tSel.value,
             paid_by: typeSel.value,
             processed: false
-        });
-        
-        renderBasket();
-        
-        document.getElementById('step-student').style.display = 'none';
-        document.getElementById('step-details').style.display = 'none';
-        pSel.value = '';
-        sSel.value = '';
-        tSel.value = '';
-        amtInput.value = '';
-        typeSel.value = '';
-    }
+        }];
 
-    function renderBasket() {
-        const body = document.getElementById('basket-body');
-        body.innerHTML = '';
-        basket.forEach((item, i) => {
-            body.innerHTML += `<tr>
-                <td>${item.student_name}</td>
-                <td><strong>${item.paymenttype}</strong></td>
-                <td>₱${item.amount.toLocaleString()}</td>
-                <td class="btn-del" onclick="basket.splice(${i},1);renderBasket()">✕</td>
-            </tr>`;
-        });
-        document.getElementById('basket-wrap').style.display = basket.length ? 'block' : 'none';
-        document.getElementById('sync-btn').style.display = basket.length ? 'block' : 'none';
-    }
-
-    async function syncBatchToXano() {
         const status = document.getElementById('status-msg');
         status.style.display = 'block';
-        status.innerText = "🚀 Syncing Batch...";
+        status.innerText = "🚀 Saving Receipt...";
+
         try {
             const resp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/process_eod", {
                 method: 'POST',
@@ -326,14 +283,14 @@
                     media_url: mediaUrl, 
                     eod_date: new Date().toISOString().split('T')[0],
                     franchise_id: parseInt(fId),
-                    record_list: basket
+                    record_list: singleRecord
                 })
             });
             if (resp.ok) {
                 status.innerText = "✅ Receipt has been uploaded";
                 setTimeout(() => location.reload(), 2000);
             } else {
-                status.innerText = "❌ SYNC FAILED.";
+                status.innerText = "❌ SAVE FAILED.";
             }
         } catch (err) {
             status.innerText = "❌ SERVER ERROR.";
