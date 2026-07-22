@@ -28,27 +28,21 @@
             </div>
 
             <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
-            
-            <!-- Forced Stop Screen -->
-            <div id="debugScreen" style="margin-top: 15px; padding: 10px; background: #fff3f3; border: 1px solid #ff9999; font-size: 0.8rem; text-align: left; word-break: break-all; display: none;">
-                <strong>STOPPED:</strong>
-                <div id="debugContent"></div>
-            </div>
         </div>
     </div>
 
     <script>
+        // Clear out all stale session data the moment the login page loads
+        localStorage.clear();
+
         const XANO_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV';
 
         async function handleLogin() {
             const emailInput = document.getElementById('email').value.trim();
             const passwordInput = document.getElementById('password').value;
             const errorDiv = document.getElementById('errorMessage');
-            const debugScreen = document.getElementById('debugScreen');
-            const debugContent = document.getElementById('debugContent');
             
             errorDiv.textContent = '';
-            debugScreen.style.display = 'none';
 
             if (!emailInput || !passwordInput) {
                 errorDiv.textContent = 'Please fill out all fields.';
@@ -58,30 +52,30 @@
             try {
                 const response = await fetch(`${XANO_BASE_URL}/auth/login`, {
                     method: 'POST',
-                    headers: { 'Content-type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: emailInput, password: passwordInput })
                 });
 
                 const data = await response.json();
-
                 if (!response.ok) throw new Error(data.message || 'Invalid credentials.');
 
-                // Store values
+                // Robustly resolve the teacher ID from the response object
+                const teacherId = data.teacher_id || data.teacherId || data.id || (data.user && data.user.teacher_id) || '';
+
+                // Store auth token, user ID, admin type, and teacher ID in local storage
                 localStorage.setItem('authToken', data.authToken);
                 localStorage.setItem('userId', data.user);
                 localStorage.setItem('admin_type_id', data.admin_type_id);
-                localStorage.setItem('teacher_id', data.teacher_id);
+                localStorage.setItem('teacher_id', teacherId);
 
-                // Print directly to screen and completely halt execution here without redirecting
-                debugContent.innerHTML = `
-                    teacher_id: <b>${data.teacher_id}</b><br>
-                    admin_type_id: <b>${data.admin_type_id}</b><br>
-                    Full JSON: ${JSON.stringify(data)}
-                `;
-                debugScreen.style.display = 'block';
-
-                // DEAD STOP - NO REDIRECTION AT ALL
-                return;
+                // Routing based on admin_type_id: 10 loads parent dashboard, 4 loads teacher uploader menu
+                if (data.admin_type_id === 10) {
+                    window.location.href = './parentdashboard/dashboard.html';
+                } else if (data.admin_type_id === 4) {
+                    window.location.href = './uploader/uploadermenu.html';
+                } else {
+                    throw new Error('Login Invalid');
+                }
 
             } catch (error) {
                 errorDiv.textContent = error.message;
