@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>TLNP NestLoad - Load Receipts</title>
+    <title>TLNP NestMind - EOD Uploader</title>
     <link rel="stylesheet" href="styles.css">
     <script src="../api_config.js"></script>
 </head>
 <body>
 
 <div id="app-container">
-    <!-- Header Banner matching global theme -->
+    <!-- Header Banner -->
     <header class="main-header" id="main-header">
         <div class="stats-banner">
             <span class="banner-title">Little Nest Global Network</span>
@@ -27,34 +27,44 @@
         </div>
     </header>
 
-    <!-- Main Content Area with Frosted Module Box -->
-    <div id="content-area">
+    <!-- Main Content Area centered -->
+    <div id="content-area" class="flex-center-container">
         <div class="uploader-wrapper">
             <div class="module-box">
+                
+                <!-- STEP 1: PHOTO CAPTURE -->
                 <div id="upload-section">
                     <div class="camera-box" id="cam-box" onclick="document.getElementById('input-cam').click()">
                         <span class="camera-icon">📸</span>
                         <p class="camera-text">Snap Payment Receipt</p>
                         <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="handleImageSelect(this)">
                     </div>
-                    <img id="preview-img" src="">
+                    <img id="preview-img" src="" style="display:none;">
                     <button class="btn-action btn-upload" id="upload-btn" style="display:none;" onclick="uploadAndInitialize()">Upload &amp; Continue</button>
                 </div>
 
-                <div id="entry-section" class="entry-form">
+                <!-- STEP 2: PARENT SELECT (Hidden until photo uploaded) -->
+                <div id="step-parent" class="entry-form" style="display:none;">
                     <div class="form-group">
                         <label>1. Select Parent</label>
                         <select id="parent-select" onchange="handleParentChange(this.value)">
                             <option value="">-- Select Parent --</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- STEP 3: STUDENT SELECT (Hidden until Parent chosen) -->
+                <div id="step-student" class="entry-form" style="display:none;">
                     <div class="form-group">
                         <label>2. Select Student</label>
                         <select id="student-select" disabled onchange="handleStudentChange(this.value)">
                             <option value="">-- Select Parent First --</option>
                         </select>
                     </div>
-                    
+                </div>
+
+                <!-- STEP 4: PAYMENT DETAILS & TEACHER (Hidden until Student chosen) -->
+                <div id="step-details" class="entry-form" style="display:none;">
                     <div class="entry-row">
                         <div class="form-group">
                             <label>Amount (PHP)</label>
@@ -75,22 +85,24 @@
                     </div>
                     
                     <button class="btn-action btn-add" onclick="addEntryToBasket()">+ Add to List</button>
-                    
-                    <div class="basket-wrap" id="basket-wrap" style="display:none;">
-                        <table class="basket-table">
-                            <thead>
-                                <tr>
-                                    <th>Student</th>
-                                    <th>Type</th>
-                                    <th>Amount</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody id="basket-body"></tbody>
-                        </table>
-                    </div>
-                    <button class="btn-action btn-sync" id="sync-btn" style="display:none;" onclick="syncBatchToXano()">Final Sync</button>
                 </div>
+
+                <!-- BASKET & SYNC -->
+                <div class="basket-wrap" id="basket-wrap" style="display:none;">
+                    <table class="basket-table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="basket-body"></tbody>
+                    </table>
+                </div>
+                <button class="btn-action btn-sync" id="sync-btn" style="display:none;" onclick="syncBatchToXano()">Final Sync</button>
+
                 <p id="status-msg"></p>
             </div>
         </div>
@@ -157,8 +169,9 @@
 
             await Promise.all([fetchParents(), fetchPaymentTypes()]);
             
+            // Hide upload section & reveal Parent Selection step
             document.getElementById('upload-section').style.display = 'none';
-            document.getElementById('entry-section').style.display = 'block';
+            document.getElementById('step-parent').style.display = 'block';
             status.innerText = "Photo Saved. Select Parent.";
         } catch (e) { 
             console.error("Upload proxy sequence crashed", e);
@@ -202,12 +215,13 @@
 
     async function handleParentChange(pId) {
         const sSel = document.getElementById('student-select');
-        const tSel = document.getElementById('teacher-select');
+        const stepStudent = document.getElementById('step-student');
+        const stepDetails = document.getElementById('step-details');
         
+        stepStudent.style.display = 'none';
+        stepDetails.style.display = 'none';
         sSel.innerHTML = '<option value="">-- Select Student --</option>';
         sSel.disabled = true;
-        tSel.innerHTML = '<option value="">-- Select --</option>';
-        tSel.disabled = true;
 
         if (!pId) return;
 
@@ -220,14 +234,16 @@
                 sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
             });
             sSel.disabled = false;
+            stepStudent.style.display = 'block';
         } catch (e) { console.error("Student fetch error"); }
     }
 
     async function handleStudentChange(sId) {
         const tSel = document.getElementById('teacher-select');
+        const stepDetails = document.getElementById('step-details');
+
         if (!sId) {
-            tSel.innerHTML = '<option value="">-- Select --</option>';
-            tSel.disabled = true;
+            stepDetails.style.display = 'none';
             return;
         }
 
@@ -242,6 +258,7 @@
                 tSel.innerHTML += `<option value="${fullName}">${fullName}</option>`;
             });
             tSel.disabled = false;
+            stepDetails.style.display = 'block';
         } catch (e) { console.error("Teacher fetch issue"); }
     }
 
@@ -268,9 +285,13 @@
         });
         
         renderBasket();
+        
+        // Reset selections for next entry
+        document.getElementById('step-student').style.display = 'none';
+        document.getElementById('step-details').style.display = 'none';
+        pSel.value = '';
         sSel.value = '';
         tSel.value = '';
-        tSel.disabled = true;
         amtInput.value = '';
         typeSel.value = '';
     }
