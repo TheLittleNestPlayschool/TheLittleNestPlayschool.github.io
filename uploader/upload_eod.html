@@ -1,100 +1,105 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TLNP NestMind</title>
-    <link rel="stylesheet" href="../nest_style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TLNP NestLoad - Load Receipts</title>
+    <link rel="stylesheet" href="../style.css">
     <script src="../api_config.js"></script>
-    <style>
-        :root { --nest-blue: #4a90e2; --success: #2ecc71; --danger: #e74c3c; --bg-soft: #f8fafc; --border: #e2e8f0; }
-        body { font-family: 'Segoe UI', sans-serif; background: transparent; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-        .module-card { width: 100%; max-width: 450px; background: #fff; border-radius: 12px; padding: 20px; box-sizing: border-box; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
-        .camera-box { padding: 40px 20px; text-align: center; border: 2px dashed #cbd5e0; border-radius: 10px; cursor: pointer; background: var(--bg-soft); }
-        #preview-img { width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-bottom: 15px; background: #000; display: none; }
-        .entry-form { display: none; border-top: 2px solid #edf2f7; padding-top: 20px; margin-top: 15px; }
-        .form-group { margin-bottom: 15px; position: relative; }
-        label { display: block; font-size: 11px; font-weight: 800; color: #4a5568; text-transform: uppercase; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; background: white; box-sizing: border-box; display: block; -webkit-appearance: select; appearance: select; }
-        select:disabled { background: #f1f5f9; cursor: not-allowed; color: #94a3b8; }
-        .basket-wrap { margin-top: 20px; background: var(--bg-soft); border-radius: 8px; padding: 10px; border: 1px solid var(--border); }
-        .basket-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .basket-table th { text-align: left; color: #718096; padding: 8px; border-bottom: 2px solid var(--border); font-size: 10px; }
-        .basket-table td { padding: 10px 8px; border-bottom: 1px solid #edf2f7; }
-        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; text-transform: uppercase; }
-        .btn-upload { background: var(--nest-blue); color: white; margin-bottom: 10px; }
-        .btn-add { background: white; color: var(--nest-blue); border: 2px solid var(--nest-blue); margin-top: 10px; }
-        .btn-sync { background: var(--success); color: white; display: none; margin-top: 25px; }
-        .btn-del { color: var(--danger); font-size: 18px; cursor: pointer; text-align: center; width: 30px; font-weight: bold; }
-        #status-msg { font-size: 11px; font-weight: 800; color: var(--nest-blue); text-align: center; margin-top: 15px; }
-        
-        .entry-row { display: flex; gap: 8px; width: 100%; margin-bottom: 15px; justify-content: space-between; }
-        .entry-row .form-group { flex: 1; margin-bottom: 0; min-width: 0; }
-    </style>
 </head>
 <body>
 
-<div class="module-card">
-    <div id="upload-section">
-        <div class="camera-box" id="cam-box" onclick="document.getElementById('input-cam').click()">
-            <span style="font-size: 40px">📸</span>
-            <p style="font-weight: 800; margin: 10px 0 0; font-size: 14px;">Snap Payment Receipt</p>
-            <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="handleImageSelect(this)">
+<div id="app-container">
+    <!-- Header Banner matching global theme -->
+    <header class="main-header" id="main-header">
+        <div class="stats-banner">
+            <span class="banner-title">Little Nest Global Network</span>
+            <span class="banner-stat"><span class="stat-highlight">50,000+</span> Learning Hours &amp; Counting!</span>
         </div>
-        <img id="preview-img" src="">
-        <button class="btn btn-upload" id="upload-btn" style="display:none;" onclick="uploadAndInitialize()">Upload & Continue</button>
+        
+        <div class="main-title">
+            <span class="brand-title">THE LITTLE NEST PLAYSCHOOL</span>
+            <span class="branch-location" id="branch-title-elem">EOD UPLOADER</span>
+        </div>
+
+        <div id="student-info-banner">
+            <span>PAYMENT &amp; RECEIPT LOGGING</span>
+        </div>
+    </header>
+
+    <!-- Main Content Area with Frosted Module Box -->
+    <div id="content-area">
+        <div class="uploader-wrapper">
+            <div class="module-box">
+                <div id="upload-section">
+                    <div class="camera-box" id="cam-box" onclick="document.getElementById('input-cam').click()">
+                        <span class="camera-icon">📸</span>
+                        <p class="camera-text">Snap Payment Receipt</p>
+                        <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="handleImageSelect(this)">
+                    </div>
+                    <img id="preview-img" src="">
+                    <button class="btn-action btn-upload" id="upload-btn" style="display:none;" onclick="uploadAndInitialize()">Upload &amp; Continue</button>
+                </div>
+
+                <div id="entry-section" class="entry-form">
+                    <div class="form-group">
+                        <label>1. Select Parent</label>
+                        <select id="parent-select" onchange="handleParentChange(this.value)">
+                            <option value="">-- Select Parent --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>2. Select Student</label>
+                        <select id="student-select" disabled onchange="handleStudentChange(this.value)">
+                            <option value="">-- Select Parent First --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="entry-row">
+                        <div class="form-group">
+                            <label>Amount (PHP)</label>
+                            <input type="number" id="amount-input" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Payment Type</label>
+                            <select id="payment-type-select" disabled>
+                                <option value="">-- Loading --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Received By</label>
+                            <select id="teacher-select" disabled>
+                                <option value="">-- Select --</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-action btn-add" onclick="addEntryToBasket()">+ Add to List</button>
+                    
+                    <div class="basket-wrap" id="basket-wrap" style="display:none;">
+                        <table class="basket-table">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="basket-body"></tbody>
+                        </table>
+                    </div>
+                    <button class="btn-action btn-sync" id="sync-btn" style="display:none;" onclick="syncBatchToXano()">Final Sync</button>
+                </div>
+                <p id="status-msg"></p>
+            </div>
+        </div>
     </div>
 
-    <div id="entry-section" class="entry-form">
-        <div class="form-group">
-            <label>1. Select Parent</label>
-            <select id="parent-select" onchange="handleParentChange(this.value)">
-                <option value="">-- Select Parent --</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>2. Select Student</label>
-            <select id="student-select" disabled onchange="handleStudentChange(this.value)">
-                <option value="">-- Select Parent First --</option>
-            </select>
-        </div>
-        
-        <div class="entry-row">
-            <div class="form-group">
-                <label>Amount (PHP)</label>
-                <input type="number" id="amount-input" placeholder="0">
-            </div>
-            <div class="form-group">
-                <label>Payment Type</label>
-                <select id="payment-type-select" disabled>
-                    <option value="">-- Loading --</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Received By</label>
-                <select id="teacher-select" disabled>
-                    <option value="">-- Select --</option>
-                </select>
-            </div>
-        </div>
-        
-        <button class="btn btn-add" onclick="addEntryToBasket()">+ Add to List</button>
-        
-        <div class="basket-wrap" id="basket-wrap" style="display:none;">
-            <table class="basket-table">
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="basket-body"></tbody>
-            </table>
-        </div>
-        <button class="btn btn-sync" id="sync-btn" style="display:none;" onclick="syncBatchToXano()">Final Sync</button>
+    <!-- Footer Navigation Buttons -->
+    <div id="footer-buttons">
+        <button onclick="navigateTo('uploadermenu.html')">Back</button>
     </div>
-    <p id="status-msg"></p>
 </div>
 
 <script>
@@ -108,6 +113,16 @@
     if (fId) {
         localStorage.setItem('locked_franchise_id', fId);
         localStorage.setItem('locked_franchise_name', fName);
+    }
+
+    window.onload = function() {
+        if (fName) {
+            document.getElementById('branch-title-elem').innerText = fName.toUpperCase() + " EOD UPLOADER";
+        }
+    }
+
+    function navigateTo(page) {
+        window.location.href = page + window.location.search;
     }
 
     function handleImageSelect(input) {
@@ -248,7 +263,7 @@
             paymenttype: typeSel.value, 
             amount: parseInt(amtInput.value), 
             received_by: tSel.value,
-            paid_by: typeSel.value, // Directly sets the payment type text string to the paid_by property matching Xano
+            paid_by: typeSel.value,
             processed: false
         });
         
@@ -277,7 +292,7 @@
 
     async function syncBatchToXano() {
         const status = document.getElementById('status-msg');
-        status.innerText = "🚀 Ssyncing Batch...";
+        status.innerText = "🚀 Syncing Batch...";
         try {
             const resp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/process_eod", {
                 method: 'POST',
