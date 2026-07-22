@@ -15,7 +15,7 @@
             <p class="login-subtitle">Where Little Success Stories Begin</p>
 
             <!-- Form Section -->
-            <h2 class="form-section-title">Login</h2>
+            <h2 class="form-section-title">Parent Login</h2>
             
             <div class="login-input-group">
                 <input type="email" id="email" class="login-input" placeholder="Email">
@@ -57,10 +57,12 @@
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || 'Invalid credentials.');
 
+                // Store all required auth and role details in local storage
                 localStorage.setItem('authToken', data.authToken);
                 localStorage.setItem('userId', data.user);
+                localStorage.setItem('admin_type_id', data.admin_type_id);
 
-                // Routing based on admin_type_id: 10 loads ./parentdashboard/dashboard.html, 4 loads ./uploader/index.html, else error
+                // Routing based on admin_type_id
                 if (data.admin_type_id === 10) {
                     window.location.href = './parentdashboard/dashboard.html';
                 } else if (data.admin_type_id === 4) {
