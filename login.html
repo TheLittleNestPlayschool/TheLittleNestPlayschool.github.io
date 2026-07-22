@@ -29,16 +29,18 @@
 
             <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
             
-            <!-- Visible Debug Box on Screen -->
+            <!-- Visible Debug Box with Pause Button -->
             <div id="debugScreen" style="margin-top: 15px; padding: 10px; background: #fff3f3; border: 1px solid #ff9999; font-size: 0.8rem; text-align: left; word-break: break-all; display: none;">
-                <strong>Debug Data:</strong>
+                <strong>Debug Data (Paused):</strong>
                 <div id="debugContent"></div>
+                <button onclick="resumeRedirect()" style="margin-top: 10px; padding: 5px 10px; background: #333; color: #fff; border: none; cursor: pointer;">Continue to Portal</button>
             </div>
         </div>
     </div>
 
     <script>
         const XANO_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV';
+        let savedNextUrl = '';
 
         async function handleLogin() {
             const emailInput = document.getElementById('email').value.trim();
@@ -64,15 +66,6 @@
 
                 const data = await response.json();
 
-                // Explicitly show the raw returned response on the screen
-                debugContent.innerHTML = `
-                    Response Status: ${response.status}<br>
-                    teacher_id: <b>${data.teacher_id}</b><br>
-                    admin_type_id: <b>${data.admin_type_id}</b><br>
-                    Full JSON: ${JSON.stringify(data)}
-                `;
-                debugScreen.style.display = 'block';
-
                 if (!response.ok) throw new Error(data.message || 'Invalid credentials.');
 
                 // Store auth token, user ID, admin type, and teacher ID in local storage
@@ -81,17 +74,32 @@
                 localStorage.setItem('admin_type_id', data.admin_type_id);
                 localStorage.setItem('teacher_id', data.teacher_id);
 
-                // Routing based on admin_type_id: 10 loads parent dashboard, 4 loads teacher uploader menu
+                // Determine routing path
                 if (data.admin_type_id === 10) {
-                    window.location.href = './parentdashboard/dashboard.html';
+                    savedNextUrl = './parentdashboard/dashboard.html';
                 } else if (data.admin_type_id === 4) {
-                    window.location.href = './uploader/uploadermenu.html';
+                    savedNextUrl = './uploader/uploadermenu.html';
                 } else {
                     throw new Error('Login Invalid');
                 }
 
+                // Explicitly show raw response and PAUSE redirection
+                debugContent.innerHTML = `
+                    Response Status: ${response.status}<br>
+                    teacher_id: <b>${data.teacher_id}</b><br>
+                    admin_type_id: <b>${data.admin_type_id}</b><br>
+                    Full JSON: ${JSON.stringify(data)}
+                `;
+                debugScreen.style.display = 'block';
+
             } catch (error) {
                 errorDiv.textContent = error.message;
+            }
+        }
+
+        function resumeRedirect() {
+            if (savedNextUrl) {
+                window.location.href = savedNextUrl;
             }
         }
     </script>
