@@ -6,6 +6,41 @@
     <title>TLNP NestMind - EOD Uploader</title>
     <link rel="stylesheet" href="styles.css">
     <script src="../api_config.js"></script>
+    <style>
+        .uploader-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+        .camera-box-large {
+            padding: 50px 20px;
+            text-align: center;
+            border: 2px dashed rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #preview-img {
+            width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            background: #000;
+            display: none;
+        }
+    </style>
 </head>
 <body>
 
@@ -29,18 +64,21 @@
 
     <!-- Main Content Area centered -->
     <div id="content-area" class="flex-center-container">
-        <div class="uploader-wrapper">
-            <div class="module-box">
+        <div class="uploader-layout">
+            <div class="module-box" style="width: 100%;">
                 
                 <!-- STEP 1: PHOTO CAPTURE -->
                 <div id="upload-section">
-                    <div class="camera-box" id="cam-box" onclick="document.getElementById('input-cam').click()">
-                        <span class="camera-icon">📸</span>
-                        <p class="camera-text">Snap Payment Receipt</p>
+                    <div class="camera-box-large" id="cam-box" onclick="document.getElementById('input-cam').click()">
+                        <span style="font-size: 56px; margin-bottom: 10px;">📸</span>
+                        <p style="font-weight: 800; margin: 0; font-size: 16px; color: var(--text-black); text-transform: uppercase;">Snap Payment Receipt</p>
                         <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="handleImageSelect(this)">
                     </div>
-                    <img id="preview-img" src="" style="display:none;">
-                    <button class="btn-action btn-upload" id="upload-btn" style="display:none;" onclick="uploadAndInitialize()">Upload &amp; Continue</button>
+                </div>
+
+                <!-- PREVIEW & PERSISTENT RECEIPT CONTAINER -->
+                <div id="preview-container" style="display:none; margin-bottom: 15px;">
+                    <img id="preview-img" src="">
                 </div>
 
                 <!-- STEP 2: PARENT SELECT (Hidden until photo uploaded) -->
@@ -137,22 +175,24 @@
         window.location.href = page + window.location.search;
     }
 
-    function handleImageSelect(input) {
+    async function handleImageSelect(input) {
         if (input.files && input.files[0]) {
             const preview = document.getElementById('preview-img');
             preview.src = URL.createObjectURL(input.files[0]);
             preview.style.display = 'block';
+            document.getElementById('preview-container').style.display = 'block';
             document.getElementById('cam-box').style.display = 'none';
-            document.getElementById('upload-btn').style.display = 'block';
+
+            await uploadAndInitialize(input.files[0]);
         }
     }
 
-    async function uploadAndInitialize() {
+    async function uploadAndInitialize(fileObj) {
         if (!fId) return alert("Session expired. Please re-login.");
         const status = document.getElementById('status-msg');
-        status.innerText = "☁️ Saving Photo...";
+        status.innerText = "☁️ Uploading Photo...";
         const formData = new FormData();
-        formData.append('file_resource', document.getElementById('input-cam').files[0]);
+        formData.append('file_resource', fileObj);
         formData.append('file_name', `${slug}/eod_${Date.now()}.jpg`);
         formData.append('franchise_id', fId);
 
@@ -169,10 +209,9 @@
 
             await Promise.all([fetchParents(), fetchPaymentTypes()]);
             
-            // Hide upload section & reveal Parent Selection step
             document.getElementById('upload-section').style.display = 'none';
             document.getElementById('step-parent').style.display = 'block';
-            status.innerText = "Photo Saved. Select Parent.";
+            status.innerText = "Photo uploaded successfully. Select Parent.";
         } catch (e) { 
             console.error("Upload proxy sequence crashed", e);
             status.innerText = "UPLOAD FAILED."; 
@@ -286,7 +325,6 @@
         
         renderBasket();
         
-        // Reset selections for next entry
         document.getElementById('step-student').style.display = 'none';
         document.getElementById('step-details').style.display = 'none';
         pSel.value = '';
