@@ -27,8 +27,13 @@
                 <button onclick="handleLogin()" class="btn-submit">→</button>
             </div>
 
-            <div id="errorMessage"></div>
-            <pre id="debugOutput" style="font-size: 0.7rem; text-align: left; background: #eee; padding: 10px; margin-top: 15px; display: none; overflow-x: auto; color: #333;"></pre>
+            <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
+            
+            <!-- Visible Debug Box on Screen -->
+            <div id="debugScreen" style="margin-top: 15px; padding: 10px; background: #fff3f3; border: 1px solid #ff9999; font-size: 0.8rem; text-align: left; word-break: break-all; display: none;">
+                <strong>Debug Data:</strong>
+                <div id="debugContent"></div>
+            </div>
         </div>
     </div>
 
@@ -39,14 +44,14 @@
             const emailInput = document.getElementById('email').value.trim();
             const passwordInput = document.getElementById('password').value;
             const errorDiv = document.getElementById('errorMessage');
-            const debugOutput = document.getElementById('debugOutput');
+            const debugScreen = document.getElementById('debugScreen');
+            const debugContent = document.getElementById('debugContent');
             
-            errorDiv.style.display = 'none';
-            debugOutput.style.display = 'none';
+            errorDiv.textContent = '';
+            debugScreen.style.display = 'none';
 
             if (!emailInput || !passwordInput) {
                 errorDiv.textContent = 'Please fill out all fields.';
-                errorDiv.style.display = 'block';
                 return;
             }
 
@@ -58,10 +63,15 @@
                 });
 
                 const data = await response.json();
-                
-                // Print raw response to screen for debugging
-                debugOutput.textContent = "API Response:\n" + JSON.stringify(data, null, 2);
-                debugOutput.style.display = 'block';
+
+                // Explicitly show the raw returned response on the screen
+                debugContent.innerHTML = `
+                    Response Status: ${response.status}<br>
+                    teacher_id: <b>${data.teacher_id}</b><br>
+                    admin_type_id: <b>${data.admin_type_id}</b><br>
+                    Full JSON: ${JSON.stringify(data)}
+                `;
+                debugScreen.style.display = 'block';
 
                 if (!response.ok) throw new Error(data.message || 'Invalid credentials.');
 
@@ -82,7 +92,6 @@
 
             } catch (error) {
                 errorDiv.textContent = error.message;
-                errorDiv.style.display = 'block';
             }
         }
     </script>
