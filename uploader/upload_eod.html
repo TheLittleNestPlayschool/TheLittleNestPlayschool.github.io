@@ -43,7 +43,7 @@
             box-sizing: border-box;
         }
         .camera-box-large {
-            padding: 50px 20px;
+            padding: 30px 20px;
             text-align: center;
             border: 2px dashed rgba(255, 255, 255, 0.6);
             border-radius: 16px;
@@ -64,8 +64,8 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            margin-bottom: 15px;
-            padding: 20px;
+            margin-bottom: 10px;
+            padding: 10px;
             border: 2px dashed rgba(255, 255, 255, 0.6);
             border-radius: 16px;
             background: rgba(255, 255, 255, 0.25);
@@ -75,21 +75,21 @@
         }
         #preview-img {
             width: 100%;
-            max-height: 200px;
+            max-height: 150px;
             object-fit: contain;
             border-radius: 12px;
             background: #000;
         }
         
-        /* Alignment and blending styles for form fields */
+        /* Alignment, blending, and tight vertical spacing for form fields */
         .entry-form .form-group {
             display: flex;
             flex-direction: column;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
             width: 100%;
         }
         .entry-form label {
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             font-weight: 600;
         }
         .entry-form select, 
@@ -98,7 +98,7 @@
             box-sizing: border-box;
             background: transparent;
             border: 1px solid rgba(0, 0, 0, 0.2);
-            padding: 8px;
+            padding: 6px 8px;
             border-radius: 8px;
         }
         .entry-row {
@@ -108,7 +108,7 @@
         }
         .btn-add {
             display: block;
-            margin: 15px auto 0 auto;
+            margin: 8px auto 0 auto;
         }
     </style>
 </head>
@@ -140,8 +140,8 @@
                 <!-- STEP 1: PHOTO CAPTURE -->
                 <div id="upload-section">
                     <div class="camera-box-large" id="cam-box" onclick="document.getElementById('input-cam').click()">
-                        <span style="font-size: 56px; margin-bottom: 10px;">📸</span>
-                        <p style="font-weight: 800; margin: 0; font-size: 16px; color: var(--text-black); text-transform: uppercase;">Payment Receipt Picture</p>
+                        <span style="font-size: 42px; margin-bottom: 6px;">📸</span>
+                        <p style="font-weight: 800; margin: 0; font-size: 15px; color: var(--text-black); text-transform: uppercase;">Payment Receipt Picture</p>
                         <input type="file" id="input-cam" hidden accept="image/*" capture="environment" onchange="handleImageSelect(this)">
                     </div>
                 </div>
@@ -196,7 +196,7 @@
                 </div>
 
                 <!-- BASKET & SYNC -->
-                <div class="basket-wrap" id="basket-wrap" style="display:none;">
+                <div class="basket-wrap" id="basket-wrap" style="display:none; margin-top: 8px;">
                     <table class="basket-table">
                         <thead>
                             <tr>
@@ -209,9 +209,9 @@
                         <tbody id="basket-body"></tbody>
                     </table>
                 </div>
-                <button class="btn-action btn-sync" id="sync-btn" style="display:none;" onclick="syncBatchToXano()">Final Sync</button>
+                <button class="btn-action btn-sync" id="sync-btn" style="display:none; margin-top: 8px;" onclick="syncBatchToXano()">Final Sync</button>
 
-                <p id="status-msg"></p>
+                <p id="status-msg" style="display:none; margin: 4px 0 0 0;"></p>
             </div>
         </div>
     </div>
@@ -259,6 +259,7 @@
     async function uploadAndInitialize(fileObj) {
         if (!fId) return alert("Session expired. Please re-login.");
         const status = document.getElementById('status-msg');
+        status.style.display = 'block';
         status.innerText = "☁️ Uploading Photo...";
         const formData = new FormData();
         formData.append('file_resource', fileObj);
@@ -279,9 +280,10 @@
             await Promise.all([fetchParents(), fetchPaymentTypes()]);
             
             document.getElementById('step-parent').style.display = 'block';
-            status.innerText = "Photo uploaded successfully. Select Parent.";
+            status.style.display = 'none';
         } catch (e) { 
             console.error("Upload proxy sequence crashed", e);
+            status.style.display = 'block';
             status.innerText = "UPLOAD FAILED."; 
         }
     }
@@ -419,6 +421,7 @@
 
     async function syncBatchToXano() {
         const status = document.getElementById('status-msg');
+        status.style.display = 'block';
         status.innerText = "🚀 Syncing Batch...";
         try {
             const resp = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:I12II1nL/process_eod", {
