@@ -28,6 +28,7 @@
             </div>
 
             <div id="errorMessage"></div>
+            <pre id="debugOutput" style="font-size: 0.7rem; text-align: left; background: #eee; padding: 10px; margin-top: 15px; display: none; overflow-x: auto; color: #333;"></pre>
         </div>
     </div>
 
@@ -38,8 +39,10 @@
             const emailInput = document.getElementById('email').value.trim();
             const passwordInput = document.getElementById('password').value;
             const errorDiv = document.getElementById('errorMessage');
+            const debugOutput = document.getElementById('debugOutput');
             
             errorDiv.style.display = 'none';
+            debugOutput.style.display = 'none';
 
             if (!emailInput || !passwordInput) {
                 errorDiv.textContent = 'Please fill out all fields.';
@@ -55,6 +58,11 @@
                 });
 
                 const data = await response.json();
+                
+                // Print raw response to screen for debugging
+                debugOutput.textContent = "API Response:\n" + JSON.stringify(data, null, 2);
+                debugOutput.style.display = 'block';
+
                 if (!response.ok) throw new Error(data.message || 'Invalid credentials.');
 
                 // Store auth token, user ID, admin type, and teacher ID in local storage
@@ -63,11 +71,11 @@
                 localStorage.setItem('admin_type_id', data.admin_type_id);
                 localStorage.setItem('teacher_id', data.teacher_id);
 
-                // Routing based on admin_type_id: 10 loads parent dashboard, 4 loads teacher uploader index
+                // Routing based on admin_type_id: 10 loads parent dashboard, 4 loads teacher uploader menu
                 if (data.admin_type_id === 10) {
                     window.location.href = './parentdashboard/dashboard.html';
                 } else if (data.admin_type_id === 4) {
-                    window.location.href = './uploader/index.html';
+                    window.location.href = './uploader/uploadermenu.html';
                 } else {
                     throw new Error('Login Invalid');
                 }
