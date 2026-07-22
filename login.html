@@ -29,18 +29,16 @@
 
             <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
             
-            <!-- Visible Debug Box with Pause Button -->
+            <!-- Forced Stop Screen -->
             <div id="debugScreen" style="margin-top: 15px; padding: 10px; background: #fff3f3; border: 1px solid #ff9999; font-size: 0.8rem; text-align: left; word-break: break-all; display: none;">
-                <strong>Debug Data (Paused):</strong>
+                <strong>STOPPED:</strong>
                 <div id="debugContent"></div>
-                <button type="button" onclick="resumeRedirect()" style="margin-top: 10px; padding: 5px 10px; background: #333; color: #fff; border: none; cursor: pointer;">Continue to Portal</button>
             </div>
         </div>
     </div>
 
     <script>
         const XANO_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV';
-        let savedNextUrl = '';
 
         async function handleLogin() {
             const emailInput = document.getElementById('email').value.trim();
@@ -60,7 +58,7 @@
             try {
                 const response = await fetch(`${XANO_BASE_URL}/auth/login`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-type': 'application/json' },
                     body: JSON.stringify({ email: emailInput, password: passwordInput })
                 });
 
@@ -68,38 +66,25 @@
 
                 if (!response.ok) throw new Error(data.message || 'Invalid credentials.');
 
-                // Store auth token, user ID, admin type, and teacher ID in local storage
+                // Store values
                 localStorage.setItem('authToken', data.authToken);
                 localStorage.setItem('userId', data.user);
                 localStorage.setItem('admin_type_id', data.admin_type_id);
                 localStorage.setItem('teacher_id', data.teacher_id);
 
-                // Determine routing path
-                if (data.admin_type_id === 10) {
-                    savedNextUrl = './parentdashboard/dashboard.html';
-                } else if (data.admin_type_id === 4) {
-                    savedNextUrl = './uploader/uploadermenu.html';
-                } else {
-                    throw new Error('Login Invalid');
-                }
-
-                // Explicitly show raw response and PAUSE redirection
+                // Print directly to screen and completely halt execution here without redirecting
                 debugContent.innerHTML = `
-                    Response Status: ${response.status}<br>
                     teacher_id: <b>${data.teacher_id}</b><br>
                     admin_type_id: <b>${data.admin_type_id}</b><br>
                     Full JSON: ${JSON.stringify(data)}
                 `;
                 debugScreen.style.display = 'block';
 
+                // DEAD STOP - NO REDIRECTION AT ALL
+                return;
+
             } catch (error) {
                 errorDiv.textContent = error.message;
-            }
-        }
-
-        function resumeRedirect() {
-            if (savedNextUrl) {
-                window.location.href = savedNextUrl;
             }
         }
     </script>
