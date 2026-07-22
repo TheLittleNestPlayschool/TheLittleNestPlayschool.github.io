@@ -58,9 +58,8 @@ body {
 
 /* --- Dashboard Grid Layout --- */
 #app-container { 
-    display: grid;
-    grid-template-columns: 4fr 1fr; 
-    grid-template-rows: auto 1fr auto;
+    display: flex;
+    flex-direction: column;
     height: 100dvh;
     width: 100vw;
     max-width: 480px;
@@ -73,7 +72,6 @@ body {
 
 /* --- Transparent Header --- */
 .main-header { 
-    grid-column: 1 / 3;
     text-align: center;
     padding: 12px 10px 8px 10px;
     background: transparent;
@@ -85,6 +83,7 @@ body {
     max-width: 100%;
     box-sizing: border-box;
     margin: 0 auto;
+    flex-shrink: 0;
 }
 
 /* Top Network Banner */
@@ -182,12 +181,22 @@ body {
 
 /* --- Content Area --- */
 #content-area { 
-    grid-column: 1 / 2;
-    grid-row: 2 / 3;
+    flex: 1;
     overflow-y: auto;
     padding: 10px 10px 20px 10px;
     margin: 0 auto;
     width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.uploader-layout {
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* <-- Ensures internal children like boxes and fields stay centered horizontally */
 }
 
 /* --- Content Modules with Frosted Background (No Border) --- */
@@ -227,8 +236,6 @@ body {
 
 /* --- Gauges Sidebar --- */
 .sidebar-right {
-    grid-column: 2 / 3;
-    grid-row: 2 / 3;
     background: transparent;
     padding: 10px 10px 10px 0;
     overflow-y: auto;
@@ -294,7 +301,6 @@ body {
 
 /* --- Footer Button Row --- */
 #footer-buttons {
-    grid-column: 1 / 3;
     background: transparent; 
     display: flex;
     justify-content: center;
@@ -304,12 +310,13 @@ body {
     padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     flex-shrink: 0;
     width: 100%;
+    max-width: 480px;
     margin: 0 auto;
 }
 
 #footer-buttons button {
     flex: 1;
-    max-width: 120px;
+    max-width: 140px;
     padding: 10px 8px;
     border: none;
     border-radius: 20px;
@@ -324,6 +331,8 @@ body {
     transition: transform 0.15s ease, background 0.15s ease;
     white-space: nowrap;
     margin: 0 auto;
+    display: block;
+    text-align: center;
 }
 
 #footer-buttons button:active {
