@@ -1,82 +1,79 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NestLoad</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Little Nest - Uploader Menu</title>
     <link rel="stylesheet" href="../style.css">
-    <script src="../api_config.js"></script>
-    <style>
-        .uploader-content-top {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 20px;
-            padding: 30px 20px;
-            width: 100%;
-            max-width: 400px;
-            margin: 20px auto 0 auto;
-        }
-    </style>
 </head>
 <body>
-    <div id="app-container">
-        <!-- Header Banner matching global theme -->
-        <header class="main-header" id="main-header">
-            <div class="stats-banner">
-                <span class="banner-title">Little Nest Global Network</span>
-                <span class="banner-stat"><span class="stat-highlight">50,000+</span> Learning Hours &amp; Counting!</span>
-            </div>
-            
-            <h1 class="main-title">
-                <span class="brand-title">THE LITTLE NEST PLAYSCHOOL</span>
-                <span class="branch-location" id="main-title">NESTLOAD</span>
-            </h1>
 
-            <div id="student-info-banner">
-                <span id="parent-name" style="font-weight: bold;">UPLOADER PORTAL</span>
-            </div>
-        </header>
+    <div class="login-container">
+        <div class="login-card" style="text-align: center;">
+            <!-- Header Section -->
+            <p style="font-size: 0.8rem; margin-bottom: 5px;">Little Nest Global Network 50,000+ Learning Hours & Counting!</p>
+            <h1 class="login-title" style="font-size: 1.5rem; margin-bottom: 2px;">THE LITTLE NEST PLAYSCHOOL</h1>
+            <div id="teacherLocationDisplay" style="font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">NESTLOAD</div>
+            <div id="teacherNameDisplay" style="font-size: 0.9rem; margin-bottom: 20px;">UPLOADER PORTAL</div>
 
-        <!-- Main Content Menu using #footer-buttons ID for stylesheet styles -->
-        <div id="content-area" class="uploader-content-top">
-            <div id="footer-buttons" style="max-width: 320px;">
-                <button onclick="navigateTo('upload_eod.html')">Upload EOD</button>
-                <button onclick="navigateTo('upload_attendance.html')">Upload Attendance</button>
+            <!-- Menu Buttons -->
+            <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 20px;">
+                <button onclick="window.location.href='./index.html'" class="btn-submit" style="width: 200px; border-radius: 20px; font-size: 0.9rem;">Upload EOD</button>
+                <button onclick="window.location.href='./attendance.html'" class="btn-submit" style="width: 200px; border-radius: 20px; font-size: 0.9rem;">Upload Attendance</button>
             </div>
         </div>
     </div>
 
     <script>
-        function initializePortal() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const tlnpKey = urlParams.get('tlnp');
+        const XANO_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV';
 
-            if (tlnpKey) {
-                fetch(NEST_ENDPOINTS.franchise.list)
-                    .then(response => response.json())
-                    .then(data => {
-                        const matched = data.find(f => f.access_key === tlnpKey);
-                        if (matched) {
-                            const slug = matched.name.toLowerCase().split(' ')[0].replace(/[^a-z0-9]/g, '');
-                            localStorage.setItem('nestmind_f_id', matched.id);
-                            localStorage.setItem('nestmind_f_slug', slug);
-                            localStorage.setItem('nestmind_f_name', matched.name);
-                            document.getElementById('main-title').innerText = matched.name.toUpperCase() + " UPLOADER";
-                            window.history.replaceState({}, document.title, window.location.pathname);
+        async function loadTeacherHeader() {
+            const authToken = localStorage.getItem('authToken');
+            const teacherId = localStorage.getItem('teacher_id');
+
+            if (!authToken || !teacherId) {
+                window.location.href = '../index.html'; // Kick back to login if missing
+                return;
+            }
+
+            try {
+                // 1. Call your Xano endpoint using teacher_id
+                const response = await fetch(`${XANO_BASE_URL}/get_teacher_details?teacher_id=${teacherId}`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch teacher details.');
+                
+                const data = await response.json();
+                const teacher = data.teacher_info;
+
+                if (teacher) {
+                    // Display Teacher Name
+                    const teacherName = teacher.name || teacher.first_name || 'Teacher';
+                    document.getElementById('teacherNameDisplay').textContent = teacherName;
+
+                    // 2. Fetch Franchise/Location name if franchise_id is present
+                    if (teacher.franchise_id) {
+                        const franchiseRes = await fetch(`${XANO_BASE_URL}/franchise/${teacher.franchise_id}`, {
+                            method: 'GET',
+                            headers: { 'Authorization': `Bearer ${authToken}` }
+                        });
+
+                        if (franchiseRes.ok) {
+                            const franchiseData = await franchiseRes.json();
+                            document.getElementById('teacherLocationDisplay').textContent = franchiseData.name.toUpperCase();
                         }
-                    })
-                    .catch(err => console.error(err));
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error loading header info:', error);
             }
         }
 
-        function navigateTo(page) {
-            window.location.href = page + window.location.search;
-        }
-
-        window.onload = initializePortal;
+        // Run on page load
+        loadTeacherHeader();
     </script>
 </body>
 </html>
