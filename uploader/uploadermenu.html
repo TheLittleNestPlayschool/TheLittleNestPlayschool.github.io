@@ -32,12 +32,11 @@
             const teacherId = localStorage.getItem('teacher_id');
 
             if (!authToken || !teacherId) {
-                window.location.href = '../index.html'; // Kick back to login if missing
+                window.location.href = '../index.html';
                 return;
             }
 
             try {
-                // 1. Call your Xano endpoint using teacher_id
                 const response = await fetch(`${XANO_BASE_URL}/get_teacher_details?teacher_id=${teacherId}`, {
                     method: 'GET',
                     headers: { 'Authorization': `Bearer ${authToken}` }
@@ -49,11 +48,9 @@
                 const teacher = data.teacher_info;
 
                 if (teacher) {
-                    // Display Teacher Name
                     const teacherName = teacher.name || teacher.first_name || 'Teacher';
                     document.getElementById('teacherNameDisplay').textContent = teacherName;
 
-                    // 2. Fetch Franchise/Location name if franchise_id is present
                     if (teacher.franchise_id) {
                         const franchiseRes = await fetch(`${XANO_BASE_URL}/franchise/${teacher.franchise_id}`, {
                             method: 'GET',
@@ -72,7 +69,6 @@
             }
         }
 
-        // Run on page load
         loadTeacherHeader();
     </script>
 </body>
