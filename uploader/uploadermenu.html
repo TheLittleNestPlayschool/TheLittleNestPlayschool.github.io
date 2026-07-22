@@ -3,80 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Little Nest - Login</title>
-    <link rel="stylesheet" href=".//style.css">
+    <title>TLNP Upload</title>
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
 
     <div class="login-container">
-        <div class="login-card">
+        <div class="login-card" style="text-align: center;">
             <!-- Header Section -->
-            <h1 class="login-title">The Little Nest Playschool</h1>
-            <p class="login-subtitle">Where Little Success Stories Begin</p>
+            <p style="font-size: 0.8rem; margin-bottom: 5px;">Little Nest Global Network <span style="color: gold;">50,000+</span> Learning Hours & Counting!</p>
+            <h1 class="login-title" style="font-size: 1.5rem; margin-bottom: 2px;">THE LITTLE NEST PLAYSCHOOL</h1>
+            <div id="teacherLocationDisplay" style="font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">NESTLOAD</div>
+            <div id="teacherNameDisplay" style="font-size: 0.9rem; margin-bottom: 20px;">UPLOADER PORTAL</div>
 
-            <!-- Form Section -->
-            <h2 class="form-section-title">Parent Login</h2>
-            
-            <div class="login-input-group">
-                <input type="email" id="email" class="login-input" placeholder="Email">
-                <input type="password" id="password" class="login-input" placeholder="Password">
+            <!-- Menu Buttons -->
+            <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 20px;">
+                <button onclick="window.location.href='./index.html'" class="btn-submit" style="width: 200px; border-radius: 20px; font-size: 0.9rem;">Upload EOD</button>
+                <button onclick="window.location.href='./attendance.html'" class="btn-submit" style="width: 200px; border-radius: 20px; font-size: 0.9rem;">Upload Attendance</button>
             </div>
             
-            <div class="login-action-row">
-                <span class="sign-in-text">Sign in</span>
-                <button onclick="handleLogin()" class="btn-submit">→</button>
-            </div>
-
-            <div id="errorMessage"></div>
+            <div id="errorMessage" style="margin-top: 15px; color: red; display: none;"></div>
         </div>
     </div>
 
     <script>
         const XANO_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV';
 
-        async function handleLogin() {
-            const emailInput = document.getElementById('email').value.trim();
-            const passwordInput = document.getElementById('password').value;
+        async function loadTeacherHeader() {
+            const authToken = localStorage.getItem('authToken');
+            const teacherId = localStorage.getItem('teacher_id');
             const errorDiv = document.getElementById('errorMessage');
-            
-            errorDiv.style.display = 'none';
 
-            if (!emailInput || !passwordInput) {
-                errorDiv.textContent = 'Please fill out all fields.';
-                errorDiv.style.display = 'block';
+            if (!authToken || !teacherId) {
+                window.location.href = '../index.html';
                 return;
             }
 
             try {
-                const response = await fetch(`${XANO_BASE_URL}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: emailInput, password: passwordInput })
+                const response = await fetch(`${XANO_BASE_URL}/get_teacher_details?teacher_id=${teacherId}`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
                 });
 
                 const data = await response.json();
-                if (!response.ok) throw new Error(data.message || 'Invalid credentials.');
+                if (!response.ok) throw new Error(data.message || 'Failed to fetch teacher details.');
+                
+                const teacher = data.teacher_info;
 
-                // Store auth token, user ID, admin type, and teacher ID in local storage
-                localStorage.setItem('authToken', data.authToken);
-                localStorage.setItem('userId', data.user);
-                localStorage.setItem('admin_type_id', data.admin_type_id);
-                localStorage.setItem('teacher_id', data.teacher_id);
+                if (teacher) {
+                    const teacherName = teacher.name || teacher.first_name || 'Teacher';
+                    document.getElementById('teacherNameDisplay').textContent = teacherName;
 
-                // Routing based on admin_type_id: 10 loads parent dashboard, 4 loads teacher uploader index
-                if (data.admin_type_id === 10) {
-                    window.location.href = './parentdashboard/dashboard.html';
-                } else if (data.admin_type_id === 4) {
-                    window.location.href = './uploader/index.html';
-                } else {
-                    throw new Error('Login Invalid');
+                    if (teacher.franchise_id) {
+                        const franchiseRes = await fetch(`${XANO_BASE_URL}/franchise/${teacher.franchise_id}`, {
+                            method: 'GET',
+                            headers: { 'Authorization': `Bearer ${authToken}` }
+                        });
+
+                        if (franchiseRes.ok) {
+                            const franchiseData = await franchiseRes.json();
+                            document.getElementById('teacherLocationDisplay').textContent = franchiseData.name.toUpperCase();
+                        }
+                    }
                 }
 
             } catch (error) {
-                errorDiv.textContent = error.message;
-                errorDiv.style.display = 'block';
+                console.error('Error loading header info:', error);
             }
         }
+
+        loadTeacherHeader();
     </script>
 </body>
 </html>
