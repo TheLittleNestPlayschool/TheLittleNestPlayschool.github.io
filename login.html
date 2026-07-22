@@ -60,13 +60,13 @@
                 localStorage.setItem('authToken', data.authToken);
                 localStorage.setItem('userId', data.user);
 
-                // Role-based conditional routing depending on admin_type_id
+                // Routing based on admin_type_id: 10 loads ./parentdashboard/dashboard.html, 4 loads ./uploader/index.html, else error
                 if (data.admin_type_id === 10) {
-                    window.location.href = './parentdashboard/uploadermenu.html';
-                } else if (data.admin_type_id === 4) {
-                    window.location.href = './teacherdashboard/dashboard.html';
-                } else {
                     window.location.href = './parentdashboard/dashboard.html';
+                } else if (data.admin_type_id === 4) {
+                    window.location.href = './uploader/index.html';
+                } else {
+                    throw new Error('Login Invalid');
                 }
 
             } catch (error) {
