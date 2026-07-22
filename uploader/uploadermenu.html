@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Little Nest - Uploader Menu</title>
+    <title>TLNP Teacher Upload</title>
     <link rel="stylesheet" href="../style.css">
 </head>
 <body>
@@ -13,12 +13,12 @@
             <!-- Header Section -->
             <p style="font-size: 0.8rem; margin-bottom: 5px;">Little Nest Global Network 50,000+ Learning Hours & Counting!</p>
             <h1 class="login-title" style="font-size: 1.5rem; margin-bottom: 2px;">THE LITTLE NEST PLAYSCHOOL</h1>
-            <div id="teacherLocationDisplay" style="font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">NESTLOAD</div>
-            <div id="teacherNameDisplay" style="font-size: 0.9rem; margin-bottom: 20px;">UPLOADER PORTAL</div>
+            <div id="teacherLocationDisplay" style="font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">NestLoad</div>
+            <div id="teacherNameDisplay" style="font-size: 0.9rem; margin-bottom: 20px;">Teacher Upload Portal</div>
 
             <!-- Menu Buttons -->
             <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 20px;">
-                <button onclick="window.location.href='./index.html'" class="btn-submit" style="width: 200px; border-radius: 20px; font-size: 0.9rem;">Upload EOD</button>
+                <button onclick="window.location.href='./index.html'" class="btn-submit" style="width: 200px; border-radius: 20px; font-size: 0.9rem;">Upload Receipt</button>
                 <button onclick="window.location.href='./attendance.html'" class="btn-submit" style="width: 200px; border-radius: 20px; font-size: 0.9rem;">Upload Attendance</button>
             </div>
         </div>
@@ -48,19 +48,14 @@
                 const teacher = data.teacher_info;
 
                 if (teacher) {
-                    const teacherName = teacher.name || teacher.first_name || 'Teacher';
-                    document.getElementById('teacherNameDisplay').textContent = teacherName;
+                    const firstName = teacher.first_name || '';
+                    const lastName = teacher.last_name || '';
+                    const fullName = `${firstName} ${lastName}`.trim();
+                    
+                    document.getElementById('teacherNameDisplay').textContent = fullName || 'Teacher';
 
                     if (teacher.franchise_id) {
-                        const franchiseRes = await fetch(`${XANO_BASE_URL}/franchise/${teacher.franchise_id}`, {
-                            method: 'GET',
-                            headers: { 'Authorization': `Bearer ${authToken}` }
-                        });
-
-                        if (franchiseRes.ok) {
-                            const franchiseData = await franchiseRes.json();
-                            document.getElementById('teacherLocationDisplay').textContent = franchiseData.name.toUpperCase();
-                        }
+                        document.getElementById('teacherLocationDisplay').textContent = String(teacher.franchise_id).toUpperCase();
                     }
                 }
 
