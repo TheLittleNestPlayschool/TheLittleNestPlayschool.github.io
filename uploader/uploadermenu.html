@@ -44,7 +44,6 @@
 
                 if (!response.ok) throw new Error('Failed to fetch teacher details.');
                 
-                // Read the response directly as the teacher object
                 const teacher = await response.json();
 
                 if (teacher) {
@@ -56,11 +55,9 @@
 
                     if (teacher.franchise_id) {
                         const fId = String(teacher.franchise_id);
-                        
-                        // Use franchise name if returned directly or populated via object relation from Xano, fallback to ID
                         const fName = teacher.franchise_name || (teacher.franchise && teacher.franchise.name) || fId;
 
-                        // Save franchise identifiers to local storage for subsequent pages
+                        // Save franchise identifiers properly to local storage here
                         localStorage.setItem('franchise_id', fId);
                         localStorage.setItem('nestmind_f_id', fId);
                         localStorage.setItem('locked_franchise_id', fId);
