@@ -55,7 +55,19 @@
                     document.getElementById('teacherNameDisplay').textContent = fullName || 'Teacher';
 
                     if (teacher.franchise_id) {
-                        document.getElementById('teacherLocationDisplay').textContent = String(teacher.franchise_id).toUpperCase();
+                        const fId = String(teacher.franchise_id);
+                        
+                        // Use franchise name if returned directly or populated via object relation from Xano, fallback to ID
+                        const fName = teacher.franchise_name || (teacher.franchise && teacher.franchise.name) || fId;
+
+                        // Save franchise identifiers to local storage for subsequent pages
+                        localStorage.setItem('franchise_id', fId);
+                        localStorage.setItem('nestmind_f_id', fId);
+                        localStorage.setItem('locked_franchise_id', fId);
+                        localStorage.setItem('nestmind_f_name', fName);
+                        localStorage.setItem('locked_franchise_name', fName);
+
+                        document.getElementById('teacherLocationDisplay').textContent = fName.toUpperCase();
                     }
                 }
 
