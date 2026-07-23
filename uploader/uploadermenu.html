@@ -13,7 +13,7 @@
         <header class="main-header">
             <div class="stats-banner">
                 <span class="banner-title">Little Nest Global Network</span>
-                <span class="banner-stat"><span class="stat-highlight" id="global-hours-elem">+</span> Learning Hours &amp; Counting!</span>
+                <span class="banner-stat"><span class="stat-highlight" id="global-hours-elem">50,000+</span> Learning Hours &amp; Counting!</span>
             </div>
             
             <div class="main-title">
@@ -53,7 +53,12 @@
                 const hoursValue = data.global_hours || data.hours || data.total_hours;
                 
                 if (hoursValue !== undefined && hoursValue !== null) {
-                    hoursElem.innerText = Number(hoursValue).toLocaleString() + "+";
+                    const formattedHours = Number(hoursValue).toLocaleString() + "+";
+                    
+                    // Save to local storage variable so other pages like upload_eod.html can access it
+                    localStorage.setItem('global_learning_hours', formattedHours);
+                    
+                    hoursElem.innerText = formattedHours;
                 }
             } catch (e) {
                 console.error("Failed to fetch global network hours:", e);
