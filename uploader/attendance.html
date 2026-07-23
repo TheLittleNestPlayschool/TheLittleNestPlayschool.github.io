@@ -218,30 +218,28 @@
         status.style.display = 'block';
         status.innerText = "🚀 Saving Attendance...";
 
-        const requests = Array.from(checkboxes).map(cb => {
-            const payload = {
-                student_id: parseInt(cb.value),
-                franchise_id: parseInt(franchise_id),
-                session_id: parseInt(currentSessionId)
-            };
-            return fetch("https://x8ki-letl-twmt.n7.xano.io/api:GE19ZGc0/student_attendance", {
+        const selectedStudentIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+        const payload = {
+            franchise_id: parseInt(franchise_id),
+            session_id: parseInt(currentSessionId),
+            student_ids: selectedStudentIds
+        };
+
+        try {
+            const response = await fetch("https://x8ki-letl-twmt.n7.xano.io/api:GE19ZGc0/student_attendance", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-        });
 
-        try {
-            const results = await Promise.all(requests);
-            const allSuccessful = results.every(res => res.ok);
-
-            if (allSuccessful) {
+            if (response.ok) {
                 status.innerText = "✅ Attendance successfully recorded";
                 setTimeout(() => {
                     window.location.href = 'uploadermenu.html';
                 }, 1500);
             } else {
-                status.innerText = "❌ SOME RECORDS FAILED TO SAVE.";
+                status.innerText = "❌ RECORDS FAILED TO SAVE.";
             }
         } catch (err) {
             console.error("Batch attendance submission error:", err);
