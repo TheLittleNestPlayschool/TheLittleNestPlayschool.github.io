@@ -136,10 +136,9 @@
 </div>
 
 <script>
-    let currentSessionId = null;
-    
     const franchise_id = localStorage.getItem('franchise_id') || localStorage.getItem('locked_franchise_id') || localStorage.getItem('nestmind_f_id');
     const franchise_name = localStorage.getItem('franchise_name') || localStorage.getItem('locked_franchise_name') || localStorage.getItem('nestmind_f_name');
+    const currentSessionId = localStorage.getItem('current_session');
 
     if (franchise_id) {
         localStorage.setItem('locked_franchise_id', franchise_id);
@@ -151,6 +150,11 @@
             document.getElementById('branch-title-elem').innerText = franchise_name.toUpperCase() + " ATTENDANCE";
         }
         
+        const sessionElem = document.getElementById('session-indicator-elem');
+        if (sessionElem) {
+            sessionElem.innerText = currentSessionId ? `Active Session ID: ${currentSessionId}` : `Active Session ID: None Set`;
+        }
+
         const savedHours = localStorage.getItem('global_learning_hours');
         if (savedHours) {
             const hoursElem = document.getElementById('global-hours-elem');
@@ -171,29 +175,10 @@
         
         const status = document.getElementById('status-msg');
         status.style.display = 'block';
-        status.innerText = "⏳ Loading Data...";
+        status.innerText = "⏳ Loading Students...";
 
         try {
-            const [franchiseResp, studentResp] = await Promise.all([
-                fetch(`https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise/${franchise_id}`),
-                fetch(`https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/get_students?franchise_id=${franchise_id}`)
-            ]);
-
-            const franchiseData = await franchiseResp.json();
-            console.log("Franchise Data Loaded:", franchiseData);
-            
-            const sessionElem = document.getElementById('session-indicator-elem');
-
-            if (franchiseData) {
-                currentSessionId = franchiseData.current_session || franchiseData.session_id || null;
-            }
-
-            if (currentSessionId) {
-                if (sessionElem) sessionElem.innerText = `Active Session ID: ${currentSessionId}`;
-            } else {
-                if (sessionElem) sessionElem.innerText = `Active Session ID: None Set`;
-            }
-
+            const studentResp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/get_students?franchise_id=${franchise_id}`);
             const students = await studentResp.json();
             const checklistContainer = document.getElementById('student-checklist');
             checklistContainer.innerHTML = '';
@@ -214,7 +199,7 @@
             status.style.display = 'none';
         } catch (e) {
             console.error("Initialization error:", e);
-            status.innerText = "FAILED TO LOAD DATA.";
+            status.innerText = "FAILED TO LOAD STUDENTS.";
         }
     }
 
