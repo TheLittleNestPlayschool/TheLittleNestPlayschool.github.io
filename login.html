@@ -36,6 +36,7 @@
         localStorage.clear();
 
         const XANO_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV';
+        const XANO_FRANCHISE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg';
 
         async function handleLogin() {
             const emailInput = document.getElementById('email').value.trim();
@@ -77,25 +78,12 @@
                 localStorage.setItem('nestmind_f_name', franchiseName);
                 localStorage.setItem('franchise_id', franchiseId); 
 
-                // Fetch the franchise record using the exact correct endpoint URL and auth token, then explicitly set current_session
-                if (franchiseId) {
-                    try {
-                        const franchiseResp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise/${franchiseId}`, {
-                            headers: {
-                                'Authorization': `Bearer ${data.authToken}`
-                            }
-                        });
-                        if (franchiseResp.ok) {
-                            const franchiseData = await franchiseResp.json();
-                            const currentSession = franchiseData.current_session || '';
-                            localStorage.setItem('current_session', currentSession);
-                        } else {
-                            localStorage.setItem('current_session', '');
-                        }
-                    } catch (err) {
-                        console.error("Failed to fetch franchise session on login:", err);
-                        localStorage.setItem('current_session', '');
-                    }
+                // Fetch the franchise record publicly to assign current_session
+                const franchiseResp = await fetch(`${XANO_FRANCHISE_URL}/franchise/${franchiseId}`);
+                if (franchiseResp.ok) {
+                    const franchiseData = await franchiseResp.json();
+                    const currentSession = franchiseData.current_session || '';
+                    localStorage.setItem('current_session', currentSession);
                 } else {
                     localStorage.setItem('current_session', '');
                 }
