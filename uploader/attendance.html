@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TLNP NestLoad - Attendance Uploader</title>
+    <link rel="stylesheet" href="../styleup.css">
+    <script src="../api_config.js"></script>
+    <style>
+        .uploader-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .module-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .entry-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .form-group {
+            width: 100%;
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-black);
+            text-align: center;
+            width: 100%;
+        }
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.15);
+            background: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+            text-align: center;
+            outline: none;
+        }
+        .student-checklist {
+            width: 100%;
+            max-width: 320px;
+            max-height: 260px;
+            overflow-y: auto;
+            border: 1px solid rgba(0,0,0,0.15);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.7);
+            padding: 8px;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+        .student-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 0.9rem;
+            color: var(--text-black);
+        }
+        .student-item:last-child {
+            border-bottom: none;
+        }
+        .student-item input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.1);
+        }
+        .btn-add {
+            display: block;
+            margin: 16px auto 0 auto;
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: none;
+            background: var(--light-pink-purple-gradient);
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <header class="main-header" id="main-header">
+        <div class="stats-banner">
+            <span class="banner-title">Little Nest Global Network</span>
+            <span class="banner-stat"><span class="stat-highlight" id="global-hours-elem">50,000+</span> Learning Hours &amp; Counting!</span>
+        </div>
+        
+        <div class="main-title">
+            <span class="brand-title">THE LITTLE NEST PLAYSCHOOL</span>
+            <span class="branch-location" id="branch-title-elem">Attendance Uploader</span>
+        </div>
+
+        <div id="student-info-banner">
+            <span>Student Attendance Tracking</span>
+        </div>
+    </header>
+
+    <div id="content-area">
+        <div class="uploader-layout">
+            <div class="module-box">
+                
+               <div id="step-attendance" class="entry-form">
+                   <div class="form-group">
+                       <label>Select Students Present</label>
+                       <div id="student-checklist" class="student-checklist">
+                           <span style="font-size: 0.85rem; color: #666; padding: 10px; display: block; text-align: center;">Loading Students...</span>
+                       </div>
+                   </div>
+                   
+                   <button class="btn-add" onclick="saveAttendanceRecords()">Save Attendance</button>
+               </div>
+
+                <p id="status-msg" style="display:none; margin: 4px 0 0 0; text-align: center; font-weight: 600;"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-buttons">
+        <button onclick="navigateTo('uploadermenu.html')">Back</button>
+    </div>
+</div>
+
+<script>
+    let currentSessionId = null;
+    
+    const fId = localStorage.getItem('nestmind_f_id') || localStorage.getItem('franchise_id') || localStorage.getItem('locked_franchise_id');
+    const fName = localStorage.getItem('nestmind_f_name') || localStorage.getItem('locked_franchise_name');
+
+    if (fId) {
+        localStorage.setItem('locked_franchise_id', fId);
+        if (fName) localStorage.setItem('locked_franchise_name', fName);
+    }
+
+    window.onload = function() {
+        if (fName) {
+            document.getElementById('branch-title-elem').innerText = fName.toUpperCase() + " ATTENDANCE";
+        }
+        
+        const savedHours = localStorage.getItem('global_learning_hours');
+        if (savedHours) {
+            const hoursElem = document.getElementById('global-hours-elem');
+            if (hoursElem) {
+                hoursElem.innerText = savedHours;
+            }
+        }
+
+        initializeAttendancePage();
+    }
+
+    function navigateTo(page) {
+        window.location.href = page + window.location.search;
+    }
+
+    async function initializeAttendancePage() {
+        if (!fId) return alert("Session expired. Please re-login.");
+        
+        const status = document.getElementById('status-msg');
+        status.style.display = 'block';
+        status.innerText = "⏳ Loading Data...";
+
+        try {
+            // Fetch franchise details to get current_session id, and fetch students concurrently
+            const [franchiseResp, studentResp] = await Promise.all([
+                fetch(`https://x8ki-letl-twmt.n7.xano.io/api:Hw8UZ2CW/franchise?id=${fId}`),
+                fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/uploader_student?franchise_id=${fId}`)
+            ]);
+
+            const franchiseData = await franchiseResp.json();
+            // Handle franchise object or list response safely
+            const franchise = Array.isArray(franchiseData) ? franchiseData.find(f => f.id == fId) : franchiseData;
+            
+            if (franchise && franchise.current_session) {
+                currentSessionId = franchise.current_session;
+            } else {
+                console.warn("current_session not explicitly found on franchise record, checking fallback metadata.");
+                currentSessionId = franchise?.session_id || null;
+            }
+
+            const students = await studentResp.json();
+            const checklistContainer = document.getElementById('student-checklist');
+            checklistContainer.innerHTML = '';
+
+            if (Array.isArray(students) && students.length > 0) {
+                students.forEach(s => {
+                    checklistContainer.innerHTML += `
+                        <label class="student-item">
+                            <input type="checkbox" name="student_checkbox" value="${s.id}">
+                            <span>${s.name}</span>
+                        </label>
+                    `;
+                });
+            } else {
+                checklistContainer.innerHTML = '<span style="font-size: 0.85rem; color: #666; padding: 10px; display: block; text-align: center;">No active students found.</span>';
+            }
+
+            status.style.display = 'none';
+        } catch (e) {
+            console.error("Initialization error:", e);
+            status.innerText = "FAILED TO LOAD DATA.";
+        }
+    }
+
+    async function saveAttendanceRecords() {
+        if (!fId) return alert("Session expired. Please re-login.");
+        if (!currentSessionId) {
+            return alert("Active session ID is missing for this franchise branch.");
+        }
+
+        const checkboxes = document.querySelectorAll('input[name="student_checkbox"]:checked');
+        if (checkboxes.length === 0) {
+            return alert("Please select at least one student.");
+        }
+
+        const status = document.getElementById('status-msg');
+        status.style.display = 'block';
+        status.innerText = "🚀 Saving Attendance...";
+
+        const requests = Array.from(checkboxes).map(cb => {
+            const payload = {
+                student_id: parseInt(cb.value),
+                franchise_id: parseInt(fId),
+                session_id: parseInt(currentSessionId)
+            };
+            return fetch("https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/push_student_attendance", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        });
+
+        try {
+            const results = await Promise.all(requests);
+            const allSuccessful = results.every(res => res.ok);
+
+            if (allSuccessful) {
+                status.innerText = "✅ Attendance successfully recorded";
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                status.innerText = "❌ SOME RECORDS FAILED TO SAVE.";
+            }
+        } catch (err) {
+            console.error("Batch attendance submission error:", err);
+            status.innerText = "❌ SERVER ERROR.";
+        }
+    }
+</script>
+</body>
+</html>
