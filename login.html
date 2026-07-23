@@ -77,7 +77,7 @@
                 localStorage.setItem('nestmind_f_name', franchiseName);
                 localStorage.setItem('franchise_id', franchiseId); 
 
-                // Fetch the franchise record using the exact correct endpoint URL and auth token
+                // Fetch the franchise record using the exact correct endpoint URL and auth token, then explicitly set current_session
                 if (franchiseId) {
                     try {
                         const franchiseResp = await fetch(`https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise/${franchiseId}`, {
@@ -89,10 +89,15 @@
                             const franchiseData = await franchiseResp.json();
                             const currentSession = franchiseData.current_session || '';
                             localStorage.setItem('current_session', currentSession);
+                        } else {
+                            localStorage.setItem('current_session', '');
                         }
                     } catch (err) {
                         console.error("Failed to fetch franchise session on login:", err);
+                        localStorage.setItem('current_session', '');
                     }
+                } else {
+                    localStorage.setItem('current_session', '');
                 }
 
                 // Routing based on admin_type_id: 10 loads parent dashboard, 4 loads teacher uploader menu
