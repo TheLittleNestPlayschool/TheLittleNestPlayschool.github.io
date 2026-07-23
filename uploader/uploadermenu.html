@@ -37,6 +37,12 @@
             }
 
             try {
+                // Clear out legacy duplicate keys to ensure clean local storage
+                localStorage.removeItem('nestmind_f_id');
+                localStorage.removeItem('nestmind_f_name');
+                localStorage.removeItem('locked_franchise_id');
+                localStorage.removeItem('locked_franchise_name');
+
                 const response = await fetch(`${XANO_BASE_URL}/get_teacher_details?teacher_id=${teacherId}`, {
                     method: 'GET',
                     headers: { 'Authorization': `Bearer ${authToken}` }
@@ -53,19 +59,16 @@
                     
                     document.getElementById('teacherNameDisplay').textContent = fullName || 'Teacher';
 
-                    if (teacher.franchise_id) {
-                        const fId = String(teacher.franchise_id);
-                        const fName = teacher.franchise_name || (teacher.franchise && teacher.franchise.name) || fId;
+                    // Extract ID and name cleanly from the updated endpoint response
+                    const franchiseId = teacher.franchise_id || '';
+                    const franchiseName = teacher.franchise_name || (teacher.franchise && teacher.franchise.name) || '';
 
-                        // Save franchise identifiers properly to local storage here
-                        localStorage.setItem('franchise_id', fId);
-                        localStorage.setItem('nestmind_f_id', fId);
-                        localStorage.setItem('locked_franchise_id', fId);
-                        localStorage.setItem('nestmind_f_name', fName);
-                        localStorage.setItem('locked_franchise_name', fName);
+                    // Save single source of truth variables to local storage
+                    localStorage.setItem('franchise_id', franchiseId);
+                    localStorage.setItem('franchise_name', franchiseName);
 
-                        document.getElementById('teacherLocationDisplay').textContent = fName.toUpperCase();
-                    }
+                    // Display the franchise name in the header banner
+                    document.getElementById('teacherLocationDisplay').textContent = franchiseName ? franchiseName.toUpperCase() : '';
                 }
 
             } catch (error) {
