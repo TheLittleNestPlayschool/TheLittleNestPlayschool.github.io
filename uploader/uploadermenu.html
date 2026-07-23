@@ -53,14 +53,16 @@
                 const teacher = await response.json();
 
                 if (teacher) {
-                    const firstName = teacher.first_name || '';
-                    const lastName = teacher.last_name || '';
+                    // Extract from teacher_info object structure returned by Xano
+                    const teacherData = teacher.teacher_info || teacher;
+                    const firstName = teacherData.first_name || '';
+                    const lastName = teacherData.last_name || '';
                     const fullName = `${firstName} ${lastName}`.trim();
                     
                     document.getElementById('teacherNameDisplay').textContent = fullName || 'Teacher';
 
-                    // Extract ID and name cleanly from the updated endpoint response
-                    const franchiseId = teacher.franchise_id || '';
+                    // Extract ID and name cleanly from the endpoint response
+                    const franchiseId = teacher.franchise_id || (teacher.franchise && teacher.franchise.id) || '';
                     const franchiseName = teacher.franchise_name || (teacher.franchise && teacher.franchise.name) || '';
 
                     // Save single source of truth variables to local storage
