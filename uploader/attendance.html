@@ -44,17 +44,6 @@
             text-align: center;
             width: 100%;
         }
-        .form-group select,
-        .form-group input {
-            width: 100%;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(0,0,0,0.15);
-            background: rgba(255,255,255,0.7);
-            font-size: 0.9rem;
-            text-align: center;
-            outline: none;
-        }
         .student-checklist {
             width: 100%;
             max-width: 320px;
@@ -142,8 +131,8 @@
 <script>
     let currentSessionId = null;
     
-    const fId = localStorage.getItem('nestmind_f_id') || localStorage.getItem('franchise_id') || localStorage.getItem('locked_franchise_id');
-    const fName = localStorage.getItem('nestmind_f_name') || localStorage.getItem('locked_franchise_name');
+    const fId = localStorage.getItem('franchise_id') || localStorage.getItem('locked_franchise_id') || localStorage.getItem('nestmind_f_id');
+    const fName = localStorage.getItem('franchise_name') || localStorage.getItem('locked_franchise_name') || localStorage.getItem('nestmind_f_name');
 
     if (fId) {
         localStorage.setItem('locked_franchise_id', fId);
@@ -178,20 +167,17 @@
         status.innerText = "⏳ Loading Data...";
 
         try {
-            // Fetch franchise details to get current_session id, and fetch students concurrently
             const [franchiseResp, studentResp] = await Promise.all([
                 fetch(`https://x8ki-letl-twmt.n7.xano.io/api:Hw8UZ2CW/franchise?id=${fId}`),
                 fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/uploader_student?franchise_id=${fId}`)
             ]);
 
             const franchiseData = await franchiseResp.json();
-            // Handle franchise object or list response safely
             const franchise = Array.isArray(franchiseData) ? franchiseData.find(f => f.id == fId) : franchiseData;
             
             if (franchise && franchise.current_session) {
                 currentSessionId = franchise.current_session;
             } else {
-                console.warn("current_session not explicitly found on franchise record, checking fallback metadata.");
                 currentSessionId = franchise?.session_id || null;
             }
 
