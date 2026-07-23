@@ -60,10 +60,8 @@
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || 'Invalid credentials.');
 
-                // Robustly resolve the teacher ID from the response object
+                // Robustly resolve IDs and metadata from the response object
                 const teacherId = data.teacher_id || data.teacherId || data.id || (data.user && data.user.teacher_id) || '';
-                
-                // Robustly resolve the franchise ID and Name from the response object
                 const franchiseId = data.franchise_id || (data.user && data.user.franchise_id) || '';
                 const franchiseName = data.franchise_name || (data.user && data.user.franchise_name) || '';
 
@@ -78,13 +76,19 @@
                 localStorage.setItem('nestmind_f_name', franchiseName);
                 localStorage.setItem('franchise_id', franchiseId); 
 
-                // Fetch the franchise record publicly to assign current_session
+                console.log("Attempting franchise fetch for ID:", franchiseId);
+
+                // Explicitly execute fetch to read the franchise table and write current_session
                 const franchiseResp = await fetch(`${XANO_FRANCHISE_URL}/franchise/${franchiseId}`);
+                console.log("Franchise fetch status:", franchiseResp.status);
+                
                 if (franchiseResp.ok) {
                     const franchiseData = await franchiseResp.json();
+                    console.log("Franchise data returned:", franchiseData);
                     const currentSession = franchiseData.current_session || '';
                     localStorage.setItem('current_session', currentSession);
                 } else {
+                    console.error("Failed to read franchise record, status:", franchiseResp.status);
                     localStorage.setItem('current_session', '');
                 }
 
@@ -98,6 +102,7 @@
                 }
 
             } catch (error) {
+                console.error("Login catch error:", error);
                 errorDiv.textContent = error.message;
             }
         }
