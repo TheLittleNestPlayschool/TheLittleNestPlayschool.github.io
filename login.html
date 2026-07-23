@@ -61,12 +61,23 @@
 
                 // Robustly resolve the teacher ID from the response object
                 const teacherId = data.teacher_id || data.teacherId || data.id || (data.user && data.user.teacher_id) || '';
+                
+                // Robustly resolve the franchise ID and Name from the response object
+                const franchiseId = data.franchise_id || (data.user && data.user.franchise_id) || '';
+                const franchiseName = data.franchise_name || (data.user && data.user.franchise_name) || '';
 
                 // Store auth token, user ID, admin type, and teacher ID in local storage
                 localStorage.setItem('authToken', data.authToken);
                 localStorage.setItem('userId', data.user);
                 localStorage.setItem('admin_type_id', data.admin_type_id);
                 localStorage.setItem('teacher_id', teacherId);
+
+                // Store franchise data so the uploader page can access it
+                localStorage.setItem('nestmind_f_id', franchiseId);
+                localStorage.setItem('nestmind_f_name', franchiseName);
+                
+                // Setting a backup key just in case any other scripts look for 'franchise_id' specifically
+                localStorage.setItem('franchise_id', franchiseId); 
 
                 // Routing based on admin_type_id: 10 loads parent dashboard, 4 loads teacher uploader menu
                 if (data.admin_type_id === 10) {
