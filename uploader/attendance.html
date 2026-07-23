@@ -82,6 +82,12 @@
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
+        .session-indicator {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #555;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -96,6 +102,7 @@
         <div class="main-title">
             <span class="brand-title">THE LITTLE NEST PLAYSCHOOL</span>
             <span class="branch-location" id="branch-title-elem">Attendance Uploader</span>
+            <div class="session-indicator" id="session-indicator-elem">Active Session ID: Loading...</div>
         </div>
 
         <div id="student-info-banner">
@@ -173,9 +180,18 @@
             ]);
 
             const franchiseData = await franchiseResp.json();
+            console.log("Franchise Data Loaded:", franchiseData);
             
+            const sessionElem = document.getElementById('session-indicator-elem');
+
             if (franchiseData) {
                 currentSessionId = franchiseData.current_session || franchiseData.session_id || null;
+            }
+
+            if (currentSessionId) {
+                if (sessionElem) sessionElem.innerText = `Active Session ID: ${currentSessionId}`;
+            } else {
+                if (sessionElem) sessionElem.innerText = `Active Session ID: None Set`;
             }
 
             const students = await studentResp.json();
@@ -223,7 +239,7 @@
                 franchise_id: parseInt(franchise_id),
                 session_id: parseInt(currentSessionId)
             };
-            return fetch("https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/push_student_attendance", {
+            return fetch("https://x8ki-letl-twmt.n7.xano.io/api:GE19ZGc0/student_attendance", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
