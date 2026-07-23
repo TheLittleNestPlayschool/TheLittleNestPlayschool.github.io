@@ -55,9 +55,7 @@
                 if (hoursValue !== undefined && hoursValue !== null) {
                     const formattedHours = Number(hoursValue).toLocaleString() + "+";
                     
-                    // Save to local storage variable so other pages like upload_eod.html can access it
                     localStorage.setItem('global_learning_hours', formattedHours);
-                    
                     hoursElem.innerText = formattedHours;
                 }
             } catch (e) {
@@ -75,7 +73,7 @@
             }
 
             try {
-                // Clear out legacy duplicate keys to ensure clean local storage
+                // Clear out legacy duplicate keys
                 localStorage.removeItem('nestmind_f_id');
                 localStorage.removeItem('nestmind_f_name');
                 localStorage.removeItem('locked_franchise_id');
@@ -91,7 +89,6 @@
                 const teacher = await response.json();
 
                 if (teacher) {
-                    // Extract from teacher_info object structure returned by Xano
                     const teacherData = teacher.teacher_info || teacher;
                     const firstName = teacherData.first_name || '';
                     const lastName = teacherData.last_name || '';
@@ -99,16 +96,26 @@
                     
                     document.getElementById('teacherNameDisplay').textContent = fullName ? `Teacher ${fullName}` : '';
 
-                    // Extract ID and name cleanly from the endpoint response
                     const franchiseId = teacher.franchise_id || (teacher.franchise && teacher.franchise.id) || '';
                     const franchiseName = teacher.franchise_name || (teacher.franchise && teacher.franchise.name) || '';
 
-                    // Save single source of truth variables to local storage
                     localStorage.setItem('franchise_id', franchiseId);
                     localStorage.setItem('franchise_name', franchiseName);
 
-                    // Display the franchise name in the header banner
                     document.getElementById('teacherLocationDisplay').textContent = franchiseName ? franchiseName.toUpperCase() : '';
+
+                    // Fetch and set current_session using the get_franchise API endpoint
+                    if (franchiseId) {
+                        const sessionResponse = await fetch(`${XANO_BASE_URL}/get_franchise?franchise_id=${franchiseId}`);
+                        if (sessionResponse.ok) {
+                            const sessionValue = await sessionResponse.json();
+                            localStorage.setItem('current_session', sessionValue);
+                        } else {
+                            localStorage.setItem('current_session', '');
+                        }
+                    } else {
+                        localStorage.setItem('current_session', '');
+                    }
                 }
 
             } catch (error) {
