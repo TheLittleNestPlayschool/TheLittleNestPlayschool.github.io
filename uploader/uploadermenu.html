@@ -13,7 +13,7 @@
         <header class="main-header">
             <div class="stats-banner">
                 <span class="banner-title">Little Nest Global Network</span>
-                <span class="banner-stat"><span class="stat-highlight">50,000+</span> Learning Hours &amp; Counting!</span>
+                <span class="banner-stat"><span class="stat-highlight" id="global-hours-elem">+</span> Learning Hours &amp; Counting!</span>
             </div>
             
             <div class="main-title">
@@ -41,6 +41,24 @@
 
     <script>
         const XANO_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV';
+
+        async function fetchGlobalHours() {
+            const hoursElem = document.getElementById('global-hours-elem');
+            if (!hoursElem) return;
+
+            try {
+                const resp = await fetch(`${XANO_BASE_URL}/nest_master/1`);
+                const data = await resp.json();
+                
+                const hoursValue = data.global_hours || data.hours || data.total_hours;
+                
+                if (hoursValue !== undefined && hoursValue !== null) {
+                    hoursElem.innerText = Number(hoursValue).toLocaleString() + "+";
+                }
+            } catch (e) {
+                console.error("Failed to fetch global network hours:", e);
+            }
+        }
 
         async function loadTeacherHeader() {
             const authToken = localStorage.getItem('authToken');
@@ -94,6 +112,7 @@
         }
 
         loadTeacherHeader();
+        fetchGlobalHours();
     </script>
 </body>
 </html>
