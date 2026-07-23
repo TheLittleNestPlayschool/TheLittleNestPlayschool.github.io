@@ -71,18 +71,14 @@
                 localStorage.setItem('nestmind_f_name', franchiseName);
                 localStorage.setItem('franchise_id', franchiseId); 
 
-                // Use the new get_franchise endpoint with franchise_id parameter
+                // Fetch current_session from get_franchise (which now directly returns current_session)
                 if (franchiseId) {
                     const franchiseUrl = `${XANO_BASE_URL}/get_franchise?franchise_id=${franchiseId}`;
-                    console.log("FETCHING FROM GET_FRANCHISE:", franchiseUrl);
-                    
                     const franchiseResp = await fetch(franchiseUrl);
                     if (franchiseResp.ok) {
-                        const franchiseData = await franchiseResp.json();
-                        console.log("GET_FRANCHISE DATA:", franchiseData);
-                        localStorage.setItem('current_session', franchiseData.current_session || '');
+                        const currentSession = await franchiseResp.json();
+                        localStorage.setItem('current_session', currentSession || '');
                     } else {
-                        console.error("GET_FRANCHISE FAILED, STATUS:", franchiseResp.status);
                         localStorage.setItem('current_session', '');
                     }
                 } else {
@@ -99,7 +95,6 @@
                 }
 
             } catch (error) {
-                console.error("CAUGHT ERROR:", error);
                 errorDiv.textContent = error.message;
             }
         }
