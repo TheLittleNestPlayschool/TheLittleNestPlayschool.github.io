@@ -59,9 +59,6 @@
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || 'Invalid credentials.');
 
-                // DEBUG: Inspect full login response payload
-                console.log("FULL LOGIN RESPONSE DATA:", data);
-
                 const teacherId = data.teacher_id || data.teacherId || data.id || (data.user && data.user.teacher_id) || '';
                 const franchiseId = data.franchise_id || (data.user && data.user.franchise_id) || '';
                 const franchiseName = data.franchise_name || (data.user && data.user.franchise_name) || '';
@@ -74,21 +71,21 @@
                 localStorage.setItem('nestmind_f_name', franchiseName);
                 localStorage.setItem('franchise_id', franchiseId); 
 
-                // Force fetch using the resolved franchiseId
-                const targetFranchiseId = franchiseId || 18;
-                const franchiseUrl = `https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise/${targetFranchiseId}`;
-                
-                console.log("FETCHING NOW FROM URL:", franchiseUrl);
-                
-                const franchiseResp = await fetch(franchiseUrl);
-                console.log("RESPONSE STATUS:", franchiseResp.status);
-                
-                if (franchiseResp.ok) {
-                    const franchiseData = await franchiseResp.json();
-                    console.log("FRANCHISE DATA BODY:", franchiseData);
-                    localStorage.setItem('current_session', franchiseData.current_session || '');
+                // Use the new get_franchise endpoint with franchise_id parameter
+                if (franchiseId) {
+                    const franchiseUrl = `${XANO_BASE_URL}/get_franchise?franchise_id=${franchiseId}`;
+                    console.log("FETCHING FROM GET_FRANCHISE:", franchiseUrl);
+                    
+                    const franchiseResp = await fetch(franchiseUrl);
+                    if (franchiseResp.ok) {
+                        const franchiseData = await franchiseResp.json();
+                        console.log("GET_FRANCHISE DATA:", franchiseData);
+                        localStorage.setItem('current_session', franchiseData.current_session || '');
+                    } else {
+                        console.error("GET_FRANCHISE FAILED, STATUS:", franchiseResp.status);
+                        localStorage.setItem('current_session', '');
+                    }
                 } else {
-                    console.error("FRANCHISE FETCH FAILED WITH STATUS:", franchiseResp.status);
                     localStorage.setItem('current_session', '');
                 }
 
