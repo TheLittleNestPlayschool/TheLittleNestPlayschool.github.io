@@ -104,13 +104,14 @@
 <script>
     let mediaUrl = "";
     
-    const fId = localStorage.getItem('nestmind_f_id');
-    const fName = localStorage.getItem('nestmind_f_name');
+    // Fallback logic to check multiple possible localStorage key definitions safely
+    const fId = localStorage.getItem('nestmind_f_id') || localStorage.getItem('franchise_id') || localStorage.getItem('locked_franchise_id');
+    const fName = localStorage.getItem('nestmind_f_name') || localStorage.getItem('locked_franchise_name');
     const slug = fName ? fName.toLowerCase().replace(/\s+/g, '-') : 'general';
 
     if (fId) {
         localStorage.setItem('locked_franchise_id', fId);
-        localStorage.setItem('locked_franchise_name', fName);
+        if (fName) localStorage.setItem('locked_franchise_name', fName);
     }
 
     window.onload = function() {
