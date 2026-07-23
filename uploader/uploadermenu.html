@@ -8,25 +8,36 @@
 </head>
 <body>
 
-    <div class="login-container">
-        <div class="login-card" style="text-align: center;">
-            <!-- Header Section -->
-            <header class="main-header">
+    <div id="app-container">
+        <!-- Header Section -->
+        <header class="main-header">
             <div class="stats-banner">
-            <span class="banner-title">Little Nest Global Network</span>
-            <span class="banner-stat"><span class="stat-highlight">50,000+</span> Learning Hours &amp; Counting!</span>
-            <div id="teacherLocationDisplay" style="font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;"></div>
-            <div id="teacherNameDisplay" style="font-size: 0.9rem; margin-bottom: 20px;"></div>
-            <h1 class="login-title" style="font-size: 1.5rem; margin-bottom: 2px;">TLNP Teacher Upload Portal</h1>  
-        </div>
-    
-            <p style="font-size: 0.8rem; margin-bottom: 5px;">Little Nest Global Network 50,000+ Learning Hours & Counting!</p>
-        
-            <!-- Menu Buttons -->
-            <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 20px;">
-                <button onclick="window.location.href='/uploader/upload_eod.html'" class="btn-submit" style="width: 200px; border-radius: 20px; font-size: 0.9rem;">Upload Receipt</button>
-                <button onclick="window.location.href='/uploader/attendance.html'" class="btn-submit" style="width: 200px; border-radius: 20px; font-size: 0.9rem;">Upload Attendance</button>
+                <span class="banner-title">Little Nest Global Network</span>
+                <span class="banner-stat"><span class="stat-highlight">50,000+</span> Learning Hours &amp; Counting!</span>
             </div>
+            
+            <div class="main-title">
+                <div id="teacherLocationDisplay" class="branch-location"></div>
+                <h1 class="brand-title" style="font-size: clamp(1.2rem, 3.5vw, 1.8rem); margin-top: 4px;">TLNP Teacher Upload Portal</h1>
+                <div id="teacherNameDisplay" style="font-size: 0.9rem; font-weight: 600; margin-top: 4px; color: var(--text-body);"></div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div id="content-area">
+            <div class="module-box">
+                <p style="font-size: 0.85rem; margin-bottom: 20px; font-weight: 600;">Please select an action below:</p>
+            
+                <!-- Menu Buttons -->
+                <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%;">
+                    <button onclick="window.location.href='/uploader/upload_eod.html'" class="btn-submit" style="width: 100%; max-width: 220px; height: auto; padding: 12px 20px; border-radius: 20px; font-size: 0.9rem;">Upload Receipt</button>
+                    <button onclick="window.location.href='/uploader/attendance.html'" class="btn-submit" style="width: 100%; max-width: 220px; height: auto; padding: 12px 20px; border-radius: 20px; font-size: 0.9rem;">Upload Attendance</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="footer-buttons">
+            <button onclick="window.location.href='../index.html'">Logout</button>
         </div>
     </div>
 
@@ -65,7 +76,7 @@
                     const lastName = teacherData.last_name || '';
                     const fullName = `${firstName} ${lastName}`.trim();
                     
-                    document.getElementById('teacherNameDisplay').textContent = fullName || 'Teacher';
+                    document.getElementById('teacherNameDisplay').textContent = fullName ? `Teacher ${fullName}` : 'Teacher';
 
                     // Extract ID and name cleanly from the endpoint response
                     const franchiseId = teacher.franchise_id || (teacher.franchise && teacher.franchise.id) || '';
