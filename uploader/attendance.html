@@ -131,17 +131,17 @@
 <script>
     let currentSessionId = null;
     
-    const fId = localStorage.getItem('franchise_id') || localStorage.getItem('locked_franchise_id') || localStorage.getItem('nestmind_f_id');
-    const fName = localStorage.getItem('franchise_name') || localStorage.getItem('locked_franchise_name') || localStorage.getItem('nestmind_f_name');
+    const franchise_id = localStorage.getItem('franchise_id') || localStorage.getItem('locked_franchise_id') || localStorage.getItem('nestmind_f_id');
+    const franchise_name = localStorage.getItem('franchise_name') || localStorage.getItem('locked_franchise_name') || localStorage.getItem('nestmind_f_name');
 
-    if (fId) {
-        localStorage.setItem('locked_franchise_id', fId);
-        if (fName) localStorage.setItem('locked_franchise_name', fName);
+    if (franchise_id) {
+        localStorage.setItem('locked_franchise_id', franchise_id);
+        if (franchise_name) localStorage.setItem('locked_franchise_name', franchise_name);
     }
 
     window.onload = function() {
-        if (fName) {
-            document.getElementById('branch-title-elem').innerText = fName.toUpperCase() + " ATTENDANCE";
+        if (franchise_name) {
+            document.getElementById('branch-title-elem').innerText = franchise_name.toUpperCase() + " ATTENDANCE";
         }
         
         const savedHours = localStorage.getItem('global_learning_hours');
@@ -160,7 +160,7 @@
     }
 
     async function initializeAttendancePage() {
-        if (!fId) return alert("Session expired. Please re-login.");
+        if (!franchise_id) return alert("Session expired. Please re-login.");
         
         const status = document.getElementById('status-msg');
         status.style.display = 'block';
@@ -168,17 +168,14 @@
 
         try {
             const [franchiseResp, studentResp] = await Promise.all([
-                fetch(`https://x8ki-letl-twmt.n7.xano.io/api:Hw8UZ2CW/franchise?id=${fId}`),
-                fetch(`https://x8ki-letl-twmt.n7.xano.io/api:iEHfqd-N/uploader_student?franchise_id=${fId}`)
+                fetch(`https://x8ki-letl-twmt.n7.xano.io/api:mXEfdJlg/franchise/${franchise_id}`),
+                fetch(`https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/get_students?franchise_id=${franchise_id}`)
             ]);
 
             const franchiseData = await franchiseResp.json();
-            const franchise = Array.isArray(franchiseData) ? franchiseData.find(f => f.id == fId) : franchiseData;
             
-            if (franchise && franchise.current_session) {
-                currentSessionId = franchise.current_session;
-            } else {
-                currentSessionId = franchise?.session_id || null;
+            if (franchiseData) {
+                currentSessionId = franchiseData.current_session || franchiseData.session_id || null;
             }
 
             const students = await studentResp.json();
@@ -206,7 +203,7 @@
     }
 
     async function saveAttendanceRecords() {
-        if (!fId) return alert("Session expired. Please re-login.");
+        if (!franchise_id) return alert("Session expired. Please re-login.");
         if (!currentSessionId) {
             return alert("Active session ID is missing for this franchise branch.");
         }
@@ -223,7 +220,7 @@
         const requests = Array.from(checkboxes).map(cb => {
             const payload = {
                 student_id: parseInt(cb.value),
-                franchise_id: parseInt(fId),
+                franchise_id: parseInt(franchise_id),
                 session_id: parseInt(currentSessionId)
             };
             return fetch("https://x8ki-letl-twmt.n7.xano.io/api:wtEDiEuV/push_student_attendance", {
