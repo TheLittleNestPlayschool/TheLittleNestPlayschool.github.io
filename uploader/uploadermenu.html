@@ -104,11 +104,15 @@
 
                     document.getElementById('teacherLocationDisplay').textContent = franchiseName ? franchiseName.toUpperCase() : '';
 
-                    // Fetch and set current_session using the get_franchise API endpoint
+                    // Fetch and set current_session correctly, handling objects or raw strings
                     if (franchiseId) {
                         const sessionResponse = await fetch(`${XANO_BASE_URL}/get_franchise?franchise_id=${franchiseId}`);
                         if (sessionResponse.ok) {
-                            const sessionValue = await sessionResponse.json();
+                            const sessionData = await sessionResponse.json();
+                            const sessionValue = typeof sessionData === 'object' && sessionData !== null 
+                                ? (sessionData.current_session || sessionData.session || '') 
+                                : sessionData;
+                                
                             localStorage.setItem('current_session', sessionValue);
                         } else {
                             localStorage.setItem('current_session', '');
